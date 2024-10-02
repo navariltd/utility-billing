@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-02 20:42:41.626150",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sales_order_creation_state"
+ ],
+ "fields": [
+  {
+   "default": "Draft",
+   "fieldname": "sales_order_creation_state",
+   "fieldtype": "Select",
+   "label": "Sales Order Creation State",
+   "options": "Draft\nSubmitted"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-10-02 21:28:49.258628",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Utility Billing Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

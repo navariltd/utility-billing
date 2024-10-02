@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-02 20:35:28.789284",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "quantity",
+  "amount",
+  "column_break_bcqb",
+  "item_code",
+  "rate",
+  "section_break_fcae",
+  "meter_reading_item"
+ ],
+ "fields": [
+  {
+   "fieldname": "meter_reading_item",
+   "fieldtype": "Table",
+   "label": "Meter Reading Item",
+   "options": "Meter Reading Item"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "column_break_bcqb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "section_break_fcae",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-10-02 20:39:31.598373",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Meter Reading Rate",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
