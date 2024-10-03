@@ -7,14 +7,14 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
-  "uom",
-  "current_reading",
   "meter_number",
+  "previous_reading",
+  "current_reading",
   "column_break_fkvl",
   "item_name",
-  "stock_uom",
-  "previous_reading",
   "consumption",
+  "uom",
+  "stock_uom",
   "section_break_leyq",
   "description"
  ],
@@ -22,8 +22,13 @@
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "uom",
@@ -58,29 +63,51 @@
   {
    "fieldname": "current_reading",
    "fieldtype": "Float",
-   "label": "Current Reading"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Current Reading",
+   "reqd": 1
   },
   {
    "fieldname": "meter_number",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Meter Number",
-   "options": "Serial No"
+   "options": "Serial No",
+   "reqd": 1
   },
   {
    "fieldname": "previous_reading",
    "fieldtype": "Float",
-   "label": "Previous Reading"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Previous Reading",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "consumption",
    "fieldtype": "Float",
-   "label": "Consumption"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Consumption",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-02 20:26:57.217493",
+ "modified": "2024-10-03 16:56:40.038858",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Item",

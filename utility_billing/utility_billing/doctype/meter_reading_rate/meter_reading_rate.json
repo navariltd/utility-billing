@@ -5,30 +5,44 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "meter_reading_item",
   "quantity",
   "amount",
   "column_break_bcqb",
   "item_code",
-  "rate",
-  "section_break_fcae",
-  "meter_reading_item"
+  "rate"
  ],
  "fields": [
   {
    "fieldname": "meter_reading_item",
-   "fieldtype": "Table",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Meter Reading Item",
-   "options": "Meter Reading Item"
+   "options": "Meter Reading Item",
+   "reqd": 1
   },
   {
    "fieldname": "quantity",
    "fieldtype": "Float",
-   "label": "Quantity"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Quantity",
+   "reqd": 1
   },
   {
    "fieldname": "amount",
    "fieldtype": "Float",
-   "label": "Amount"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Amount",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_bcqb",
@@ -37,22 +51,28 @@
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "rate",
    "fieldtype": "Float",
-   "label": "Rate"
-  },
-  {
-   "fieldname": "section_break_fcae",
-   "fieldtype": "Section Break"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Rate",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-02 20:39:31.598373",
+ "modified": "2024-10-03 10:48:14.634458",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Rate",

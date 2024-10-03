@@ -15,6 +15,7 @@
   "customer_name",
   "territory",
   "section_break_4qzn",
+  "items",
   "amended_from"
  ],
  "fields": [
@@ -83,12 +84,18 @@
    "label": "Series",
    "options": "MR-.YYYY.MM.-",
    "reqd": 1
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Meter Reading Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-03 10:16:15.222455",
+ "modified": "2024-10-03 10:45:13.109123",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
