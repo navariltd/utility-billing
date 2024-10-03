@@ -1,11 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2024-10-02 20:10:40.513570",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "series",
+  "naming_series",
   "customer",
   "currency",
   "price_list",
@@ -32,20 +33,19 @@
    "search_index": 1
   },
   {
-   "fieldname": "series",
-   "fieldtype": "Data",
-   "label": "Series"
-  },
-  {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "reqd": 1
   },
   {
    "fieldname": "currency",
-   "fieldtype": "Data",
-   "label": "Currency"
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_qmhh",
@@ -54,7 +54,9 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date"
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
   },
   {
    "fieldname": "customer_name",
@@ -71,16 +73,26 @@
    "fieldname": "price_list",
    "fieldtype": "Link",
    "label": "Price List",
-   "options": "Price List"
+   "options": "Price List",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Series",
+   "options": "MR-.YYYY.MM.-",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-02 20:17:05.757913",
+ "modified": "2024-10-03 10:16:15.222455",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

@@ -5,43 +5,57 @@ from frappe.model.document import Document
 
 
 class MeterReading(Document):
-    def on_submit(self):
-        # Get settings from Utility Billing Settings
-        settings = frappe.get_single("Utility Billing Settings")
-        sales_order_state = settings.sales_order_creation_state or "Draft"
-
-        # Create Sales Order
-        sales_order = frappe.new_doc("Sales Order")
-        sales_order.customer = self.customer
-        sales_order.transaction_date = self.date
-        sales_order.currency = self.currency
-        sales_order.price_list = self.price_list
-        sales_order.territory = self.territory
-
-        # Add Meter Reading Items to Sales Order Items
+    def before_submit(self):
         for item in self.items:
-            sales_order_item = sales_order.append("items", {})
-            sales_order_item.item_code = item.item_code
-            sales_order_item.item_name = item.item_name
-            sales_order_item.description = item.description
-            sales_order_item.uom = item.uom
-            sales_order_item.stock_uom = item.stock_uom
-            sales_order_item.qty = item.consumption
-            sales_order_item.warehouse = item.delivery_warehouse
-
-            # Calculate rate and amount for the item based on tariff rates
-            rates = frappe.get_all(
-                "Meter Reading Rate",
-                filters={"meter_reading_item": item.name},
-                fields=["quantity", "rate"],
+            # Fetch previous reading
+            previous_reading = frappe.db.get_value(
+                "Meter Reading Item",
+                {"item_code": item.item_code, "customer": self.customer},
+                "current_reading",
+                order_by="modified desc",
             )
-            total_amount = sum(rate["quantity"] * rate["rate"] for rate in rates)
-            sales_order_item.rate = 0  # Since rate is calculated separately
-            sales_order_item.amount = total_amount
+            item.previous_reading = previous_reading or 0
 
-        # Save Sales Order in Draft or Submit it
-        sales_order.flags.ignore_permissions = True
-        if sales_order_state == "Draft":
-            sales_order.save()
+            # Calculate consumption
+            item.consumption = item.current_reading - item.previous_reading
+
+            # Apply rates based on consumption
+            apply_meter_reading_rates(item)
+
+
+def apply_meter_reading_rates(item):
+    # Tariff-based calculation logic
+    tariff_blocks = frappe.get_list(
+        "Item Price Tariff",
+        filters={"item_code": item.item_code},
+        order_by="lower_limit asc",
+    )
+
+    remaining_consumption = item.consumption
+    for block in tariff_blocks:
+        rate = block.rate
+        lower_limit = block.lower_limit
+        upper_limit = block.upper_limit
+
+        # Determine quantity for this block
+        if remaining_consumption <= upper_limit:
+            quantity = remaining_consumption
         else:
-            sales_order.submit()
+            quantity = upper_limit - lower_limit
+
+        # Calculate amount for this block
+        amount = quantity * rate
+        # Create Meter Reading Rate entry
+        item.append(
+            "rates",
+            {
+                "item_code": item.item_code,
+                "quantity": quantity,
+                "rate": rate,
+                "amount": amount,
+            },
+        )
+
+        remaining_consumption -= quantity
+        if remaining_consumption <= 0:
+            break
