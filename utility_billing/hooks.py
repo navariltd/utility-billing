@@ -5,6 +5,24 @@ app_description = "WWSSC Billing System"
 app_email = "info@navari.co.ke"
 app_license = "agpl-3.0"
 
+fixtures = [
+    {"dt": "Client Script", "filters": [["module", "=", "Utility Billing"]]},
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            [
+                "dt",
+                "in",
+                (
+                    "Item Price"
+                ),
+            ],
+            ["is_system_generated", "=", 0],
+        ],
+    },
+]
+
+
 # Apps
 # ------------------
 

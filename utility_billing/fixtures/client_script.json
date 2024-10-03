@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item Price",
+  "enabled": 1,
+  "modified": "2024-10-03 10:36:00.652247",
+  "module": "Utility Billing",
+  "name": "Item Price Tariff",
+  "script": "frappe.ui.form.on('Item Price', {\n    refresh: function(frm) {\n        check_and_set_rate_zero(frm);\n    },\n\n    custom_item_price_tariffs: function(frm) {\n        check_and_set_rate_zero(frm);\n    }\n});\n\n// Helper function to check tariff table and set rate to zero\nfunction check_and_set_rate_zero(frm) {\n    if (frm.doc.custom_item_price_tariffs && frm.doc.custom_item_price_tariffs.length > 0) {\n        frm.set_value('price_list_rate', 0);\n    }\n}\n",
+  "view": "Form"
+ }
+]
