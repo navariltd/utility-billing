@@ -13,9 +13,14 @@ fixtures = [
             [
                 "dt",
                 "in",
-                ("Item Price"),
+                (
+                    "Item Price",
+                    "Sales Order Item",
+                    "Sales Invoice Item",
+                 ),
             ],
             ["is_system_generated", "=", 0],
+            ["module", "=", "Utility Billing"],
         ],
     },
 ]

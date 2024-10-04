@@ -65,15 +65,16 @@ def create_sales_order(meter_reading):
 
 @frappe.whitelist()
 def get_previous_reading(meter_number):
-    """Fetch all previous readings for the specified meter number using SQL."""
-    query = """
-        SELECT current_reading, creation
-        FROM `tabMeter Reading Item`
-        WHERE meter_number = %s
-        ORDER BY creation DESC
-    """
-    previous_readings = frappe.db.sql(query, (meter_number,), as_dict=True)
-    return previous_readings[0].current_reading if previous_readings else 0
+    """Fetch all previous readings for the specified meter number."""
+    previous_reading = frappe.get_all(
+        "Meter Reading Item",
+        filters={"meter_number": meter_number},
+        fields=["current_reading", "creation"],
+        order_by="creation desc",
+        limit_page_length=1
+    )
+    
+    return previous_reading[0].current_reading if previous_reading else 0
 
 
 @frappe.whitelist()
