@@ -13,9 +13,7 @@ fixtures = [
             [
                 "dt",
                 "in",
-                (
-                    "Item Price"
-                ),
+                ("Item Price"),
             ],
             ["is_system_generated", "=", 0],
         ],
