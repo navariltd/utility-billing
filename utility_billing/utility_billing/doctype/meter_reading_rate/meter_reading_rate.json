@@ -6,7 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "meter_reading_item",
-  "quantity",
+  "qty",
   "amount",
   "column_break_bcqb",
   "item_code",
@@ -22,16 +22,6 @@
    "in_standard_filter": 1,
    "label": "Meter Reading Item",
    "options": "Meter Reading Item",
-   "reqd": 1
-  },
-  {
-   "fieldname": "quantity",
-   "fieldtype": "Float",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Quantity",
    "reqd": 1
   },
   {
@@ -68,11 +58,21 @@
    "in_standard_filter": 1,
    "label": "Rate",
    "reqd": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Quantity",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-03 10:48:14.634458",
+ "modified": "2024-10-04 12:00:37.653850",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Rate",

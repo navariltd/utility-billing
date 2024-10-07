@@ -37,7 +37,7 @@ def create_meter_reading_rates(meter_reading):
                 "doctype": "Meter Reading Rate",
                 "meter_reading_item": item.name,
                 "item_code": item.item_code,
-                "quantity": quantity,
+                "qty": quantity,
                 "amount": amount,
                 "rate": rate,
                 "meter_reading": meter_reading.name,
@@ -50,12 +50,24 @@ def create_sales_order(meter_reading):
     sales_order = frappe.get_doc(
         {"doctype": "Sales Order", "customer": meter_reading.customer, "items": []}
     )
+
     for item in meter_reading.items:
+        meter_reading_rate = frappe.get_value(
+            "Meter Reading Rate", {"meter_reading_item": item.name}, ["qty", "amount"]
+        )
+
+        qty = meter_reading_rate[0] if meter_reading_rate else item.consumption
+        amount = meter_reading_rate[1] if meter_reading_rate else 0
+
         sales_order.append(
             "items",
             {
                 "item_code": item.item_code,
-                "qty": item.consumption,
+                "meter_number": item.meter_number,
+                "previous_reading": item.previous_reading,
+                "current_reading": item.current_reading,
+                "qty": qty,
+                "rate": amount,
                 "delivery_date": nowdate(),
             },
         )
@@ -71,9 +83,9 @@ def get_previous_reading(meter_number):
         filters={"meter_number": meter_number},
         fields=["current_reading", "creation"],
         order_by="creation desc",
-        limit_page_length=1
+        limit_page_length=1,
     )
-    
+
     return previous_reading[0].current_reading if previous_reading else 0
 
 

@@ -6,7 +6,6 @@ app_email = "info@navari.co.ke"
 app_license = "agpl-3.0"
 
 fixtures = [
-    {"dt": "Client Script", "filters": [["module", "=", "Utility Billing"]]},
     {
         "doctype": "Custom Field",
         "filters": [
@@ -17,7 +16,7 @@ fixtures = [
                     "Item Price",
                     "Sales Order Item",
                     "Sales Invoice Item",
-                 ),
+                ),
             ],
             ["is_system_generated", "=", 0],
             ["module", "=", "Utility Billing"],
@@ -64,7 +63,7 @@ fixtures = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Item Price": "public/js/item_price.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
