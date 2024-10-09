@@ -79,7 +79,7 @@
    "fieldname": "customer_type",
    "fieldtype": "Select",
    "label": "Customer Type",
-   "options": "Customer"
+   "options": "Company\nIndividual\nPartnership"
   },
   {
    "fieldname": "customer_group",
@@ -207,7 +207,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-09 15:32:10.619999",
+ "modified": "2024-10-09 16:16:27.513780",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Request for Utility Service",
