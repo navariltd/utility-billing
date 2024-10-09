@@ -1,0 +1,276 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-10-08 16:29:52.921205",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "date",
+  "company",
+  "customer_name",
+  "customer_type",
+  "customer_group",
+  "territory",
+  "column_break_nqzi",
+  "request_type",
+  "nrcpassport_no",
+  "organisation_registration_no",
+  "accounting_dimensions_section",
+  "cost_center",
+  "column_break_vjsy",
+  "project",
+  "currency_and_price_list_section",
+  "currency",
+  "column_break_tviv",
+  "price_list",
+  "section_break_asmx",
+  "amended_from",
+  "address_and_contacts_tab",
+  "address",
+  "town",
+  "residential_area",
+  "street_name",
+  "plothouse_no",
+  "column_break_kzdt",
+  "contact",
+  "postal_address",
+  "telephonecell_no",
+  "email_address",
+  "section_break_lpoa",
+  "connection_size",
+  "water_network",
+  "east_cordinates",
+  "south_cordinates",
+  "pipes_typedistance"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_asmx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Request for Utility Service",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "Naming Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "customer_type",
+   "fieldtype": "Select",
+   "label": "Customer Type",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "customer_group",
+   "fieldtype": "Link",
+   "label": "Customer Group",
+   "options": "Customer Group"
+  },
+  {
+   "fieldname": "territory",
+   "fieldtype": "Data",
+   "label": "Territory"
+  },
+  {
+   "fieldname": "column_break_nqzi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "request_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Request Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nrcpassport_no",
+   "fieldtype": "Data",
+   "label": "NRC/Passport No"
+  },
+  {
+   "fieldname": "organisation_registration_no",
+   "fieldtype": "Data",
+   "label": "Organisation Registration No"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Data",
+   "label": "Cost Center"
+  },
+  {
+   "fieldname": "column_break_vjsy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Data",
+   "label": "Project"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "currency_and_price_list_section",
+   "fieldtype": "Section Break",
+   "label": "Currency and Price List"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "column_break_tviv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Data",
+   "label": "Price List"
+  },
+  {
+   "fieldname": "address_and_contacts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Address and Contacts"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Link",
+   "label": "Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "column_break_kzdt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "section_break_lpoa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "connection_size",
+   "fieldtype": "Data",
+   "label": "Connection Size"
+  },
+  {
+   "fieldname": "water_network",
+   "fieldtype": "Data",
+   "label": "Water Network"
+  },
+  {
+   "fieldname": "east_cordinates",
+   "fieldtype": "Data",
+   "label": "East Cordinates"
+  },
+  {
+   "fieldname": "south_cordinates",
+   "fieldtype": "Data",
+   "label": "South Cordinates"
+  },
+  {
+   "fieldname": "pipes_typedistance",
+   "fieldtype": "Data",
+   "label": "Pipes type/Distance"
+  },
+  {
+   "fieldname": "town",
+   "fieldtype": "Data",
+   "label": "Town"
+  },
+  {
+   "fieldname": "residential_area",
+   "fieldtype": "Data",
+   "label": "Residential Area"
+  },
+  {
+   "fieldname": "street_name",
+   "fieldtype": "Data",
+   "label": "Street Name"
+  },
+  {
+   "fieldname": "plothouse_no",
+   "fieldtype": "Data",
+   "label": "Plot/House no"
+  },
+  {
+   "fieldname": "postal_address",
+   "fieldtype": "Data",
+   "label": "Postal Address"
+  },
+  {
+   "fieldname": "telephonecell_no",
+   "fieldtype": "Data",
+   "label": "Telephone/Cell no"
+  },
+  {
+   "fieldname": "email_address",
+   "fieldtype": "Data",
+   "label": "Email Address\t"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-10-09 08:31:10.144297",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Request for Utility Service",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
