@@ -24,6 +24,12 @@ fixtures = [
             ["module", "=", "Utility Billing"],
         ],
     },
+    {
+        "doctype": "Workspace",
+        "filters": [
+            ["module", "=", "Utility Billing"],
+        ],
+    },
 ]
 
 

@@ -1,0 +1,56 @@
+[
+ {
+  "app": "Utility Billing",
+  "charts": [],
+  "content": "[{\"id\":\"fqWR1Nv2hU\",\"type\":\"header\",\"data\":{\"text\":\"<span style=\\\"font-size: 16px;\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"_3e05httN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"1acTaFDYDY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request For Utility Service\",\"col\":4}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": "",
+  "hide_custom": 0,
+  "icon": "milestone",
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Utility Billing",
+  "links": [],
+  "modified": "2024-10-09 08:39:29.349115",
+  "module": "Utility Billing",
+  "name": "Utility Billing",
+  "number_cards": [],
+  "parent_page": "",
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 48.0,
+  "shortcuts": [
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Meter Reading",
+    "link_to": "Meter Reading",
+    "restrict_to_domain": null,
+    "stats_filter": "[]",
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Request For Utility Service",
+    "link_to": "Request for Utility Service",
+    "restrict_to_domain": null,
+    "stats_filter": "[]",
+    "type": "DocType",
+    "url": null
+   }
+  ],
+  "title": "Utility Billing"
+ }
+]
