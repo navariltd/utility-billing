@@ -28,16 +28,9 @@
   "section_break_asmx",
   "amended_from",
   "address_and_contacts_tab",
-  "address",
-  "town",
-  "residential_area",
-  "street_name",
-  "plothouse_no",
+  "address_html",
   "column_break_kzdt",
-  "contact",
-  "postal_address",
-  "telephonecell_no",
-  "email_address",
+  "contact_html",
   "section_break_lpoa",
   "connection_size",
   "water_network",
@@ -163,23 +156,11 @@
   {
    "fieldname": "address_and_contacts_tab",
    "fieldtype": "Tab Break",
-   "label": "Address and Contacts"
-  },
-  {
-   "fieldname": "address",
-   "fieldtype": "Link",
-   "label": "Address",
-   "options": "Address"
+   "label": "Address & Contacts"
   },
   {
    "fieldname": "column_break_kzdt",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "contact",
-   "fieldtype": "Link",
-   "label": "Contact",
-   "options": "Contact"
   },
   {
    "fieldname": "section_break_lpoa",
@@ -211,45 +192,22 @@
    "label": "Pipes type/Distance"
   },
   {
-   "fieldname": "town",
-   "fieldtype": "Data",
-   "label": "Town"
+   "fieldname": "address_html",
+   "fieldtype": "HTML",
+   "label": "Address HTML",
+   "options": "Address"
   },
   {
-   "fieldname": "residential_area",
-   "fieldtype": "Data",
-   "label": "Residential Area"
-  },
-  {
-   "fieldname": "street_name",
-   "fieldtype": "Data",
-   "label": "Street Name"
-  },
-  {
-   "fieldname": "plothouse_no",
-   "fieldtype": "Data",
-   "label": "Plot/House no"
-  },
-  {
-   "fieldname": "postal_address",
-   "fieldtype": "Data",
-   "label": "Postal Address"
-  },
-  {
-   "fieldname": "telephonecell_no",
-   "fieldtype": "Data",
-   "label": "Telephone/Cell no"
-  },
-  {
-   "fieldname": "email_address",
-   "fieldtype": "Data",
-   "label": "Email Address\t"
+   "fieldname": "contact_html",
+   "fieldtype": "HTML",
+   "label": "Contact",
+   "options": "Contact"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-09 08:31:10.144297",
+ "modified": "2024-10-09 15:32:10.619999",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Request for Utility Service",
