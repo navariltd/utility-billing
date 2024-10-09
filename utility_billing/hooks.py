@@ -16,6 +16,8 @@ fixtures = [
                     "Item Price",
                     "Sales Order Item",
                     "Sales Invoice Item",
+                    "Issue",
+                    "BOM",
                 ),
             ],
             ["is_system_generated", "=", 0],
