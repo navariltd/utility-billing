@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestRequestforUtilityService(FrappeTestCase):
+class TestUtilityServiceRequest(FrappeTestCase):
     pass

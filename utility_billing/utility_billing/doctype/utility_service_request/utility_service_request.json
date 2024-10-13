@@ -7,16 +7,25 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "date",
-  "company",
   "customer_name",
   "customer_type",
   "customer_group",
-  "territory",
   "column_break_nqzi",
+  "date",
   "request_type",
   "nrcpassport_no",
-  "organisation_registration_no",
+  "territory",
+  "column_break_wxld",
+  "company",
+  "tax_id",
+  "section_break_lpoa",
+  "connection_size",
+  "pipes_typedistance",
+  "column_break_bfhu",
+  "water_network",
+  "south_cordinates",
+  "column_break_omtp",
+  "east_cordinates",
   "accounting_dimensions_section",
   "cost_center",
   "column_break_vjsy",
@@ -25,18 +34,14 @@
   "currency",
   "column_break_tviv",
   "price_list",
+  "section_break_jqrx",
+  "items",
   "section_break_asmx",
   "amended_from",
   "address_and_contacts_tab",
   "address_html",
   "column_break_kzdt",
-  "contact_html",
-  "section_break_lpoa",
-  "connection_size",
-  "water_network",
-  "east_cordinates",
-  "south_cordinates",
-  "pipes_typedistance"
+  "contact_html"
  ],
  "fields": [
   {
@@ -48,38 +53,53 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Request for Utility Service",
+   "options": "Utility Service Request",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
   },
   {
    "fieldname": "naming_series",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "Naming Series",
+   "options": "UT-SER-REQ-.YYYY.-",
    "reqd": 1
   },
   {
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "read_only": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company"
   },
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer Name"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Name"
   },
   {
    "fieldname": "customer_type",
    "fieldtype": "Select",
    "label": "Customer Type",
-   "options": "Company\nIndividual\nPartnership"
+   "options": "Company\nIndividual\nPartnership",
+   "reqd": 1
   },
   {
    "fieldname": "customer_group",
@@ -98,20 +118,21 @@
   },
   {
    "fieldname": "request_type",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
+   "in_filter": 1,
    "in_list_view": 1,
-   "label": "Request Type",
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Utility Request Type",
+   "options": "Utility Request Type",
    "reqd": 1
   },
   {
    "fieldname": "nrcpassport_no",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_standard_filter": 1,
    "label": "NRC/Passport No"
-  },
-  {
-   "fieldname": "organisation_registration_no",
-   "fieldtype": "Data",
-   "label": "Organisation Registration No"
   },
   {
    "collapsible": 1,
@@ -130,8 +151,9 @@
   },
   {
    "fieldname": "project",
-   "fieldtype": "Data",
-   "label": "Project"
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
   },
   {
    "collapsible": 1,
@@ -141,8 +163,9 @@
   },
   {
    "fieldname": "currency",
-   "fieldtype": "Data",
-   "label": "Currency"
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
   },
   {
    "fieldname": "column_break_tviv",
@@ -150,8 +173,9 @@
   },
   {
    "fieldname": "price_list",
-   "fieldtype": "Data",
-   "label": "Price List"
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List"
   },
   {
    "fieldname": "address_and_contacts_tab",
@@ -202,15 +226,44 @@
    "fieldtype": "HTML",
    "label": "Contact",
    "options": "Contact"
+  },
+  {
+   "fieldname": "tax_id",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "Organisation Registration No"
+  },
+  {
+   "fieldname": "section_break_jqrx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Utility Service Request Item"
+  },
+  {
+   "fieldname": "column_break_wxld",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bfhu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_omtp",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-09 16:16:27.513780",
+ "modified": "2024-10-14 01:18:31.662238",
  "modified_by": "Administrator",
  "module": "Utility Billing",
- "name": "Request for Utility Service",
+ "name": "Utility Service Request",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
