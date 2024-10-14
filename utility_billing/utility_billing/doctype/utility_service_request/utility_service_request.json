@@ -13,11 +13,11 @@
   "column_break_nqzi",
   "date",
   "request_type",
-  "nrcpassport_no",
   "territory",
   "column_break_wxld",
   "company",
   "tax_id",
+  "nrcpassport_no",
   "section_break_lpoa",
   "connection_size",
   "pipes_typedistance",
@@ -92,7 +92,8 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Name"
+   "label": "Name",
+   "reqd": 1
   },
   {
    "fieldname": "customer_type",
@@ -109,8 +110,9 @@
   },
   {
    "fieldname": "territory",
-   "fieldtype": "Data",
-   "label": "Territory"
+   "fieldtype": "Link",
+   "label": "Territory",
+   "options": "Territory"
   },
   {
    "fieldname": "column_break_nqzi",
@@ -233,7 +235,7 @@
    "fieldtype": "Data",
    "in_filter": 1,
    "in_standard_filter": 1,
-   "label": "Organisation Registration No"
+   "label": "Tax ID"
   },
   {
    "fieldname": "section_break_jqrx",
@@ -261,7 +263,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 01:52:46.346069",
+ "modified": "2024-10-14 05:12:30.780832",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

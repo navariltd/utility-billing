@@ -19,8 +19,9 @@ class UtilityServiceRequest(Document):
                     "customer_type": self.customer_type,
                     "customer_group": self.customer_group,
                     "territory": self.territory,
-                    "nrcpassport_no": self.nrcpassport_no,
-                    "organisation_registration_no": self.organisation_registration_no,
+                    "tax_id": self.tax_id,
+                    "nrc_or_passport_no": self.nrcpassport_no,
+                    "company": self.company,
                 }
             )
             customer.insert()
