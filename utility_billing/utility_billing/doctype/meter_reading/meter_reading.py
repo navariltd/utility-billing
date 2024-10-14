@@ -78,26 +78,23 @@ def create_meter_reading_rates(meter_reading):
 
 def create_sales_order(meter_reading):
     sales_order = frappe.get_doc(
-        {"doctype": "Sales Order", "customer": meter_reading.customer, "items": []}
+        {
+            "doctype": "Sales Order",
+            "customer": meter_reading.customer,
+            "items": [],
+            "order_type": "Sales",
+            "selling_price_list": meter_reading.price_list,
+        }
     )
 
-    for item in meter_reading.items:
-        meter_reading_rate = frappe.get_value(
-            "Meter Reading Rate", {"meter_reading_item": item.name}, ["qty", "amount"]
-        )
-
-        qty = meter_reading_rate[0] if meter_reading_rate else item.consumption
-        amount = meter_reading_rate[1] if meter_reading_rate else 0
-
+    for rate in meter_reading.rates:
         sales_order.append(
             "items",
             {
-                "item_code": item.item_code,
-                "meter_number": item.meter_number,
-                "previous_reading": item.previous_reading,
-                "current_reading": item.current_reading,
-                "qty": qty,
-                "rate": amount,
+                "item_code": rate.item_code,
+                "qty": round(rate.qty),
+                "rate": rate.rate,
+                "amount": rate.amount,
                 "delivery_date": nowdate(),
             },
         )

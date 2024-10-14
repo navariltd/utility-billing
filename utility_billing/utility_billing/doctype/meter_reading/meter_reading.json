@@ -108,13 +108,14 @@
    "fieldname": "rates",
    "fieldtype": "Table",
    "label": "Rates",
-   "options": "Meter Reading Rate"
+   "options": "Meter Reading Rate",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 03:21:34.383860",
+ "modified": "2024-10-14 04:45:23.802412",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
