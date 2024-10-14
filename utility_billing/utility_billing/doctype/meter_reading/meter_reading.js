@@ -18,6 +18,7 @@ frappe.ui.form.on("Meter Reading", {
 				callback: function (r) {
 					if (r.message) {
 						frm.set_value("customer_name", r.message.customer_name);
+						frm.set_value("territory", r.message.territory);
 						frm.set_value("price_list", r.message.default_price_list);
 					}
 				},
@@ -64,6 +65,28 @@ frappe.ui.form.on("Meter Reading Item", {
 		if (row.current_reading !== undefined || row.current_reading !== 0) {
 			row.consumption = row.current_reading - row.previous_reading;
 			frm.refresh_field("items");
+		}
+	},
+	item_code: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row.item_code) {
+			frappe.call({
+				method: "frappe.client.get",
+				args: {
+					doctype: "Item",
+					name: row.item_code,
+				},
+				callback: function (r) {
+					if (r.message) {
+						frappe.model.set_value(cdt, cdn, "item_name", r.message.item_name);
+						frappe.model.set_value(cdt, cdn, "uom", r.message.stock_uom);
+						frappe.model.set_value(cdt, cdn, "stock_uom", r.message.stock_uom);
+						frappe.model.set_value(cdt, cdn, "description", r.message.description);
+
+						frm.refresh_field("items");
+					}
+				},
+			});
 		}
 	},
 });

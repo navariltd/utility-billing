@@ -142,8 +142,9 @@
   },
   {
    "fieldname": "cost_center",
-   "fieldtype": "Data",
-   "label": "Cost Center"
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
   },
   {
    "fieldname": "column_break_vjsy",
@@ -260,7 +261,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 01:18:31.662238",
+ "modified": "2024-10-14 01:52:46.346069",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

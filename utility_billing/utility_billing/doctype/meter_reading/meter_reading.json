@@ -8,15 +8,17 @@
  "field_order": [
   "naming_series",
   "customer",
-  "currency",
-  "price_list",
+  "customer_name",
   "column_break_qmhh",
   "date",
-  "customer_name",
-  "territory",
+  "currency",
+  "price_list",
+  "column_break_aiuo",
   "company",
+  "territory",
   "section_break_4qzn",
   "items",
+  "rates",
   "amended_from"
  ],
  "fields": [
@@ -97,12 +99,22 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company"
+  },
+  {
+   "fieldname": "column_break_aiuo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rates",
+   "fieldtype": "Table",
+   "label": "Rates",
+   "options": "Meter Reading Rate"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-11 09:40:07.444466",
+ "modified": "2024-10-14 03:21:34.383860",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

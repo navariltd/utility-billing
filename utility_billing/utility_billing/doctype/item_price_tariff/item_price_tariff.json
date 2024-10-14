@@ -14,9 +14,10 @@
  "fields": [
   {
    "fieldname": "lower_limit",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Lower Limit",
+   "precision": "3",
    "reqd": 1
   },
   {
@@ -32,7 +33,7 @@
   },
   {
    "fieldname": "upper_limit",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Upper Limit",
    "reqd": 1
@@ -41,7 +42,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-02 20:07:30.217655",
+ "modified": "2024-10-14 02:20:18.799993",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Item Price Tariff",

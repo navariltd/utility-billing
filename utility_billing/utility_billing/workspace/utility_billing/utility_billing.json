@@ -1,8 +1,8 @@
 {
  "app": "Utility Billing",
  "charts": [],
- "content": "[{\"id\":\"fqWR1Nv2hU\",\"type\":\"header\",\"data\":{\"text\":\"<span style=\\\"font-size: 16px;\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"_3e05httN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"1acTaFDYDY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request For Utility Service\",\"col\":4}}]",
- "creation": "2024-10-09 08:37:02.024121",
+ "content": "[{\"id\":\"fqWR1Nv2hU\",\"type\":\"header\",\"data\":{\"text\":\"<span style=\\\"font-size: 16px;\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"_3e05httN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"1acTaFDYDY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":4}}]",
+ "creation": "2024-10-13 23:12:14.676237",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -14,7 +14,7 @@
  "is_hidden": 0,
  "label": "Utility Billing",
  "links": [],
- "modified": "2024-10-09 08:39:29.349115",
+ "modified": "2024-10-14 01:23:43.099432",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing",
@@ -37,8 +37,8 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Request For Utility Service",
-   "link_to": "Request for Utility Service",
+   "label": "Utility Service Request",
+   "link_to": "Utility Service Request",
    "stats_filter": "[]",
    "type": "DocType"
   }

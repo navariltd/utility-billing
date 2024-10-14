@@ -26,12 +26,13 @@
   },
   {
    "fieldname": "amount",
-   "fieldtype": "Float",
+   "fieldtype": "Currency",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Amount",
+   "precision": "2",
    "reqd": 1
   },
   {
@@ -67,30 +68,19 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Quantity",
+   "precision": "3",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "istable": 1,
  "links": [],
- "modified": "2024-10-04 12:00:37.653850",
+ "modified": "2024-10-14 03:03:41.319656",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Rate",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
+ "permissions": [],
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
