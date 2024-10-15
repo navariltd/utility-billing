@@ -1,0 +1,36 @@
+[
+ {
+  "custom": 0,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": "Utility Billing",
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Utility Service Request",
+  "link_fieldname": "sales_order",
+  "modified": "2024-10-15 09:05:23.141183",
+  "name": "p9tpcelsh8",
+  "parent": "Sales Order",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "DocType",
+  "table_fieldname": null
+ },
+ {
+  "custom": 0,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": "Utility Billing",
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Meter Reading",
+  "link_fieldname": "sales_order",
+  "modified": "2024-10-15 09:05:23.141183",
+  "name": "pig054jhm1",
+  "parent": "Sales Order",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "DocType",
+  "table_fieldname": "sales_order"
+ }
+]

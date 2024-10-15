@@ -15,6 +15,7 @@
   "date",
   "request_type",
   "territory",
+  "sales_order",
   "column_break_wxld",
   "company",
   "tax_id",
@@ -265,12 +266,18 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-15 07:45:18.266932",
+ "modified": "2024-10-15 08:34:46.547441",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

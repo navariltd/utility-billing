@@ -43,6 +43,15 @@ frappe.ui.form.on("Utility Service Request", {
 			).addClass("btn-primary");
 			frm.page.set_inner_btn_group_as_primary(__("Create"));
 		}
+		if (frm.doc.customer) {
+			fetch_customer_details(frm);
+		}
+	},
+
+	customer: function (frm) {
+		if (frm.doc.customer) {
+			fetch_customer_details(frm);
+		}
 	},
 });
 
@@ -123,3 +132,23 @@ frappe.ui.form.on("Utility Service Request Item", {
 		}
 	},
 });
+
+function fetch_customer_details(frm) {
+	frappe.call({
+		method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_customer_details",
+		args: {
+			customer: frm.doc.customer,
+		},
+		callback: function (r) {
+			if (r.message) {
+				frm.set_value("customer_name", r.message.customer_name);
+				frm.set_value("territory", r.message.territory);
+				frm.set_value("customer_group", r.message.customer_group);
+				frm.set_value("customer_type", r.message.customer_type);
+				frm.set_value("company", r.message.company);
+				frm.set_value("tax_id", r.message.tax_id);
+				frm.set_value("nrcpassport_no", r.message.nrc_or_passport_no);
+			}
+		},
+	});
+}
