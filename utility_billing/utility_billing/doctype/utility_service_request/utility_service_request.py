@@ -10,32 +10,14 @@ class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
 
-    def on_submit(self):
-        if not frappe.db.exists("Customer", self.customer_name):
-            customer = frappe.get_doc(
-                {
-                    "doctype": "Customer",
-                    "customer_name": self.customer_name,
-                    "customer_type": self.customer_type,
-                    "customer_group": self.customer_group,
-                    "territory": self.territory,
-                    "tax_id": self.tax_id,
-                    "nrc_or_passport_no": self.nrcpassport_no,
-                    "company": self.company,
-                }
-            )
-            customer.insert()
-
-
 
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):
     doc = frappe.get_doc("Utility Service Request", docname)
     customer_doc = create_customer(doc)
     sales_order_doc = create_sales_order(doc, customer_doc)
-    return {
-        "sales_order": sales_order_doc.name
-    }
+    return {"sales_order": sales_order_doc.name}
+
 
 def create_customer(doc):
     """
@@ -47,36 +29,40 @@ def create_customer(doc):
         customer_doc.customer_type = doc.customer_type
         customer_doc.customer_group = doc.customer_group
         customer_doc.territory = doc.territory
+        customer_doc.tax_id = doc.tax_id
+        customer_doc.nrc_or_passport_no = doc.nrcpassport_no
+        customer_doc.company = doc.company
         customer_doc.insert()
         doc.customer = customer_doc.name
         doc.save()
     else:
         customer_doc = frappe.get_doc("Customer", doc.customer)
-    
+
     return customer_doc
+
 
 def create_sales_order(doc, customer_doc):
     """
     Create a new Sales Order linked to the provided customer.
     """
-    auto_submit_sales_order = frappe.db.get_single_value('Utility Billing Settings', 'sales_order_creation_state') 
+    auto_submit_sales_order = frappe.db.get_single_value(
+        "Utility Billing Settings", "sales_order_creation_state"
+    )
     sales_order_doc = frappe.new_doc("Sales Order")
     sales_order_doc.customer = customer_doc.name
     sales_order_doc.transaction_date = frappe.utils.nowdate()
 
-    for item in doc.items: 
-        sales_order_doc.append("items", {
-            "item_code": item.item_code, 
-            "qty": item.qty or 1,
-            "rate": item.rate or 0  
-        })
+    for item in doc.items:
+        sales_order_doc.append(
+            "items",
+            {"item_code": item.item_code, "qty": item.qty or 1, "rate": item.rate or 0},
+        )
 
     sales_order_doc.insert()
-    
-    
+
     doc.customer = customer_doc.name
 
-    if auto_submit_sales_order != "Draft" :
+    if auto_submit_sales_order != "Draft":
         sales_order_doc.submit()
 
     return sales_order_doc

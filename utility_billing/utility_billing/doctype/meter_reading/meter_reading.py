@@ -65,17 +65,13 @@ def get_previous_reading(meter_number):
 
 @frappe.whitelist()
 def get_customer_details(customer):
-    """Fetch customer details such as name and default price list."""
-    customer_details = frappe.db.get_value(
-        "Customer",
-        customer,
-        ["customer_name", "default_price_list", "territory"],
-        as_dict=True,
-    )
-    if customer_details:
-        if not customer_details.default_price_list:
-            customer_group = frappe.db.get_value("Customer", customer, "customer_group")
-            customer_details.default_price_list = frappe.db.get_value(
-                "Customer Group", customer_group, "default_price_list"
-            )
-    return customer_details or {}
+    """Fetch all customer details, including the default price list and other fields."""
+
+    customer_doc = frappe.get_doc("Customer", customer)
+
+    if not customer_doc.default_price_list:
+        customer_doc.default_price_list = frappe.db.get_value(
+            "Customer Group", customer_doc.customer_group, "default_price_list"
+        )
+
+    return customer_doc.as_dict()
