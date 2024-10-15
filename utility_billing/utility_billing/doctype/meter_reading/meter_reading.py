@@ -3,6 +3,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import nowdate
+
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
 
 
@@ -18,7 +19,6 @@ class MeterReading(Document):
                 sales_order = create_sales_order(self)
                 sales_order.submit()
             self.sales_order = sales_order.name
-
 
 
 def create_sales_order(meter_reading):

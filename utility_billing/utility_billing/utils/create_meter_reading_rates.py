@@ -1,5 +1,6 @@
 import frappe
 
+
 def create_meter_reading_rates(meter_reading, price_list, reading_date):
     """Create Meter Reading Rate documents based on the Meter Reading date and append to its rates child table."""
     meter_reading.set("rates", [])
@@ -52,4 +53,3 @@ def create_meter_reading_rates(meter_reading, price_list, reading_date):
                 )
 
                 total_consumption -= slab_quantity
-
