@@ -8,6 +8,7 @@
  "field_order": [
   "naming_series",
   "customer_name",
+  "customer",
   "customer_type",
   "customer_group",
   "column_break_nqzi",
@@ -22,10 +23,10 @@
   "connection_size",
   "pipes_typedistance",
   "column_break_bfhu",
-  "water_network",
-  "south_cordinates",
-  "column_break_omtp",
   "east_cordinates",
+  "water_network",
+  "column_break_omtp",
+  "south_cordinates",
   "accounting_dimensions_section",
   "cost_center",
   "column_break_vjsy",
@@ -258,12 +259,18 @@
   {
    "fieldname": "column_break_omtp",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 05:12:30.780832",
+ "modified": "2024-10-15 07:45:18.266932",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

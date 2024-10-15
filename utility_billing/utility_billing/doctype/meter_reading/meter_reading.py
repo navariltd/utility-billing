@@ -4,79 +4,25 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import nowdate
 
+from ...utils.create_meter_reading_rates import create_meter_reading_rates
+
 
 class MeterReading(Document):
     def validate(self):
-        create_meter_reading_rates(self)
+        create_meter_reading_rates(self, self.price_list, self.date)
+
         settings = frappe.get_single("Utility Billing Settings")
-        if settings.sales_order_creation_state == "Draft":
-            create_sales_order(self)
-
-    def after_insert(self):
-        create_meter_reading_rates(self)
-        self.save()
-
-    def before_submit(self):
-        settings = frappe.get_single("Utility Billing Settings")
-        if settings.sales_order_creation_state == "Submitted":
-            create_sales_order(self)
-
-
-def create_meter_reading_rates(meter_reading):
-    """Create Meter Reading Rate documents from the Meter Reading and append to its rates child table."""
-
-    meter_reading.set("rates", [])
-    for item in meter_reading.items:
-        item_prices = frappe.get_list(
-            "Item Price",
-            filters={
-                "item_code": item.item_code,
-                "price_list": meter_reading.price_list,
-            },
-            fields=["name", "tariffs"],
-        )
-
-        if not item_prices:
-            frappe.throw(
-                ("No pricing available for Item {0} and Price List {1}").format(
-                    item.item_code, meter_reading.price_list
-                )
-            )
-
-        total_consumption = item.consumption
-
-        for item_price in item_prices:
-            item_price_doc = frappe.get_doc("Item Price", item_price.name)
-
-            for tariff in item_price_doc.tariffs:
-                if total_consumption <= 0:
-                    break
-
-                slab_quantity = min(
-                    total_consumption, tariff.upper_limit - tariff.lower_limit
-                )
-
-                if slab_quantity <= 0:
-                    continue
-
-                rate = tariff.rate
-                amount = slab_quantity * rate
-
-                meter_reading.append(
-                    "rates",
-                    {
-                        "meter_reading_item": item.name,
-                        "item_code": item.item_code,
-                        "qty": slab_quantity,
-                        "amount": amount,
-                        "rate": rate,
-                    },
-                )
-
-                total_consumption -= slab_quantity
+        if not self.sales_order:
+            if settings.sales_order_creation_state == "Draft":
+                sales_order = create_sales_order(self)
+            else:
+                sales_order = create_sales_order(self)
+                sales_order.submit()
+            self.sales_order = sales_order.name
 
 
 def create_sales_order(meter_reading):
+    """Create a Sales Order based on the Meter Reading."""
     sales_order = frappe.get_doc(
         {
             "doctype": "Sales Order",
@@ -100,11 +46,12 @@ def create_sales_order(meter_reading):
         )
 
     sales_order.insert()
+    return sales_order
 
 
 @frappe.whitelist()
 def get_previous_reading(meter_number):
-    """Fetch all previous readings for the specified meter number."""
+    """Fetch the previous reading for the specified meter number."""
     previous_reading = frappe.get_all(
         "Meter Reading Item",
         filters={"meter_number": meter_number},
@@ -118,7 +65,7 @@ def get_previous_reading(meter_number):
 
 @frappe.whitelist()
 def get_customer_details(customer):
-    """Fetch customer name and price list."""
+    """Fetch customer details such as name and default price list."""
     customer_details = frappe.db.get_value(
         "Customer",
         customer,

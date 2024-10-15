@@ -11,6 +11,38 @@ frappe.ui.form.on("Utility Service Request", {
 			let currentDate = frappe.datetime.nowdate();
 			frm.set_value("date", currentDate);
 		}
+		if (!frm.is_new()) {
+			frm.add_custom_button(
+				__("Sales Order"),
+				function () {
+					frappe.call({
+						method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
+						args: {
+							docname: frm.doc.name,
+						},
+						callback: function (response) {
+							if (response.message) {
+								let sales_order_link = frappe.utils.get_form_link(
+									"Sales Order",
+									response.message.sales_order
+								);
+
+								frappe.msgprint({
+									title: __("Success"),
+									message: __(
+										"Sales Order <a href='{0}'>{1}</a> created successfully.",
+										[sales_order_link, response.message.sales_order]
+									),
+									indicator: "green",
+								});
+							}
+						},
+					});
+				},
+				__("Create")
+			).addClass("btn-primary");
+			frm.page.set_inner_btn_group_as_primary(__("Create"));
+		}
 	},
 });
 

@@ -16,6 +16,7 @@
   "column_break_aiuo",
   "company",
   "territory",
+  "sales_order",
   "section_break_4qzn",
   "items",
   "rates",
@@ -110,12 +111,18 @@
    "label": "Rates",
    "options": "Meter Reading Rate",
    "read_only": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 04:45:23.802412",
+ "modified": "2024-10-14 12:10:28.778932",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
