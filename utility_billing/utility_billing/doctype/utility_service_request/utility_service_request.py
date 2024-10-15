@@ -60,7 +60,8 @@ def create_sales_order(doc, customer_doc):
 
     sales_order_doc.insert()
 
-    doc.customer = customer_doc.name
+    doc.sales_order = sales_order_doc.name
+    doc.save()
 
     if auto_submit_sales_order != "Draft":
         sales_order_doc.submit()
