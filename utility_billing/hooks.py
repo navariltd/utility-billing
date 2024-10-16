@@ -28,7 +28,7 @@ fixtures = [
     {
         "doctype": "Workspace",
         "filters": [
-            ["module", "in", ["Utility Billing", "Selling"]], 
+            ["module", "in", ["Utility Billing", "Selling"]],
         ],
     },
     {
