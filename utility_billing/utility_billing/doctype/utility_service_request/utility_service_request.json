@@ -6,16 +6,15 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_cpzx",
   "naming_series",
   "customer_name",
-  "customer",
   "customer_type",
-  "customer_group",
+  "request_type",
   "column_break_nqzi",
   "date",
-  "request_type",
+  "customer_group",
   "territory",
-  "sales_order",
   "column_break_wxld",
   "company",
   "tax_id",
@@ -40,6 +39,10 @@
   "items",
   "section_break_asmx",
   "amended_from",
+  "more_info_tab",
+  "customer",
+  "column_break_vdbu",
+  "sales_order",
   "address_and_contacts_tab",
   "address_html",
   "column_break_kzdt",
@@ -61,8 +64,10 @@
    "search_index": 1
   },
   {
+   "default": "UT-SER-REQ-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
    "options": "UT-SER-REQ-.YYYY.-",
    "reqd": 1
@@ -107,7 +112,7 @@
   {
    "fieldname": "customer_group",
    "fieldtype": "Link",
-   "label": "Customer Group",
+   "label": "Tariff",
    "options": "Customer Group"
   },
   {
@@ -192,6 +197,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_lpoa",
    "fieldtype": "Section Break"
   },
@@ -237,7 +243,7 @@
    "fieldtype": "Data",
    "in_filter": 1,
    "in_standard_filter": 1,
-   "label": "Tax ID"
+   "label": "Organisation Registration No"
   },
   {
    "fieldname": "section_break_jqrx",
@@ -265,19 +271,45 @@
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "sales_order",
    "fieldtype": "Link",
    "label": "Sales Order",
-   "options": "Sales Order"
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info",
+   "show_dashboard": 1
+  },
+  {
+   "fieldname": "column_break_vdbu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_cpzx",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2024-10-15 08:34:46.547441",
+ "links": [
+  {
+   "link_doctype": "Issue",
+   "link_fieldname": "utility_service_request"
+  },
+  {
+   "link_doctype": "BOM",
+   "link_fieldname": "utility_service_request"
+  }
+ ],
+ "modified": "2024-10-16 06:36:54.372494",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

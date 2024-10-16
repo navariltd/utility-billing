@@ -9,18 +9,19 @@
   "naming_series",
   "customer",
   "customer_name",
+  "price_list",
   "column_break_qmhh",
   "date",
   "currency",
-  "price_list",
   "column_break_aiuo",
   "company",
   "territory",
-  "sales_order",
   "section_break_4qzn",
   "items",
   "rates",
-  "amended_from"
+  "amended_from",
+  "more_info_tab",
+  "sales_order"
  ],
  "fields": [
   {
@@ -66,7 +67,8 @@
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer Name"
+   "label": "Customer Name",
+   "read_only": 1
   },
   {
    "fieldname": "territory",
@@ -82,8 +84,10 @@
    "reqd": 1
   },
   {
+   "default": "MR-.YYYY.MM.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Series",
    "options": "MR-.YYYY.MM.-",
@@ -116,13 +120,19 @@
    "fieldname": "sales_order",
    "fieldtype": "Link",
    "label": "Sales Order",
-   "options": "Sales Order"
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 12:10:28.778932",
+ "modified": "2024-10-15 13:20:50.730593",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

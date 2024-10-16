@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Navari and contributors
 # For license information, please see license.txt
 
+import json
+
 import frappe
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
@@ -67,3 +69,60 @@ def create_sales_order(doc, customer_doc):
         sales_order_doc.submit()
 
     return sales_order_doc
+
+
+@frappe.whitelist()
+def create_site_survey(docname):
+    """Create a site survey as an issue for the utility service request."""
+    doc = frappe.get_doc("Utility Service Request", docname)
+
+    issue_doc = frappe.new_doc("Issue")
+    issue_doc.subject = f"Site Survey for {docname}"
+    issue_doc.description = (
+        f"Site survey created for Utility Service Request: {docname}."
+    )
+    issue_doc.utility_service_request = docname
+
+    issue_doc.insert()
+    doc.save()
+
+    return {"issue": issue_doc.name}
+
+
+@frappe.whitelist()
+def create_bom(docname, item_code, items):
+    try:
+        items = json.loads(items)
+    except json.JSONDecodeError as e:
+        frappe.throw(f"Error parsing items: {e}")
+
+    bom = frappe.new_doc("BOM")
+    bom.item = item_code
+    bom.utility_service_request = docname
+
+    for item in items:
+        bom.append(
+            "items",
+            {
+                "item_code": item["item_code"],
+                "qty": item["qty"],
+            },
+        )
+
+    bom.save()
+
+    return bom.name
+
+
+@frappe.whitelist()
+def create_work_order(docname):
+    """Create a work order for the utility service request."""
+    doc = frappe.get_doc("Utility Service Request", docname)
+
+    work_order_doc = frappe.new_doc("Work Order")
+    work_order_doc.utility_service_request = docname
+    work_order_doc.insert()
+
+    doc.save()
+
+    return {"work_order": work_order_doc.name}

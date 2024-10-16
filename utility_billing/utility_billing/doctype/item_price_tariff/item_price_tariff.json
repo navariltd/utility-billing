@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "lower_limit",
+  "upper_limit",
   "rate",
-  "column_break_vblp",
-  "upper_limit"
+  "column_break_vblp"
  ],
  "fields": [
   {
@@ -42,7 +42,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-14 02:20:18.799993",
+ "modified": "2024-10-15 13:21:36.848952",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Item Price Tariff",
