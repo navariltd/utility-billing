@@ -32,5 +32,39 @@
   "parentfield": "links",
   "parenttype": "DocType",
   "table_fieldname": "sales_order"
+ },
+ {
+  "custom": 0,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": "Utility Billing",
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Utility Service Request",
+  "link_fieldname": "sales_order",
+  "modified": "2024-10-16 05:03:48.880992",
+  "name": "fgmh8ta7ha",
+  "parent": "Sales Order",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "DocType",
+  "table_fieldname": null
+ },
+ {
+  "custom": 0,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": "Utility Billing",
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Meter Reading",
+  "link_fieldname": "sales_order",
+  "modified": "2024-10-16 05:03:48.880992",
+  "name": "fgmh3btdrn",
+  "parent": "Sales Order",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "DocType",
+  "table_fieldname": "sales_order"
  }
 ]
