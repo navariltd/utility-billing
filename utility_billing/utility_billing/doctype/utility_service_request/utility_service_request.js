@@ -1,6 +1,3 @@
-// Copyright (c) 2024, Navari and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("Utility Service Request", {
 	refresh: function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
@@ -8,140 +5,24 @@ frappe.ui.form.on("Utility Service Request", {
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
-		}
+			frappe.call({
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.check_request_status",
+				args: {
+					request_name: frm.doc.name,
+				},
+				callback: function (response) {
+					if (response.message != frm.doc.status) {
+						frm.set_value("status", response.message);
+						frm.save();
+					}
 
+					addActionButtons(frm, frm.doc.status);
+				},
+			});
+		}
 		if (!frm.doc.date) {
 			let currentDate = frappe.datetime.nowdate();
 			frm.set_value("date", currentDate);
-		}
-
-		if (!frm.is_new()) {
-			const currentWorkflowState = frm.doc.workflow_state;
-
-			// Define actions based on workflow state
-			const workflowActions = {
-				"CSO Approved": [
-					{
-						label: __("Issue Site Survey"),
-						method: "create_site_survey",
-						field: "site_survey",
-						doc_type: "Issue",
-					},
-				],
-				"Site Survey Completed": [
-					{
-						label: __("BOM"),
-						method: "create_bom",
-						field: "bom",
-						doc_type: "BOM",
-						use_modal: true,
-					},
-				],
-				"BOM Created": [
-					{
-						label: __("CSM Approval"),
-						method: "approve_csm",
-						field: "csm_approval",
-						doc_type: "Utility Service Request",
-					},
-				],
-				"CSM Approved": [
-					{
-						label: __("MD Approval"),
-						method: "approve_md",
-						field: "md_approval",
-						doc_type: "Utility Service Request",
-					},
-				],
-				"MD Approved": [
-					{
-						label: __("Sales Order"),
-						method: "create_customer_and_sales_order",
-						field: "sales_order",
-						doc_type: "Sales Order",
-					},
-				],
-				"Payment Processed": [
-					{
-						label: __("Work Order"),
-						method: "create_work_order",
-						field: "work_order",
-						doc_type: "Work Order",
-					},
-				],
-				"Work Order Completed": [
-					{
-						label: __("Close Request"),
-						method: "close_request",
-						field: null,
-						doc_type: null,
-					},
-				],
-			};
-
-			if (workflowActions[currentWorkflowState]) {
-				workflowActions[currentWorkflowState].forEach((action) => {
-					if (action.field) {
-						frappe.db
-							.get_value(
-								action.doc_type,
-								{ utility_service_request: frm.doc.name },
-								"name"
-							)
-							.then((result) => {
-								if (result.message && Object.keys(result.message).length === 0) {
-									// Document does not exist
-									if (action.use_modal) {
-										// Open modal for BOM creation
-										frm.add_custom_button(
-											action.label,
-											function () {
-												open_bom_creation_modal(frm);
-											},
-											__("Create")
-										);
-									} else {
-										frm.add_custom_button(
-											action.label,
-											function () {
-												frappe.call({
-													method: `utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.${action.method}`,
-													args: {
-														docname: frm.doc.name,
-													},
-													callback: function (response) {
-														handle_response(
-															response,
-															action.label,
-															frm
-														);
-													},
-												});
-											},
-											__("Create")
-										);
-									}
-								}
-							});
-					} else {
-						frm.add_custom_button(
-							action.label,
-							function () {
-								frappe.call({
-									method: `utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.${action.method}`,
-									args: {
-										docname: frm.doc.name,
-									},
-									callback: function (response) {
-										handle_response(response, action.label, frm);
-									},
-								});
-							},
-							__("Create")
-						);
-					}
-				});
-			}
 		}
 
 		if (frm.doc.customer) {
@@ -364,6 +245,53 @@ function open_bom_creation_modal(frm) {
 	});
 
 	modal.show();
+}
+function addActionButtons(frm) {
+	const currentStatus = frm.doc.status;
+
+	if (frm.doc.docstatus === 1 && !frm.doc.sales_order) {
+		frm.add_custom_button(
+			__("Sales Order"),
+			function () {
+				frappe.call({
+					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
+					args: {
+						docname: frm.doc.name,
+					},
+					callback: function (response) {
+						handle_response(response, __("Sales Order"), frm);
+					},
+				});
+			},
+			__("Create")
+		);
+	}
+
+	if (currentStatus === "") {
+		frm.add_custom_button(
+			__("Issue Site Survey"),
+			function () {
+				frappe.call({
+					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_site_survey",
+					args: {
+						docname: frm.doc.name,
+					},
+					callback: function (response) {
+						handle_response(response, __("Issue Site Survey"), frm);
+					},
+				});
+			},
+			__("Create")
+		);
+	} else if (currentStatus === "Site Survey Completed") {
+		frm.add_custom_button(
+			__("BOM"),
+			function () {
+				open_bom_creation_modal(frm);
+			},
+			__("Create")
+		);
+	}
 }
 
 // Handle the response from the server

@@ -19,14 +19,6 @@
   "company",
   "tax_id",
   "nrcpassport_no",
-  "section_break_lpoa",
-  "connection_size",
-  "pipes_typedistance",
-  "column_break_bfhu",
-  "east_cordinates",
-  "water_network",
-  "column_break_omtp",
-  "south_cordinates",
   "accounting_dimensions_section",
   "cost_center",
   "column_break_vjsy",
@@ -40,10 +32,20 @@
   "section_break_asmx",
   "amended_from",
   "more_info_tab",
+  "section_break_lpoa",
+  "connection_size",
+  "pipes_typedistance",
+  "column_break_bfhu",
+  "east_cordinates",
+  "water_network",
+  "column_break_omtp",
+  "south_cordinates",
+  "section_break_usdz",
   "customer",
   "column_break_vdbu",
   "sales_order",
   "address_and_contacts_tab",
+  "section_break_ywar",
   "address_html",
   "column_break_kzdt",
   "contact_html"
@@ -295,6 +297,14 @@
    "collapsible": 1,
    "fieldname": "section_break_cpzx",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_ywar",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_usdz",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -309,7 +319,7 @@
    "link_fieldname": "utility_service_request"
   }
  ],
- "modified": "2024-10-16 06:36:54.372494",
+ "modified": "2024-10-16 09:13:15.851320",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
