@@ -6,11 +6,12 @@
  "engine": "InnoDB",
  "field_order": [
   "meter_reading_item",
-  "qty",
-  "amount",
-  "column_break_bcqb",
   "item_code",
-  "rate"
+  "block",
+  "column_break_bcqb",
+  "qty",
+  "rate",
+  "amount"
  ],
  "fields": [
   {
@@ -70,12 +71,23 @@
    "label": "Quantity",
    "precision": "3",
    "reqd": 1
+  },
+  {
+   "fieldname": "block",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Block",
+   "options": "Item",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-14 03:03:41.319656",
+ "modified": "2024-10-17 04:43:53.286128",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Rate",

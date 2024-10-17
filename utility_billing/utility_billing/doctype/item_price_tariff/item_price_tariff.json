@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "block",
   "lower_limit",
   "upper_limit",
   "rate",
@@ -37,12 +38,18 @@
    "in_list_view": 1,
    "label": "Upper Limit",
    "reqd": 1
+  },
+  {
+   "fieldname": "block",
+   "fieldtype": "Data",
+   "label": "Block",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-15 13:21:36.848952",
+ "modified": "2024-10-16 14:44:47.681695",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Item Price Tariff",

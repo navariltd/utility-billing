@@ -2,10 +2,20 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Meter Reading", {
-	onload: function (frm) {
+	refresh: function (frm) {
 		if (!frm.doc.date) {
 			frm.set_value("date", frappe.datetime.now_date());
 		}
+
+		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
+			return {
+				filters: {
+					is_sales_item: 1,
+					has_variants: 0,
+					["item_group"]: ["in", ["Water", "Sewerage"]],
+				},
+			};
+		};
 	},
 
 	customer: function (frm) {
