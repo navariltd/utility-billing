@@ -42,6 +42,10 @@
   {
    "fieldname": "block",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Block",
    "reqd": 1
   }
@@ -49,7 +53,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-16 14:44:47.681695",
+ "modified": "2024-10-17 06:20:57.592318",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Item Price Tariff",
