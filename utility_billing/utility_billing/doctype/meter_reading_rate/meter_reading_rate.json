@@ -84,26 +84,14 @@
   }
  ],
  "index_web_pages_for_search": 1,
+ "istable": 1,
  "links": [],
- "modified": "2024-10-17 07:30:33.471183",
+ "modified": "2024-10-17 08:27:35.854008",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Rate",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
+ "permissions": [],
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
