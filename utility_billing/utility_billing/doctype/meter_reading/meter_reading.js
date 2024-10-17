@@ -12,7 +12,6 @@ frappe.ui.form.on("Meter Reading", {
 				filters: {
 					is_sales_item: 1,
 					has_variants: 0,
-					["item_group"]: ["in", ["Water", "Sewerage"]],
 				},
 			};
 		};
