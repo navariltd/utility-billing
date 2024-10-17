@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-10-02 20:35:28.789284",
+ "creation": "2024-10-17 09:36:01.507712",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -25,21 +25,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Amount",
-   "precision": "2",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_bcqb",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -51,14 +36,19 @@
    "reqd": 1
   },
   {
-   "fieldname": "rate",
-   "fieldtype": "Float",
+   "fieldname": "block",
+   "fieldtype": "Data",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Rate",
+   "label": "Block",
+   "options": "Item",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_bcqb",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "qty",
@@ -72,24 +62,34 @@
    "reqd": 1
   },
   {
-   "fieldname": "block",
-   "fieldtype": "Data",
+   "fieldname": "rate",
+   "fieldtype": "Float",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Block",
-   "options": "Item",
+   "label": "Rate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Amount",
+   "precision": "2",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-17 08:27:35.854008",
+ "modified": "2024-10-17 09:36:01.507712",
  "modified_by": "Administrator",
  "module": "Utility Billing",
- "name": "Meter Reading Rate",
+ "name": "Meter Reading Tariff Rate",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "creation",
