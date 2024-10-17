@@ -31,7 +31,7 @@
   "items",
   "section_break_asmx",
   "amended_from",
-  "more_info_tab",
+  "tab_6_tab",
   "section_break_lpoa",
   "connection_size",
   "pipes_typedistance",
@@ -40,16 +40,19 @@
   "water_network",
   "column_break_omtp",
   "south_cordinates",
-  "section_break_usdz",
-  "customer",
-  "status",
-  "column_break_vdbu",
-  "sales_order",
   "address_and_contacts_tab",
   "section_break_ywar",
   "address_html",
   "column_break_kzdt",
-  "contact_html"
+  "contact_html",
+  "terms_tab",
+  "more_info_tab",
+  "section_break_usdz",
+  "request_status",
+  "customer",
+  "column_break_vdbu",
+  "sales_order",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -70,8 +73,7 @@
    "default": "UT-SER-REQ-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Naming Series",
+   "label": "Series",
    "options": "UT-SER-REQ-.YYYY.-",
    "reqd": 1
   },
@@ -102,7 +104,7 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Name",
+   "label": "Customer Name",
    "reqd": 1
   },
   {
@@ -136,7 +138,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Utility Request Type",
-   "options": "Utility Request Type",
+   "options": "Issue Type",
    "reqd": 1
   },
   {
@@ -287,8 +289,7 @@
   {
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
-   "label": "More Info",
-   "show_dashboard": 1
+   "label": "More Info"
   },
   {
    "fieldname": "column_break_vdbu",
@@ -308,9 +309,28 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "status",
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  },
+  {
+   "fieldname": "terms_tab",
+   "fieldtype": "Tab Break",
+   "label": "Terms"
+  },
+  {
+   "fieldname": "tab_6_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connection Details & Coordinates"
+  },
+  {
+   "fieldname": "request_status",
    "fieldtype": "Select",
-   "label": "Status",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Request Status",
    "options": "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
    "read_only": 1
   }
@@ -327,7 +347,7 @@
    "link_fieldname": "utility_service_request"
   }
  ],
- "modified": "2024-10-16 13:16:54.472834",
+ "modified": "2024-10-17 05:39:08.749229",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

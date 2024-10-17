@@ -88,13 +88,18 @@ def create_sales_order(doc, customer_doc):
 def create_site_survey(docname):
     """Create a site survey as an issue for the utility service request."""
     doc = frappe.get_doc("Utility Service Request", docname)
+    request_type_description = frappe.db.get_value(
+        "Issue Type", doc.request_type, "description"
+    )
 
     issue_doc = frappe.new_doc("Issue")
-    issue_doc.subject = f"Site Survey for {docname}"
+    issue_doc.subject = f"Site Survey for {docname} ({doc.customer_name})"
     issue_doc.description = (
-        f"Site survey created for Utility Service Request: {docname}."
+        f"Site survey created for Utility Service Request: {docname}, Customer name: {doc.customer_name}.\n"
+        f"{request_type_description}"
     )
     issue_doc.utility_service_request = docname
+    issue_doc.issue_type = doc.request_type
 
     issue_doc.insert()
     doc.save()
@@ -103,28 +108,16 @@ def create_site_survey(docname):
 
 
 @frappe.whitelist()
-def create_bom(docname, item_code, items):
-    try:
-        items = json.loads(items)
-    except json.JSONDecodeError as e:
-        frappe.throw(f"Error parsing items: {e}")
-
+def create_bom(docname, item_code):
     bom = frappe.new_doc("BOM")
     bom.item = item_code
     bom.utility_service_request = docname
-
-    for item in items:
-        bom.append(
-            "items",
-            {
-                "item_code": item["item_code"],
-                "qty": item["qty"],
-            },
-        )
-
+    bom.items = []
+    bom.flags.ignore_mandatory = True
+    bom.flags.ignore_validate = True
     bom.save()
 
-    return bom.name
+    return {"bom": bom.name}
 
 
 @frappe.whitelist()
@@ -137,7 +130,7 @@ def check_request_status(request_name):
         "BOM", filters={"utility_service_request": request_name}, pluck="docstatus"
     )
 
-    status = frappe.get_doc("Utility Service Request", request_name).status
+    status = frappe.get_doc("Utility Service Request", request_name).request_status
 
     if submitted_boms:
         if any(int(bom) == 1 for bom in submitted_boms):
