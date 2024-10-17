@@ -1,19 +1,16 @@
 import frappe
+from frappe.query_builder import DocType
 
-@frappe.whitelist(allow_guest=True)  
+@frappe.whitelist(allow_guest=True)
 def drop_meter_reading():
     try:
-        meter_readings = frappe.get_all("Meter Reading", pluck="name")
-        for reading in meter_readings:
-            frappe.delete_doc("Meter Reading", reading)
+        MeterReading = DocType("Meter Reading")
+        MeterReadingItem = DocType("Meter Reading Item")
+        MeterReadingRate = DocType("Meter Reading Rate")
 
-        meter_reading_items = frappe.get_all("Meter Reading Item", pluck="name")
-        for item in meter_reading_items:
-            frappe.delete_doc("Meter Reading Item", item)
-
-        meter_reading_rates = frappe.get_all("Meter Reading Rate", pluck="name")
-        for rate in meter_reading_rates:
-            frappe.delete_doc("Meter Reading Rate", rate)
+        frappe.qb.from_(MeterReading).delete().run()
+        frappe.qb.from_(MeterReadingItem).delete().run()
+        frappe.qb.from_(MeterReadingRate).delete().run()
 
         frappe.db.commit()
 
@@ -21,7 +18,8 @@ def drop_meter_reading():
             "status": "success",
             "message": "All entries in Meter Reading, Meter Reading Item, and Meter Reading Rate have been successfully deleted."
         }
-    
+
     except Exception as e:
         frappe.log_error(f"An error occurred while deleting records: {str(e)}", "Drop Reading Error")
         return {"status": "error", "message": str(e)}
+
