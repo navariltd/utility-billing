@@ -18,7 +18,7 @@
   "territory",
   "section_break_4qzn",
   "items",
-  "rates",
+  "reading_rates",
   "amended_from",
   "more_info_tab",
   "sales_order"
@@ -109,13 +109,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "rates",
-   "fieldtype": "Table",
-   "label": "Rates",
-   "options": "Meter Reading Rate",
-   "read_only": 1
-  },
-  {
    "fieldname": "sales_order",
    "fieldtype": "Link",
    "label": "Sales Order",
@@ -126,12 +119,19 @@
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
+  },
+  {
+   "fieldname": "reading_rates",
+   "fieldtype": "Table",
+   "label": "Rates",
+   "options": "Meter Reading Tariff Rate",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-17 06:30:56.344965",
+ "modified": "2024-10-17 09:36:54.588694",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

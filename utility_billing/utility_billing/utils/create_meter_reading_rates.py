@@ -2,7 +2,7 @@ import frappe
 
 
 def create_meter_reading_rates(meter_reading, price_list, reading_date):
-    """Create Meter Reading Rate documents based on the Meter Reading date and append to its rates child table."""
+    """Create Meter Reading Tariff Rate documents based on the Meter Reading date and append to its rates child table."""
     meter_reading.set("rates", [])
 
     for item in meter_reading.items:
