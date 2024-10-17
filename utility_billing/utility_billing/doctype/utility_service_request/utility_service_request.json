@@ -322,7 +322,7 @@
   {
    "fieldname": "tab_6_tab",
    "fieldtype": "Tab Break",
-   "label": "Connection Details & Coordinates"
+   "label": "Coordinates"
   },
   {
    "fieldname": "request_status",
@@ -347,7 +347,7 @@
    "link_fieldname": "utility_service_request"
   }
  ],
- "modified": "2024-10-17 05:39:08.749229",
+ "modified": "2024-10-17 07:25:21.020260",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

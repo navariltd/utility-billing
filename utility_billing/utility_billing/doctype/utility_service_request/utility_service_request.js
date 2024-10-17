@@ -37,6 +37,14 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		};
+
+		frm.set_query("customer_group", function () {
+			return {
+				filters: {
+					is_group: 0,
+				},
+			};
+		});
 	},
 
 	customer: function (frm) {
