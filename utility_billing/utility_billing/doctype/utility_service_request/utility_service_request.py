@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-
+from frappe import _
 
 class UtilityServiceRequest(Document):
     def onload(self):
@@ -147,3 +147,40 @@ def check_request_status(request_name):
         status = ""
 
     return status
+
+
+@frappe.whitelist()
+def get_item_details(item_code, price_list=None):
+    item = frappe.get_doc("Item", item_code)
+
+    if not item:
+        frappe.throw(_("Item not found"))
+
+    default_warehouse = getattr(item, 'default_warehouse', None)
+
+    item_details = {
+        "item_name": item.item_name,
+        "uom": item.stock_uom,
+        "rate": item.standard_rate,
+        "warehouse": default_warehouse,
+        "description": item.description,
+        "qty": 1,
+        "conversion_factor": (item.uoms[0] or {}).get('conversion_factor', 1) if item.uoms else 1,
+        "brand": item.brand,
+        "item_group": item.item_group,
+        "stock_uom": item.stock_uom,
+        "bom_no": item.default_bom,
+        "weight_per_unit": item.weight_per_unit,
+        "weight_uom": item.weight_uom
+    }
+
+    if price_list:
+        item_price = frappe.db.get_value(
+            "Item Price", 
+            filters={"price_list": price_list, "item_code": item_code},
+            fieldname=["price_list_rate"]
+        )
+        if item_price:
+            item_details["rate"] = item_price
+
+    return item_details

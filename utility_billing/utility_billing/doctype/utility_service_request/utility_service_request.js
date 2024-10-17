@@ -85,56 +85,48 @@ frappe.ui.form.on("Utility Service Request Item", {
 		let row = locals[cdt][cdn];
 		if (row.item_code) {
 			frappe.call({
-				method: "frappe.client.get",
-				args: { doctype: "Item", name: row.item_code },
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_item_details",
+				args: {
+					item_code: row.item_code,
+					price_list: frm.doc.price_list,
+				},
 				callback: function (r) {
 					if (r.message) {
 						let item = r.message;
 						frappe.model.set_value(cdt, cdn, {
 							item_name: item.item_name,
-							uom: item.stock_uom,
-							rate: item.standard_rate,
-							warehouse: item.default_warehouse,
+							uom: item.uom,
+							rate: item.rate,
+							warehouse: item.warehouse,
 							description: item.description,
 							qty: 1,
-							conversion_factor: (item.uoms[0] || {}).conversion_factor || 1,
-							brand: item.brand || null,
+							conversion_factor: item.conversion_factor,
+							brand: item.brand,
 							item_group: item.item_group,
 							stock_uom: item.stock_uom,
-							bom_no: item.default_bom,
+							bom_no: item.bom_no,
 							weight_per_unit: item.weight_per_unit,
-							weight_uom: item.weight_uom || null,
+							weight_uom: item.weight_uom,
 						});
 
-						// Fetch price list rate if available
-						if (frm.doc.price_list) {
-							frappe.call({
-								method: "frappe.client.get_list",
-								args: {
-									doctype: "Item Price",
-									filters: {
-										price_list: frm.doc.price_list,
-										item_code: row.item_code,
-									},
-									fields: ["price_list_rate"],
-								},
-								callback: function (res) {
-									let rate =
-										res.message[0]?.price_list_rate || item.standard_rate;
-									let amount = rate * row.qty;
-									frappe.model.set_value(cdt, cdn, {
-										rate: rate,
-										price_list_rate: rate,
-										amount: amount,
-										base_price_list_rate: rate,
-									});
-								},
-							});
-						}
+						let amount = flt(item.rate) * flt(row.qty || 1);
+						frappe.model.set_value(cdt, cdn, {
+							rate: item.rate,
+							amount: amount,
+							base_price_list_rate: item.rate,
+						});
 					}
 				},
 			});
 		}
+	},
+
+	rate: function (frm, cdt, cdn) {
+		calculate_amount(frm, cdt, cdn);
+	},
+
+	qty: function (frm, cdt, cdn) {
+		calculate_amount(frm, cdt, cdn);
 	},
 
 	delivery_date: function (frm) {
@@ -143,6 +135,12 @@ frappe.ui.form.on("Utility Service Request Item", {
 		}
 	},
 });
+
+function calculate_amount(frm, cdt, cdn) {
+	let row = locals[cdt][cdn];
+	let amount = flt(row.rate) * flt(row.qty);
+	frappe.model.set_value(cdt, cdn, "amount", amount);
+}
 
 function fetch_customer_details(frm) {
 	frappe.call({
