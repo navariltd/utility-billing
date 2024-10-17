@@ -273,6 +273,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
@@ -280,6 +281,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "sales_order",
    "fieldtype": "Link",
    "label": "Sales Order",
@@ -325,8 +327,10 @@
    "label": "Coordinates"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "request_status",
    "fieldtype": "Select",
+   "ignore_user_permissions": 1,
    "in_filter": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
@@ -347,7 +351,7 @@
    "link_fieldname": "utility_service_request"
   }
  ],
- "modified": "2024-10-17 07:25:21.020260",
+ "modified": "2024-10-17 10:14:10.432620",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
