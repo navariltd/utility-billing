@@ -41,6 +41,7 @@ def create_sales_order(meter_reading):
                 "qty": round(rate.qty),
                 "rate": rate.rate,
                 "amount": rate.amount,
+                "block": rate.block,
                 "delivery_date": nowdate(),
             },
         )

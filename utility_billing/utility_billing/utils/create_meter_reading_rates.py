@@ -46,6 +46,7 @@ def create_meter_reading_rates(meter_reading, price_list, reading_date):
                     {
                         "meter_reading_item": item.name,
                         "item_code": item.item_code,
+                        "block": tariff.block,
                         "qty": slab_quantity,
                         "amount": amount,
                         "rate": rate,
