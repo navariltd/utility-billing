@@ -64,6 +64,7 @@ def create_sales_order(doc, customer_doc):
     sales_order_doc = frappe.new_doc("Sales Order")
     sales_order_doc.customer = customer_doc.name
     sales_order_doc.transaction_date = frappe.utils.nowdate()
+    sales_order_doc.delivery_date = frappe.utils.nowdate()
 
     for item in doc.items:
         sales_order_doc.append(
