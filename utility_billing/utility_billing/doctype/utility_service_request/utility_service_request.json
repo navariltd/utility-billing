@@ -48,6 +48,18 @@
   "terms_tab",
   "tc_name",
   "terms",
+  "official_tab",
+  "assessed_by",
+  "checked_by",
+  "approved_by",
+  "verified_by",
+  "posted_by",
+  "column_break_bpqj",
+  "date_assesed",
+  "date_checked",
+  "date_approved",
+  "date_verified",
+  "date_posted",
   "more_info_tab",
   "section_break_usdz",
   "request_status",
@@ -256,6 +268,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -341,12 +354,76 @@
    "fieldtype": "Link",
    "label": "Terms",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "official_tab",
+   "fieldtype": "Tab Break",
+   "label": "Official"
+  },
+  {
+   "fieldname": "assessed_by",
+   "fieldtype": "Link",
+   "label": "Assessed by",
+   "options": "User"
+  },
+  {
+   "fieldname": "checked_by",
+   "fieldtype": "Link",
+   "label": "Checked by",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved by",
+   "options": "User"
+  },
+  {
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified by",
+   "options": "User"
+  },
+  {
+   "fieldname": "posted_by",
+   "fieldtype": "Link",
+   "label": "Posted by",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_bpqj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_assesed",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_checked",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_approved",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_verified",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_posted",
+   "fieldtype": "Date",
+   "label": "Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-18 10:25:52.474191",
+ "modified": "2024-10-18 15:58:40.090473",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

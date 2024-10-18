@@ -2,6 +2,7 @@ frappe.ui.form.on("Utility Service Request", {
 	refresh: function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
 		frm.toggle_display("contact_html", !frm.is_new());
+		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
@@ -62,6 +63,10 @@ frappe.ui.form.on("Utility Service Request", {
 			});
 		}
 	},
+
+	onload: function (frm) {
+		frm.ignore_doctypes_on_cancel_all = ["BOM"];
+	},
 });
 
 frappe.ui.form.on("Utility Service Request Item", {
@@ -69,6 +74,11 @@ frappe.ui.form.on("Utility Service Request Item", {
 		let row = locals[cdt][cdn];
 		let delivery_date = frm.doc.delivery_date || frappe.datetime.nowdate();
 		frappe.model.set_value(cdt, cdn, "delivery_date", delivery_date);
+		frm.script_manager.copy_from_first_row("items", row, [
+			"income_account",
+			"discount_account",
+			"cost_center",
+		]);
 	},
 
 	item_code: function (frm, cdt, cdn) {
