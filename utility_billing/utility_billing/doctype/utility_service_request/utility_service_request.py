@@ -15,14 +15,8 @@ class UtilityServiceRequest(Document):
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):
     doc = frappe.get_doc("Utility Service Request", docname)
-
-    # Create or retrieve customer
     customer_doc = create_customer(doc)
-
-    # Re-fetch the Utility Service Request document to get the latest version
-    doc = frappe.get_doc("Utility Service Request", docname)
-
-    # Create sales order after fetching the latest document
+    link_contact_and_address_to_customer(customer_doc, doc)
     sales_order_doc = create_sales_order(doc, customer_doc)
 
     return {"sales_order": sales_order_doc.name}
@@ -40,12 +34,10 @@ def create_customer(doc):
         customer_doc.company = doc.company
         customer_doc.insert()
 
-        # Set the customer on the Utility Service Request document
         frappe.db.set_value(
             "Utility Service Request", doc.name, "customer", customer_doc.name
         )
 
-        # Re-fetch the Utility Service Request document to avoid the "modified" error
         doc = frappe.get_doc("Utility Service Request", doc.name)
         doc.save()
 
@@ -53,6 +45,26 @@ def create_customer(doc):
         customer_doc = frappe.get_doc("Customer", doc.customer)
 
     return customer_doc
+
+def link_contact_and_address_to_customer(customer_doc, doc):
+    dynamic_links = frappe.db.get_all(
+        "Dynamic Link",
+        filters={"link_doctype": "Utility Service Request", "link_name": doc.name, "parenttype": ["in", ["Contact", "Address"]]},
+        fields=["parent", "parenttype"]
+    )
+    for link in dynamic_links:
+        new_link = frappe.get_doc({
+            "doctype": "Dynamic Link",
+            "parent": link.parent,
+            "parenttype": link.parenttype,
+            "link_doctype": "Customer",
+            "link_name": customer_doc.name
+        })
+        new_link.insert(ignore_permissions=True)  
+
+
+    frappe.db.commit()
+
 
 
 def create_sales_order(doc, customer_doc):
