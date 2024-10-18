@@ -1,12 +1,11 @@
 # Copyright (c) 2024, Navari and contributors
 # For license information, please see license.txt
 
-import json
-
 import frappe
+from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe import _
+
 
 class UtilityServiceRequest(Document):
     def onload(self):
@@ -63,6 +62,7 @@ def create_sales_order(doc, customer_doc):
 
     sales_order_doc = frappe.new_doc("Sales Order")
     sales_order_doc.customer = customer_doc.name
+    sales_order_doc.utility_service_request = doc.name
     sales_order_doc.transaction_date = frappe.utils.nowdate()
     sales_order_doc.delivery_date = frappe.utils.nowdate()
 
@@ -73,11 +73,6 @@ def create_sales_order(doc, customer_doc):
         )
 
     sales_order_doc.insert()
-
-    # Set the sales order on the Utility Service Request document
-    frappe.db.set_value(
-        "Utility Service Request", doc.name, "sales_order", sales_order_doc.name
-    )
 
     if auto_submit_sales_order != "Draft":
         sales_order_doc.submit()
@@ -157,7 +152,7 @@ def get_item_details(item_code, price_list=None):
     if not item:
         frappe.throw(_("Item not found"))
 
-    default_warehouse = getattr(item, 'default_warehouse', None)
+    default_warehouse = getattr(item, "default_warehouse", None)
 
     item_details = {
         "item_name": item.item_name,
@@ -166,20 +161,22 @@ def get_item_details(item_code, price_list=None):
         "warehouse": default_warehouse,
         "description": item.description,
         "qty": 1,
-        "conversion_factor": (item.uoms[0] or {}).get('conversion_factor', 1) if item.uoms else 1,
+        "conversion_factor": (
+            (item.uoms[0] or {}).get("conversion_factor", 1) if item.uoms else 1
+        ),
         "brand": item.brand,
         "item_group": item.item_group,
         "stock_uom": item.stock_uom,
         "bom_no": item.default_bom,
         "weight_per_unit": item.weight_per_unit,
-        "weight_uom": item.weight_uom
+        "weight_uom": item.weight_uom,
     }
 
     if price_list:
         item_price = frappe.db.get_value(
-            "Item Price", 
+            "Item Price",
             filters={"price_list": price_list, "item_code": item_code},
-            fieldname=["price_list_rate"]
+            fieldname=["price_list_rate"],
         )
         if item_price:
             item_details["rate"] = item_price

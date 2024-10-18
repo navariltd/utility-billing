@@ -10,7 +10,7 @@ from ...utils.create_meter_reading_rates import create_meter_reading_rates
 class MeterReading(Document):
     def validate(self):
         create_meter_reading_rates(self, self.price_list, self.date)
-    
+
     def on_submit(self):
         settings = frappe.get_single("Utility Billing Settings")
         if not self.sales_order:

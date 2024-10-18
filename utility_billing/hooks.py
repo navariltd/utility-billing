@@ -31,13 +31,6 @@ fixtures = [
             ["module", "in", ["Utility Billing", "Selling"]],
         ],
     },
-    {
-        "doctype": "DocType Link",
-        "filters": [
-            ["parent", "in", ["Sales Order"]],
-            ["group", "=", "Utility Billing"],
-        ],
-    },
 ]
 
 

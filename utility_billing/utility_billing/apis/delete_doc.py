@@ -1,6 +1,7 @@
 import frappe
 from frappe.query_builder import DocType
 
+
 @frappe.whitelist(allow_guest=True)
 def drop_meter_reading():
     try:
@@ -16,10 +17,11 @@ def drop_meter_reading():
 
         return {
             "status": "success",
-            "message": "All entries in Meter Reading, Meter Reading Item, and Meter Reading Rate have been successfully deleted."
+            "message": "All entries in Meter Reading, Meter Reading Item, and Meter Reading Rate have been successfully deleted.",
         }
 
     except Exception as e:
-        frappe.log_error(f"An error occurred while deleting records: {str(e)}", "Drop Reading Error")
+        frappe.log_error(
+            f"An error occurred while deleting records: {str(e)}", "Drop Reading Error"
+        )
         return {"status": "error", "message": str(e)}
-
