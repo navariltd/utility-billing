@@ -46,25 +46,30 @@ def create_customer(doc):
 
     return customer_doc
 
+
 def link_contact_and_address_to_customer(customer_doc, doc):
     dynamic_links = frappe.db.get_all(
         "Dynamic Link",
-        filters={"link_doctype": "Utility Service Request", "link_name": doc.name, "parenttype": ["in", ["Contact", "Address"]]},
-        fields=["parent", "parenttype"]
+        filters={
+            "link_doctype": "Utility Service Request",
+            "link_name": doc.name,
+            "parenttype": ["in", ["Contact", "Address"]],
+        },
+        fields=["parent", "parenttype"],
     )
     for link in dynamic_links:
-        new_link = frappe.get_doc({
-            "doctype": "Dynamic Link",
-            "parent": link.parent,
-            "parenttype": link.parenttype,
-            "link_doctype": "Customer",
-            "link_name": customer_doc.name
-        })
-        new_link.insert(ignore_permissions=True)  
-
+        new_link = frappe.get_doc(
+            {
+                "doctype": "Dynamic Link",
+                "parent": link.parent,
+                "parenttype": link.parenttype,
+                "link_doctype": "Customer",
+                "link_name": customer_doc.name,
+            }
+        )
+        new_link.insert(ignore_permissions=True)
 
     frappe.db.commit()
-
 
 
 def create_sales_order(doc, customer_doc):
