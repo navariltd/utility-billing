@@ -93,7 +93,6 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Previous Reading",
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -104,7 +103,6 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Consumption",
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -121,7 +119,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-22 08:17:27.371899",
+ "modified": "2024-10-22 08:55:19.246976",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Item",
