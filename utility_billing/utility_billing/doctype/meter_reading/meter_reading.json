@@ -8,20 +8,22 @@
  "field_order": [
   "naming_series",
   "customer",
-  "customer_name",
-  "price_list",
   "column_break_qmhh",
   "date",
-  "currency",
+  "customer_name",
   "column_break_aiuo",
   "company",
   "territory",
+  "currency_and_price_list_section",
+  "currency",
+  "column_break_tssa",
+  "price_list",
   "section_break_4qzn",
   "items",
   "rates",
   "amended_from",
   "more_info_tab",
-  "sales_order"
+  "tab_3_tab"
  ],
  "fields": [
   {
@@ -109,13 +111,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "sales_order",
-   "fieldtype": "Link",
-   "label": "Sales Order",
-   "options": "Sales Order",
-   "read_only": 1
-  },
-  {
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
@@ -126,12 +121,28 @@
    "label": "Rates",
    "options": "Meter Reading Tariff Rate",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "currency_and_price_list_section",
+   "fieldtype": "Section Break",
+   "label": "Currency and Price List"
+  },
+  {
+   "fieldname": "column_break_tssa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tab_3_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-17 10:50:02.967407",
+ "modified": "2024-10-22 07:14:32.622588",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

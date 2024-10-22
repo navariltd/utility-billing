@@ -63,8 +63,8 @@
   "more_info_tab",
   "section_break_usdz",
   "request_status",
-  "customer",
   "column_break_vdbu",
+  "customer",
   "connections_tab"
  ],
  "fields": [
@@ -423,7 +423,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-18 15:58:40.090473",
+ "modified": "2024-10-21 17:47:29.177488",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
