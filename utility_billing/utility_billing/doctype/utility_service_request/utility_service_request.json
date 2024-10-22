@@ -46,12 +46,25 @@
   "column_break_kzdt",
   "contact_html",
   "terms_tab",
+  "tc_name",
+  "terms",
+  "official_tab",
+  "assessed_by",
+  "checked_by",
+  "approved_by",
+  "verified_by",
+  "posted_by",
+  "column_break_bpqj",
+  "date_assesed",
+  "date_checked",
+  "date_approved",
+  "date_verified",
+  "date_posted",
   "more_info_tab",
   "section_break_usdz",
   "request_status",
-  "customer",
   "column_break_vdbu",
-  "sales_order",
+  "customer",
   "connections_tab"
  ],
  "fields": [
@@ -255,6 +268,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -278,14 +292,6 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "sales_order",
-   "fieldtype": "Link",
-   "label": "Sales Order",
-   "options": "Sales Order",
    "read_only": 1
   },
   {
@@ -337,21 +343,87 @@
    "label": "Request Status",
    "options": "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
    "read_only": 1
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions Details"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "official_tab",
+   "fieldtype": "Tab Break",
+   "label": "Official"
+  },
+  {
+   "fieldname": "assessed_by",
+   "fieldtype": "Link",
+   "label": "Assessed by",
+   "options": "User"
+  },
+  {
+   "fieldname": "checked_by",
+   "fieldtype": "Link",
+   "label": "Checked by",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved by",
+   "options": "User"
+  },
+  {
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified by",
+   "options": "User"
+  },
+  {
+   "fieldname": "posted_by",
+   "fieldtype": "Link",
+   "label": "Posted by",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_bpqj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_assesed",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_checked",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_approved",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_verified",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "date_posted",
+   "fieldtype": "Date",
+   "label": "Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "Issue",
-   "link_fieldname": "utility_service_request"
-  },
-  {
-   "link_doctype": "BOM",
-   "link_fieldname": "utility_service_request"
-  }
- ],
- "modified": "2024-10-17 10:14:10.432620",
+ "links": [],
+ "modified": "2024-10-21 17:47:29.177488",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
@@ -359,6 +431,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -367,6 +441,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1

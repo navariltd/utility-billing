@@ -10,16 +10,18 @@ from ...utils.create_meter_reading_rates import create_meter_reading_rates
 class MeterReading(Document):
     def validate(self):
         create_meter_reading_rates(self, self.price_list, self.date)
-    
+
     def on_submit(self):
         settings = frappe.get_single("Utility Billing Settings")
-        if not self.sales_order:
+        existing_sales_order = frappe.db.get_value(
+            "Sales Order", {"meter_reading": self.name}, "name"
+        )
+        if not existing_sales_order:
             if settings.sales_order_creation_state == "Draft":
                 sales_order = create_sales_order(self)
             else:
                 sales_order = create_sales_order(self)
                 sales_order.submit()
-            self.sales_order = sales_order.name
 
 
 def create_sales_order(meter_reading):
@@ -28,6 +30,7 @@ def create_sales_order(meter_reading):
         {
             "doctype": "Sales Order",
             "customer": meter_reading.customer,
+            "meter_reading": meter_reading.name,
             "items": [],
             "order_type": "Sales",
             "selling_price_list": meter_reading.price_list,

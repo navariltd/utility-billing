@@ -2,6 +2,7 @@ frappe.ui.form.on("Utility Service Request", {
 	refresh: function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
 		frm.toggle_display("contact_html", !frm.is_new());
+		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
@@ -25,10 +26,6 @@ frappe.ui.form.on("Utility Service Request", {
 			frm.set_value("date", currentDate);
 		}
 
-		if (frm.doc.customer) {
-			fetch_customer_details(frm);
-		}
-
 		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
 			return {
 				filters: {
@@ -45,12 +42,6 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		});
-	},
-
-	customer: function (frm) {
-		if (frm.doc.customer) {
-			fetch_customer_details(frm);
-		}
 	},
 
 	customer_group: function (frm) {
@@ -72,6 +63,10 @@ frappe.ui.form.on("Utility Service Request", {
 			});
 		}
 	},
+
+	onload: function (frm) {
+		frm.ignore_doctypes_on_cancel_all = ["BOM"];
+	},
 });
 
 frappe.ui.form.on("Utility Service Request Item", {
@@ -79,6 +74,11 @@ frappe.ui.form.on("Utility Service Request Item", {
 		let row = locals[cdt][cdn];
 		let delivery_date = frm.doc.delivery_date || frappe.datetime.nowdate();
 		frappe.model.set_value(cdt, cdn, "delivery_date", delivery_date);
+		frm.script_manager.copy_from_first_row("items", row, [
+			"income_account",
+			"discount_account",
+			"cost_center",
+		]);
 	},
 
 	item_code: function (frm, cdt, cdn) {
@@ -142,25 +142,6 @@ function calculate_amount(frm, cdt, cdn) {
 	frappe.model.set_value(cdt, cdn, "amount", amount);
 }
 
-function fetch_customer_details(frm) {
-	frappe.call({
-		method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_customer_details",
-		args: {
-			customer: frm.doc.customer,
-		},
-		callback: function (r) {
-			if (r.message) {
-				frm.set_value("customer_name", r.message.customer_name);
-				frm.set_value("territory", r.message.territory);
-				frm.set_value("customer_group", r.message.customer_group);
-				frm.set_value("customer_type", r.message.customer_type);
-				frm.set_value("company", r.message.company);
-				frm.set_value("tax_id", r.message.tax_id);
-				frm.set_value("nrcpassport_no", r.message.nrc_or_passport_no);
-			}
-		},
-	});
-}
 function open_bom_creation_modal(frm) {
 	const modal = new frappe.ui.Dialog({
 		title: __("Create BOM"),
@@ -209,24 +190,37 @@ function open_bom_creation_modal(frm) {
 function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
-	if (frm.doc.docstatus === 1 && !frm.doc.sales_order) {
-		frm.add_custom_button(
-			__("Sales Order"),
-			function () {
-				frappe.call({
-					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
-					args: {
-						docname: frm.doc.name,
-					},
-					callback: function (response) {
-						handle_response(response, __("Sales Order"), frm);
-						if (response && response.message) {
-							frappe.set_route("Form", "Sales Order", response.message.sales_order);
-						}
-					},
-				});
-			},
-			__("Create")
+	if (frm.doc.docstatus === 1) {
+		frappe.db.get_value(
+			"Sales Order",
+			{ utility_service_request: frm.doc.name },
+			"name",
+			(r) => {
+				if (!r.name) {
+					frm.add_custom_button(
+						__("Sales Order"),
+						function () {
+							frappe.call({
+								method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
+								args: {
+									docname: frm.doc.name,
+								},
+								callback: function (response) {
+									handle_response(response, __("Sales Order"), frm);
+									if (response && response.message) {
+										frappe.set_route(
+											"Form",
+											"Sales Order",
+											response.message.sales_order
+										);
+									}
+								},
+							});
+						},
+						__("Create")
+					);
+				}
+			}
 		);
 	}
 
@@ -242,8 +236,6 @@ function addActionButtons(frm) {
 					callback: function (response) {
 						handle_response(response, __("Site Survey"), frm);
 						if (response && response.message) {
-							console.log(response);
-
 							frappe.set_route("Form", "Issue", response.message.issue);
 						}
 					},

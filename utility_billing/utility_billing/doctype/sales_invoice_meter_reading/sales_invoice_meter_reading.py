@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class MeterReadingTariffRate(Document):
-    pass
+class SalesInvoiceMeterReading(Document):
+	pass

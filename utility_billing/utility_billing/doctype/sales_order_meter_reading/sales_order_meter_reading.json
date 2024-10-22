@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-22 07:41:17.062183",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "column_break_fkvl",
+  "meter_number",
+  "previous_reading",
+  "column_break_smgb",
+  "current_reading"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fkvl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "meter_number",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Meter Number",
+   "options": "Serial No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_smgb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_reading",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Current Reading",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_reading",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Previous Reading",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-22 08:17:14.894276",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Sales Order Meter Reading",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
