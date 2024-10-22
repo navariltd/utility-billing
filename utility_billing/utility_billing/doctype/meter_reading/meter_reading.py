@@ -2,9 +2,10 @@
 # For license information, please see license.txt
 import frappe
 from frappe.model.document import Document
-from frappe.utils import nowdate
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Sum
+from frappe.utils import nowdate
+
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
 
 
@@ -82,8 +83,7 @@ def get_previous_consumption(meter_number):
     parent, _ = get_previous_invoice_reading(meter_number)
     meter_reading = DocType("Sales Invoice Meter Reading")
     previous_consumption = (
-        frappe.qb
-        .from_(meter_reading)
+        frappe.qb.from_(meter_reading)
         .where(meter_reading.parent == parent)
         .select(Sum(meter_reading.current_reading - meter_reading.previous_reading))
     ).run()
