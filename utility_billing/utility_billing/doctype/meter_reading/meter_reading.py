@@ -3,7 +3,8 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import nowdate
-
+from frappe.query_builder import DocType
+from frappe.query_builder.functions import Sum
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
 
 
@@ -79,13 +80,14 @@ def create_sales_order(meter_reading):
 def get_previous_consumption(meter_number):
     """Fetch the sum of previous readings for the specified meter number sharing the same parent."""
     parent, _ = get_previous_invoice_reading(meter_number)
-    previous_consumption = frappe.db.get_value(
-        "Sales Invoice Meter Reading",
-        filters={"parent": parent},
-        fieldname="sum(current_reading)",
-    )
-
-    return previous_consumption or 0
+    meter_reading = DocType("Sales Invoice Meter Reading")
+    previous_consumption = (
+        frappe.qb
+        .from_(meter_reading)
+        .where(meter_reading.parent == parent)
+        .select(Sum(meter_reading.current_reading - meter_reading.previous_reading))
+    ).run()
+    return previous_consumption[0][0] if previous_consumption else 0
 
 
 @frappe.whitelist()

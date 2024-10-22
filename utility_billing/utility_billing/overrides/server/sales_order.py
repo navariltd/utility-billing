@@ -217,6 +217,20 @@ def make_sales_invoice(source_names, target_doc=None, ignore_permissions=False):
                         "reset_value": True,
                     },
                     "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
+                    "Sales Order Meter Reading": {
+                        "doctype": "Sales Invoice Meter Reading",
+                        "field_map": {
+                            "meter_number": "meter_number",
+                            "item_code": "item_code",
+                            "uom": "uom",
+                            "stock_uom": "stock_uom",
+                            "previous_consumption": "previous_consumption",
+                            "current_reading": "current_reading",
+                            "previous_reading": "previous_reading"
+                        },
+                        "condition": lambda doc: doc.meter_number is not None, 
+                    }
+
                 },
                 target_doc,
                 postprocess,
