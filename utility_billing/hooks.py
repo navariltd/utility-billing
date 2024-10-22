@@ -17,6 +17,8 @@ fixtures = [
                     "Customer",
                     "Issue",
                     "Item Price",
+                    "Sales Order",
+                    "Sales Invoice",
                     "Sales Order Item",
                     "Sales Invoice Item",
                 ),

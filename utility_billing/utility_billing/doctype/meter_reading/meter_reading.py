@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 import frappe
 from frappe.model.document import Document
+from frappe.query_builder import DocType
+from frappe.query_builder.functions import Sum
 from frappe.utils import nowdate
 
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
@@ -13,8 +15,12 @@ class MeterReading(Document):
 
     def on_submit(self):
         settings = frappe.get_single("Utility Billing Settings")
-        existing_sales_order = frappe.db.get_value(
-            "Sales Order", {"meter_reading": self.name}, "name"
+        existing_sales_order = frappe.db.exists(
+            {
+                "doctype": "Sales Order Meter Reading",
+                "parenttype": "Sales Order",
+                "meter_reading": self.name,
+            }
         )
         if not existing_sales_order:
             if settings.sales_order_creation_state == "Draft":
@@ -30,7 +36,7 @@ def create_sales_order(meter_reading):
         {
             "doctype": "Sales Order",
             "customer": meter_reading.customer,
-            "meter_reading": meter_reading.name,
+            "meter_readings": [],
             "items": [],
             "order_type": "Sales",
             "selling_price_list": meter_reading.price_list,
@@ -50,8 +56,55 @@ def create_sales_order(meter_reading):
             },
         )
 
+    for i in meter_reading.items:
+        _, prev_reading = get_previous_invoice_reading(i.meter_number)
+        prev_consumption = get_previous_consumption(i.meter_number)
+        sales_order.append(
+            "meter_readings",
+            {
+                "item_code": i.item_code,
+                "meter_number": i.meter_number,
+                "meter_reading": meter_reading.name,
+                "uom": i.uom,
+                "stock_uom": i.stock_uom,
+                "current_reading": i.current_reading,
+                "previous_reading": prev_reading,
+                "previous_consumption": prev_consumption,
+            },
+        )
     sales_order.insert()
+
     return sales_order
+
+
+@frappe.whitelist()
+def get_previous_consumption(meter_number):
+    """Fetch the sum of previous readings for the specified meter number sharing the same parent."""
+    parent, _ = get_previous_invoice_reading(meter_number)
+    meter_reading = DocType("Sales Invoice Meter Reading")
+    previous_consumption = (
+        frappe.qb.from_(meter_reading)
+        .where(meter_reading.parent == parent)
+        .select(Sum(meter_reading.current_reading - meter_reading.previous_reading))
+    ).run()
+    return previous_consumption[0][0] if previous_consumption else 0
+
+
+@frappe.whitelist()
+def get_previous_invoice_reading(meter_number):
+    """Fetch the previous reading and its parent for the specified meter number."""
+    previous_reading = frappe.get_all(
+        "Sales Invoice Meter Reading",
+        filters={"meter_number": meter_number},
+        fields=["current_reading", "creation", "parent"],
+        order_by="creation desc",
+        limit_page_length=1,
+    )
+
+    if previous_reading:
+        return previous_reading[0].parent, previous_reading[0].current_reading
+    else:
+        return "None", 0
 
 
 @frappe.whitelist()

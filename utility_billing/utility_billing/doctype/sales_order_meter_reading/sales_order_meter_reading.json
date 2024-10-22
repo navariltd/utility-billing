@@ -7,10 +7,14 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
+  "meter_reading",
+  "stock_uom",
   "column_break_fkvl",
   "meter_number",
-  "previous_reading",
+  "uom",
   "column_break_smgb",
+  "previous_reading",
+  "previous_consumption",
   "current_reading"
  ],
  "fields": [
@@ -37,8 +41,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Meter Number",
-   "options": "Serial No",
-   "reqd": 1
+   "options": "Serial No"
   },
   {
    "fieldname": "column_break_smgb",
@@ -51,8 +54,7 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Current Reading",
-   "reqd": 1
+   "label": "Current Reading"
   },
   {
    "fieldname": "previous_reading",
@@ -61,14 +63,44 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Previous Reading",
-   "reqd": 1
+   "label": "Previous Reading"
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "meter_reading",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Meter Reading",
+   "options": "Meter Reading"
+  },
+  {
+   "fieldname": "previous_consumption",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Previous Consumption"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-22 08:17:14.894276",
+ "modified": "2024-10-22 09:37:40.803921",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Sales Order Meter Reading",
