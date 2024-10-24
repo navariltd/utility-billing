@@ -14,8 +14,8 @@
   "delivery_warehouse",
   "uom",
   "column_break_smgb",
-  "current_reading",
   "previous_reading",
+  "current_reading",
   "consumption",
   "section_break_leyq",
   "description"
@@ -93,6 +93,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Previous Reading",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -103,6 +104,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Consumption",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -119,7 +121,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-22 08:55:19.246976",
+ "modified": "2024-10-24 13:41:29.433226",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Item",

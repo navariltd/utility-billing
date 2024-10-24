@@ -76,13 +76,15 @@
    "fieldname": "territory",
    "fieldtype": "Link",
    "label": "Territory",
-   "options": "Territory"
+   "options": "Territory",
+   "read_only": 1
   },
   {
    "fieldname": "price_list",
    "fieldtype": "Link",
    "label": "Price List",
    "options": "Price List",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -142,7 +144,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-22 07:14:32.622588",
+ "modified": "2024-10-24 13:38:38.351573",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
