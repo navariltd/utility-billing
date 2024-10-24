@@ -397,33 +397,33 @@
   {
    "fieldname": "date_assesed",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Assessed by Date"
   },
   {
    "fieldname": "date_checked",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Checked by Date"
   },
   {
    "fieldname": "date_approved",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Approved by Date"
   },
   {
    "fieldname": "date_verified",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Verified by Date"
   },
   {
    "fieldname": "date_posted",
    "fieldtype": "Date",
-   "label": "Date"
+   "label": "Posted by Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-21 17:47:29.177488",
+ "modified": "2024-10-24 13:50:18.316001",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
