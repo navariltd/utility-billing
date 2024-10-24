@@ -116,6 +116,27 @@ def get_unique_customers_and_orders(source_names):
 @frappe.whitelist()
 def make_sales_invoice(source_names, target_doc=None, ignore_permissions=False):
     """Create Sales Invoice from Sales Orders."""
+    source_names = parse_source_names(source_names)
+
+    doclist = []
+    for source_name in source_names:
+        try:
+            current_doc = map_sales_order_to_invoice(
+                source_name, target_doc, ignore_permissions
+            )
+            doclist.append(current_doc)
+        except Exception as e:
+            log_error_and_continue(source_name, e)
+
+    if doclist:
+        target_invoice = merge_documents(doclist)
+        finalize_invoice(target_invoice)
+
+    return target_invoice
+
+
+def parse_source_names(source_names):
+    """Parse and validate the source_names input."""
     if isinstance(source_names, str):
         source_names = json.loads(source_names)
 
@@ -125,138 +146,144 @@ def make_sales_invoice(source_names, target_doc=None, ignore_permissions=False):
                 "Invalid input type for source_names. Expected JSON array, list, or tuple."
             )
         )
+    return source_names
 
-    def postprocess(source, target):
-        set_missing_values(source, target)
-        if target.get("allocate_advances_automatically"):
-            target.set_advances()
 
-    def set_missing_values(source, target):
-        target.flags.ignore_permissions = True
-        target.run_method("set_missing_values")
-        target.run_method("set_po_nos")
-        target.run_method("calculate_taxes_and_totals")
-        target.run_method("set_use_serial_batch_fields")
+def map_sales_order_to_invoice(source_name, target_doc, ignore_permissions):
+    """Map Sales Order to Sales Invoice."""
+    return get_mapped_doc(
+        "Sales Order",
+        source_name,
+        {
+            "Sales Order": {
+                "doctype": "Sales Invoice",
+                "field_map": {
+                    "party_account_currency": "party_account_currency",
+                    "payment_terms_template": "payment_terms_template",
+                },
+                "field_no_map": ["payment_terms_template"],
+                "validation": {"docstatus": ["=", 1]},
+            },
+            "Sales Order Item": {
+                "doctype": "Sales Invoice Item",
+                "field_map": {
+                    "name": "so_detail",
+                    "parent": "sales_order",
+                },
+                "postprocess": update_item,
+                "condition": lambda doc: doc.qty
+                and (doc.base_amount == 0 or abs(doc.billed_amt) < abs(doc.amount)),
+            },
+            "Sales Taxes and Charges": {
+                "doctype": "Sales Taxes and Charges",
+                "reset_value": True,
+            },
+            "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
+            "Sales Order Meter Reading": {
+                "doctype": "Sales Invoice Meter Reading",
+                "field_map": {
+                    "meter_number": "meter_number",
+                    "item_code": "item_code",
+                    "uom": "uom",
+                    "stock_uom": "stock_uom",
+                    "previous_consumption": "previous_consumption",
+                    "current_reading": "current_reading",
+                    "previous_reading": "previous_reading",
+                },
+                "condition": lambda doc: doc.meter_number is not None,
+            },
+        },
+        target_doc,
+        postprocess,
+        ignore_permissions=ignore_permissions,
+    )
 
-        if source.company_address:
-            target.update({"company_address": source.company_address})
-        else:
-            target.update(get_company_address(target.company))
 
-        if target.company_address:
-            target.update(
-                get_fetch_values(
-                    "Sales Invoice", "company_address", target.company_address
-                )
-            )
+def postprocess(source, target):
+    """Postprocess to set missing values and calculate totals."""
+    set_missing_values(source, target)
+    if target.get("allocate_advances_automatically"):
+        target.set_advances()
 
-        if source.loyalty_points and source.order_type == "Shopping Cart":
-            target.redeem_loyalty_points = 1
-            target.loyalty_points = source.loyalty_points
 
-        target.debit_to = get_party_account("Customer", source.customer, source.company)
+def set_missing_values(source, target):
+    """Set missing values and calculate totals for the invoice."""
+    target.flags.ignore_permissions = True
+    target.run_method("set_missing_values")
+    target.run_method("set_po_nos")
+    target.run_method("calculate_taxes_and_totals")
+    target.run_method("set_use_serial_batch_fields")
 
-    def update_item(source, target, source_parent):
-        """Update the item information for the invoice."""
-        target.amount = flt(source.amount) - flt(source.billed_amt)
-        target.base_amount = target.amount * flt(source_parent.conversion_rate)
-        target.qty = (
-            target.amount / flt(source.rate)
-            if (source.rate and source.billed_amt)
-            else source.qty - source.returned_qty
+    if source.company_address:
+        target.update({"company_address": source.company_address})
+    else:
+        target.update(get_company_address(target.company))
+
+    if target.company_address:
+        target.update(
+            get_fetch_values("Sales Invoice", "company_address", target.company_address)
         )
 
-        if source_parent.project:
-            target.cost_center = frappe.db.get_value(
-                "Project", source_parent.project, "cost_center"
-            )
-        if target.item_code:
-            item = get_item_defaults(target.item_code, source_parent.company)
-            item_group = get_item_group_defaults(
-                target.item_code, source_parent.company
-            )
-            cost_center = item.get("selling_cost_center") or item_group.get(
-                "selling_cost_center"
-            )
+    if source.loyalty_points and source.order_type == "Shopping Cart":
+        target.redeem_loyalty_points = 1
+        target.loyalty_points = source.loyalty_points
 
-            if cost_center:
-                target.cost_center = cost_center
+    target.debit_to = get_party_account("Customer", source.customer, source.company)
 
-    doclist = []
 
-    for source_name in source_names:
-        try:
-            current_doc = get_mapped_doc(
-                "Sales Order",
-                source_name,
-                {
-                    "Sales Order": {
-                        "doctype": "Sales Invoice",
-                        "field_map": {
-                            "party_account_currency": "party_account_currency",
-                            "payment_terms_template": "payment_terms_template",
-                        },
-                        "field_no_map": ["payment_terms_template"],
-                        "validation": {"docstatus": ["=", 1]},
-                    },
-                    "Sales Order Item": {
-                        "doctype": "Sales Invoice Item",
-                        "field_map": {
-                            "name": "so_detail",
-                            "parent": "sales_order",
-                        },
-                        "postprocess": update_item,
-                        "condition": lambda doc: doc.qty
-                        and (
-                            doc.base_amount == 0
-                            or abs(doc.billed_amt) < abs(doc.amount)
-                        ),
-                    },
-                    "Sales Taxes and Charges": {
-                        "doctype": "Sales Taxes and Charges",
-                        "reset_value": True,
-                    },
-                    "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
-                    "Sales Order Meter Reading": {
-                        "doctype": "Sales Invoice Meter Reading",
-                        "field_map": {
-                            "meter_number": "meter_number",
-                            "item_code": "item_code",
-                            "uom": "uom",
-                            "stock_uom": "stock_uom",
-                            "previous_consumption": "previous_consumption",
-                            "current_reading": "current_reading",
-                            "previous_reading": "previous_reading",
-                        },
-                        "condition": lambda doc: doc.meter_number is not None,
-                    },
-                },
-                target_doc,
-                postprocess,
-                ignore_permissions=ignore_permissions,
-            )
+def update_item(source, target, source_parent):
+    """Update the item details for the invoice."""
+    target.amount = flt(source.amount) - flt(source.billed_amt)
+    target.base_amount = target.amount * flt(source_parent.conversion_rate)
+    target.qty = (
+        target.amount / flt(source.rate)
+        if (source.rate and source.billed_amt)
+        else source.qty - source.returned_qty
+    )
 
-            doclist.append(current_doc)
+    set_cost_center(source_parent, target)
 
-        except Exception as e:
-            frappe.log_error(
-                message=str(e), title=f"Error processing Sales Order {source_name}"
-            )
-            create_log(source_name, e, "Sales Order", "Sales Invoice", "Failed")
-            continue
 
-    if doclist:
-        target_invoice = doclist[0]
-        for doc in doclist[1:]:
-            merge_invoice_items(target_invoice, doc)
-            merge_invoice_taxes(target_invoice, doc)
+def set_cost_center(source_parent, target):
+    """Set the cost center for the invoice item."""
+    if source_parent.project:
+        target.cost_center = frappe.db.get_value(
+            "Project", source_parent.project, "cost_center"
+        )
 
-        target_invoice.run_method("calculate_taxes_and_totals")
-        target_invoice.run_method("set_payment_schedule")
+    if target.item_code:
+        item = get_item_defaults(target.item_code, source_parent.company)
+        item_group = get_item_group_defaults(target.item_code, source_parent.company)
+        cost_center = item.get("selling_cost_center") or item_group.get(
+            "selling_cost_center"
+        )
 
-    target_invoice.save()
+        if cost_center:
+            target.cost_center = cost_center
 
+
+def log_error_and_continue(source_name, e):
+    """Log errors and continue processing other Sales Orders."""
+    frappe.log_error(
+        message=str(e), title=f"Error processing Sales Order {source_name}"
+    )
+    create_log(source_name, e, "Sales Order", "Sales Invoice", "Failed")
+
+
+def merge_documents(doclist):
+    """Merge multiple invoices into one."""
+    target_invoice = doclist[0]
+    for doc in doclist[1:]:
+        merge_invoice_items(target_invoice, doc)
+        merge_invoice_taxes(target_invoice, doc)
     return target_invoice
+
+
+def finalize_invoice(invoice):
+    """Calculate totals and save the invoice."""
+    invoice.run_method("calculate_taxes_and_totals")
+    invoice.run_method("set_payment_schedule")
+    invoice.save()
 
 
 def merge_invoice_items(target_invoice, doc):
