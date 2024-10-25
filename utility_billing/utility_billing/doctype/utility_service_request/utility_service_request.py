@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
+from frappe.utils import nowdate
 
 
 class UtilityServiceRequest(Document):
@@ -171,6 +172,7 @@ def get_item_details(item_code, price_list=None):
 
     item_details = {
         "item_name": item.item_name,
+        "item_code": item.item_code,
         "uom": item.stock_uom,
         "rate": item.standard_rate,
         "warehouse": default_warehouse,
@@ -187,6 +189,7 @@ def get_item_details(item_code, price_list=None):
         "weight_uom": item.weight_uom, 
         "item_tax_template": item.taxes[0].item_tax_template if item.taxes else None,
         "default_warehouse": item.item_defaults[0].default_warehouse if item.item_defaults else None,
+        "delivery_date": nowdate(),
     }
 
     if price_list:

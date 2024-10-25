@@ -46,7 +46,7 @@ frappe.ui.form.on("Meter Reading", {
 	},
 	validate: function (frm) {
 		frm.doc.items.forEach((item) => {
-			if (item.current_reading !== undefined && item.previous_reading !== undefined) {
+			if (item.current_reading >= 0 && item.previous_reading >= 0) {
 				const consumption = item.current_reading - item.previous_reading;
 
 				if (consumption < 0) {
@@ -74,14 +74,14 @@ frappe.ui.form.on("Meter Reading Item", {
 	current_reading: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
 
-		if (row.previous_reading !== undefined && row.current_reading !== undefined) {
+		if (row.previous_reading >= 0 && row.current_reading >= 0) {
 			calculate_consumption(frm, row);
 		}
 	},
 	previous_reading: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
 
-		if (row.current_reading !== undefined && row.previous_reading !== undefined) {
+		if (row.current_reading >= 0 && row.previous_reading >= 0) {
 			calculate_consumption(frm, row);
 		}
 	},
@@ -123,7 +123,7 @@ function calculate_consumption(frm, row) {
 	if (row.consumption < 0) {
 		frappe.msgprint(__("Current reading cannot be lower than previous reading."));
 		row.consumption = 0;
-		row.current_reading = undefined;
+		row.current_reading = 0;
 	}
 	frm.refresh_field("items");
 }
