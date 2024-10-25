@@ -84,10 +84,7 @@ def create_sales_order(doc, customer_doc):
     sales_order_doc.delivery_date = frappe.utils.nowdate()
 
     for item in doc.items:
-        sales_order_doc.append(
-            "items",
-            {"item_code": item.item_code, "qty": item.qty or 1, "rate": item.rate or 0},
-        )
+        sales_order_doc.append("items", item.as_dict())
 
     sales_order_doc.insert()
 
@@ -125,6 +122,7 @@ def create_bom(docname, item_code):
     bom = frappe.new_doc("BOM")
     bom.item = item_code
     bom.utility_service_request = docname
+    bom.raw_material_cost = 1   
     bom.items = []
     bom.flags.ignore_mandatory = True
     bom.flags.ignore_validate = True

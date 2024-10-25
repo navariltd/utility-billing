@@ -178,8 +178,8 @@ function open_bom_creation_modal(frm) {
 					if (response.message) {
 						handle_response(response, "BOM", frm);
 						modal.hide();
-
-						frappe.set_route("Form", "BOM", response.message.bom);
+						const bomUrl = frappe.utils.get_form_link("BOM", response.message.bom);
+						window.location.href = bomUrl;
 					}
 				},
 			});
@@ -228,7 +228,7 @@ function addActionButtons(frm) {
 
 	if (currentStatus === "") {
 		frm.add_custom_button(
-			__("Issue Site Survey"),
+			__("Site Survey"),
 			function () {
 				frappe.call({
 					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_site_survey",
