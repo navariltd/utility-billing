@@ -11,6 +11,7 @@ frappe.ui.form.on("Meter Reading", {
 			return {
 				filters: {
 					is_sales_item: 1,
+					allow_utility_billing: 1,
 					has_variants: 0,
 				},
 			};
