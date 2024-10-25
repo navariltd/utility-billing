@@ -107,6 +107,8 @@ frappe.ui.form.on("Utility Service Request Item", {
 							bom_no: item.bom_no,
 							weight_per_unit: item.weight_per_unit,
 							weight_uom: item.weight_uom,
+							item_tax_template: item.item_tax_template,
+							warehouse: item.default_warehouse,
 						});
 
 						let amount = flt(item.rate) * flt(row.qty || 1);

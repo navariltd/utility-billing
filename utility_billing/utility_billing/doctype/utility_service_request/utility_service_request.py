@@ -186,7 +186,9 @@ def get_item_details(item_code, price_list=None):
         "stock_uom": item.stock_uom,
         "bom_no": item.default_bom,
         "weight_per_unit": item.weight_per_unit,
-        "weight_uom": item.weight_uom,
+        "weight_uom": item.weight_uom, 
+        "item_tax_template": item.taxes[0].item_tax_template if item.taxes else None,
+        "default_warehouse": item.item_defaults[0].default_warehouse if item.item_defaults else None,
     }
 
     if price_list:
