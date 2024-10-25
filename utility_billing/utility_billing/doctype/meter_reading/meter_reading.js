@@ -43,37 +43,45 @@ frappe.ui.form.on("Meter Reading", {
 		});
 		frm.refresh_field("items");
 	},
+	validate: function (frm) {
+		frm.doc.items.forEach((item) => {
+			if (item.current_reading !== undefined && item.previous_reading !== undefined) {
+				const consumption = item.current_reading - item.previous_reading;
+
+				if (consumption < 0) {
+					frappe.msgprint(
+						__("Current reading cannot be lower than previous reading.for item: {0}", [
+							item.item_code,
+						])
+					);
+					frappe.validated = false;
+				}
+			} else {
+				frappe.msgprint(
+					__(
+						"Please ensure that both current and previous readings are provided for item: {0}",
+						[item.item_code]
+					)
+				);
+				frappe.validated = false;
+			}
+		});
+	},
 });
 
 frappe.ui.form.on("Meter Reading Item", {
-	meter_number: function (frm, cdt, cdn) {
-		const row = locals[cdt][cdn];
-		if (row.meter_number) {
-			frappe.call({
-				method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_reading",
-				args: {
-					meter_number: row.meter_number,
-				},
-				callback: function (r) {
-					row.previous_reading = r.message || 0;
-					frm.refresh_field("items");
-				},
-			});
-		}
-	},
-
 	current_reading: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (row.previous_reading !== undefined || row.previous_reading !== 0) {
-			row.consumption = row.current_reading - row.previous_reading;
-			frm.refresh_field("items");
+
+		if (row.previous_reading !== undefined && row.current_reading !== undefined) {
+			calculate_consumption(frm, row);
 		}
 	},
 	previous_reading: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (row.current_reading !== undefined || row.current_reading !== 0) {
-			row.consumption = row.current_reading - row.previous_reading;
-			frm.refresh_field("items");
+
+		if (row.current_reading !== undefined && row.previous_reading !== undefined) {
+			calculate_consumption(frm, row);
 		}
 	},
 	item_code: function (frm, cdt, cdn) {
@@ -92,10 +100,29 @@ frappe.ui.form.on("Meter Reading Item", {
 						frappe.model.set_value(cdt, cdn, "stock_uom", r.message.stock_uom);
 						frappe.model.set_value(cdt, cdn, "description", r.message.description);
 
-						frm.refresh_field("items");
+						frappe.call({
+							method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
+							args: {
+								item_code: row.item_code,
+							},
+							callback: function (r) {
+								row.previous_reading = r.message[1] || 0;
+								frm.refresh_field("items");
+							},
+						});
 					}
 				},
 			});
 		}
 	},
 });
+
+function calculate_consumption(frm, row) {
+	row.consumption = row.current_reading - row.previous_reading;
+	if (row.consumption < 0) {
+		frappe.msgprint(__("Current reading cannot be lower than previous reading."));
+		row.consumption = 0;
+		row.current_reading = undefined;
+	}
+	frm.refresh_field("items");
+}
