@@ -65,6 +65,28 @@ frappe.ui.form.on("Utility Service Request", {
 		}
 	},
 
+	tc_name: function (frm) {
+		if (!frm.doc.tc_name) {
+			frm.set_value("terms", "");
+			return;
+		}
+		frappe.call({
+			method: "frappe.client.get_value",
+			args: {
+				doctype: "Terms and Conditions",
+				fieldname: "terms",
+				filters: {
+					name: frm.doc.tc_name,
+				},
+			},
+			callback: function (r) {
+				if (r.message && r.message.terms) {
+					frm.set_value("terms", r.message.terms);
+				}
+			},
+		});
+	},
+
 	onload: function (frm) {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 	},
