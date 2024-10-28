@@ -53,7 +53,7 @@ def enqueue_sales_invoice_creation(source_names):
     )
 
     return _(
-        "Started a background job to create Sales Invoice for {0} customers."
+        "Started a background job to create Sales Invoice(s) for {0} customer(s)."
     ).format(num_customers)
 
 
