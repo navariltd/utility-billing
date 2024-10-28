@@ -30,7 +30,7 @@ frappe.ui.form.on("Utility Service Request", {
 			return {
 				filters: {
 					is_sales_item: 1,
-					allow_utility_billing: 1,
+					is_utility_item: 1,
 					has_variants: 0,
 				},
 			};

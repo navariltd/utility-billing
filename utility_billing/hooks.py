@@ -16,6 +16,7 @@ fixtures = [
                     "BOM",
                     "Customer",
                     "Issue",
+                    "Item",
                     "Item Price",
                     "Sales Order",
                     "Sales Invoice",
