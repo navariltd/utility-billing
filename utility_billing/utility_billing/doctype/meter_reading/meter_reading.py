@@ -48,6 +48,7 @@ def create_sales_order(meter_reading):
         rate_dict = rate.as_dict()
         rate_dict["delivery_date"] = nowdate()
         sales_order.append("items", rate_dict)
+        
 
     for i in meter_reading.items:
         _, prev_reading = get_previous_invoice_reading(i.item_code)

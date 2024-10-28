@@ -10,7 +10,7 @@ def before_validate(doc: Document, method: str) -> None:
 def copy_meter_reading_from_sales_order(doc: Document, sales_order_name: str) -> None:
     """Copies meter_readings tables from the linked Sales Order."""
     sales_order = frappe.get_doc("Sales Order", sales_order_name)
-
+    
     if hasattr(sales_order, "meter_readings"):
         if not doc.meter_readings:
             doc.meter_readings = []

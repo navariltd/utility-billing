@@ -274,7 +274,7 @@ def merge_documents(doclist):
     """Merge multiple invoices into one."""
     target_invoice = doclist[0]
     for doc in doclist[1:]:
-        merge_invoice_items(target_invoice, doc)
+        add_invoice_items(target_invoice, doc)
         merge_invoice_taxes(target_invoice, doc)
     return target_invoice
 
@@ -286,18 +286,9 @@ def finalize_invoice(invoice):
     invoice.save()
 
 
-def merge_invoice_items(target_invoice, doc):
-    """Merge items from multiple docs into a single invoice."""
+def add_invoice_items(target_invoice, doc):
     for item in doc.items:
-        existing_item = next(
-            (i for i in target_invoice.items if i.item_code == item.item_code), None
-        )
-        if existing_item:
-            existing_item.qty += item.qty
-            existing_item.amount += item.amount
-            existing_item.base_amount += item.base_amount
-        else:
-            target_invoice.append("items", item)
+        target_invoice.append("items", item)
 
 
 def merge_invoice_taxes(target_invoice, doc):
