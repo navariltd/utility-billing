@@ -4,6 +4,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Sum
+from frappe.utils import nowdate
 
 from ..utility_service_request.utility_service_request import get_item_details
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
@@ -44,8 +45,9 @@ def create_sales_order(meter_reading):
     )
 
     for rate in meter_reading.rates:
-        item_details = get_item_details(rate.item_code)
-        sales_order.append("items", item_details)
+        rate_dict = rate.as_dict()
+        rate_dict["delivery_date"] = nowdate()
+        sales_order.append("items", rate_dict)
 
     for i in meter_reading.items:
         _, prev_reading = get_previous_invoice_reading(i.item_code)
