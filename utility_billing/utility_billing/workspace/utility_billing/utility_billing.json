@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"fqWR1Nv2hU\",\"type\":\"header\",\"data\":{\"text\":\"Utility Billing Shortcuts<br>\",\"col\":12}},{\"id\":\"_3e05httN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"1acTaFDYDY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":4}}]",
- "creation": "2024-10-15 09:19:30.540834",
+ "content": "[{\"id\":\"fqWR1Nv2hU\",\"type\":\"header\",\"data\":{\"text\":\"Utility Billing Shortcuts<br>\",\"col\":12}},{\"id\":\"_3e05httN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"1acTaFDYDY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":4}},{\"id\":\"RLwaO1wtgC\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":3}}]",
+ "creation": "2024-10-24 13:04:18.087889",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "Utility Billing",
  "links": [],
- "modified": "2024-10-17 06:39:06.370295",
+ "modified": "2024-10-24 13:07:25.645617",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing",
@@ -31,6 +31,13 @@
    "label": "Meter Reading",
    "link_to": "Meter Reading",
    "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Utility Billing Settings",
+   "link_to": "Utility Billing Settings",
    "type": "DocType"
   },
   {
