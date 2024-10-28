@@ -6,6 +6,7 @@ from frappe.query_builder import DocType
 from frappe.query_builder.functions import Sum
 from frappe.utils import nowdate
 
+from ..utility_service_request.utility_service_request import get_item_details
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
 
 
@@ -44,21 +45,14 @@ def create_sales_order(meter_reading):
     )
 
     for rate in meter_reading.rates:
-        sales_order.append(
-            "items",
-            {
-                "item_code": rate.item_code,
-                "qty": round(rate.qty),
-                "rate": rate.rate,
-                "amount": rate.amount,
-                "block": rate.block,
-                "delivery_date": nowdate(),
-            },
-        )
+        rate_dict = rate.as_dict()
+        rate_dict["delivery_date"] = nowdate()
+        sales_order.append("items", rate_dict)
+        
 
     for i in meter_reading.items:
-        _, prev_reading = get_previous_invoice_reading(i.meter_number)
-        prev_consumption = get_previous_consumption(i.meter_number)
+        _, prev_reading = get_previous_invoice_reading(i.item_code)
+        prev_consumption = get_previous_consumption(i.item_code)
         sales_order.append(
             "meter_readings",
             {
@@ -78,9 +72,9 @@ def create_sales_order(meter_reading):
 
 
 @frappe.whitelist()
-def get_previous_consumption(meter_number):
+def get_previous_consumption(item_code):
     """Fetch the sum of previous readings for the specified meter number sharing the same parent."""
-    parent, _ = get_previous_invoice_reading(meter_number)
+    parent, _ = get_previous_invoice_reading(item_code)
     meter_reading = DocType("Sales Invoice Meter Reading")
     previous_consumption = (
         frappe.qb.from_(meter_reading)
@@ -91,34 +85,19 @@ def get_previous_consumption(meter_number):
 
 
 @frappe.whitelist()
-def get_previous_invoice_reading(meter_number):
+def get_previous_invoice_reading(item_code):
     """Fetch the previous reading and its parent for the specified meter number."""
     previous_reading = frappe.get_all(
         "Sales Invoice Meter Reading",
-        filters={"meter_number": meter_number},
+        filters={"item_code": item_code},
         fields=["current_reading", "creation", "parent"],
         order_by="creation desc",
         limit_page_length=1,
     )
-
     if previous_reading:
         return previous_reading[0].parent, previous_reading[0].current_reading
     else:
         return "None", 0
-
-
-@frappe.whitelist()
-def get_previous_reading(meter_number):
-    """Fetch the previous reading for the specified meter number."""
-    previous_reading = frappe.get_all(
-        "Meter Reading Item",
-        filters={"meter_number": meter_number},
-        fields=["current_reading", "creation"],
-        order_by="creation desc",
-        limit_page_length=1,
-    )
-
-    return previous_reading[0].current_reading if previous_reading else 0
 
 
 @frappe.whitelist()

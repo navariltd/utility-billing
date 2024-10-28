@@ -30,6 +30,7 @@ frappe.ui.form.on("Utility Service Request", {
 			return {
 				filters: {
 					is_sales_item: 1,
+					is_utility_item: 1,
 					has_variants: 0,
 				},
 			};
@@ -62,6 +63,28 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			});
 		}
+	},
+
+	tc_name: function (frm) {
+		if (!frm.doc.tc_name) {
+			frm.set_value("terms", "");
+			return;
+		}
+		frappe.call({
+			method: "frappe.client.get_value",
+			args: {
+				doctype: "Terms and Conditions",
+				fieldname: "terms",
+				filters: {
+					name: frm.doc.tc_name,
+				},
+			},
+			callback: function (r) {
+				if (r.message && r.message.terms) {
+					frm.set_value("terms", r.message.terms);
+				}
+			},
+		});
 	},
 
 	onload: function (frm) {
@@ -107,6 +130,8 @@ frappe.ui.form.on("Utility Service Request Item", {
 							bom_no: item.bom_no,
 							weight_per_unit: item.weight_per_unit,
 							weight_uom: item.weight_uom,
+							item_tax_template: item.item_tax_template,
+							warehouse: item.default_warehouse,
 						});
 
 						let amount = flt(item.rate) * flt(row.qty || 1);
@@ -176,8 +201,8 @@ function open_bom_creation_modal(frm) {
 					if (response.message) {
 						handle_response(response, "BOM", frm);
 						modal.hide();
-
-						frappe.set_route("Form", "BOM", response.message.bom);
+						const bomUrl = frappe.utils.get_form_link("BOM", response.message.bom);
+						window.location.href = bomUrl;
 					}
 				},
 			});
@@ -226,7 +251,7 @@ function addActionButtons(frm) {
 
 	if (currentStatus === "") {
 		frm.add_custom_button(
-			__("Issue Site Survey"),
+			__("Site Survey"),
 			function () {
 				frappe.call({
 					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_site_survey",
