@@ -6,6 +6,7 @@ from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import nowdate, add_months
+from erpnext.controllers.accounts_controller import AccountsController
 
 
 class UtilityServiceRequest(Document):
@@ -90,6 +91,9 @@ def create_sales_order(doc, customer_doc):
         sales_order_doc.append("items", item_dict)
 
     sales_order_doc.insert()
+    
+    AccountsController.append_taxes_from_item_tax_template(sales_order_doc)
+    sales_order_doc.save()
 
     if auto_submit_sales_order != "Draft":
         sales_order_doc.submit()
