@@ -3,10 +3,21 @@ def get_data():
         "fieldname": "utility_service_request",
         "transactions": [
             {
+                "label": "Sales",
+                "items": [
+                    "Sales Order",
+                ],
+            },
+            {
+                "label": "Project",
                 "items": [
                     "Issue",
+                ],
+            },
+            {
+                "label": "Material",
+                "items": [
                     "BOM",
-                    "Sales Order",
                 ],
             },
         ],

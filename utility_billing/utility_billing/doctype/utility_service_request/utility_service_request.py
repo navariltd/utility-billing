@@ -5,7 +5,8 @@ import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import nowdate
+from frappe.utils import nowdate, add_months
+from erpnext.controllers.accounts_controller import AccountsController
 
 
 class UtilityServiceRequest(Document):
@@ -82,12 +83,17 @@ def create_sales_order(doc, customer_doc):
     sales_order_doc.customer = customer_doc.name
     sales_order_doc.utility_service_request = doc.name
     sales_order_doc.transaction_date = frappe.utils.nowdate()
-    sales_order_doc.delivery_date = frappe.utils.nowdate()
+    sales_order_doc.delivery_date = add_months(sales_order_doc.transaction_date, 1)
 
     for item in doc.items:
-        sales_order_doc.append("items", item.as_dict())
+        item_dict = item.as_dict()
+        item_dict["delivery_date"] = sales_order_doc.delivery_date
+        sales_order_doc.append("items", item_dict)
 
     sales_order_doc.insert()
+    
+    AccountsController.append_taxes_from_item_tax_template(sales_order_doc)
+    sales_order_doc.save()
 
     if auto_submit_sales_order != "Draft":
         sales_order_doc.submit()

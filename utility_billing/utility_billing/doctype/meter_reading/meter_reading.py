@@ -5,6 +5,7 @@ from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Sum
 from frappe.utils import nowdate
+from erpnext.controllers.accounts_controller import AccountsController
 
 from ..utility_service_request.utility_service_request import get_item_details
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
@@ -66,7 +67,10 @@ def create_sales_order(meter_reading):
                 "previous_consumption": prev_consumption,
             },
         )
-    sales_order.insert()
+    
+    sales_order.insert() 
+    AccountsController.append_taxes_from_item_tax_template(sales_order)
+    sales_order.save()
 
     return sales_order
 
