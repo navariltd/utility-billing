@@ -37,8 +37,6 @@ Use **Customer Groups** to categorize customers, enabling specific tariff setups
 
 III. **Price List and Item Prices**
 
-![Price List Screenshot](./utility_billing/docs/images/price-list.png)
-
 - **Define Price List**: Create a price list associated with the relevant **Customer Group**, specifying the pricing strategy for different utility services.
 
 ![Item Prices Screenshot](./utility_billing/docs/images/item-prices.png)
@@ -105,6 +103,28 @@ The Utility Billing application includes several key Doctypes essential for mana
   - **Individual Invoices for Multiple Sales Orders**: Checkbox setting for managing how invoices are generated per sales order.
 
 ![Utility Billing Settings Screenshot](./utility_billing/docs/images/utility-settings.png)
+
+### Customizations
+
+### **1. Sales Order & Sales Invoice**
+
+- Rates (Sales Order Meter Reading & Sales Invoice Meter Reading) child tables to track and calculate charges based on the meter readings associated with each sales order.
+- Block field to link each item in the items child tables to a specific tariff block.
+
+![Sales Order Screenshot](./utility_billing/docs/images/sales-order.png)
+![Sales Invoice Screenshot](./utility_billing/docs/images/sales-invoice.png)
+
+### **2. Item**
+
+- Is Utility Item (is_utility_item) to identify items that should be processed as utility-related.
+
+![Item Screenshot](./utility_billing/docs/images/is_utility_item.png)
+
+### **3. Item Price**
+
+- Is Fixed Meter Charge - When checked, this field indicates that the item has a fixed rate, and the rate applies as a static charge regardless of the meter readings.
+
+![Item Screenshot](./utility_billing/docs/images/is_fixed_meter_charge.png)
 
 ### Manual/Self-Hosted Installation
 
