@@ -2,40 +2,36 @@ from frappe.model.document import Document
 import frappe
 from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
 from erpnext.controllers.accounts_controller import AccountsController
-from frappe.model.mapper import get_mapped_doc
 
 
 def before_validate(doc: Document, method: str) -> None:
     """Intercepts submit event for document"""
-    AccountsController.append_taxes_from_item_tax_template(doc)
-    calculate_taxes_and_totals(doc)
-    unique_sales_orders = {item.sales_order for item in doc.items if item.sales_order}
+    if not doc.taxes:
+        AccountsController.append_taxes_from_item_tax_template(doc)
+        calculate_taxes_and_totals(doc)
+    unique_sales_orders = {
+        item.sales_order
+        for item in frappe.get_all(
+            "Sales Invoice Item",
+            filters={"parent": doc.name, "sales_order": ["is", "set"]},
+            fields=["sales_order"]
+        )
+    }
+
     for sales_order in unique_sales_orders:
-        map_sales_order_meter_readings_to_invoice(sales_order, doc, True)
+        map_sales_order_meter_readings_to_invoice(sales_order, doc)
 
 
-
-def map_sales_order_meter_readings_to_invoice(source_name, target_doc, ignore_permissions):
-    """Map Sales Order to Sales Invoice, including meter readings."""
-    return get_mapped_doc(
-        "Sales Order",
-        source_name,
-        {
-           "Sales Order": {
-                "doctype": "Sales Invoice",
-                "field_map": {
-                    "party_account_currency": "party_account_currency",
-                    "payment_terms_template": "payment_terms_template",
-                },
-                "field_no_map": ["payment_terms_template"],
-                "validation": {"docstatus": ["=", 1]},
-            },
-            "Sales Order Meter Reading": { 
-                "doctype": "Sales Invoice Meter Reading",
-                "add_if_empty": True,
-            }
-        },
-        target_doc,
-        ignore_permissions=ignore_permissions,
-    )
+def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
+    """Map all fields from Sales Order Meter Reading to Sales Invoice Meter Reading."""
+    sales_order = frappe.get_doc("Sales Order", sales_order_name)
+    meter_readings = sales_order.get("meter_readings") 
+    target_doc.set("meter_readings", [])
+    if sales_order.utility_property: target_doc.utility_property = sales_order.utility_property 
+    
+    for reading in meter_readings:
+        new_reading_data = reading.as_dict()
+        new_reading_data.pop("name", None) 
+        new_reading = target_doc.append("meter_readings", new_reading_data)
+        new_reading.parent = target_doc.name 
 

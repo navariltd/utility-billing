@@ -15,6 +15,7 @@
   "date",
   "customer_group",
   "territory",
+  "property",
   "column_break_wxld",
   "company",
   "tax_id",
@@ -36,10 +37,9 @@
   "connection_size",
   "pipes_typedistance",
   "column_break_bfhu",
-  "east_cordinates",
   "water_network",
   "column_break_omtp",
-  "south_cordinates",
+  "location",
   "address_and_contacts_tab",
   "section_break_ywar",
   "address_html",
@@ -230,16 +230,6 @@
    "label": "Water Network"
   },
   {
-   "fieldname": "east_cordinates",
-   "fieldtype": "Data",
-   "label": "East Cordinates"
-  },
-  {
-   "fieldname": "south_cordinates",
-   "fieldtype": "Data",
-   "label": "South Cordinates"
-  },
-  {
    "fieldname": "pipes_typedistance",
    "fieldtype": "Data",
    "label": "Pipes type/Distance"
@@ -418,12 +408,24 @@
    "fieldname": "date_posted",
    "fieldtype": "Date",
    "label": "Posted by Date"
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Utility Property"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "Location",
+   "options": "Location"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-24 13:50:18.316001",
+ "modified": "2024-11-06 16:42:41.258215",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

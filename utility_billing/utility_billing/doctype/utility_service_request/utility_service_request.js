@@ -65,6 +65,26 @@ frappe.ui.form.on("Utility Service Request", {
 		}
 	},
 
+	property: function (frm) {
+		if (frm.doc.property) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Utility Property",
+					fieldname: "territory",
+					filters: {
+						name: frm.doc.property,
+					},
+				},
+				callback: function (r) {
+					if (r.message && r.message.territory) {
+						frm.set_value("territory", r.message.territory);
+					}
+				},
+			});
+		}
+	},
+
 	tc_name: function (frm) {
 		if (!frm.doc.tc_name) {
 			frm.set_value("terms", "");
