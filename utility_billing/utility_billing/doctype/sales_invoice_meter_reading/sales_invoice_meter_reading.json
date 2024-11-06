@@ -12,7 +12,7 @@
   "meter_reading",
   "column_break_fkvl",
   "previous_reading",
-  "previous_consumption",
+  "consumption",
   "stock_qty",
   "column_break_smgb",
   "uom",
@@ -38,10 +38,6 @@
   {
    "fieldname": "meter_number",
    "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
    "label": "Meter Number",
    "options": "Serial No"
   },
@@ -98,19 +94,19 @@
    "options": "Meter Reading"
   },
   {
-   "fieldname": "previous_consumption",
+   "fieldname": "consumption",
    "fieldtype": "Float",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Previous Consumption"
+   "label": "Consumption"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-22 10:39:42.353734",
+ "modified": "2024-11-06 06:20:37.916756",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Sales Invoice Meter Reading",
