@@ -35,6 +35,7 @@ def create_customer(doc):
         customer_doc.nrc_or_passport_no = doc.nrcpassport_no
         customer_doc.company = doc.company
         customer_doc.insert()
+        customer_doc.utility_property = doc.property
 
         frappe.db.set_value(
             "Utility Service Request", doc.name, "customer", customer_doc.name
@@ -82,6 +83,7 @@ def create_sales_order(doc, customer_doc):
     sales_order_doc = frappe.new_doc("Sales Order")
     sales_order_doc.customer = customer_doc.name
     sales_order_doc.utility_service_request = doc.name
+    sales_order_doc.utility_property = doc.property
     sales_order_doc.transaction_date = frappe.utils.nowdate()
     sales_order_doc.delivery_date = add_months(sales_order_doc.transaction_date, 1)
 
@@ -113,13 +115,12 @@ def create_site_survey(docname):
     issue_doc.subject = f"Site Survey for {docname} ({doc.customer_name})"
     issue_doc.description = (
         f"Site survey created for Utility Service Request: {docname}, Customer name: {doc.customer_name}.\n"
-        f"{request_type_description}"
+        f"{' ' + request_type_description if request_type_description else ''}",
     )
     issue_doc.utility_service_request = docname
     issue_doc.issue_type = doc.request_type
 
     issue_doc.insert()
-    doc.save()
 
     return {"issue": issue_doc.name}
 

@@ -105,9 +105,10 @@ frappe.ui.form.on("Meter Reading Item", {
 							method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
 							args: {
 								item_code: row.item_code,
+								customer: frm.doc.customer,
 							},
 							callback: function (r) {
-								row.previous_reading = r.message[1] || 0;
+								row.previous_reading = r.message || 0;
 								frm.refresh_field("items");
 							},
 						});

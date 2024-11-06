@@ -6,7 +6,12 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title"
+  "title",
+  "lft",
+  "rgt",
+  "is_group",
+  "old_parent",
+  "parent_utility_category"
  ],
  "fields": [
   {
@@ -14,15 +19,51 @@
    "fieldtype": "Data",
    "label": "Title",
    "unique": 1
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "label": "Old Parent",
+   "options": "Utility Category"
+  },
+  {
+   "fieldname": "parent_utility_category",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent Utility Category",
+   "options": "Utility Category"
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_tree": 1,
  "links": [],
- "modified": "2024-11-06 16:06:42.742911",
+ "modified": "2024-11-06 16:40:59.588124",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Category",
  "naming_rule": "By fieldname",
+ "nsm_parent_field": "parent_utility_category",
  "owner": "Administrator",
  "permissions": [
   {
