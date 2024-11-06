@@ -64,7 +64,7 @@ def create_sales_order(meter_reading):
                 "stock_uom": i.stock_uom,
                 "current_reading": i.current_reading,
                 "previous_reading": prev_reading,
-                "previous_consumption": prev_consumption,
+                "consumption": i.consumption,
             },
         )
     

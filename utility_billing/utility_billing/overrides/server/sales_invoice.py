@@ -2,6 +2,7 @@ from frappe.model.document import Document
 import frappe
 from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
 from erpnext.controllers.accounts_controller import AccountsController
+from frappe.model.mapper import get_mapped_doc
 
 
 def before_validate(doc: Document, method: str) -> None:
@@ -10,19 +11,31 @@ def before_validate(doc: Document, method: str) -> None:
     calculate_taxes_and_totals(doc)
     unique_sales_orders = {item.sales_order for item in doc.items if item.sales_order}
     for sales_order in unique_sales_orders:
-        copy_meter_reading_from_sales_order(doc, sales_order)
+        map_sales_order_meter_readings_to_invoice(sales_order, doc, True)
 
-def copy_meter_reading_from_sales_order(doc: Document, sales_order_name: str) -> None:
-    """Copies meter_readings tables from the linked Sales Order."""
-    sales_order = frappe.get_doc("Sales Order", sales_order_name)
-    
-    if hasattr(sales_order, "meter_readings"):
-        if not doc.meter_readings:
-            doc.meter_readings = []
-        for reading in sales_order.meter_readings:
-            reading_dict = reading.as_dict()
-            reading_dict.pop("name", None)
-            
-            if not any(existing_reading for existing_reading in doc.meter_readings if existing_reading.meter_reading == reading_dict.get("meter_reading")):
-                new_reading = doc.append("meter_readings", {})
-                new_reading.update(reading_dict) 
+
+
+def map_sales_order_meter_readings_to_invoice(source_name, target_doc, ignore_permissions):
+    """Map Sales Order to Sales Invoice, including meter readings."""
+    return get_mapped_doc(
+        "Sales Order",
+        source_name,
+        {
+           "Sales Order": {
+                "doctype": "Sales Invoice",
+                "field_map": {
+                    "party_account_currency": "party_account_currency",
+                    "payment_terms_template": "payment_terms_template",
+                },
+                "field_no_map": ["payment_terms_template"],
+                "validation": {"docstatus": ["=", 1]},
+            },
+            "Sales Order Meter Reading": { 
+                "doctype": "Sales Invoice Meter Reading",
+                "add_if_empty": True,
+            }
+        },
+        target_doc,
+        ignore_permissions=ignore_permissions,
+    )
+

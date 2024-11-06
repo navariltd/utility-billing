@@ -181,16 +181,7 @@ def map_sales_order_to_invoice(source_name, target_doc, ignore_permissions):
             "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
             "Sales Order Meter Reading": {
                 "doctype": "Sales Invoice Meter Reading",
-                "field_map": {
-                    "meter_number": "meter_number",
-                    "item_code": "item_code",
-                    "uom": "uom",
-                    "stock_uom": "stock_uom",
-                    "previous_consumption": "previous_consumption",
-                    "current_reading": "current_reading",
-                    "previous_reading": "previous_reading",
-                },
-                "condition": lambda doc: doc.meter_number is not None,
+                "add_if_empty": True,
             },
         },
         target_doc,
@@ -275,6 +266,7 @@ def merge_documents(doclist):
     target_invoice = doclist[0]
     for doc in doclist[1:]:
         add_invoice_items(target_invoice, doc)
+        add_invoice_meter_readings(target_invoice, doc)
         merge_invoice_taxes(target_invoice, doc)
     return target_invoice
 
@@ -289,6 +281,10 @@ def finalize_invoice(invoice):
 def add_invoice_items(target_invoice, doc):
     for item in doc.items:
         target_invoice.append("items", item)
+
+def add_invoice_meter_readings(target_invoice, doc):
+    for item in doc.meter_readings:
+        target_invoice.append("meter_readings", item)
 
 
 def merge_invoice_taxes(target_invoice, doc):

@@ -155,44 +155,58 @@ frappe.listview_settings["Sales Order"] = {
 function createSalesInvoices(listview, args) {
 	let checked_items = listview.get_checked_items();
 	const doc_names = [];
-	const error_messages = [];
+	const draft_orders = [];
 
 	checked_items.forEach((item) => {
-		if (item.per_billed >= 100) {
-			error_messages.push(__("Order {0} is already fully billed.", [item.name]));
-		} else if (item.docstatus === 0) {
-			error_messages.push(__("Order {0} is not submitted.", [item.name]));
-		} else {
+		if (item.docstatus === 0) {
+			draft_orders.push(item.name);
+		} else if (item.per_billed < 100) {
 			doc_names.push(item.name);
 		}
 	});
 
-	frappe.confirm(
-		__("Create Sales Invoice(s) for {0} Sales Order(s)?", [doc_names.length]),
-		() => {
-			if (doc_names.length > 0) {
-				const invoice_args = {
-					source_names: doc_names,
-				};
+	if (draft_orders.length > 0) {
+		const draft_links = draft_orders
+			.map((order) => `<a href="/app/sales-order/${order}" target="_blank">${order}</a>`)
+			.join(", ");
 
-				frappe.call({
-					method: "utility_billing.utility_billing.overrides.server.sales_order.enqueue_sales_invoice_creation",
-					args: invoice_args,
-					callback: function (response) {
-						if (response.message) {
-							frappe.msgprint(__(response.message));
-						} else {
-							frappe.msgprint(__("No valid orders to process."));
-						}
-
-						if (error_messages.length > 0) {
-							error_messages.forEach((msg) => frappe.msgprint(msg));
-						}
-					},
-				});
-			} else {
-				frappe.msgprint(__("No valid orders to process."));
+		frappe.confirm(
+			__(
+				"The following orders have not been submitted and will be ignored: {0}. <br>Proceed with creating invoices for submitted orders?",
+				[draft_links]
+			),
+			() => {
+				confirmInvoiceCreation(doc_names);
 			}
-		}
-	);
+		);
+	} else {
+		frappe.confirm(
+			__("Create Sales Invoice(s) for {0} Sales Order(s)?", [doc_names.length]),
+			() => {
+				confirmInvoiceCreation(doc_names);
+			}
+		);
+	}
+}
+
+function confirmInvoiceCreation(doc_names) {
+	if (doc_names.length > 0) {
+		const invoice_args = {
+			source_names: doc_names,
+		};
+
+		frappe.call({
+			method: "utility_billing.utility_billing.overrides.server.sales_order.enqueue_sales_invoice_creation",
+			args: invoice_args,
+			callback: function (response) {
+				if (response.message) {
+					frappe.msgprint(__(response.message));
+				} else {
+					frappe.msgprint(__("No valid orders to process."));
+				}
+			},
+		});
+	} else {
+		frappe.msgprint(__("No valid orders to process."));
+	}
 }
