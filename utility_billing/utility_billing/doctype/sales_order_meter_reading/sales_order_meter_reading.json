@@ -15,8 +15,8 @@
   "uom",
   "qty",
   "column_break_smgb",
-  "previous_reading",
   "current_reading",
+  "previous_reading",
   "consumption"
  ],
  "fields": [
@@ -111,7 +111,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-06 06:19:27.648258",
+ "modified": "2024-11-07 00:03:24.415579",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Sales Order Meter Reading",
