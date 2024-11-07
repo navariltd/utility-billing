@@ -28,6 +28,7 @@ def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
     meter_readings = sales_order.get("meter_readings") 
     target_doc.set("meter_readings", [])
     if sales_order.utility_property: target_doc.utility_property = sales_order.utility_property 
+    if sales_order.utility_service_request: target_doc.utility_service_request = sales_order.utility_service_request 
     
     for reading in meter_readings:
         new_reading_data = reading.as_dict()

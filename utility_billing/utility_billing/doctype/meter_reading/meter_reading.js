@@ -30,6 +30,21 @@ frappe.ui.form.on("Meter Reading", {
 						frm.set_value("customer_name", r.message.customer_name);
 						frm.set_value("territory", r.message.territory);
 						frm.set_value("price_list", r.message.default_price_list);
+						frm.doc.items.forEach((item) => {
+							if (item.item_code) {
+								frappe.call({
+									method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
+									args: {
+										item_code: item.item_code,
+										customer: frm.doc.customer,
+									},
+									callback: function (r) {
+										item.previous_reading = r.message || 0;
+										frm.refresh_field("items");
+									},
+								});
+							}
+						});
 					}
 				},
 			});

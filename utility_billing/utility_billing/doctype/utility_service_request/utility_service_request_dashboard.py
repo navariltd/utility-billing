@@ -6,6 +6,7 @@ def get_data():
                 "label": "Sales",
                 "items": [
                     "Sales Order",
+                    "Sales Invoice",
                 ],
             },
             {
