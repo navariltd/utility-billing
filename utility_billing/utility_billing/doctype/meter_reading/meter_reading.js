@@ -31,19 +31,7 @@ frappe.ui.form.on("Meter Reading", {
 						frm.set_value("territory", r.message.territory);
 						frm.set_value("price_list", r.message.default_price_list);
 						frm.doc.items.forEach((item) => {
-							if (item.item_code) {
-								frappe.call({
-									method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
-									args: {
-										item_code: item.item_code,
-										customer: frm.doc.customer,
-									},
-									callback: function (r) {
-										item.previous_reading = r.message || 0;
-										frm.refresh_field("items");
-									},
-								});
-							}
+							fetch_previous_reading(frm, item);
 						});
 					}
 				},
@@ -116,23 +104,36 @@ frappe.ui.form.on("Meter Reading Item", {
 						frappe.model.set_value(cdt, cdn, "stock_uom", r.message.stock_uom);
 						frappe.model.set_value(cdt, cdn, "description", r.message.description);
 
-						frappe.call({
-							method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
-							args: {
-								item_code: row.item_code,
-								customer: frm.doc.customer,
-							},
-							callback: function (r) {
-								row.previous_reading = r.message || 0;
-								frm.refresh_field("items");
-							},
-						});
+						fetch_previous_reading(frm, row);
 					}
 				},
 			});
 		}
 	},
+	meter_number: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row.item_code && frm.doc.customer) {
+			fetch_previous_reading(frm, row);
+		}
+	},
 });
+
+function fetch_previous_reading(frm, row) {
+	if (row.item_code && frm.doc.customer) {
+		frappe.call({
+			method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
+			args: {
+				item_code: row.item_code,
+				customer: frm.doc.customer,
+				meter_number: row.meter_number,
+			},
+			callback: function (r) {
+				row.previous_reading = r.message || 0;
+				frm.refresh_field("items");
+			},
+		});
+	}
+}
 
 function calculate_consumption(frm, row) {
 	row.consumption = row.current_reading - row.previous_reading;

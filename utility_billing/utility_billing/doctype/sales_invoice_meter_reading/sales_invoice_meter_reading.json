@@ -38,6 +38,10 @@
   {
    "fieldname": "meter_number",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Meter Number",
    "options": "Serial No"
   },
@@ -106,7 +110,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-07 07:25:13.812814",
+ "modified": "2024-11-08 07:35:30.185347",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Sales Invoice Meter Reading",
