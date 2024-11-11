@@ -120,6 +120,7 @@
    "fieldname": "rates",
    "fieldtype": "Table",
    "label": "Rates",
+   "no_copy": 1,
    "options": "Meter Reading Tariff Rate",
    "read_only": 1
   },
@@ -143,7 +144,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-06 06:12:10.394176",
+ "modified": "2024-11-11 14:30:07.566066",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
