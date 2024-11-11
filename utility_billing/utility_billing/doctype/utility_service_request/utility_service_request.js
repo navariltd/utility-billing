@@ -292,7 +292,11 @@ function addActionButtons(frm) {
 		frm.add_custom_button(
 			__("BOM"),
 			function () {
-				open_bom_creation_modal(frm);
+				frappe.model.with_doctype("BOM", function () {
+					const bom = frappe.model.get_new_doc("BOM");
+					bom.utility_service_request = frm.doc.name;
+					frappe.set_route("Form", "BOM", bom.name);
+				});
 			},
 			__("Create")
 		);
