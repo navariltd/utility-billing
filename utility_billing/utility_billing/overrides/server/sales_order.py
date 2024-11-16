@@ -273,6 +273,7 @@ def merge_documents(doclist):
 
 def finalize_invoice(invoice):
     """Calculate totals and save the invoice."""
+    invoice.update_stock = 1
     invoice.run_method("calculate_taxes_and_totals")
     invoice.run_method("set_payment_schedule")
     invoice.save()
