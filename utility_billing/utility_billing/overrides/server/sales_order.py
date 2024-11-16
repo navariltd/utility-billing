@@ -273,9 +273,15 @@ def merge_documents(doclist):
 
 def finalize_invoice(invoice):
     """Calculate totals and save the invoice."""
+    invoice.update_stock = 1
     invoice.run_method("calculate_taxes_and_totals")
     invoice.run_method("set_payment_schedule")
     invoice.save()
+    auto_submit_sales_invoice = frappe.db.get_single_value(
+        "Utility Billing Settings", "sales_invoice_creation_state"
+    )
+    if auto_submit_sales_invoice != "Draft":
+        invoice.submit()
 
 
 def add_invoice_items(target_invoice, doc):

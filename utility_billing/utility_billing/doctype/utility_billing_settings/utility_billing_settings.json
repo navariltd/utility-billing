@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sales_order_creation_state",
+  "sales_invoice_creation_state",
   "column_break_moce",
   "individual_invoices_for_multiple_sales_orders"
  ],
@@ -25,13 +26,20 @@
    "default": "0",
    "fieldname": "individual_invoices_for_multiple_sales_orders",
    "fieldtype": "Check",
-   "label": "Individual Invoices for Multiple Sales Orders"
+   "label": "Create single invoice for multiple sales orders per customer"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "sales_invoice_creation_state",
+   "fieldtype": "Select",
+   "label": "Sales Invoice Creation State",
+   "options": "Draft\nSubmitted"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-21 13:51:14.215274",
+ "modified": "2024-11-16 19:13:25.929144",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",
