@@ -292,11 +292,60 @@ function addActionButtons(frm) {
 		frm.add_custom_button(
 			__("BOM"),
 			function () {
-				frappe.model.with_doctype("BOM", function () {
-					const bom = frappe.model.get_new_doc("BOM");
-					bom.utility_service_request = frm.doc.name;
-					frappe.set_route("Form", "BOM", bom.name);
+				const dialog = new frappe.ui.Dialog({
+					title: __("Select or Create BOM"),
+					fields: [
+						{
+							fieldname: "selected_bom",
+							label: __("Select BOM"),
+							fieldtype: "Link",
+							options: "BOM",
+						},
+					],
+					primary_action_label: __("New BOM"),
+					primary_action: function () {
+						const new_bom = frappe.model.get_new_doc("BOM");
+						new_bom.utility_service_request = frm.doc.name;
+
+						frappe.set_route("Form", "BOM", new_bom.name);
+					},
+					secondary_action_label: __("New Version"),
+					secondary_action: function () {
+						const selected_bom = dialog.get_value("selected_bom");
+						if (selected_bom) {
+							frappe.call({
+								method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.bom_new_version",
+								args: {
+									bom: selected_bom,
+								},
+								callback: function (response) {
+									if (response && response.message) {
+										const new_bom = response.message;
+										new_bom.utility_service_request = frm.doc.name;
+										frappe.db
+											.insert(new_bom)
+											.then((doc) => {
+												frappe.set_route("Form", "BOM", doc.name);
+											})
+											.catch((err) => {
+												frappe.msgprint({
+													title: __("Error"),
+													message:
+														__("Failed to save the BOM: ") +
+														err.message,
+													indicator: "red",
+												});
+											});
+									}
+								},
+							});
+						} else {
+							frappe.msgprint(__("Please select a BOM to create a new version."));
+						}
+					},
 				});
+
+				dialog.show();
 			},
 			__("Create")
 		);
