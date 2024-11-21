@@ -209,3 +209,9 @@ def get_item_details(item_code, price_list=None):
             item_details["rate"] = item_price
 
     return item_details
+
+
+@frappe.whitelist()
+def bom_new_version(bom):
+    bom = frappe.get_doc("BOM", bom)
+    return frappe.copy_doc(bom)
