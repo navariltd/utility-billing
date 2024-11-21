@@ -426,7 +426,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-11 14:41:13.705665",
+ "modified": "2024-11-21 09:15:24.699016",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
@@ -450,7 +450,10 @@
    "write": 1
   }
  ],
+ "search_fields": "customer_name,customer_group,territory,property,request_type,nrcpassport_no",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "customer_name",
+ "translated_doctype": 1
 }
