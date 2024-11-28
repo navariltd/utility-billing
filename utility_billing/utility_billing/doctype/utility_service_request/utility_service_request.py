@@ -252,9 +252,10 @@ def create_stock_entry_for_meter_issue(docname):
             })
             stock_entry.append("items", stock_entry_item)
             
-    stock_entry.save()
+    if stock_entry.items:
+        stock_entry.save()
 
-    if auto_submit_stock_entry == "Submitted":
-        stock_entry.submit()
+        if auto_submit_stock_entry == "Submitted":
+            stock_entry.submit()
 
     return {"stock_entry": stock_entry.name}
