@@ -8,6 +8,7 @@
   "sales_order_creation_state",
   "sales_invoice_creation_state",
   "column_break_moce",
+  "stock_entry_creation_state",
   "individual_invoices_for_multiple_sales_orders"
  ],
  "fields": [
@@ -34,12 +35,19 @@
    "fieldtype": "Select",
    "label": "Sales Invoice Creation State",
    "options": "Draft\nSubmitted"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "stock_entry_creation_state",
+   "fieldtype": "Select",
+   "label": "Stock Entry Creation State",
+   "options": "Draft\nSubmitted"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-16 19:13:25.929144",
+ "modified": "2024-11-28 16:53:04.866577",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

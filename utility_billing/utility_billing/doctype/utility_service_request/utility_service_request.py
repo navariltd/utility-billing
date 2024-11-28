@@ -20,6 +20,10 @@ def create_customer_and_sales_order(docname):
     customer_doc = create_customer(doc)
     link_contact_and_address_to_customer(customer_doc, doc)
     sales_order_doc = create_sales_order(doc, customer_doc)
+    create_stock_entry_for_meter_issue(docname)
+    for item in doc.items:
+        if item.item_group == "Meter" and item.meter_number:
+            create_warranty_claim(customer_doc, item.meter_number, item.item_code)
 
     return {"sales_order": sales_order_doc.name}
 
@@ -215,3 +219,42 @@ def get_item_details(item_code, price_list=None):
 def bom_new_version(bom):
     bom = frappe.get_doc("BOM", bom)
     return frappe.copy_doc(bom)
+
+
+def create_warranty_claim(customer_doc, serial_number, item_code):
+    warranty_claim = frappe.new_doc("Warranty Claim")
+    warranty_claim.customer = customer_doc.name 
+    warranty_claim.complaint = customer_doc.name     
+    warranty_claim.serial_no = serial_number
+    warranty_claim.item_code = item_code
+    warranty_claim.complaint_date = nowdate()
+    warranty_claim.status = "Closed"
+    warranty_claim.save()
+    return warranty_claim
+
+
+@frappe.whitelist()
+def create_stock_entry_for_meter_issue(docname):
+    doc = frappe.get_doc("Utility Service Request", docname)
+
+    auto_submit_stock_entry = frappe.db.get_single_value("Utility Billing Settings", "stock_entry_creation_state")
+
+    stock_entry = frappe.new_doc("Stock Entry")
+    stock_entry.stock_entry_type = "Material Issue"
+
+    for item in doc.items:
+        if item.item_group == "Meter" and item.meter_number:
+            stock_entry_item = item.as_dict()
+            stock_entry_item.update({
+                "serial_no": item.meter_number, 
+                "use_serial_batch_fields": 1,                  
+                "s_warehouse": item.warehouse,  
+            })
+            stock_entry.append("items", stock_entry_item)
+            
+    stock_entry.save()
+
+    if auto_submit_stock_entry == "Submitted":
+        stock_entry.submit()
+
+    return {"stock_entry": stock_entry.name}

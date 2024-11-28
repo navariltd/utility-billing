@@ -224,6 +224,7 @@ function toggle_meter_number(frm, cdt, cdn, show) {
 	if (!show) {
 		frappe.model.set_value(cdt, cdn, "meter_number", null);
 	}
+	frm.fields_dict["items"].grid.toggle_reqd("warehouse", show, cdt, cdn);
 }
 
 function calculate_amount(frm, cdt, cdn) {
