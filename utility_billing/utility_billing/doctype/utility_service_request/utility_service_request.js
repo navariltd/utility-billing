@@ -36,6 +36,26 @@ frappe.ui.form.on("Utility Service Request", {
 			};
 		};
 
+		let closedWarrantySerials = [];
+
+		frappe.db
+			.get_list("Warranty Claim", {
+				filters: { status: "Closed" },
+				fields: ["serial_no"],
+			})
+			.then((warrantyClaims) => {
+				closedWarrantySerials = warrantyClaims.map((claim) => claim.serial_no);
+			});
+
+		frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
+			return {
+				filters: {
+					status: "Active",
+					name: ["not in", closedWarrantySerials],
+				},
+			};
+		};
+
 		frm.set_query("customer_group", function () {
 			return {
 				filters: {
@@ -113,6 +133,11 @@ frappe.ui.form.on("Utility Service Request", {
 });
 
 frappe.ui.form.on("Utility Service Request Item", {
+	form_render: function (frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		handle_item_code(frm, cdt, cdn, row.item_code);
+	},
+
 	items_add: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		let delivery_date = frm.doc.delivery_date || frappe.datetime.nowdate();
@@ -126,44 +151,7 @@ frappe.ui.form.on("Utility Service Request Item", {
 
 	item_code: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-		if (row.item_code) {
-			frappe.call({
-				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_item_details",
-				args: {
-					item_code: row.item_code,
-					price_list: frm.doc.price_list,
-				},
-				callback: function (r) {
-					if (r.message) {
-						let item = r.message;
-						frappe.model.set_value(cdt, cdn, {
-							item_name: item.item_name,
-							uom: item.uom,
-							rate: item.rate,
-							warehouse: item.warehouse,
-							description: item.description,
-							qty: 1,
-							conversion_factor: item.conversion_factor,
-							brand: item.brand,
-							item_group: item.item_group,
-							stock_uom: item.stock_uom,
-							bom_no: item.bom_no,
-							weight_per_unit: item.weight_per_unit,
-							weight_uom: item.weight_uom,
-							item_tax_template: item.item_tax_template,
-							warehouse: item.default_warehouse,
-						});
-
-						let amount = flt(item.rate) * flt(row.qty || 1);
-						frappe.model.set_value(cdt, cdn, {
-							rate: item.rate,
-							amount: amount,
-							base_price_list_rate: item.rate,
-						});
-					}
-				},
-			});
-		}
+		handle_item_code(frm, cdt, cdn, row.item_code, true);
 	},
 
 	rate: function (frm, cdt, cdn) {
@@ -180,6 +168,63 @@ frappe.ui.form.on("Utility Service Request Item", {
 		}
 	},
 });
+
+function handle_item_code(frm, cdt, cdn, item_code, update_fields = false) {
+	if (item_code) {
+		frappe.call({
+			method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_item_details",
+			args: {
+				item_code: item_code,
+				price_list: frm.doc.price_list,
+			},
+			callback: function (r) {
+				if (r.message) {
+					let item = r.message;
+					if (update_fields) {
+						update_item_fields(frm, cdt, cdn, item);
+					}
+					toggle_meter_number(frm, cdt, cdn, item.item_group === "Meter");
+				}
+			},
+		});
+	} else {
+		toggle_meter_number(frm, cdt, cdn, false);
+	}
+}
+
+function update_item_fields(frm, cdt, cdn, item) {
+	frappe.model.set_value(cdt, cdn, {
+		item_name: item.item_name,
+		uom: item.uom,
+		rate: item.rate,
+		warehouse: item.warehouse,
+		description: item.description,
+		qty: 1,
+		conversion_factor: item.conversion_factor,
+		brand: item.brand,
+		item_group: item.item_group,
+		stock_uom: item.stock_uom,
+		bom_no: item.bom_no,
+		weight_per_unit: item.weight_per_unit,
+		weight_uom: item.weight_uom,
+		item_tax_template: item.item_tax_template,
+		warehouse: item.default_warehouse,
+	});
+
+	let amount = flt(item.rate) * flt(frm.doc.qty || 1);
+	frappe.model.set_value(cdt, cdn, {
+		rate: item.rate,
+		amount: amount,
+		base_price_list_rate: item.rate,
+	});
+}
+
+function toggle_meter_number(frm, cdt, cdn, show) {
+	frm.fields_dict["items"].grid.toggle_display("meter_number", show, cdt, cdn);
+	if (!show) {
+		frappe.model.set_value(cdt, cdn, "meter_number", null);
+	}
+}
 
 function calculate_amount(frm, cdt, cdn) {
 	let row = locals[cdt][cdn];
