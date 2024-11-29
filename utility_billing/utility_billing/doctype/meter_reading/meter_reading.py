@@ -13,10 +13,16 @@ from ...utils.create_meter_reading_rates import create_meter_reading_rates
 
 class MeterReading(Document):
     def validate(self):
+        for item in self.items:
+            self.validate_item_readings(item)
         create_meter_reading_rates(self, self.price_list, self.date)
 
     def on_submit(self):
         settings = frappe.get_single("Utility Billing Settings")
+        if not self.rates or len(self.rates) == 0:
+            frappe.throw(
+                frappe._("Cannot submit Meter Reading. No rates available.")
+            )
         existing_sales_order = frappe.db.exists(
             {
                 "doctype": "Sales Order Meter Reading",
@@ -30,6 +36,31 @@ class MeterReading(Document):
             else:
                 sales_order = create_sales_order(self)
                 sales_order.submit()
+
+    def validate_item_readings(self, item):
+        """Validate readings for each item."""
+        if item.current_reading is None:
+            frappe.throw(
+                frappe._(
+                    f"Current reading is required for item: {item.item_code}"
+                )
+            )
+
+        previous_reading = get_previous_invoice_reading(
+            item_code=item.item_code,
+            customer=self.customer,
+            meter_number=item.meter_number
+        )
+        item.previous_reading = previous_reading
+
+        item.consumption = item.current_reading - previous_reading
+
+        if item.consumption < 0:
+            frappe.throw(
+                frappe._(
+                    f"Current reading cannot be lower than the previous reading for item: {item.item_code}"
+                )
+            )
 
 
 def create_sales_order(meter_reading):
@@ -116,3 +147,24 @@ def get_customer_details(customer):
         )
 
     return customer_doc.as_dict()
+
+
+@frappe.whitelist()
+def get_serial_numbers_from_warranty_claims(customer):
+    """
+    Fetch serial numbers from closed Warranty Claims for the given customer and item.
+    """
+    serial_numbers = frappe.get_all(
+        "Warranty Claim",
+        filters={
+            "customer": customer,
+            "status": "Closed",
+        },
+        fields=["serial_no"],
+    )
+    serial_list = []
+    for claim in serial_numbers:
+        if claim.get("serial_no"):
+            serial_list.extend(claim["serial_no"].split("\n"))
+
+    return list(set(serial_list)) 

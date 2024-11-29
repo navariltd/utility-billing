@@ -16,6 +16,8 @@ frappe.ui.form.on("Meter Reading", {
 				},
 			};
 		};
+
+		update_meter_number_query(frm);
 	},
 
 	customer: function (frm) {
@@ -37,6 +39,7 @@ frappe.ui.form.on("Meter Reading", {
 				},
 			});
 		}
+		update_meter_number_query(frm);
 	},
 
 	items_add: function (frm) {
@@ -109,6 +112,7 @@ frappe.ui.form.on("Meter Reading Item", {
 				},
 			});
 		}
+		update_meter_number_query(frm);
 	},
 	meter_number: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
@@ -117,6 +121,38 @@ frappe.ui.form.on("Meter Reading Item", {
 		}
 	},
 });
+
+function update_meter_number_query(frm) {
+	frappe.db
+		.get_list("Warranty Claim", {
+			filters: { status: "Closed", customer: frm.doc.customer },
+			fields: ["serial_no"],
+		})
+		.then((warrantyClaims) => {
+			const closedWarrantySerials = warrantyClaims.map((claim) => claim.serial_no);
+
+			frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
+				return {
+					filters: {
+						status: "Active",
+						name: ["in", closedWarrantySerials],
+					},
+				};
+			};
+
+			frm.doc.items.forEach((row) => {
+				if (!row.meter_number && closedWarrantySerials.length === 1) {
+					frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"meter_number",
+						closedWarrantySerials[0]
+					);
+				}
+			});
+			frm.refresh_field("items");
+		});
+}
 
 function fetch_previous_reading(frm, row) {
 	if (row.item_code && frm.doc.customer) {
