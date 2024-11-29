@@ -223,7 +223,7 @@ def set_missing_values(source, target):
 
 
 def update_item(source, target, source_parent):
-    """Update the item details for the invoice."""
+    """Update the item details for the invoice and copy serial number as meter number if applicable."""
     target.amount = flt(source.amount) - flt(source.billed_amt)
     target.base_amount = target.amount * flt(source_parent.conversion_rate)
     target.qty = (
@@ -233,6 +233,21 @@ def update_item(source, target, source_parent):
     )
 
     set_cost_center(source_parent, target)
+
+    sales_order = frappe.get_doc("Sales Order", source_parent.name)
+
+    if sales_order.utility_service_request:
+        utility_service_request = frappe.get_doc(
+            "Utility Service Request", sales_order.utility_service_request
+        )
+
+        for request_item in utility_service_request.items:
+            if request_item.item_code == target.item_code:  
+                if request_item.meter_number:
+                    target.serial_no = request_item.meter_number  
+                    break
+
+    return target
 
 
 def set_cost_center(source_parent, target):
