@@ -116,3 +116,24 @@ def get_customer_details(customer):
         )
 
     return customer_doc.as_dict()
+
+
+@frappe.whitelist()
+def get_serial_numbers_from_warranty_claims(customer):
+    """
+    Fetch serial numbers from closed Warranty Claims for the given customer and item.
+    """
+    serial_numbers = frappe.get_all(
+        "Warranty Claim",
+        filters={
+            "customer": customer,
+            "status": "Closed",
+        },
+        fields=["serial_no"],
+    )
+    serial_list = []
+    for claim in serial_numbers:
+        if claim.get("serial_no"):
+            serial_list.extend(claim["serial_no"].split("\n"))
+
+    return list(set(serial_list)) 
