@@ -2,17 +2,17 @@
 # For license information, please see license.txt
 
 import frappe
+from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import nowdate, add_months
-from erpnext.controllers.accounts_controller import AccountsController
+from frappe.utils import add_months, nowdate
 
 
 class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
- 
+
 
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):
@@ -97,7 +97,7 @@ def create_sales_order(doc, customer_doc):
         sales_order_doc.append("items", item_dict)
 
     sales_order_doc.insert()
-    
+
     AccountsController.append_taxes_from_item_tax_template(sales_order_doc)
     sales_order_doc.save()
 
@@ -134,7 +134,7 @@ def create_bom(docname, item_code):
     bom = frappe.new_doc("BOM")
     bom.item = item_code
     bom.utility_service_request = docname
-    bom.raw_material_cost = 1   
+    bom.raw_material_cost = 1
     bom.items = []
     bom.flags.ignore_mandatory = True
     bom.flags.ignore_validate = True
@@ -197,9 +197,11 @@ def get_item_details(item_code, price_list=None):
         "stock_uom": item.stock_uom,
         "bom_no": item.default_bom,
         "weight_per_unit": item.weight_per_unit,
-        "weight_uom": item.weight_uom, 
+        "weight_uom": item.weight_uom,
         "item_tax_template": item.taxes[0].item_tax_template if item.taxes else None,
-        "default_warehouse": item.item_defaults[0].default_warehouse if item.item_defaults else None,
+        "default_warehouse": (
+            item.item_defaults[0].default_warehouse if item.item_defaults else None
+        ),
         "delivery_date": nowdate(),
     }
 
@@ -223,8 +225,8 @@ def bom_new_version(bom):
 
 def create_warranty_claim(customer_doc, serial_number, item_code):
     warranty_claim = frappe.new_doc("Warranty Claim")
-    warranty_claim.customer = customer_doc.name 
-    warranty_claim.complaint = customer_doc.name     
+    warranty_claim.customer = customer_doc.name
+    warranty_claim.complaint = customer_doc.name
     warranty_claim.serial_no = serial_number
     warranty_claim.item_code = item_code
     warranty_claim.complaint_date = nowdate()
@@ -237,7 +239,9 @@ def create_warranty_claim(customer_doc, serial_number, item_code):
 def create_stock_entry_for_meter_issue(docname):
     doc = frappe.get_doc("Utility Service Request", docname)
 
-    auto_submit_stock_entry = frappe.db.get_single_value("Utility Billing Settings", "stock_entry_creation_state")
+    auto_submit_stock_entry = frappe.db.get_single_value(
+        "Utility Billing Settings", "stock_entry_creation_state"
+    )
 
     stock_entry = frappe.new_doc("Stock Entry")
     stock_entry.stock_entry_type = "Material Issue"
@@ -245,13 +249,15 @@ def create_stock_entry_for_meter_issue(docname):
     for item in doc.items:
         if item.item_group == "Meter" and item.meter_number:
             stock_entry_item = item.as_dict()
-            stock_entry_item.update({
-                "serial_no": item.meter_number, 
-                "use_serial_batch_fields": 1,                  
-                "s_warehouse": item.warehouse,  
-            })
+            stock_entry_item.update(
+                {
+                    "serial_no": item.meter_number,
+                    "use_serial_batch_fields": 1,
+                    "s_warehouse": item.warehouse,
+                }
+            )
             stock_entry.append("items", stock_entry_item)
-            
+
     if stock_entry.items:
         stock_entry.save()
 

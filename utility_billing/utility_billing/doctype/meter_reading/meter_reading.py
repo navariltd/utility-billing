@@ -1,11 +1,10 @@
 # Copyright (c) 2024, Navari and contributors
 # For license information, please see license.txt
 import frappe
+from erpnext.controllers.accounts_controller import AccountsController
 from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.utils import nowdate
-from erpnext.controllers.accounts_controller import AccountsController
-from frappe.query_builder import DocType
 from pypika import Order
 
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
@@ -20,9 +19,7 @@ class MeterReading(Document):
     def on_submit(self):
         settings = frappe.get_single("Utility Billing Settings")
         if not self.rates or len(self.rates) == 0:
-            frappe.throw(
-                frappe._("Cannot submit Meter Reading. No rates available.")
-            )
+            frappe.throw(frappe._("Cannot submit Meter Reading. No rates available."))
         existing_sales_order = frappe.db.exists(
             {
                 "doctype": "Sales Order Meter Reading",
@@ -41,15 +38,13 @@ class MeterReading(Document):
         """Validate readings for each item."""
         if item.current_reading is None:
             frappe.throw(
-                frappe._(
-                    f"Current reading is required for item: {item.item_code}"
-                )
+                frappe._(f"Current reading is required for item: {item.item_code}")
             )
 
         previous_reading = get_previous_invoice_reading(
             item_code=item.item_code,
             customer=self.customer,
-            meter_number=item.meter_number
+            meter_number=item.meter_number,
         )
         item.previous_reading = previous_reading
 
@@ -75,7 +70,9 @@ def create_sales_order(meter_reading):
             "selling_price_list": meter_reading.price_list,
         }
     )
-    utility_property = frappe.get_value("Customer", meter_reading.customer, "utility_property")
+    utility_property = frappe.get_value(
+        "Customer", meter_reading.customer, "utility_property"
+    )
     if utility_property:
         sales_order.utility_property = utility_property
 
@@ -83,10 +80,11 @@ def create_sales_order(meter_reading):
         rate_dict = rate.as_dict()
         rate_dict["delivery_date"] = nowdate()
         sales_order.append("items", rate_dict)
-        
 
     for i in meter_reading.items:
-        prev_reading = get_previous_invoice_reading(i.item_code, meter_reading.customer, i.meter_number)
+        prev_reading = get_previous_invoice_reading(
+            i.item_code, meter_reading.customer, i.meter_number
+        )
         sales_order.append(
             "meter_readings",
             {
@@ -100,8 +98,8 @@ def create_sales_order(meter_reading):
                 "consumption": i.consumption,
             },
         )
-    
-    sales_order.insert() 
+
+    sales_order.insert()
     AccountsController.append_taxes_from_item_tax_template(sales_order)
     sales_order.save()
 
@@ -111,24 +109,25 @@ def create_sales_order(meter_reading):
 @frappe.whitelist()
 def get_previous_invoice_reading(item_code, customer, meter_number=None):
     """Fetch the latest reading for the specified customer, item, and optional meter number."""
-    
+
     SalesInvoiceMeterReading = DocType("Sales Invoice Meter Reading")
     SalesInvoice = DocType("Sales Invoice")
-    
+
     query = (
         frappe.qb.from_(SalesInvoiceMeterReading)
-        .join(SalesInvoice).on(SalesInvoice.name == SalesInvoiceMeterReading.parent) 
+        .join(SalesInvoice)
+        .on(SalesInvoice.name == SalesInvoiceMeterReading.parent)
         .select(SalesInvoiceMeterReading.current_reading)
         .where(SalesInvoice.customer == customer)
         .where(SalesInvoiceMeterReading.item_code == item_code)
         .where(SalesInvoice.docstatus == 1)
     )
-    
+
     if meter_number:
         query = query.where(SalesInvoiceMeterReading.meter_number == meter_number)
     else:
         query = query.where(SalesInvoiceMeterReading.meter_number.isnull())
-    
+
     query = query.orderby(SalesInvoiceMeterReading.creation, order=Order.desc)
     result = query.limit(1).run()
 
@@ -167,4 +166,4 @@ def get_serial_numbers_from_warranty_claims(customer):
         if claim.get("serial_no"):
             serial_list.extend(claim["serial_no"].split("\n"))
 
-    return list(set(serial_list)) 
+    return list(set(serial_list))
