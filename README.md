@@ -69,7 +69,7 @@ The Meter Reading doctype is used to log periodic meter readings for customers. 
 4. In the Items table, select the Utility Items and set the Current Readings.  
    - The previous reading will be pulled from the Customer’s previous Sales Invoice, and the Consumption is calculated using the formula:  
      **Consumption = (Current Reading - Previous Reading)**  
-   - The Meter Number is fetched from the Customer’s associated Warranty Claim.  
+   - The Meter Number is fetched from the Customer’s associated Warranty Claim and is auto-selected if there is only one meter, or selected manually if multiple meters are available.  
 5. Save and Submit.  
 
 On saving, the consumption rates are auto-calculated based on the associated Item Price.  
@@ -112,7 +112,9 @@ Streamlines the billing process by generating a single invoice from multiple cus
 ![Is Utility Screenshot](./utility_billing/docs/images/is_utility_item.png)  
 
 #### **3.2 Meter Numbers**  
-- Maintain meter numbers as serial numbers in ERPNext. Assign them via Warranty Claims for seamless integration.  
+- Maintain meter numbers as serial numbers in ERPNext. Assign them via Warranty Claims for seamless integration. A customer can have one or more meter numbers.
+- **Single Meter:** If a customer has only one meter, it will be auto-selected during meter reading.
+- **Multiple Meters:** If a customer has multiple meters, the specific meter must be selected from the existing ones linked to the customer.
 ![Warranty Claim Screenshot](./utility_billing/docs/images/meter-number.png)  
 
 ---
