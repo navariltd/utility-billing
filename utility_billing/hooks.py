@@ -173,18 +173,16 @@ doctype_list_js = {
 # Hook on document methods and events
 
 doc_events = {
-	# "*": {
-	# 	"on_update": "method",
-	# 	"on_cancel": "method",
-	# 	"on_trash": "method"
-	# }
- 
-     "Sales Invoice": {
+    # "*": {
+    # 	"on_update": "method",
+    # 	"on_cancel": "method",
+    # 	"on_trash": "method"
+    # }
+    "Sales Invoice": {
         "before_validate": [
             "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
         ],
     },
-
 }
 
 # Scheduled Tasks

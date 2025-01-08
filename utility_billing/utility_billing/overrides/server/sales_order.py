@@ -242,9 +242,9 @@ def update_item(source, target, source_parent):
         )
 
         for request_item in utility_service_request.items:
-            if request_item.item_code == target.item_code:  
+            if request_item.item_code == target.item_code:
                 if request_item.meter_number:
-                    target.serial_no = request_item.meter_number  
+                    target.serial_no = request_item.meter_number
                     break
 
     return target
@@ -302,6 +302,7 @@ def finalize_invoice(invoice):
 def add_invoice_items(target_invoice, doc):
     for item in doc.items:
         target_invoice.append("items", item)
+
 
 def add_invoice_meter_readings(target_invoice, doc):
     for item in doc.meter_readings:

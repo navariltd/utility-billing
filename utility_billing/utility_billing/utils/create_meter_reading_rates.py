@@ -1,5 +1,7 @@
-import frappe
 from datetime import datetime
+
+import frappe
+
 
 @frappe.whitelist()
 def create_meter_reading_rates(meter_reading, price_list, reading_date):
@@ -30,8 +32,9 @@ def create_meter_reading_rates(meter_reading, price_list, reading_date):
 def get_item_prices(item_code, price_list, reading_date):
     """Fetch item prices for the given item code and reading date."""
     reading_date = (
-        datetime.strptime(reading_date, '%Y-%m-%d').date()
-        if isinstance(reading_date, str) else reading_date
+        datetime.strptime(reading_date, "%Y-%m-%d").date()
+        if isinstance(reading_date, str)
+        else reading_date
     )
     item_prices = frappe.get_list(
         "Item Price",
@@ -43,10 +46,16 @@ def get_item_prices(item_code, price_list, reading_date):
         fields=["name", "tariffs", "is_fixed_meter_charge", "valid_upto"],
     )
     return [
-        price for price in item_prices
-        if price.get("valid_upto") is None or
-           (datetime.strptime(price["valid_upto"], '%Y-%m-%d').date() >= reading_date if isinstance(price["valid_upto"], str) else price["valid_upto"] >= reading_date)
+        price
+        for price in item_prices
+        if price.get("valid_upto") is None
+        or (
+            datetime.strptime(price["valid_upto"], "%Y-%m-%d").date() >= reading_date
+            if isinstance(price["valid_upto"], str)
+            else price["valid_upto"] >= reading_date
+        )
     ]
+
 
 def raise_no_pricing_error(item_code, price_list, reading_date):
     """Raise an error if no valid pricing is available."""
