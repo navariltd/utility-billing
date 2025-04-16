@@ -36,6 +36,11 @@ fixtures = [
     },
 ]
 
+accounting_dimension_doctypes = [
+    "Utility Bill Structure",
+    "Utility Service Request",
+]
+
 
 # Apps
 # ------------------
