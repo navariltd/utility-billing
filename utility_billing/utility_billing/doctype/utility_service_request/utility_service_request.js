@@ -302,38 +302,67 @@ function addActionButtons(frm) {
 				},
 				__("Create")
 			);
-		}
-		frappe.db.get_value(
-			"Sales Order",
-			{ utility_service_request: frm.doc.name },
-			"name",
-			(r) => {
-				if (!r.name) {
-					frm.add_custom_button(
-						__("Sales Order"),
-						function () {
-							frappe.call({
-								method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
-								args: {
-									docname: frm.doc.name,
-								},
-								callback: function (response) {
-									handle_response(response, __("Sales Order"), frm);
-									if (response && response.message) {
-										frappe.set_route(
-											"Form",
-											"Sales Order",
-											response.message.sales_order
-										);
-									}
-								},
-							});
-						},
-						__("Create")
-					);
+		} else {
+			frappe.db.get_value(
+				"Contract",
+				{ utility_service_request: frm.doc.name },
+				"name",
+				(r) => {
+					if (!r.name) {
+						frm.add_custom_button(
+							__("Contract"),
+							function () {
+								frappe.call({
+									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_contract",
+									args: {
+										name: frm.doc.name,
+									},
+									callback: function (response) {
+										handle_response(response, __("Contract"), frm);
+										if (response && response.message) {
+											frappe.set_route("Form", "Contract", response.message);
+										}
+									},
+								});
+							},
+							__("Create")
+						);
+					}
 				}
-			}
-		);
+			);
+
+			frappe.db.get_value(
+				"Sales Order",
+				{ utility_service_request: frm.doc.name },
+				"name",
+				(r) => {
+					if (!r.name) {
+						frm.add_custom_button(
+							__("Sales Order"),
+							function () {
+								frappe.call({
+									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
+									args: {
+										docname: frm.doc.name,
+									},
+									callback: function (response) {
+										handle_response(response, __("Sales Order"), frm);
+										if (response && response.message) {
+											frappe.set_route(
+												"Form",
+												"Sales Order",
+												response.message.name
+											);
+										}
+									},
+								});
+							},
+							__("Create")
+						);
+					}
+				}
+			);
+		}
 	}
 
 	if (currentStatus === "") {

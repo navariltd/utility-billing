@@ -12,6 +12,11 @@ from frappe.utils import add_months, nowdate
 class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
+        
+    def on_submit(self):
+        settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+        if settings.create_customer_from_utility_service_request_on_submit:
+            make_customer(self.name)
  
 
 @frappe.whitelist()
@@ -29,6 +34,20 @@ def create_customer_and_sales_order(docname):
 
 
 @frappe.whitelist()
+def create_contract(name):
+    """Create a contract from the Utility Service Request."""
+    doc = frappe.get_doc("Utility Service Request", name)
+    contract = frappe.new_doc("Contract")
+    contract.party_type = "Customer"
+    contract.party_name = doc.customer
+    contract.utility_service_request = name
+    contract.property = doc.utility_property
+    contract.flags.ignore_mandatory = True
+    contract.insert()
+    return contract.name
+
+
+@frappe.whitelist()
 def make_customer(name):
     """Create a customer from the Utility Service Request."""
     doc = frappe.get_doc("Utility Service Request", name)
@@ -36,15 +55,25 @@ def make_customer(name):
     frappe.db.set_value("Utility Service Request", name, "customer", customer_doc.name)
     return customer_doc.name
 
+
 def create_customer(doc):
     if doc.customer:
         return frappe.get_doc("Customer", doc.customer)
     
     from erpnext.selling.doctype.quotation.quotation import create_customer_from_lead, create_customer_from_prospect
-    if doc.service_request_from == "Lead": 
+
+    if doc.service_request_from == "Lead":
+        existing_customer = frappe.db.get_value("Customer", {"lead_name": doc.party_name}, "name")
+        if existing_customer:
+            return frappe.get_doc("Customer", existing_customer)
         return create_customer_from_lead(doc.party_name, ignore_permissions=True)
+    
     elif doc.service_request_from == "Prospect":
+        existing_customer = frappe.db.get_value("Customer", {"prospect_name": doc.party_name}, "name")
+        if existing_customer:
+            return frappe.get_doc("Customer", existing_customer)
         return create_customer_from_prospect(doc.party_name, ignore_permissions=True)
+    
     elif doc.service_request_from == "Customer":
         return frappe.get_doc("Customer", doc.party_name)
 
