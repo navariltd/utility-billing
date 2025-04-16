@@ -8,17 +8,27 @@
  "field_order": [
   "section_break_uwso",
   "property_name",
-  "territory",
   "utility_category",
-  "location",
   "parent_utility_property",
-  "is_group",
   "column_break_dhhw",
-  "lft",
-  "plot_no",
+  "status",
+  "is_fixed_asset",
+  "is_group",
+  "section_break_jcig",
+  "asset_naming_series",
+  "item",
+  "column_break_sakg",
+  "asset_category",
+  "section_break_spsb",
+  "territory",
+  "location",
+  "column_break_dgdr",
   "house_no",
+  "plot_no",
+  "section_break_nbga",
+  "lft",
+  "column_break_bfzu",
   "rgt",
-  "old_parent",
   "address_contacts_tab",
   "address_html",
   "column_break_txlm",
@@ -52,12 +62,6 @@
    "label": "Is Group"
   },
   {
-   "fieldname": "old_parent",
-   "fieldtype": "Link",
-   "label": "Old Parent",
-   "options": "Utility Property"
-  },
-  {
    "fieldname": "parent_utility_property",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -85,6 +89,10 @@
   {
    "fieldname": "utility_category",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Utility Category",
    "options": "Utility Category"
   },
@@ -122,12 +130,75 @@
    "fieldname": "contact_html",
    "fieldtype": "HTML",
    "label": "Contact HTML"
+  },
+  {
+   "fieldname": "section_break_nbga",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_bfzu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.is_fixed_asset == 1",
+   "fieldname": "asset_category",
+   "fieldtype": "Link",
+   "label": "Asset Category",
+   "options": "Asset Category"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_fixed_asset",
+   "fieldtype": "Check",
+   "label": "Is Fixed Asset"
+  },
+  {
+   "depends_on": "eval: doc.is_fixed_asset == 1",
+   "fieldname": "asset_naming_series",
+   "fieldtype": "Select",
+   "label": "Asset Naming Series",
+   "options": "ACC-ASS-.YYYY.-"
+  },
+  {
+   "depends_on": "eval: doc.is_fixed_asset == 1",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "link_filters": "[[\"Item\",\"is_fixed_asset\",\"=\",1]]",
+   "options": "Item"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Availability Status",
+   "options": "\nAvailable\nOccupied\nUnder Maintenance\nReserved",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_spsb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dgdr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jcig",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_sakg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2024-11-06 16:19:19.100357",
+ "modified": "2025-04-16 10:18:09.583934",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",
@@ -148,7 +219,25 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Green",
+   "title": "Available"
+  },
+  {
+   "color": "Blue",
+   "title": "Occupied"
+  },
+  {
+   "color": "Orange",
+   "title": "Under Maintenance"
+  },
+  {
+   "color": "Pink",
+   "title": "Reserved"
+  }
+ ]
 }
