@@ -282,6 +282,27 @@ function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
 	if (frm.doc.docstatus === 1) {
+		if (!frm.doc.customer) {
+			frm.add_custom_button(
+				__("Customer"),
+				function () {
+					frappe.call({
+						method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.make_customer",
+						args: {
+							name: frm.doc.name,
+						},
+						callback: function (response) {
+							frappe.show_alert({
+								message: __("Customer created successfully!"),
+								indicator: "green",
+							});
+							frm.reload_doc();
+						},
+					});
+				},
+				__("Create")
+			);
+		}
 		frappe.db.get_value(
 			"Sales Order",
 			{ utility_service_request: frm.doc.name },

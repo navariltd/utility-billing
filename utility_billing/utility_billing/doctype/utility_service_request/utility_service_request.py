@@ -28,30 +28,25 @@ def create_customer_and_sales_order(docname):
     return {"sales_order": sales_order_doc.name}
 
 
+@frappe.whitelist()
+def make_customer(name):
+    """Create a customer from the Utility Service Request."""
+    doc = frappe.get_doc("Utility Service Request", name)
+    customer_doc = create_customer(doc)
+    frappe.db.set_value("Utility Service Request", name, "customer", customer_doc.name)
+    return customer_doc.name
+
 def create_customer(doc):
-    if not doc.customer:
-        customer_doc = frappe.new_doc("Customer")
-        customer_doc.customer_name = doc.customer_name
-        customer_doc.customer_type = doc.customer_type
-        customer_doc.customer_group = doc.customer_group
-        customer_doc.territory = doc.territory
-        customer_doc.tax_id = doc.tax_id
-        customer_doc.nrc_or_passport_no = doc.nrcpassport_no
-        customer_doc.company = doc.company
-        customer_doc.insert()
-        customer_doc.utility_property = doc.property
-
-        frappe.db.set_value(
-            "Utility Service Request", doc.name, "customer", customer_doc.name
-        )
-
-        doc = frappe.get_doc("Utility Service Request", doc.name)
-        doc.save()
-
-    else:
-        customer_doc = frappe.get_doc("Customer", doc.customer)
-
-    return customer_doc
+    if doc.customer:
+        return frappe.get_doc("Customer", doc.customer)
+    
+    from erpnext.selling.doctype.quotation.quotation import create_customer_from_lead, create_customer_from_prospect
+    if doc.service_request_from == "Lead": 
+        return create_customer_from_lead(doc.party_name, ignore_permissions=True)
+    elif doc.service_request_from == "Prospect":
+        return create_customer_from_prospect(doc.party_name, ignore_permissions=True)
+    elif doc.service_request_from == "Customer":
+        return frappe.get_doc("Customer", doc.party_name)
 
 
 def link_contact_and_address_to_customer(customer_doc, doc):
