@@ -19,7 +19,8 @@
   "items",
   "total_amount",
   "section_break_9z5c",
-  "amended_from"
+  "amended_from",
+  "dashboard_tab"
  ],
  "fields": [
   {
@@ -112,13 +113,25 @@
   {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard",
+   "show_dashboard": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2025-04-16 13:02:08.771370",
+ "links": [
+  {
+   "group": "Utility Billing",
+   "link_doctype": "Utility Service Request",
+   "link_fieldname": "utility_bill_structure"
+  }
+ ],
+ "modified": "2025-04-16 16:18:13.745402",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure",

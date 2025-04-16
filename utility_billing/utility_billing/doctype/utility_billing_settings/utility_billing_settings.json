@@ -9,7 +9,8 @@
   "sales_invoice_creation_state",
   "column_break_moce",
   "stock_entry_creation_state",
-  "individual_invoices_for_multiple_sales_orders"
+  "individual_invoices_for_multiple_sales_orders",
+  "create_customer_from_utility_service_request_on_submit"
  ],
  "fields": [
   {
@@ -42,12 +43,18 @@
    "fieldtype": "Select",
    "label": "Stock Entry Creation State",
    "options": "Draft\nSubmitted"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_customer_from_utility_service_request_on_submit",
+   "fieldtype": "Check",
+   "label": "Create Customer from Utility Service Request on Submit"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-28 16:53:04.866577",
+ "modified": "2025-04-16 14:52:15.237854",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",
@@ -64,6 +71,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

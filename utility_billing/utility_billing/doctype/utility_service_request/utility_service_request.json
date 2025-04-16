@@ -9,14 +9,15 @@
  "field_order": [
   "section_break_cpzx",
   "naming_series",
-  "customer_name",
   "customer_type",
   "request_type",
+  "service_request_from",
+  "party_name",
   "column_break_nqzi",
   "date",
   "customer_group",
   "territory",
-  "property",
+  "payment_terms_template",
   "column_break_wxld",
   "company",
   "tax_id",
@@ -30,6 +31,7 @@
   "column_break_tviv",
   "price_list",
   "section_break_jqrx",
+  "utility_bill_structure",
   "items",
   "section_break_asmx",
   "amended_from",
@@ -110,16 +112,6 @@
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company"
-  },
-  {
-   "fieldname": "customer_name",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Customer Name",
-   "reqd": 1
   },
   {
    "fieldname": "customer_type",
@@ -407,12 +399,6 @@
    "label": "Posted by Date"
   },
   {
-   "fieldname": "property",
-   "fieldtype": "Link",
-   "label": "Property",
-   "options": "Utility Property"
-  },
-  {
    "fieldname": "location",
    "fieldtype": "Link",
    "label": "Location",
@@ -421,12 +407,38 @@
   {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_request_from",
+   "fieldtype": "Link",
+   "label": "Service Request From",
+   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Lead\",\"Customer\",\"Prospect\"]]]",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Party Name",
+   "options": "service_request_from"
+  },
+  {
+   "fieldname": "payment_terms_template",
+   "fieldtype": "Link",
+   "label": "Payment Terms Template",
+   "options": "Payment Terms Template"
+  },
+  {
+   "fieldname": "utility_bill_structure",
+   "fieldtype": "Link",
+   "label": "Utility Bill Structure",
+   "options": "Utility Bill Structure"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-16 13:08:43.906254",
+ "modified": "2025-04-16 15:04:24.665045",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
@@ -451,10 +463,11 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "customer_name,customer_group,territory,property,request_type,nrcpassport_no",
+ "search_fields": "party_name,customer_group,territory,request_type,nrcpassport_no",
+ "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "customer_name",
+ "title_field": "party_name",
  "translated_doctype": 1
 }

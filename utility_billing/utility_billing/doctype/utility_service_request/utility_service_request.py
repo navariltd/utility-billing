@@ -12,7 +12,7 @@ from frappe.utils import add_months, nowdate
 class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
-
+ 
 
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):

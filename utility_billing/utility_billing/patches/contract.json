@@ -1,0 +1,56 @@
+[
+  {
+    "fieldname": "contract_utilities_section",
+    "label": "Utility Details",
+    "fieldtype": "Section Break",
+    "insert_after": "end_date"
+  },
+  {
+    "fieldname": "property",
+    "label": "Property",
+    "fieldtype": "Link",
+    "options": "Utility Property",
+    "in_standard_filter": 1,
+    "in_list_view": 1,
+    "insert_after": "contract_utilities_section"
+  },
+  {
+    "fieldname": "frequency",
+    "label": "Frequency",
+    "fieldtype": "Select",
+    "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
+    "default": "Monthly",
+    "in_standard_filter": 1,
+    "insert_after": "property"
+  },
+  {
+    "fieldtype": "Column Break",
+    "fieldname": "utility_property_col",
+    "insert_after": "utility_service_request"
+  },
+  {
+    "fieldname": "utility_service_request",
+    "label": "Utility Service Request",
+    "fieldtype": "Link",
+    "options": "Utility Service Request",
+    "in_list_view": 0,
+    "in_standard_filter": 1,
+    "insert_after": "frequency"
+  },
+  {
+    "fieldname": "rent_increment_percentage",
+    "label": "Rent Increment Percentage",
+    "fieldtype": "Float",
+    "default": 0.0,
+    "insert_after": "utility_property_col"
+  },
+  {
+    "fieldname": "rent_increment_frequency",
+    "label": "Rent Increment Frequency",
+    "fieldtype": "Select",
+    "in_standard_filter": 1,
+    "options": "\nMonthly\nQuarterly\nYearly",
+    "default": "Yearly",
+    "insert_after": "rent_increment_percentage"
+  }
+]

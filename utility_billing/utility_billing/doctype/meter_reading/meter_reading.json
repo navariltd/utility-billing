@@ -16,6 +16,10 @@
   "company",
   "territory",
   "property",
+  "accounting_dimensions_section",
+  "cost_center",
+  "dimension_col_break",
+  "project",
   "currency_and_price_list_section",
   "currency",
   "column_break_tssa",
@@ -148,12 +152,34 @@
    "label": "Property",
    "options": "Utility Property",
    "read_only": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "dimension_col_break",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-16 10:57:51.137373",
+ "modified": "2025-04-16 15:08:10.896336",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

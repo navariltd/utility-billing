@@ -21,5 +21,11 @@ def get_data():
                     "BOM",
                 ],
             },
+            {
+                "label": "Contract Management",
+                "items": [
+                    "Contract",
+                ],
+            },
         ],
     }
