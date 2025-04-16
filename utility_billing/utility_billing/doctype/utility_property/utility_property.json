@@ -33,7 +33,8 @@
   "address_contacts_tab",
   "address_html",
   "column_break_txlm",
-  "contact_html"
+  "contact_html",
+  "dashboard_tab"
  ],
  "fields": [
   {
@@ -215,12 +216,18 @@
    "fieldtype": "Currency",
    "label": "Gross Purchase Amount",
    "mandatory_depends_on": "eval: doc.is_fixed_asset == 1"
+  },
+  {
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-04-16 10:47:44.506390",
+ "modified": "2025-04-16 11:51:21.418081",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",

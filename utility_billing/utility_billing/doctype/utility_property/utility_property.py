@@ -35,7 +35,7 @@ class UtilityProperty(NestedSet):
 
             asset_exists = frappe.db.exists("Asset", {
                 "item_code": self.item,
-                "utility_property": self.name
+                "asset_name": self.property_name,
             })
             if not asset_exists:
                 asset_doc = frappe.get_doc({
@@ -44,7 +44,6 @@ class UtilityProperty(NestedSet):
                     "asset_name": self.property_name,
                     "asset_category": self.asset_category,
                     "naming_series": self.asset_naming_series or "ACC-ASS-.YYYY.-",
-                    "utility_property": self.name,
                     "is_existing_asset": 1,
                     "gross_purchase_amount": self.gross_purchase_amount,
                     "location": self.location

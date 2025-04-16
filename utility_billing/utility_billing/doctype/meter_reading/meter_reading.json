@@ -15,6 +15,7 @@
   "column_break_aiuo",
   "company",
   "territory",
+  "property",
   "currency_and_price_list_section",
   "currency",
   "column_break_tssa",
@@ -140,12 +141,19 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Utility Property",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-11 14:40:31.793069",
+ "modified": "2025-04-16 10:57:51.137373",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",
@@ -166,6 +174,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
