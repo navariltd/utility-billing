@@ -118,7 +118,7 @@
   {
    "fieldname": "customer_group",
    "fieldtype": "Link",
-   "label": "Tariff",
+   "label": "Tariff / Customer Group",
    "options": "Customer Group"
   },
   {
@@ -449,7 +449,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-17 21:45:38.631787",
+ "modified": "2025-04-17 22:04:55.846873",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
