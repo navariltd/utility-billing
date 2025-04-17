@@ -348,7 +348,7 @@ def get_utility_bill_structure_details(name):
 
 
 @frappe.whitelist()
-def create_sales_order_doc(docname, items, customer=None, transaction_date=None, company=None):
+def create_sales_order_doc(docname, items, customer=None, customer_name=None, transaction_date=None, company=None):
     """
     Create a Sales Order from Utility Service Request
     
@@ -362,7 +362,7 @@ def create_sales_order_doc(docname, items, customer=None, transaction_date=None,
         - item_name (optional)
     :param customer: Customer ID
     :param transaction_date: Order date
-    :param company: Company
+    :param company: Company 
     """
     if isinstance(items, str):
         try:
@@ -386,7 +386,10 @@ def create_sales_order_doc(docname, items, customer=None, transaction_date=None,
     so = frappe.new_doc("Sales Order")
     so.update({
         "customer": customer or usr.customer,
-        "customer_name": usr.customer_name,
+        "customer_name": customer_name,
+        "payment_terms_template": usr.payment_terms_template,
+        "tc_name": usr.tc_name,
+        "terms": usr.terms,
         "company": company or usr.company or frappe.defaults.get_user_default("company"),
         "transaction_date": transaction_date or nowdate(),
         "delivery_date": add_days(transaction_date or nowdate(), 7),
@@ -398,7 +401,7 @@ def create_sales_order_doc(docname, items, customer=None, transaction_date=None,
         "selling_price_list": usr.price_list,
         "ignore_pricing_rule": 1,
     })
-
+    
     for item in items:
         item_code = item.get("item_code")
         
@@ -435,7 +438,7 @@ def create_sales_order_doc(docname, items, customer=None, transaction_date=None,
 
 
 @frappe.whitelist()
-def create_sales_invoice_doc(docname, items, customer=None, posting_date=None, due_date=None, company=None):
+def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, posting_date=None, due_date=None, company=None):
     """
     Create a Sales Invoice from Utility Service Request
     
@@ -474,7 +477,11 @@ def create_sales_invoice_doc(docname, items, customer=None, posting_date=None, d
     si = frappe.new_doc("Sales Invoice")
     si.update({
         "customer": customer or usr.customer,
-        "customer_name": usr.customer_name,
+        "customer_name": customer_name,
+        "ignore_default_payment_terms_template": usr.ignore_default_payment_terms_template,
+        "payment_terms_template": usr.payment_terms_template,
+        "tc_name": usr.tc_name,
+        "terms": usr.terms,
         "company": company or usr.company or frappe.defaults.get_user_default("company"),
         "posting_date": posting_date or nowdate(),
         "due_date": due_date or add_days(nowdate(), 30),

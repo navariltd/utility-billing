@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
-  "discount",
-  "column_break_jqkh",
   "amount",
+  "column_break_jqkh",
+  "discount",
   "total"
  ],
  "fields": [
@@ -61,7 +61,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-16 17:52:48.959085",
+ "modified": "2025-04-17 21:16:02.185026",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure Item",

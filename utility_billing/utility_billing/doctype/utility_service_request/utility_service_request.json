@@ -9,7 +9,6 @@
  "field_order": [
   "section_break_cpzx",
   "naming_series",
-  "customer_type",
   "request_type",
   "service_request_from",
   "party_name",
@@ -17,7 +16,6 @@
   "date",
   "customer_group",
   "territory",
-  "payment_terms_template",
   "column_break_wxld",
   "company",
   "tax_id",
@@ -49,6 +47,10 @@
   "column_break_kzdt",
   "contact_html",
   "terms_tab",
+  "payment_terms_section",
+  "ignore_default_payment_terms_template",
+  "payment_terms_template",
+  "section_break_qgrb",
   "tc_name",
   "terms",
   "official_tab",
@@ -112,13 +114,6 @@
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company"
-  },
-  {
-   "fieldname": "customer_type",
-   "fieldtype": "Select",
-   "label": "Customer Type",
-   "options": "Company\nIndividual\nPartnership",
-   "reqd": 1
   },
   {
    "fieldname": "customer_group",
@@ -433,12 +428,28 @@
    "fieldtype": "Link",
    "label": "Utility Bill Structure",
    "options": "Utility Bill Structure"
+  },
+  {
+   "fieldname": "payment_terms_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Terms"
+  },
+  {
+   "fieldname": "section_break_qgrb",
+   "fieldtype": "Section Break",
+   "label": "Terms & Conditions"
+  },
+  {
+   "default": "0",
+   "fieldname": "ignore_default_payment_terms_template",
+   "fieldtype": "Check",
+   "label": "Ignore Default Payment Terms Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-16 15:04:24.665045",
+ "modified": "2025-04-17 21:45:38.631787",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
