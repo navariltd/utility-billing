@@ -1,0 +1,12 @@
+{
+  "doctype": "Custom Field",
+  "dt": "Issue",
+  "fieldname": "utility_service_request",
+  "fieldtype": "Link",
+  "insert_after": "email_account",
+  "label": "Utility Service Request",
+  "modified": "2024-10-14 05:31:21.910805",
+  "module": "Utility Billing",
+  "name": "Issue-custom_request_for_utility_service",
+  "options": "Utility Service Request"
+}

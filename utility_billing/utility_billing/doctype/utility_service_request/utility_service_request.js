@@ -672,6 +672,8 @@ function showSalesOrderModal(frm) {
 		row.grid.refresh();
 	}
 
+	dialog.$wrapper.find(".modal-content").css("width", "900px");
+
 	dialog.show();
 }
 

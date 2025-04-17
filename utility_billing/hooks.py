@@ -124,7 +124,7 @@ doctype_list_js = {
 # ------------
 
 # before_install = "utility_billing.install.before_install"
-after_install = "utility_billing.setup.install.create_utility_property_dimension"
+# after_install = "utility_billing.setup.install.create_utility_property_dimension"
 
 # Uninstallation
 # ------------

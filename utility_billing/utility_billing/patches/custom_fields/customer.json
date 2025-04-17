@@ -1,0 +1,25 @@
+[
+  {
+    "doctype": "Custom Field",
+    "dt": "Customer",
+    "fieldname": "nrc_or_passport_no",
+    "fieldtype": "Data",
+    "insert_after": "customer_group",
+    "label": "NRC or Passport No",
+    "modified": "2024-10-14 05:53:37.647063",
+    "module": "Utility Billing",
+    "name": "Customer-custom_nrc_or_passport_no"
+  },
+  {
+    "doctype": "Custom Field",
+    "dt": "Customer",
+    "fieldname": "utility_property",
+    "fieldtype": "Link",
+    "insert_after": "nrc_or_passport_no",
+    "label": "Utility Property",
+    "modified": "2024-11-06 17:37:36.928304",
+    "module": "Utility Billing",
+    "name": "Customer-custom_property",
+    "options": "Utility Property"
+  }
+]
