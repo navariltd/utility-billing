@@ -2,17 +2,23 @@
 # For license information, please see license.txt
 
 import frappe
+import json
 from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import add_months, nowdate
+from frappe.utils import add_months, nowdate, add_days
 
 
 class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
-
+        
+    def on_submit(self):
+        settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+        if settings.create_customer_from_utility_service_request_on_submit:
+            make_customer(self.name)
+ 
 
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):
@@ -28,30 +34,49 @@ def create_customer_and_sales_order(docname):
     return {"sales_order": sales_order_doc.name}
 
 
+@frappe.whitelist()
+def create_contract(name):
+    """Create a contract from the Utility Service Request."""
+    doc = frappe.get_doc("Utility Service Request", name)
+    contract = frappe.new_doc("Contract")
+    contract.party_type = "Customer"
+    contract.party_name = doc.customer
+    contract.utility_service_request = name
+    contract.property = doc.utility_property
+    contract.flags.ignore_mandatory = True
+    contract.insert()
+    return contract.name
+
+
+@frappe.whitelist()
+def make_customer(name):
+    """Create a customer from the Utility Service Request."""
+    doc = frappe.get_doc("Utility Service Request", name)
+    customer_doc = create_customer(doc)
+    frappe.db.set_value("Utility Service Request", name, "customer", customer_doc.name)
+    return customer_doc.name
+
+
 def create_customer(doc):
-    if not doc.customer:
-        customer_doc = frappe.new_doc("Customer")
-        customer_doc.customer_name = doc.customer_name
-        customer_doc.customer_type = doc.customer_type
-        customer_doc.customer_group = doc.customer_group
-        customer_doc.territory = doc.territory
-        customer_doc.tax_id = doc.tax_id
-        customer_doc.nrc_or_passport_no = doc.nrcpassport_no
-        customer_doc.company = doc.company
-        customer_doc.insert()
-        customer_doc.utility_property = doc.property
+    if doc.customer:
+        return frappe.get_doc("Customer", doc.customer)
+    
+    from erpnext.selling.doctype.quotation.quotation import create_customer_from_lead, create_customer_from_prospect
 
-        frappe.db.set_value(
-            "Utility Service Request", doc.name, "customer", customer_doc.name
-        )
-
-        doc = frappe.get_doc("Utility Service Request", doc.name)
-        doc.save()
-
-    else:
-        customer_doc = frappe.get_doc("Customer", doc.customer)
-
-    return customer_doc
+    if doc.service_request_from == "Lead":
+        existing_customer = frappe.db.get_value("Customer", {"lead_name": doc.party_name}, "name")
+        if existing_customer:
+            return frappe.get_doc("Customer", existing_customer)
+        return create_customer_from_lead(doc.party_name, ignore_permissions=True)
+    
+    elif doc.service_request_from == "Prospect":
+        existing_customer = frappe.db.get_value("Customer", {"prospect_name": doc.party_name}, "name")
+        if existing_customer:
+            return frappe.get_doc("Customer", existing_customer)
+        return create_customer_from_prospect(doc.party_name, ignore_permissions=True)
+    
+    elif doc.service_request_from == "Customer":
+        return frappe.get_doc("Customer", doc.party_name)
 
 
 def link_contact_and_address_to_customer(customer_doc, doc):
@@ -265,3 +290,232 @@ def create_stock_entry_for_meter_issue(docname):
             stock_entry.submit()
 
     return {"stock_entry": stock_entry.name}
+
+
+@frappe.whitelist()
+def get_utility_bill_structure_details(name):
+    structure = frappe.get_doc("Utility Bill Structure", name)
+
+    items = []
+    for row in structure.items:
+        item = frappe.get_doc("Item", row.item)
+        item_details = {
+            "item_name": item.item_name,
+            "item_code": item.item_code,
+            "uom": item.stock_uom,
+            "rate": row.amount,
+            "amount": row.amount,
+            "warehouse": (
+                item.item_defaults[0].default_warehouse if item.item_defaults else None
+            ),
+            "description": item.description,
+            "qty": 1,
+            "conversion_factor": (
+                (item.uoms[0] or {}).get("conversion_factor", 1) if item.uoms else 1
+            ),
+            "brand": item.brand,
+            "item_group": item.item_group,
+            "stock_uom": item.stock_uom,
+            "bom_no": item.default_bom,
+            "weight_per_unit": item.weight_per_unit,
+            "weight_uom": item.weight_uom,
+            "item_tax_template": item.taxes[0].item_tax_template if item.taxes else None,
+            "default_warehouse": (
+                item.item_defaults[0].default_warehouse if item.item_defaults else None
+            ),
+            "delivery_date": nowdate(),
+        }
+        items.append(item_details)
+
+    dimension_fields = frappe.get_all("Accounting Dimension", filters={"disabled": 0}, fields=["fieldname"])
+    dimensions = {}
+
+    if hasattr(structure, 'cost_center'):
+        dimensions['cost_center'] = structure.cost_center
+    if hasattr(structure, 'project'):
+        dimensions['project'] = structure.project
+
+    for dim in dimension_fields:
+        fieldname = dim.fieldname
+        if hasattr(structure, fieldname):
+            dimensions[fieldname] = getattr(structure, fieldname)
+
+    return {
+        "items": items,
+        "dimensions": dimensions
+    }
+
+
+
+@frappe.whitelist()
+def create_sales_order_doc(docname, items, customer=None, transaction_date=None, company=None):
+    """
+    Create a Sales Order from Utility Service Request
+    
+    :param docname: Utility Service Request name
+    :param items: List of item dictionaries containing:
+        - item_code
+        - qty
+        - rate
+        - amount
+        - warehouse
+        - item_name (optional)
+    :param customer: Customer ID
+    :param transaction_date: Order date
+    :param company: Company
+    """
+    if isinstance(items, str):
+        try:
+            items = json.loads(items)
+        except Exception as e:
+            frappe.throw(f"Failed to parse items JSON: {e}")
+
+    if not isinstance(items, list):
+        frappe.throw("Items must be a list of item dictionaries.")
+
+    for item in items:
+        if not item.get("item_code"):
+            frappe.throw("Item Code is required for all items")
+        if not item.get("qty"):
+            frappe.throw("Quantity is required for all items")
+        if item.get("rate") is None:  
+            frappe.throw("Rate is required for all items")
+
+    usr = frappe.get_doc("Utility Service Request", docname)
+
+    so = frappe.new_doc("Sales Order")
+    so.update({
+        "customer": customer or usr.customer,
+        "customer_name": usr.customer_name,
+        "company": company or usr.company or frappe.defaults.get_user_default("company"),
+        "transaction_date": transaction_date or nowdate(),
+        "delivery_date": add_days(transaction_date or nowdate(), 7),
+        "utility_service_request": docname,
+        "territory": usr.territory,
+        "price_list": usr.price_list,
+        "currency": usr.currency or frappe.defaults.get_user_default("currency"),
+        "conversion_rate": 1.0,
+        "selling_price_list": usr.price_list,
+        "ignore_pricing_rule": 1,
+    })
+
+    for item in items:
+        item_code = item.get("item_code")
+        
+        item_name = item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name")
+        description = frappe.db.get_value("Item", item_code, "description")
+        uom = frappe.db.get_value("Item", item_code, "stock_uom")
+
+        so.append("items", {
+            "item_code": item_code,
+            "item_name": item_name,
+            "description": description,
+            "qty": float(item.get("qty")),
+            "uom": uom,
+            "rate": float(item.get("rate")),
+            "amount": float(item.get("amount")) or (float(item.get("qty")) * float(item.get("rate"))),
+            "conversion_factor": 1.0,
+            "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
+        })
+
+    so.insert(ignore_permissions=True)
+    
+    if frappe.db.get_single_value("Utility Billing Settings", "sales_order_creation_state") == "Submitted":
+        so.submit()
+
+    frappe.get_doc({
+        "doctype": "Comment",
+        "comment_type": "Info",
+        "reference_doctype": "Utility Service Request",
+        "reference_name": docname,
+        "content": f"Created Sales Order <a href='/app/sales-order/{so.name}'>{so.name}</a>"
+    }).insert(ignore_permissions=True)
+
+    return so.name
+
+
+@frappe.whitelist()
+def create_sales_invoice_doc(docname, items, customer=None, posting_date=None, due_date=None, company=None):
+    """
+    Create a Sales Invoice from Utility Service Request
+    
+    :param docname: Utility Service Request name
+    :param items: List of item dictionaries containing:
+        - item_code
+        - qty
+        - rate
+        - amount
+        - warehouse
+        - item_name (optional)
+    :param customer: Customer ID
+    :param posting_date: Invoice date
+    :param due_date: Due date
+    :param company: Company
+    """
+    if isinstance(items, str):
+        try:
+            items = json.loads(items)
+        except Exception as e:
+            frappe.throw(f"Failed to parse items JSON: {e}")
+
+    if not isinstance(items, list):
+        frappe.throw("Items must be a list of item dictionaries.")
+
+    for item in items:
+        if not item.get("item_code"):
+            frappe.throw("Item Code is required for all items")
+        if not item.get("qty"):
+            frappe.throw("Quantity is required for all items")
+        if item.get("rate") is None:
+            frappe.throw("Rate is required for all items")
+
+    usr = frappe.get_doc("Utility Service Request", docname)
+
+    si = frappe.new_doc("Sales Invoice")
+    si.update({
+        "customer": customer or usr.customer,
+        "customer_name": usr.customer_name,
+        "company": company or usr.company or frappe.defaults.get_user_default("company"),
+        "posting_date": posting_date or nowdate(),
+        "due_date": due_date or add_days(nowdate(), 30),
+        "utility_service_request": docname,
+        "currency": usr.currency or frappe.defaults.get_user_default("currency"),
+        "price_list": usr.price_list,
+        "selling_price_list": usr.price_list,
+        "conversion_rate": 1.0,
+        "ignore_pricing_rule": 1,
+    })
+
+    for item in items:
+        item_code = item.get("item_code")
+        
+        item_name = item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name")
+        description = frappe.db.get_value("Item", item_code, "description")
+        uom = frappe.db.get_value("Item", item_code, "stock_uom")
+
+        si.append("items", {
+            "item_code": item_code,
+            "item_name": item_name,
+            "description": description,
+            "qty": float(item.get("qty")),
+            "uom": uom,
+            "rate": float(item.get("rate")),
+            "amount": float(item.get("amount")) or (float(item.get("qty")) * float(item.get("rate"))),
+            "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
+            "conversion_factor": 1.0,
+        })
+
+    si.insert(ignore_permissions=True)
+    
+    if frappe.db.get_single_value("Utility Billing Settings", "sales_invoice_creation_state") == "Submitted":
+        si.submit()
+
+    frappe.get_doc({
+        "doctype": "Comment",
+        "comment_type": "Info",
+        "reference_doctype": "Utility Service Request",
+        "reference_name": docname,
+        "content": f"Created Sales Invoice <a href='/app/sales-invoice/{si.name}'>{si.name}</a>"
+    }).insert(ignore_permissions=True)
+
+    return si.name

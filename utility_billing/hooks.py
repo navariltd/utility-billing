@@ -36,6 +36,12 @@ fixtures = [
     },
 ]
 
+accounting_dimension_doctypes = [
+    "Utility Bill Structure",
+    "Utility Service Request",
+    "Meter Reading"
+]
+
 
 # Apps
 # ------------------
@@ -118,7 +124,7 @@ doctype_list_js = {
 # ------------
 
 # before_install = "utility_billing.install.before_install"
-# after_install = "utility_billing.install.after_install"
+after_install = "utility_billing.setup.install.create_utility_property_dimension"
 
 # Uninstallation
 # ------------
