@@ -53,14 +53,15 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Total"
+   "label": "Total",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-16 12:53:53.466399",
+ "modified": "2025-04-16 17:52:48.959085",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure Item",

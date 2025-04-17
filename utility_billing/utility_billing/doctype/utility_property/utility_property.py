@@ -28,6 +28,8 @@ class UtilityProperty(NestedSet):
                     "is_stock_item": 0,
                     "item_group": "Fixed Asset",
                     "asset_category": self.asset_category,
+					"is_sales_item": 1,
+					"is_utility_item": 1,
                     "stock_uom": "Nos"
                 })
                 item_doc.insert()

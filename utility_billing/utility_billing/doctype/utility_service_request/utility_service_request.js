@@ -65,6 +65,35 @@ frappe.ui.form.on("Utility Service Request", {
 		});
 	},
 
+	utility_bill_structure(frm) {
+		if (!frm.doc.utility_bill_structure) return;
+
+		frappe.call({
+			method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_utility_bill_structure_details",
+			args: { name: frm.doc.utility_bill_structure },
+			callback(r) {
+				if (!r.message) return;
+
+				const { items, dimensions } = r.message;
+
+				frm.clear_table("items");
+				(items || []).forEach((item) => {
+					const row = frm.add_child("items");
+					Object.keys(item).forEach((field) => {
+						row[field] = item[field];
+					});
+				});
+				frm.refresh_field("items");
+
+				Object.entries(dimensions || {}).forEach(([key, value]) => {
+					if (frm.fields_dict[key]) {
+						frm.set_value(key, value);
+					}
+				});
+			},
+		});
+	},
+
 	customer_group: function (frm) {
 		if (frm.doc.customer_group) {
 			frappe.call({
@@ -282,6 +311,7 @@ function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
 	if (frm.doc.docstatus === 1) {
+		// Customer creation button
 		if (!frm.doc.customer) {
 			frm.add_custom_button(
 				__("Customer"),
@@ -303,6 +333,7 @@ function addActionButtons(frm) {
 				__("Create")
 			);
 		} else {
+			// Contract creation button
 			frappe.db.get_value(
 				"Contract",
 				{ utility_service_request: frm.doc.name },
@@ -331,37 +362,45 @@ function addActionButtons(frm) {
 				}
 			);
 
-			frappe.db.get_value(
-				"Sales Order",
-				{ utility_service_request: frm.doc.name },
-				"name",
-				(r) => {
-					if (!r.name) {
-						frm.add_custom_button(
-							__("Sales Order"),
-							function () {
-								frappe.call({
-									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_customer_and_sales_order",
-									args: {
-										docname: frm.doc.name,
-									},
-									callback: function (response) {
-										handle_response(response, __("Sales Order"), frm);
-										if (response && response.message) {
-											frappe.set_route(
-												"Form",
-												"Sales Order",
-												response.message.name
-											);
-										}
-									},
-								});
-							},
-							__("Create")
-						);
+			// Sales Order button with modal
+			if (frm.doc.items && frm.doc.items.length > 0) {
+				frappe.db.get_value(
+					"Sales Order",
+					{ utility_service_request: frm.doc.name },
+					"name",
+					(r) => {
+						if (!r.name) {
+							frm.add_custom_button(
+								__("Sales Order"),
+								function () {
+									showSalesOrderModal(frm);
+								},
+								__("Create")
+							);
+						}
 					}
-				}
-			);
+				);
+			}
+
+			// Sales Invoice button with modal
+			if (frm.doc.items && frm.doc.items.length > 0) {
+				frappe.db.get_value(
+					"Sales Invoice",
+					{ utility_service_request: frm.doc.name },
+					"name",
+					(r) => {
+						if (!r.name) {
+							frm.add_custom_button(
+								__("Sales Invoice"),
+								function () {
+									showSalesInvoiceModal(frm);
+								},
+								__("Create")
+							);
+						}
+					}
+				);
+			}
 		}
 	}
 
@@ -446,6 +485,390 @@ function addActionButtons(frm) {
 			__("Create")
 		);
 	}
+}
+
+function showSalesOrderModal(frm) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Create Sales Order"),
+		fields: [
+			{
+				fieldname: "customer_section",
+				fieldtype: "Section Break",
+				label: __("Customer Details"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "customer",
+				label: __("Customer"),
+				fieldtype: "Link",
+				options: "Customer",
+				default: frm.doc.customer,
+				read_only: 1,
+			},
+			{
+				fieldname: "customer_name",
+				label: __("Customer Name"),
+				fieldtype: "Data",
+				default: frm.doc.customer_name,
+				read_only: 1,
+				collapsible: 0,
+			},
+			{
+				fieldname: "col_break",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "transaction_date",
+				label: __("Date"),
+				fieldtype: "Date",
+				default: frappe.datetime.get_today(),
+				reqd: 1,
+			},
+			{
+				fieldname: "company",
+				label: __("Company"),
+				fieldtype: "Link",
+				options: "Company",
+				default: frappe.defaults.get_user_default("Company"),
+				reqd: 1,
+			},
+			{
+				fieldname: "items_section",
+				fieldtype: "Section Break",
+				label: __("Select Items"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "items_table",
+				fieldtype: "Table",
+				label: __("Items"),
+				fields: [
+					{
+						fieldname: "item_code",
+						label: __("Item"),
+						fieldtype: "Link",
+						options: "Item",
+						in_list_view: 1,
+						reqd: 1,
+						onchange: function () {
+							const row = this.grid_row;
+							if (this.value) {
+								frappe.call({
+									method: "frappe.client.get_value",
+									args: {
+										doctype: "Item",
+										fieldname: ["item_name", "standard_rate"],
+										filters: { name: this.value },
+									},
+									callback: (r) => {
+										if (!r.exc) {
+											row.doc.item_name = r.message.item_name;
+											row.doc.rate = r.message.standard_rate;
+											calculate_row_amount(row);
+											refresh_field("items_table");
+										}
+									},
+								});
+							}
+						},
+					},
+					{
+						fieldname: "qty",
+						fieldtype: "Float",
+						label: __("Qty"),
+						in_list_view: 1,
+						default: 1,
+						reqd: 1,
+						onchange: function () {
+							calculate_row_amount(this.grid_row);
+						},
+					},
+					{
+						fieldname: "rate",
+						label: __("Rate"),
+						fieldtype: "Currency",
+						in_list_view: 1,
+						reqd: 1,
+						onchange: function () {
+							calculate_row_amount(this.grid_row);
+						},
+					},
+					{
+						fieldname: "amount",
+						label: __("Amount"),
+						fieldtype: "Currency",
+						read_only: 1,
+						in_list_view: 1,
+					},
+					{
+						fieldname: "warehouse",
+						label: __("Warehouse"),
+						fieldtype: "Link",
+						options: "Warehouse",
+						reqd: 1,
+						default: frappe.defaults.get_user_default("Warehouse"),
+						in_list_view: 1,
+					},
+					{
+						fieldname: "name",
+						fieldtype: "Data",
+						hidden: 1,
+					},
+				],
+				data: frm.doc.items.map((item) => {
+					const qty = item.qty || 1;
+					const rate = item.rate || 0;
+					return {
+						name: item.name,
+						item_code: item.item_code,
+						rate: rate,
+						amount: flt(rate * qty),
+						qty: qty,
+						warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
+					};
+				}),
+			},
+		],
+		primary_action_label: __("Create"),
+		primary_action: function (values) {
+			const items = values.items_table.map((row) => {
+				return {
+					name: row.name,
+					item_code: row.item_code,
+					qty: row.qty,
+					rate: row.rate,
+					amount: row.amount,
+					warehouse: row.warehouse,
+				};
+			});
+
+			frappe.call({
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc",
+				args: {
+					docname: frm.doc.name,
+					items: items,
+					customer: values.customer,
+					transaction_date: values.transaction_date,
+					company: values.company,
+				},
+				callback: function (response) {
+					dialog.hide();
+					if (response.message) {
+						frappe.show_alert({
+							message: __("Sales Order created successfully!"),
+							indicator: "green",
+						});
+						frappe.set_route("Form", "Sales Order", response.message);
+					}
+				},
+			});
+		},
+	});
+
+	function calculate_row_amount(row) {
+		const qty = parseFloat(row.doc.qty) || 0;
+		const rate = parseFloat(row.doc.rate) || 0;
+		row.doc.amount = parseFloat(qty * rate);
+		row.grid.refresh();
+	}
+
+	dialog.show();
+}
+
+function showSalesInvoiceModal(frm) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Create Sales Invoice"),
+		fields: [
+			{
+				fieldname: "customer_section",
+				fieldtype: "Section Break",
+				label: __("Customer Details"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "customer",
+				label: __("Customer"),
+				fieldtype: "Link",
+				options: "Customer",
+				default: frm.doc.customer,
+				read_only: 1,
+			},
+			{
+				fieldname: "customer_name",
+				label: __("Customer Name"),
+				fieldtype: "Data",
+				default: frm.doc.customer_name,
+				read_only: 1,
+				collapsible: 0,
+			},
+			{
+				fieldname: "col_break",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "posting_date",
+				label: __("Posting Date"),
+				fieldtype: "Date",
+				default: frappe.datetime.get_today(),
+				reqd: 1,
+			},
+			{
+				fieldname: "company",
+				label: __("Company"),
+				fieldtype: "Link",
+				options: "Company",
+				default: frappe.defaults.get_user_default("Company"),
+				reqd: 1,
+			},
+			{
+				fieldname: "due_date",
+				label: __("Due Date"),
+				fieldtype: "Date",
+				default: frappe.datetime.add_days(frappe.datetime.get_today(), 30),
+				reqd: 1,
+			},
+			{
+				fieldname: "items_section",
+				fieldtype: "Section Break",
+				label: __("Select Items"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "items_table",
+				fieldtype: "Table",
+				label: __("Items"),
+				fields: [
+					{
+						fieldname: "item_code",
+						label: __("Item"),
+						fieldtype: "Link",
+						options: "Item",
+						in_list_view: 1,
+						reqd: 1,
+						onchange: function () {
+							const row = this.grid_row;
+							if (this.value) {
+								frappe.call({
+									method: "frappe.client.get_value",
+									args: {
+										doctype: "Item",
+										fieldname: ["item_name", "standard_rate"],
+										filters: { name: this.value },
+									},
+									callback: (r) => {
+										if (!r.exc) {
+											row.doc.item_name = r.message.item_name;
+											row.doc.rate = r.message.standard_rate;
+											calculate_row_amount(row);
+											refresh_field("items_table");
+										}
+									},
+								});
+							}
+						},
+					},
+					{
+						fieldname: "qty",
+						label: __("Quantity"),
+						fieldtype: "Float",
+						default: 1,
+						in_list_view: 1,
+						reqd: 1,
+						onchange: function () {
+							calculate_row_amount(this.grid_row);
+						},
+					},
+					{
+						fieldname: "rate",
+						label: __("Rate"),
+						fieldtype: "Currency",
+						in_list_view: 1,
+						reqd: 1,
+						onchange: function () {
+							calculate_row_amount(this.grid_row);
+						},
+					},
+					{
+						fieldname: "amount",
+						label: __("Amount"),
+						fieldtype: "Currency",
+						read_only: 1,
+						in_list_view: 1,
+					},
+					{
+						fieldname: "warehouse",
+						label: __("Warehouse"),
+						fieldtype: "Link",
+						options: "Warehouse",
+						reqd: 1,
+						default: frappe.defaults.get_user_default("Warehouse"),
+						in_list_view: 1,
+					},
+					{
+						fieldname: "name",
+						fieldtype: "Data",
+						hidden: 1,
+					},
+				],
+				data: frm.doc.items.map((item) => {
+					const qty = item.qty || 1;
+					const rate = item.rate || 0;
+					return {
+						name: item.name,
+						item_code: item.item_code,
+						qty: qty,
+						rate: rate,
+						amount: flt(rate * qty),
+						warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
+					};
+				}),
+			},
+		],
+		primary_action_label: __("Create"),
+		primary_action: function (values) {
+			const items = values.items_table.map((row) => {
+				return {
+					name: row.name,
+					item_code: row.item_code,
+					qty: row.qty,
+					rate: row.rate,
+					amount: row.amount,
+					warehouse: row.warehouse,
+				};
+			});
+
+			frappe.call({
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
+				args: {
+					docname: frm.doc.name,
+					items: items,
+					customer: values.customer,
+					posting_date: values.posting_date,
+					due_date: values.due_date,
+					company: values.company,
+				},
+				callback: function (response) {
+					dialog.hide();
+					if (response.message) {
+						frappe.show_alert({
+							message: __("Sales Invoice created successfully!"),
+							indicator: "green",
+						});
+						frappe.set_route("Form", "Sales Invoice", response.message);
+					}
+				},
+			});
+		},
+	});
+
+	function calculate_row_amount(row) {
+		const qty = parseFloat(row.doc.qty) || 0;
+		const rate = parseFloat(row.doc.rate) || 0;
+		row.doc.amount = parseFloat(qty * rate);
+		row.grid.refresh();
+	}
+
+	dialog.show();
 }
 
 // Handle the response from the server
