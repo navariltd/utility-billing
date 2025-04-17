@@ -1,0 +1,11 @@
+{
+  "doctype": "Custom Field",
+  "dt": "Item",
+  "fieldname": "is_utility_item",
+  "fieldtype": "Check",
+  "insert_after": "is_sales_item",
+  "label": "Is Utility Item",
+  "modified": "2024-11-05 10:20:13.215342",
+  "module": "Utility Billing",
+  "name": "Item-custom_allow_utility_billing"
+}

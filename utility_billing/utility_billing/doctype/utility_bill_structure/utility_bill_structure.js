@@ -1,6 +1,3 @@
-// Copyright (c) 2025, Navari and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("Utility Bill Structure", {
 	refresh(frm) {
 		calculate_overall_total(frm);
@@ -10,6 +7,22 @@ frappe.ui.form.on("Utility Bill Structure", {
 		frm.fields_dict.items.grid.wrapper.on("change", () => {
 			calculate_overall_total(frm);
 		});
+	},
+
+	fiscal_year(frm) {
+		if (frm.doc.fiscal_year) {
+			frappe.db
+				.get_value("Fiscal Year", frm.doc.fiscal_year, [
+					"year_start_date",
+					"year_end_date",
+				])
+				.then((r) => {
+					if (r.message) {
+						frm.set_value("start_date", r.message.year_start_date);
+						frm.set_value("end_date", r.message.year_end_date);
+					}
+				});
+		}
 	},
 });
 
