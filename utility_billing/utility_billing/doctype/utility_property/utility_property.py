@@ -10,6 +10,17 @@ class UtilityProperty(NestedSet):
         load_address_and_contact(self)
 
     def validate(self):
+        if self.item:
+            asset = frappe.db.get_value("Asset", {
+                "item_code": self.item,
+                "asset_name": self.property_name
+            }, ["location", "asset_category", "gross_purchase_amount"], as_dict=True)
+
+            if asset:
+                self.location = asset.location
+                self.asset_category = asset.asset_category
+                self.gross_purchase_amount = asset.gross_purchase_amount
+
         if self.is_fixed_asset:
             if not frappe.db.exists("Item Group", "Fixed Asset"):
                 frappe.get_doc({
@@ -28,8 +39,8 @@ class UtilityProperty(NestedSet):
                     "is_stock_item": 0,
                     "item_group": "Fixed Asset",
                     "asset_category": self.asset_category,
-					"is_sales_item": 1,
-					"is_utility_item": 1,
+                    "is_sales_item": 1,
+                    "is_utility_item": 1,
                     "stock_uom": "Nos"
                 })
                 item_doc.insert()

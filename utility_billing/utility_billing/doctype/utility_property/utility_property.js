@@ -9,4 +9,28 @@ frappe.ui.form.on("Utility Property", {
 			frappe.contacts.render_address_and_contact(frm);
 		}
 	},
+
+	item(frm) {
+		if (frm.doc.item) {
+			frappe.call({
+				method: "frappe.client.get_list",
+				args: {
+					doctype: "Asset",
+					filters: {
+						item_code: frm.doc.item,
+					},
+					fields: ["location", "asset_category", "gross_purchase_amount"],
+					limit_page_length: 1,
+				},
+				callback: function (r) {
+					if (r.message && r.message.length > 0) {
+						const asset = r.message[0];
+						frm.set_value("location", asset.location);
+						frm.set_value("asset_category", asset.asset_category);
+						frm.set_value("gross_purchase_amount", asset.gross_purchase_amount);
+					}
+				},
+			});
+		}
+	},
 });
