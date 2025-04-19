@@ -1,12 +1,10 @@
-{
-  "doctype": "Custom Field",
-  "dt": "Sales Order Item",
-  "fieldname": "block",
-  "fieldtype": "Link",
-  "insert_after": "item_name",
-  "label": "Block",
-  "modified": "2024-11-06 06:24:29.448536",
-  "module": "Utility Billing",
-  "name": "Sales Order Item-custom_block",
-  "options": "Utility Tariff Block"
-}
+[
+  {
+    "fieldname": "block",
+    "fieldtype": "Link",
+    "insert_after": "item_name",
+    "label": "Block",
+    "name": "Sales Order Item-custom_block",
+    "options": "Utility Tariff Block"
+  }
+]

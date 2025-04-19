@@ -1,12 +1,10 @@
-{
-  "doctype": "Custom Field",
-  "dt": "BOM",
-  "fieldname": "utility_service_request",
-  "fieldtype": "Link",
-  "insert_after": "more_info_tab",
-  "label": "Utility Service Request",
-  "modified": "2024-11-07 07:38:13.456406",
-  "module": "Utility Billing",
-  "name": "BOM-custom_utility_request",
-  "options": "Utility Service Request"
-}
+[
+  {
+    "fieldname": "utility_service_request",
+    "fieldtype": "Link",
+    "insert_after": "more_info_tab",
+    "label": "Utility Service Request",
+    "name": "BOM-custom_utility_request",
+    "options": "Utility Service Request"
+  }
+]
