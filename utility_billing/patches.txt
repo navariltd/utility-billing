@@ -7,3 +7,4 @@
 utility_billing.utility_billing.patches.create_custom_fields # 19/04/25
 utility_billing.utility_billing.patches.create_connection_links # 19/04/25
 utility_billing.utility_billing.patches.accounting_dimension # 19/04/25
+utility_billing.utility_billing.patches.set_allow_auto_repeat_sales_invoice # 19/04/25

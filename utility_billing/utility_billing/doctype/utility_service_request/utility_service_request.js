@@ -707,9 +707,13 @@ function showSalesOrderModal(frm) {
 function showSalesInvoiceModal(frm) {
 	frappe.db.get_value("Customer", frm.doc.customer, "customer_name").then((response) => {
 		const customerName = response.message.customer_name;
+		const today = frappe.datetime.get_today();
+		const nextYear = frappe.datetime.add_days(today, 365);
+
 		const dialog = new frappe.ui.Dialog({
 			title: __("Create Sales Invoice"),
 			fields: [
+				// Customer Section
 				{
 					fieldname: "customer_section",
 					fieldtype: "Section Break",
@@ -730,7 +734,6 @@ function showSalesInvoiceModal(frm) {
 					fieldtype: "Data",
 					default: customerName,
 					read_only: 1,
-					collapsible: 0,
 				},
 				{
 					fieldname: "col_break",
@@ -740,7 +743,7 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "posting_date",
 					label: __("Posting Date"),
 					fieldtype: "Date",
-					default: frappe.datetime.get_today(),
+					default: today,
 					reqd: 1,
 				},
 				{
@@ -755,9 +758,76 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "due_date",
 					label: __("Due Date"),
 					fieldtype: "Date",
-					default: frappe.datetime.add_days(frappe.datetime.get_today(), 30),
+					default: frappe.datetime.add_days(today, 30),
 					reqd: 1,
 				},
+
+				// Auto Repeat Section
+				{
+					fieldname: "auto_repeat_section",
+					fieldtype: "Section Break",
+					label: __("Auto Repeat Settings"),
+				},
+				{
+					fieldname: "enable_auto_repeat",
+					label: __("Set Auto Repeat"),
+					fieldtype: "Check",
+					default: 0,
+					change: function () {
+						update_auto_repeat_fields(this.get_value(), dialog.get_value("frequency"));
+					},
+				},
+				{
+					fieldname: "frequency",
+					label: __("Frequency"),
+					fieldtype: "Select",
+					default: "Monthly",
+					options: "Weekly\nBi-Weekly\nMonthly\nQuarterly\nHalf-Yearly\nYearly",
+					onchange: function () {
+						if (dialog.get_value("enable_auto_repeat")) {
+							update_auto_repeat_fields(true, this.get_value());
+						}
+					},
+					depends_on: "eval:doc.enable_auto_repeat",
+				},
+				{
+					fieldname: "col_break_auto",
+					fieldtype: "Column Break",
+				},
+				{
+					fieldname: "repeat_start_date",
+					label: __("Start Date"),
+					fieldtype: "Date",
+					default: today,
+					reqd: 1,
+					depends_on: "eval:doc.enable_auto_repeat",
+				},
+				{
+					fieldname: "repeat_end_date",
+					label: __("End Date"),
+					fieldtype: "Date",
+					default: nextYear,
+					reqd: 1,
+					depends_on: "eval:doc.enable_auto_repeat",
+				},
+				{
+					fieldname: "repeat_on_days",
+					label: __("Repeat on Days"),
+					fieldtype: "MultiSelect",
+					options: [
+						"Monday",
+						"Tuesday",
+						"Wednesday",
+						"Thursday",
+						"Friday",
+						"Saturday",
+						"Sunday",
+					],
+					depends_on:
+						"eval:doc.enable_auto_repeat && (doc.frequency === 'Weekly' || doc.frequency === 'Bi-Weekly')",
+				},
+
+				// Items Section
 				{
 					fieldname: "items_section",
 					fieldtype: "Section Break",
@@ -858,16 +928,23 @@ function showSalesInvoiceModal(frm) {
 			],
 			primary_action_label: __("Create"),
 			primary_action: function (values) {
-				const items = values.items_table.map((row) => {
-					return {
-						name: row.name,
-						item_code: row.item_code,
-						qty: row.qty,
-						rate: row.rate,
-						amount: row.amount,
-						warehouse: row.warehouse,
-					};
-				});
+				const items = values.items_table.map((row) => ({
+					name: row.name,
+					item_code: row.item_code,
+					qty: row.qty,
+					rate: row.rate,
+					amount: row.amount,
+					warehouse: row.warehouse,
+				}));
+
+				const auto_repeat_settings = values.enable_auto_repeat
+					? {
+							frequency: values.frequency,
+							start_date: values.repeat_start_date,
+							end_date: values.repeat_end_date,
+							days: values.repeat_on_days,
+					  }
+					: null;
 
 				frappe.call({
 					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
@@ -879,6 +956,7 @@ function showSalesInvoiceModal(frm) {
 						posting_date: values.posting_date,
 						due_date: values.due_date,
 						company: values.company,
+						auto_repeat: auto_repeat_settings,
 					},
 					callback: function (response) {
 						dialog.hide();
@@ -901,9 +979,16 @@ function showSalesInvoiceModal(frm) {
 			row.grid.refresh();
 		}
 
+		function update_auto_repeat_fields(enabled, frequency) {
+			const isWeekly = ["Weekly", "Bi-Weekly"].includes(frequency);
+			dialog.toggle_display("frequency", enabled);
+			dialog.toggle_display("repeat_start_date", enabled);
+			dialog.toggle_display("repeat_end_date", enabled);
+			dialog.toggle_display("repeat_on_days", enabled && isWeekly);
+		}
+
 		dialog.$wrapper.find(".modal-dialog").css("max-width", "max-content");
 		dialog.$wrapper.find(".modal-content").css("width", "1000px");
-
 		dialog.show();
 	});
 }

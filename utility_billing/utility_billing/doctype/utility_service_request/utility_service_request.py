@@ -438,23 +438,26 @@ def create_sales_order_doc(docname, items, customer=None, customer_name=None, tr
 
 
 @frappe.whitelist()
-def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, posting_date=None, due_date=None, company=None):
+def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, posting_date=None, due_date=None, company=None, auto_repeat=None):
     """
-    Create a Sales Invoice from Utility Service Request
-    
+    Create a Sales Invoice from Utility Service Request and optionally create an Auto Repeat.
+
     :param docname: Utility Service Request name
     :param items: List of item dictionaries containing:
-        - item_code
-        - qty
-        - rate
-        - amount
-        - warehouse
-        - item_name (optional)
+        - item_code, qty, rate, amount, warehouse, item_name (optional)
     :param customer: Customer ID
     :param posting_date: Invoice date
     :param due_date: Due date
     :param company: Company
+    :param auto_repeat: Dict or JSON string containing Auto Repeat settings or existing Auto Repeat name
     """
+    # Load auto_repeat if it is a JSON string
+    if isinstance(auto_repeat, str):
+        try:
+            auto_repeat = json.loads(auto_repeat)
+        except Exception as e:
+            frappe.throw(f"Failed to parse auto_repeat JSON: {e}")
+
     if isinstance(items, str):
         try:
             items = json.loads(items)
@@ -495,7 +498,7 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
 
     for item in items:
         item_code = item.get("item_code")
-        
+
         item_name = item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name")
         description = frappe.db.get_value("Item", item_code, "description")
         uom = frappe.db.get_value("Item", item_code, "stock_uom")
@@ -513,9 +516,27 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
         })
 
     si.insert(ignore_permissions=True)
-    
+
     if frappe.db.get_single_value("Utility Billing Settings", "sales_invoice_creation_state") == "Submitted":
         si.submit()
+
+    # Auto Repeat creation
+    if isinstance(auto_repeat, dict) and auto_repeat.get("frequency") and auto_repeat.get("start_date"):
+        repeat_doc = frappe.get_doc({
+            "doctype": "Auto Repeat",
+            "reference_doctype": "Sales Invoice",
+            "reference_document": si.name,
+            "frequency": auto_repeat.get("frequency"),
+            "start_date": auto_repeat.get("start_date"),
+            "end_date": auto_repeat.get("end_date"),
+            "next_schedule_date": auto_repeat.get("start_date"),
+            "submit_on_creation": 1,
+            "notify_by_email": 0,
+            "auto_repeat_on_days": auto_repeat.get("days", []),
+        })
+        repeat_doc.insert(ignore_permissions=True)
+        si.db_set("auto_repeat", repeat_doc.name)
+        frappe.msgprint(f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> created for this invoice.")
 
     frappe.get_doc({
         "doctype": "Comment",
