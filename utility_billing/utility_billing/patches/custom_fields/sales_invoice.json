@@ -1,62 +1,34 @@
 [
   {
-    "doctype": "Custom Field",
-    "dt": "Sales Invoice",
     "fieldname": "meter_readings",
     "fieldtype": "Table",
     "insert_after": "items",
     "label": "Meter Readings",
-    "modified": "2024-11-11 14:29:12.256558",
-    "module": "Utility Billing",
     "name": "Sales Invoice-custom_sales_invoice_meter_reading",
     "no_copy": 1,
     "options": "Sales Invoice Meter Reading",
     "read_only": 1
   },
   {
-    "doctype": "Custom Field",
-    "dt": "Sales Invoice",
     "fieldname": "custom_utility_billing",
     "fieldtype": "Section Break",
     "collapsible": 1,
     "insert_after": "more_info_tab",
     "label": "Utility Billing",
-    "modified": "2024-11-06 17:16:18.491014",
-    "module": "Utility Billing",
     "name": "Sales Invoice-custom_utility_billing"
   },
   {
-    "doctype": "Custom Field",
-    "dt": "Sales Invoice",
-    "fieldname": "utility_property",
-    "fieldtype": "Link",
-    "insert_after": "custom_utility_billing",
-    "label": "Utility Property",
-    "modified": "2024-11-06 17:17:32.815119",
-    "module": "Utility Billing",
-    "name": "Sales Invoice-custom_utility_property",
-    "options": "Utility Property"
-  },
-  {
-    "doctype": "Custom Field",
-    "dt": "Sales Invoice",
     "fieldname": "utility_service_request",
     "fieldtype": "Link",
     "insert_after": "custom_utility_billing",
     "label": "Utility Service Request",
-    "modified": "2024-11-06 17:18:14.802096",
-    "module": "Utility Billing",
     "name": "Sales Invoice-custom_utility_service_request",
     "options": "Utility Service Request"
   },
   {
-    "doctype": "Custom Field",
-    "dt": "Sales Invoice",
     "fieldname": "custom_col",
     "fieldtype": "Column Break",
     "insert_after": "utility_service_request",
-    "modified": "2024-11-06 17:22:43.079550",
-    "module": "Utility Billing",
     "name": "Sales Invoice-custom_col"
   }
 ]

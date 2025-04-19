@@ -1,24 +1,16 @@
 [
   {
-    "doctype": "Custom Field",
-    "dt": "Item Price",
     "fieldname": "is_fixed_meter_charge",
     "fieldtype": "Check",
     "insert_after": "item_description",
     "label": "Is Fixed Meter Charge",
-    "modified": "2024-10-22 11:22:36.731436",
-    "module": "Utility Billing",
     "name": "Item Price-custom_is_fixed_meter_charge"
   },
   {
-    "doctype": "Custom Field",
-    "dt": "Item Price",
     "fieldname": "tariffs",
     "fieldtype": "Table",
     "insert_after": "section_break_24",
     "label": "Tariffs",
-    "modified": "2024-10-14 02:10:02.044248",
-    "module": "Utility Billing",
     "name": "Item Price-custom_tariffs",
     "options": "Item Price Tariff"
   }
