@@ -33,6 +33,29 @@
   "items",
   "section_break_asmx",
   "amended_from",
+  "terms_tab",
+  "payment_terms_section",
+  "ignore_default_payment_terms_template",
+  "payment_terms_template",
+  "section_break_qgrb",
+  "tc_name",
+  "terms",
+  "auto_repeat_schedule_tab",
+  "auto_repeat_settings_section",
+  "frequency",
+  "repeat_on_day",
+  "repeat_on_last_day",
+  "submit_on_creation",
+  "column_break_fexi",
+  "start_date",
+  "end_date",
+  "section_break_nnjp",
+  "repeat_on_days",
+  "address_and_contacts_tab",
+  "section_break_ywar",
+  "address_html",
+  "column_break_kzdt",
+  "contact_html",
   "tab_6_tab",
   "section_break_lpoa",
   "connection_size",
@@ -41,30 +64,6 @@
   "water_network",
   "column_break_omtp",
   "location",
-  "address_and_contacts_tab",
-  "section_break_ywar",
-  "address_html",
-  "column_break_kzdt",
-  "contact_html",
-  "terms_tab",
-  "payment_terms_section",
-  "ignore_default_payment_terms_template",
-  "payment_terms_template",
-  "section_break_qgrb",
-  "tc_name",
-  "terms",
-  "official_tab",
-  "assessed_by",
-  "checked_by",
-  "approved_by",
-  "verified_by",
-  "posted_by",
-  "column_break_bpqj",
-  "date_assesed",
-  "date_checked",
-  "date_approved",
-  "date_verified",
-  "date_posted",
   "more_info_tab",
   "section_break_usdz",
   "request_status",
@@ -261,14 +260,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer",
-   "read_only": 1
-  },
-  {
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
@@ -330,70 +321,6 @@
    "options": "Terms and Conditions"
   },
   {
-   "fieldname": "official_tab",
-   "fieldtype": "Tab Break",
-   "label": "Official"
-  },
-  {
-   "fieldname": "assessed_by",
-   "fieldtype": "Link",
-   "label": "Assessed by",
-   "options": "User"
-  },
-  {
-   "fieldname": "checked_by",
-   "fieldtype": "Link",
-   "label": "Checked by",
-   "options": "User"
-  },
-  {
-   "fieldname": "approved_by",
-   "fieldtype": "Link",
-   "label": "Approved by",
-   "options": "User"
-  },
-  {
-   "fieldname": "verified_by",
-   "fieldtype": "Link",
-   "label": "Verified by",
-   "options": "User"
-  },
-  {
-   "fieldname": "posted_by",
-   "fieldtype": "Link",
-   "label": "Posted by",
-   "options": "User"
-  },
-  {
-   "fieldname": "column_break_bpqj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "date_assesed",
-   "fieldtype": "Date",
-   "label": "Assessed by Date"
-  },
-  {
-   "fieldname": "date_checked",
-   "fieldtype": "Date",
-   "label": "Checked by Date"
-  },
-  {
-   "fieldname": "date_approved",
-   "fieldtype": "Date",
-   "label": "Approved by Date"
-  },
-  {
-   "fieldname": "date_verified",
-   "fieldtype": "Date",
-   "label": "Verified by Date"
-  },
-  {
-   "fieldname": "date_posted",
-   "fieldtype": "Date",
-   "label": "Posted by Date"
-  },
-  {
    "fieldname": "location",
    "fieldtype": "Link",
    "label": "Location",
@@ -444,12 +371,85 @@
    "fieldname": "ignore_default_payment_terms_template",
    "fieldtype": "Check",
    "label": "Ignore Default Payment Terms Template"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "auto_repeat_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Auto Repeat Settings"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "label": "Frequency",
+   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly"
+  },
+  {
+   "fieldname": "column_break_fexi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.frequency==='Weekly';",
+   "fieldname": "repeat_on_days",
+   "fieldtype": "Table",
+   "label": "Repeat on Days",
+   "options": "Auto Repeat Day"
+  },
+  {
+   "fieldname": "auto_repeat_schedule_tab",
+   "fieldtype": "Tab Break",
+   "label": "Auto Repeat Schedule"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval: in_list([\"Monthly\", \"Quarterly\", \"Half-yearly\", \"Yearly\"], doc.frequency) && !doc.repeat_on_last_day\n",
+   "fieldname": "repeat_on_day",
+   "fieldtype": "Int",
+   "label": "Repeat on Day"
+  },
+  {
+   "fieldname": "section_break_nnjp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "submit_on_creation",
+   "fieldtype": "Check",
+   "label": "Submit on Creation"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "depends_on": "eval:doc.frequency === 'Monthly'",
+   "fieldname": "repeat_on_last_day",
+   "fieldtype": "Check",
+   "label": "Repeat on Last Day of the Month"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-17 22:04:55.846873",
+ "modified": "2025-04-25 11:58:22.711747",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

@@ -10,7 +10,7 @@ def get_data():
         "non_standard_fieldnames": {
             "Asset": "item_code",
             "Meter Reading": "property",
-            "Utility Service Request": "property",
+            "Utility Service Request": "utility_property",
             "Quotation": "utility_property",
             "Sales Order": "utility_property",
             "Delivery Note": "utility_property",

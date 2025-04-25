@@ -530,13 +530,17 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
             "start_date": auto_repeat.get("start_date"),
             "end_date": auto_repeat.get("end_date"),
             "next_schedule_date": auto_repeat.get("start_date"),
-            "submit_on_creation": 1,
+            "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
             "notify_by_email": 0,
-            "auto_repeat_on_days": auto_repeat.get("days", []),
+            "repeat_on_day": auto_repeat.get("repeat_on_day"),
+            "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
+            "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
         })
         repeat_doc.insert(ignore_permissions=True)
         si.db_set("auto_repeat", repeat_doc.name)
-        frappe.msgprint(f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> created for this invoice.")
+        frappe.msgprint(
+            f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> created for this invoice."
+        )
 
     frappe.get_doc({
         "doctype": "Comment",

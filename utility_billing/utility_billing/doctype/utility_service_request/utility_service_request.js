@@ -357,7 +357,7 @@ function addActionButtons(frm) {
 			// Contract creation button
 			frappe.db.get_value(
 				"Contract",
-				{ utility_service_request: frm.doc.name },
+				{ utility_service_request: frm.doc.name, docstatus: 1 },
 				"name",
 				(r) => {
 					if (!r.name) {
@@ -379,49 +379,24 @@ function addActionButtons(frm) {
 							},
 							__("Create")
 						);
+					} else {
+						frm.add_custom_button(
+							__("Sales Order / Deposit"),
+							function () {
+								showSalesOrderModal(frm);
+							},
+							__("Create")
+						);
+						frm.add_custom_button(
+							__("Sales Invoice"),
+							function () {
+								showSalesInvoiceModal(frm);
+							},
+							__("Create")
+						);
 					}
 				}
 			);
-
-			// Sales Order button with modal
-			if (frm.doc.items && frm.doc.items.length > 0) {
-				frappe.db.get_value(
-					"Sales Order",
-					{ utility_service_request: frm.doc.name },
-					"name",
-					(r) => {
-						if (!r.name) {
-							frm.add_custom_button(
-								__("Sales Order"),
-								function () {
-									showSalesOrderModal(frm);
-								},
-								__("Create")
-							);
-						}
-					}
-				);
-			}
-
-			// Sales Invoice button with modal
-			if (frm.doc.items && frm.doc.items.length > 0) {
-				frappe.db.get_value(
-					"Sales Invoice",
-					{ utility_service_request: frm.doc.name },
-					"name",
-					(r) => {
-						if (!r.name) {
-							frm.add_custom_button(
-								__("Sales Invoice"),
-								function () {
-									showSalesInvoiceModal(frm);
-								},
-								__("Create")
-							);
-						}
-					}
-				);
-			}
 		}
 	}
 
@@ -772,7 +747,7 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "enable_auto_repeat",
 					label: __("Set Auto Repeat"),
 					fieldtype: "Check",
-					default: 0,
+					default: frm.doc.frequency ? 1 : 0,
 					change: function () {
 						update_auto_repeat_fields(this.get_value(), dialog.get_value("frequency"));
 					},
@@ -781,8 +756,8 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "frequency",
 					label: __("Frequency"),
 					fieldtype: "Select",
-					default: "Monthly",
-					options: "Weekly\nBi-Weekly\nMonthly\nQuarterly\nHalf-Yearly\nYearly",
+					default: frm.doc.frequency || "Monthly",
+					options: "Daily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
 					onchange: function () {
 						if (dialog.get_value("enable_auto_repeat")) {
 							update_auto_repeat_fields(true, this.get_value());
@@ -798,7 +773,7 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "repeat_start_date",
 					label: __("Start Date"),
 					fieldtype: "Date",
-					default: today,
+					default: frm.doc.start_date || frappe.datetime.get_today(),
 					reqd: 1,
 					depends_on: "eval:doc.enable_auto_repeat",
 				},
@@ -806,7 +781,9 @@ function showSalesInvoiceModal(frm) {
 					fieldname: "repeat_end_date",
 					label: __("End Date"),
 					fieldtype: "Date",
-					default: nextYear,
+					default:
+						frm.doc.end_date ||
+						frappe.datetime.add_days(frappe.datetime.get_today(), 365),
 					reqd: 1,
 					depends_on: "eval:doc.enable_auto_repeat",
 				},
@@ -823,8 +800,30 @@ function showSalesInvoiceModal(frm) {
 						"Saturday",
 						"Sunday",
 					],
+					default: frm.doc.repeat_on_days || [],
+					depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Weekly'",
+				},
+				{
+					fieldname: "repeat_on_last_day",
+					label: __("Repeat on Last Day of the Month"),
+					fieldtype: "Check",
+					default: frm.doc.repeat_on_last_day || 0,
+					depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Monthly'",
+				},
+				{
+					fieldname: "repeat_on_day",
+					label: __("Repeat on Day"),
+					fieldtype: "Int",
+					default: frm.doc.repeat_on_day || "",
 					depends_on:
-						"eval:doc.enable_auto_repeat && (doc.frequency === 'Weekly' || doc.frequency === 'Bi-Weekly')",
+						"eval:doc.enable_auto_repeat && in_list(['Monthly', 'Quarterly', 'Half-yearly', 'Yearly'], doc.frequency) && !doc.repeat_on_last_day",
+				},
+				{
+					fieldname: "submit_on_creation",
+					label: __("Submit on Creation"),
+					fieldtype: "Check",
+					default: frm.doc.submit_on_creation || 0,
+					depends_on: "eval:doc.enable_auto_repeat",
 				},
 
 				// Items Section
@@ -942,7 +941,10 @@ function showSalesInvoiceModal(frm) {
 							frequency: values.frequency,
 							start_date: values.repeat_start_date,
 							end_date: values.repeat_end_date,
-							days: values.repeat_on_days,
+							repeat_on_days: values.repeat_on_days,
+							repeat_on_day: values.repeat_on_day,
+							repeat_on_last_day: values.repeat_on_last_day,
+							submit_on_creation: values.submit_on_creation,
 					  }
 					: null;
 
