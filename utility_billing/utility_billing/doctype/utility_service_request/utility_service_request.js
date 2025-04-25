@@ -739,6 +739,23 @@ function showSalesInvoiceModal(frm) {
 					},
 				},
 				{
+					fieldname: "utility_property",
+					label: __("Property"),
+					fieldtype: "Link",
+					options: "Utility Property",
+					depends_on: "eval:doc.enable_auto_repeat",
+					change: function () {
+						let selected_value = this.get_value();
+						let items = dialog.get_value("items_table") || [];
+
+						items.forEach((row) => {
+							row.utility_property = selected_value;
+						});
+
+						dialog.set_value("items_table", items);
+					},
+				},
+				{
 					fieldname: "frequency",
 					label: __("Frequency"),
 					fieldtype: "Select",
@@ -848,6 +865,7 @@ function showSalesInvoiceModal(frm) {
 							repeat_on_day: values.repeat_on_day,
 							repeat_on_last_day: values.repeat_on_last_day,
 							submit_on_creation: values.submit_on_creation,
+							utility_property: values.utility_property,
 					  }
 					: null;
 

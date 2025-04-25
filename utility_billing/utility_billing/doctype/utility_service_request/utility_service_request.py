@@ -461,33 +461,34 @@ def create_sales_order_doc(docname, items, customer=None, customer_name=None, tr
 @frappe.whitelist()
 def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, posting_date=None, due_date=None, company=None, auto_repeat=None):
     """
-    Create a Sales Invoice from Utility Service Request and optionally create an Auto Repeat.
+    Create a Sales Invoice from Utility Service Request and optionally create Auto Repeat documents
+    with rent increment logic based on property settings.
 
     :param docname: Utility Service Request name
-    :param items: List of item dictionaries containing:
-        - item_code, qty, rate, amount, warehouse, item_name (optional)
+    :param items: List of item dictionaries
     :param customer: Customer ID
     :param posting_date: Invoice date
     :param due_date: Due date
     :param company: Company
-    :param auto_repeat: Dict or JSON string containing Auto Repeat settings or existing Auto Repeat name
+    :param auto_repeat: Dict containing Auto Repeat settings
     """
-    # Load auto_repeat if it is a JSON string
+    # Parse inputs
     if isinstance(auto_repeat, str):
         try:
             auto_repeat = json.loads(auto_repeat)
-        except Exception as e:
+        except Exception:
             auto_repeat = {}
 
     if isinstance(items, str):
         try:
             items = json.loads(items)
-        except Exception as e:
+        except Exception:
             items = []
 
     if not isinstance(items, list):
         frappe.throw("Items must be a list of item dictionaries.")
 
+    # Validate items
     for item in items:
         if not item.get("item_code"):
             frappe.throw("Item Code is required for all items")
@@ -498,6 +499,32 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
 
     usr = frappe.get_doc("Utility Service Request", docname)
 
+    # Create initial sales invoice
+    si = create_base_sales_invoice(usr, items, customer, customer_name, 
+                                 posting_date, due_date, company)
+    
+    # Handle auto repeat creation with rent increments
+    if isinstance(auto_repeat, dict) and auto_repeat.get("frequency"):
+        create_auto_repeats_with_increments(
+            si, 
+            usr,
+            auto_repeat,
+            items
+        )
+
+    # Add comment to Utility Service Request
+    frappe.get_doc({
+        "doctype": "Comment",
+        "comment_type": "Info",
+        "reference_doctype": "Utility Service Request",
+        "reference_name": docname,
+        "content": f"Created Sales Invoice <a href='/app/sales-invoice/{si.name}'>{si.name}</a>"
+    }).insert(ignore_permissions=True)
+
+    return si.name
+
+def create_base_sales_invoice(usr, items, customer, customer_name, posting_date, due_date, company):
+    """Create the base sales invoice document."""
     si = frappe.new_doc("Sales Invoice")
     si.update({
         "customer": customer or usr.customer,
@@ -509,7 +536,7 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
         "company": company or usr.company or frappe.defaults.get_user_default("company"),
         "posting_date": posting_date or nowdate(),
         "due_date": due_date or add_days(nowdate(), 30),
-        "utility_service_request": docname,
+        "utility_service_request": usr.name,
         "currency": usr.currency or frappe.defaults.get_user_default("currency"),
         "price_list": usr.price_list,
         "selling_price_list": usr.price_list,
@@ -519,7 +546,6 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
 
     for item in items:
         item_code = item.get("item_code")
-
         item_line = {
             "item_code": item_code,
             "item_name": item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name"),
@@ -529,10 +555,10 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
             "rate": float(item.get("rate", 0)),
             "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
             "conversion_factor": 1.0,
+            "amount": float(item.get("amount", float(item.get("qty", 0)) * float(item.get("rate", 0))))
         }
 
-        item_line["amount"] = float(item.get("amount", item_line["qty"] * item_line["rate"]))
-
+        # Add any additional fields
         for key, value in item.items():
             if key not in item_line:
                 item_line[key] = value
@@ -544,34 +570,132 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
     if frappe.db.get_single_value("Utility Billing Settings", "sales_invoice_creation_state") == "Submitted":
         si.submit()
 
-    # Auto Repeat creation
-    if isinstance(auto_repeat, dict) and auto_repeat.get("frequency") and auto_repeat.get("start_date"):
-        repeat_doc = frappe.get_doc({
-            "doctype": "Auto Repeat",
-            "reference_doctype": "Sales Invoice",
-            "reference_document": si.name,
-            "frequency": auto_repeat.get("frequency"),
-            "start_date": auto_repeat.get("start_date"),
-            "end_date": auto_repeat.get("end_date"),
-            "next_schedule_date": auto_repeat.get("start_date"),
-            "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
-            "notify_by_email": 0,
-            "repeat_on_day": auto_repeat.get("repeat_on_day"),
-            "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
-            "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
-        })
-        repeat_doc.insert(ignore_permissions=True)
-        si.db_set("auto_repeat", repeat_doc.name)
-        frappe.msgprint(
-            f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> created for this invoice."
+    return si
+
+def create_auto_repeats_with_increments(si, usr, auto_repeat, original_items):
+    """Create auto repeat documents with rent increment logic."""
+    import copy
+    from frappe.utils import getdate, add_months
+    
+    # Get property rent increment settings
+    property_doc = next((prop for prop in usr.requested_properties if prop.utility_property == auto_repeat.get("utility_property")), None)
+    increment_months = property_doc.rent_increment_interval_months if property_doc else 0
+    increment_percentage = property_doc.rent_increment_percentage if property_doc else 0
+    
+    start_date = getdate(auto_repeat.get("start_date"))
+    end_date = getdate(auto_repeat.get("end_date")) if auto_repeat.get("end_date") else None
+    
+    # If no increment settings, create single auto repeat
+    if not increment_months or not increment_percentage:
+        create_single_auto_repeat(si, auto_repeat)
+        return
+    
+    # Create auto repeat for the first period using the passed Sales Invoice (si)
+    create_single_auto_repeat(si, {
+        **auto_repeat,
+        "start_date": start_date,
+        "end_date": add_months(start_date, increment_months) if not end_date or add_months(start_date, increment_months) <= end_date else end_date
+    })
+    
+    # Calculate periods with increments
+    current_start = add_months(start_date, increment_months)
+    period_count = 1  # Start from the second period
+    
+    current_items = copy.deepcopy(original_items)
+
+
+    while True:
+        # Apply increment to current items
+        for item in current_items:
+            item["rate"] = float(item.get("rate", 0)) * (1 + increment_percentage / 100)
+            item["amount"] = float(item.get("qty", 0)) * float(item.get("rate", 0))
+
+        next_increment_date = add_months(current_start, increment_months)
+
+        # Stop if we've passed the end date
+        if end_date and next_increment_date > end_date:
+            next_increment_date = end_date
+            create_period_auto_repeat(si, auto_repeat, current_start, next_increment_date,
+                                      current_items, increment_percentage, period_count)
+            break
+
+        create_period_auto_repeat(si, auto_repeat, current_start, next_increment_date,
+                                  current_items, increment_percentage, period_count)
+
+        current_start = next_increment_date
+        period_count += 1
+
+        if end_date and current_start >= end_date:
+            break
+
+            
+        # Apply increment to items for next period
+        for item in original_items:
+            item["rate"] = float(item.get("rate", 0)) * (1 + increment_percentage / 100)
+            item["amount"] = float(item.get("qty", 0)) * float(item.get("rate", 0))
+            
+
+def create_period_auto_repeat(si, auto_repeat, start_date, end_date, items, increment_percentage, period_count):
+    """Create an auto repeat document for a specific period with adjusted rates."""
+    
+    # Create a copy of the original sales invoice with updated rates
+    new_si = create_base_sales_invoice(
+        frappe.get_doc("Utility Service Request", si.utility_service_request),
+        items,
+        si.customer,
+        si.customer_name,
+        start_date,
+        add_days(start_date, 30),  # Due date 30 days after posting
+        si.company
+    )
+    
+    # Create auto repeat for this period
+    repeat_doc = frappe.get_doc({
+        "doctype": "Auto Repeat",
+        "reference_doctype": "Sales Invoice",
+        "reference_document": new_si.name,
+        "frequency": auto_repeat.get("frequency"),
+        "start_date": start_date,
+        "end_date": end_date,
+        "next_schedule_date": start_date,
+        "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
+        "notify_by_email": 0,
+        "repeat_on_day": auto_repeat.get("repeat_on_day"),
+        "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
+        "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
+        "description": f"Period {period_count}" + (
+            f" (with {increment_percentage}% increase)" if period_count > 1 else ""
         )
+    })
+    
+    repeat_doc.insert(ignore_permissions=True)
+    new_si.db_set("auto_repeat", repeat_doc.name)
+    
+    frappe.msgprint(
+        f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> "
+        f"created for period {period_count} ({start_date} to {end_date})"
+    )
 
-    frappe.get_doc({
-        "doctype": "Comment",
-        "comment_type": "Info",
-        "reference_doctype": "Utility Service Request",
-        "reference_name": docname,
-        "content": f"Created Sales Invoice <a href='/app/sales-invoice/{si.name}'>{si.name}</a>"
-    }).insert(ignore_permissions=True)
-
-    return si.name
+def create_single_auto_repeat(si, auto_repeat):
+    """Create a single auto repeat document without increments."""
+    repeat_doc = frappe.get_doc({
+        "doctype": "Auto Repeat",
+        "reference_doctype": "Sales Invoice",
+        "reference_document": si.name,
+        "frequency": auto_repeat.get("frequency"),
+        "start_date": auto_repeat.get("start_date"),
+        "end_date": auto_repeat.get("end_date"),
+        "next_schedule_date": auto_repeat.get("start_date"),
+        "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
+        "notify_by_email": 0,
+        "repeat_on_day": auto_repeat.get("repeat_on_day"),
+        "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
+        "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
+    })
+    
+    repeat_doc.insert(ignore_permissions=True)
+    si.db_set("auto_repeat", repeat_doc.name)
+    
+    frappe.msgprint(
+        f"Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> created"
+    )

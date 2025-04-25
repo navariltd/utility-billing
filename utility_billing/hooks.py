@@ -190,6 +190,15 @@ doc_events = {
             "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
         ],
     },
+    "Contract": {
+        "before_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.before_submit"
+        ],
+        "on_cancel": [
+            "utility_billing.utility_billing.overrides.server.contract.on_cancel"
+        ],
+        
+    },
 }
 
 # Scheduled Tasks
