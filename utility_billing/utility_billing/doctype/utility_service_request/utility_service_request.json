@@ -31,6 +31,7 @@
   "section_break_jqrx",
   "utility_bill_structure",
   "items",
+  "remarks",
   "section_break_asmx",
   "amended_from",
   "terms_tab",
@@ -444,12 +445,18 @@
    "fieldname": "repeat_on_last_day",
    "fieldtype": "Check",
    "label": "Repeat on Last Day of the Month"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Text Editor",
+   "label": "Remarks"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-25 11:58:22.711747",
+ "modified": "2025-04-25 12:37:50.073264",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

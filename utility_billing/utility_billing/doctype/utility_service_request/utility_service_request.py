@@ -14,6 +14,10 @@ class UtilityServiceRequest(Document):
     def onload(self):
         load_address_and_contact(self)
         
+    def validate(self):
+        if self.service_request_from == "Customer":
+            self.customer = self.party_name
+        
     def on_submit(self):
         settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
         if settings.create_customer_from_utility_service_request_on_submit:
@@ -43,6 +47,9 @@ def create_contract(name):
     contract.party_name = doc.customer
     contract.utility_service_request = name
     contract.property = doc.utility_property
+    contract.start_date = doc.start_date
+    contract.end_date = doc.end_date
+    contract.frequency = doc.frequency
     contract.flags.ignore_mandatory = True
     contract.insert()
     return contract.name
@@ -404,22 +411,25 @@ def create_sales_order_doc(docname, items, customer=None, customer_name=None, tr
     
     for item in items:
         item_code = item.get("item_code")
-        
-        item_name = item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name")
-        description = frappe.db.get_value("Item", item_code, "description")
-        uom = frappe.db.get_value("Item", item_code, "stock_uom")
 
-        so.append("items", {
+        item_line = {
             "item_code": item_code,
-            "item_name": item_name,
-            "description": description,
-            "qty": float(item.get("qty")),
-            "uom": uom,
-            "rate": float(item.get("rate")),
-            "amount": float(item.get("amount")) or (float(item.get("qty")) * float(item.get("rate"))),
-            "conversion_factor": 1.0,
+            "item_name": item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name"),
+            "description": item.get("description") or frappe.db.get_value("Item", item_code, "description"),
+            "uom": item.get("uom") or frappe.db.get_value("Item", item_code, "stock_uom"),
+            "qty": float(item.get("qty", 0)),
+            "rate": float(item.get("rate", 0)),
             "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
-        })
+            "conversion_factor": 1.0,
+        }
+
+        item_line["amount"] = float(item.get("amount", item_line["qty"] * item_line["rate"]))
+
+        for key, value in item.items():
+            if key not in item_line:
+                item_line[key] = value
+
+        so.append("items", item_line)
 
     so.insert(ignore_permissions=True)
     
@@ -456,13 +466,13 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
         try:
             auto_repeat = json.loads(auto_repeat)
         except Exception as e:
-            frappe.throw(f"Failed to parse auto_repeat JSON: {e}")
+            auto_repeat = {}
 
     if isinstance(items, str):
         try:
             items = json.loads(items)
         except Exception as e:
-            frappe.throw(f"Failed to parse items JSON: {e}")
+            items = []
 
     if not isinstance(items, list):
         frappe.throw("Items must be a list of item dictionaries.")
@@ -499,21 +509,24 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
     for item in items:
         item_code = item.get("item_code")
 
-        item_name = item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name")
-        description = frappe.db.get_value("Item", item_code, "description")
-        uom = frappe.db.get_value("Item", item_code, "stock_uom")
-
-        si.append("items", {
+        item_line = {
             "item_code": item_code,
-            "item_name": item_name,
-            "description": description,
-            "qty": float(item.get("qty")),
-            "uom": uom,
-            "rate": float(item.get("rate")),
-            "amount": float(item.get("amount")) or (float(item.get("qty")) * float(item.get("rate"))),
+            "item_name": item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name"),
+            "description": item.get("description") or frappe.db.get_value("Item", item_code, "description"),
+            "uom": item.get("uom") or frappe.db.get_value("Item", item_code, "stock_uom"),
+            "qty": float(item.get("qty", 0)),
+            "rate": float(item.get("rate", 0)),
             "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
             "conversion_factor": 1.0,
-        })
+        }
+
+        item_line["amount"] = float(item.get("amount", item_line["qty"] * item_line["rate"]))
+
+        for key, value in item.items():
+            if key not in item_line:
+                item_line[key] = value
+
+        si.append("items", item_line)
 
     si.insert(ignore_permissions=True)
 

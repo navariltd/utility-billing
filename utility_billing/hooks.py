@@ -39,6 +39,7 @@ fixtures = [
 accounting_dimension_doctypes = [
     "Utility Bill Structure",
     "Utility Service Request",
+    "Utility Service Request Item",
     "Meter Reading"
 ]
 
