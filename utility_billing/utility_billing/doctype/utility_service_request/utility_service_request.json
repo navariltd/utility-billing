@@ -42,6 +42,8 @@
   "tc_name",
   "terms",
   "auto_repeat_schedule_tab",
+  "requested_properties_section",
+  "requested_properties",
   "auto_repeat_settings_section",
   "frequency",
   "repeat_on_day",
@@ -418,7 +420,7 @@
   {
    "fieldname": "auto_repeat_schedule_tab",
    "fieldtype": "Tab Break",
-   "label": "Auto Repeat Schedule"
+   "label": "Lease Details"
   },
   {
    "allow_on_submit": 1,
@@ -451,12 +453,24 @@
    "fieldname": "remarks",
    "fieldtype": "Text Editor",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "requested_properties_section",
+   "fieldtype": "Section Break",
+   "label": "Requested Properties"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "requested_properties",
+   "fieldtype": "Table",
+   "label": "Requested Properties",
+   "options": "Contract Utility Property Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-25 12:37:50.073264",
+ "modified": "2025-04-25 14:19:56.201259",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

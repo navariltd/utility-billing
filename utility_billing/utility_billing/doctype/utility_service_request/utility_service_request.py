@@ -37,11 +37,11 @@ def create_customer_and_sales_order(docname):
 
     return {"sales_order": sales_order_doc.name}
 
-
 @frappe.whitelist()
 def create_contract(name):
     """Create a contract from the Utility Service Request."""
     doc = frappe.get_doc("Utility Service Request", name)
+    
     contract = frappe.new_doc("Contract")
     contract.party_type = "Customer"
     contract.party_name = doc.customer
@@ -50,8 +50,19 @@ def create_contract(name):
     contract.start_date = doc.start_date
     contract.end_date = doc.end_date
     contract.frequency = doc.frequency
+
+    for item in doc.requested_properties:
+        contract.append("properties", {
+            "frequency": item.frequency,
+            "utility_property": item.utility_property,
+            "rent_increment_frequency": item.rent_increment_frequency,
+            "rent_increment_percentage": item.rent_increment_percentage
+        })
+    
     contract.flags.ignore_mandatory = True
+    
     contract.insert()
+    
     return contract.name
 
 
