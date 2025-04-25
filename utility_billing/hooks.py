@@ -39,6 +39,7 @@ fixtures = [
 accounting_dimension_doctypes = [
     "Utility Bill Structure",
     "Utility Service Request",
+    "Utility Service Request Item",
     "Meter Reading"
 ]
 
@@ -188,6 +189,15 @@ doc_events = {
         "before_validate": [
             "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
         ],
+    },
+    "Contract": {
+        "before_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.before_submit"
+        ],
+        "on_cancel": [
+            "utility_billing.utility_billing.overrides.server.contract.on_cancel"
+        ],
+        
     },
 }
 

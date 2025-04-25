@@ -2,46 +2,29 @@ from frappe import _
 
 def get_data():
     return {
-        "fieldname": "name", 
-        "internal_links": {
-            "Item": "item",
-            "Customer": "customer",
-        },
+        "fieldname": "utility_property",
         "non_standard_fieldnames": {
             "Asset": "item_code",
             "Meter Reading": "property",
-            "Utility Service Request": "property",
-            "Quotation": "utility_property",
-            "Sales Order": "utility_property",
-            "Delivery Note": "utility_property",
-            "Sales Invoice": "utility_property",
-            "Material Request": "utility_property",
-            "Supplier Quotation": "utility_property",
-            "Purchase Order": "utility_property",
-            "Purchase Receipt": "utility_property",
-            "Purchase Invoice": "utility_property",
-            "Payment Entry": "utility_property",
-            "Payment Request": "utility_property",
         },
         "transactions": [
+            
             {
-                "label": _("Utility Operations"),
+                "label": _("Contracts"),
                 "items": [
-                    "Meter Reading",
-                    "Utility Service Request",
+                    "Contract",
                 ],
             },
             {
                 "label": _("Assets"),
                 "items": [
-                    "Item",
                     "Asset",
                 ],
             },
             {
-                "label": _("Customer"),
+                "label": _("Support"),
                 "items": [
-                    "Customer",
+                    "Issue",
                 ],
             },
             {
@@ -54,14 +37,10 @@ def get_data():
                 ],
             },
             {
-                "label": _("Buy"),
+                "label": _("Utility Operations"),
                 "items": [
-                    "Material Request",
-                    "Supplier Quotation",
-                    "Request for Quotation",
-                    "Purchase Order",
-                    "Purchase Receipt",
-                    "Purchase Invoice",
+                    "Meter Reading",
+                    "Utility Service Request",
                 ],
             },
             {
@@ -71,5 +50,16 @@ def get_data():
                     "Payment Request",
                 ],
             },
+            {
+                "label": _("Buy"),
+                "items": [
+                    "Material Request",
+                    "Supplier Quotation",
+                    "Purchase Order",
+                    "Purchase Receipt",
+                    "Purchase Invoice",
+                ],
+            },
+            
         ],
     }
