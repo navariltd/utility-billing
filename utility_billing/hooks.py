@@ -197,7 +197,10 @@ doc_events = {
         "on_cancel": [
             "utility_billing.utility_billing.overrides.server.contract.on_cancel"
         ],
-        
+        "on_update_after_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.on_update_after_submit"
+        ]
+
     },
 }
 

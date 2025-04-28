@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "is_active",
   "utility_property",
   "frequency",
   "column_break_eglj",
@@ -15,7 +16,6 @@
  ],
  "fields": [
   {
-   "allow_on_submit": 1,
    "fieldname": "utility_property",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -27,7 +27,6 @@
    "reqd": 1
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "frequency",
    "fieldtype": "Select",
    "in_filter": 1,
@@ -42,7 +41,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "rent_increment_frequency",
    "fieldtype": "Select",
    "hidden": 1,
@@ -54,7 +52,6 @@
    "options": "\nMonthly\nQuarterly\nYearly"
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "rent_increment_percentage",
    "fieldtype": "Percent",
    "in_filter": 1,
@@ -64,7 +61,6 @@
    "label": "Rent Increment Percentage"
   },
   {
-   "allow_on_submit": 1,
    "description": "The number of months between each rent increment. For example, enter 12 for annual increments or 6 for semi-annual increments.",
    "fieldname": "rent_increment_interval_months",
    "fieldtype": "Float",
@@ -73,13 +69,24 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Rent Increment Interval (Months)"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-25 18:10:39.717361",
+ "modified": "2025-04-28 14:23:07.694795",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Contract Utility Property Item",
