@@ -27,6 +27,22 @@
   "column_break_dgdr",
   "house_no",
   "plot_no",
+  "column_break_ypzh",
+  "lot_size",
+  "unit_information_section",
+  "unit_number",
+  "bedrooms",
+  "column_break_qsil",
+  "unit_type",
+  "bathrooms",
+  "column_break_qbgf",
+  "unit_size",
+  "floor_level",
+  "features_and_amenities_section",
+  "features",
+  "other_info_section",
+  "unique_features",
+  "legal_description",
   "section_break_nbga",
   "lft",
   "old_parent",
@@ -244,12 +260,91 @@
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company"
+  },
+  {
+   "fieldname": "features_and_amenities_section",
+   "fieldtype": "Section Break",
+   "label": "Features and Amenities"
+  },
+  {
+   "fieldname": "features",
+   "fieldtype": "Table",
+   "options": "Utility Property Feature item"
+  },
+  {
+   "fieldname": "unit_information_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Information"
+  },
+  {
+   "fieldname": "unit_number",
+   "fieldtype": "Data",
+   "label": "Unit Number"
+  },
+  {
+   "fieldname": "column_break_qsil",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unit_type",
+   "fieldtype": "Link",
+   "label": "Unit Type",
+   "options": "Utility Property Unit Type"
+  },
+  {
+   "fieldname": "unique_features",
+   "fieldtype": "Text Editor",
+   "label": "Unique Features"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "other_info_section",
+   "fieldtype": "Section Break",
+   "label": "Other Information"
+  },
+  {
+   "fieldname": "legal_description",
+   "fieldtype": "Text Editor",
+   "label": "Legal Description"
+  },
+  {
+   "fieldname": "column_break_ypzh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bedrooms",
+   "fieldtype": "Int",
+   "label": "Bedrooms"
+  },
+  {
+   "fieldname": "bathrooms",
+   "fieldtype": "Int",
+   "label": "Bathrooms"
+  },
+  {
+   "fieldname": "column_break_qbgf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "floor_level",
+   "fieldtype": "Data",
+   "label": "Floor Level"
+  },
+  {
+   "fieldname": "lot_size",
+   "fieldtype": "Data",
+   "label": "Lot Size (Land Area)"
+  },
+  {
+   "fieldname": "unit_size",
+   "fieldtype": "Float",
+   "label": "Unit Size (sqft)"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-04-25 12:36:06.300875",
+ "modified": "2025-04-28 15:06:45.179099",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",

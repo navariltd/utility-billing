@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-28 14:37:05.782963",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "feature",
+  "column_break_meiy",
+  "feature_type",
+  "section_break_apsq",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Notes"
+  },
+  {
+   "fieldname": "feature",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Feature",
+   "options": "Utility Property Feature",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_apsq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_meiy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "feature_type",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Feature Type",
+   "options": "Utility Property Feature Type"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-04-28 14:44:59.631581",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Utility Property Feature item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
