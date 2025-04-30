@@ -1,232 +1,331 @@
-# **Utility Billing**  
+# 💡 **Utility Billing & Property Management for ERPNext**
 
-## **Utility Billing System Integration for ERPNext**  
+## ⚙️ Integrated Utility Billing & Property Management System
 
-### **Overview**  
-
-The Utility Billing application provides a robust solution for managing utility billing processes within the [ERPNext](https://erpnext.com) framework. This integration streamlines the billing lifecycle for utilities such as water, electricity, and sanitation, ensuring accurate billing.  
-![Utility Service Request Process Flow Screenshot](./utility_billing/docs/images/service-flow.png)  
+The **Utility Billing & Property Management App** is a powerful addition to [ERPNext](https://erpnext.com), designed to streamline **utility billing**, **property leasing**, and **tenant management**. This module combines robust billing automation with advanced property oversight — ideal for municipal utilities, real estate managers, and property developers.
 
 ---
 
-### **Summary of Main Features**  
-
-1. **Service Request Management**  
-   - Streamline handling of customer service requests related to utility issues, ensuring prompt responses and efficient resolutions.  
-
-2. **Meter Reading**  
-   - Facilitate accurate meter reading processes for the collection and recording of consumption data, supporting billing accuracy and efficiency.  
-
-3. **Flexible Tariff Structures**  
-   - Define and manage various tariff plans, allowing customization for different customer types and consumption levels to optimize billing accuracy.  
-
-4. **Bulk Billing**  
-   - Enable bulk billing capabilities for processing multiple invoices at once, improving efficiency and reducing manual workload in the billing cycle.  
+# I. 🔌 **Utility Billing**
 
 ---
 
-## **Key Features**  
+### 🧩 **Main Functionalities**
 
-### 1. **Setup**  
+### 🔌 **Utility Billing**
 
-#### **1.1 Utility Billing Settings**  
-Go to the **Utility Settings** doctype to configure your utility provider details and settings.  
-
-![Utility Settings Screenshot](./utility_billing/docs/images/utility-settings.png)  
-
-This section allows the configuration of operational preferences to streamline utility billing. Below are the key details and their functionalities:  
-- **Sales Order Creation State**  
-  - Defines the default state for new sales orders created through the utility billing module. The state can be set to "Draft" or "Submitted." Setting this to "Draft" allows for reviewing and verifying sales orders before final submission. Choosing "Submitted" directly generates submitted sales orders without additional review steps.  
-- **Sales Invoice Creation State**  
-  - Determines whether sales invoices generated are set to "Draft" or "Submitted" by default. Select "Draft" for an additional review process or "Submitted" for immediate invoicing.  
-- **Stock Entry Creation State**  
-  - Specifies the default state for stock entries created during utility billing-related transactions. Configurable to "Draft" or "Submitted."  
-- **Create Single Invoice for Multiple Sales Orders per Customer**  
-  - Consolidates multiple sales orders for a single customer into one invoice.  
-
-#### **1.2 Customer Groups**  
-- Categorize customers into groups like residential, commercial, or industrial. This categorization helps in applying tailored tariffs and services to different customer segments. To learn more about Customer Groups, visit [Customer Groups](https://docs.erpnext.com/docs/user/manual/en/customer-group).  
-
-#### **1.3 Price List and Item Prices**  
-- **Price List**: Create price lists specific to each customer group, detailing the rates for services like water usage, electricity consumption, or sewer charges. To learn more about Price Lists, visit [Price Lists](https://docs.erpnext.com/docs/user/manual/en/price-lists).  
-- **Item Prices**: Use the "Item Prices" doctype to input detailed pricing, including block rates or fixed charges, for accurate billing. [Learn more about Item Prices here](https://docs.erpnext.com/docs/user/manual/en/item-price).  
-
-![Item Prices Screenshot](./utility_billing/docs/images/item-prices.png)  
+- 💬 Service Request Management
+- 📏 Meter Reading
+- 💰 Tariff Management
+- 🧾 Bulk Billing (Mass Billing)
 
 ---
 
-### 2. **Billing Management**  
-
-#### **2.1 Meter Reading**  
-![Meter Reading Screenshot](./utility_billing/docs/images/meter-reading.png)  
-
-Meter Numbers are maintained as serial Numbers in ERPNext. To assign Meter Numbers to each customer, create a Warranty Claim. To learn more about Warranty Claim, [visit Warranty Claim here](https://docs.erpnext.com/docs/user/manual/en/warranty-claim).  
-
-The Meter Reading doctype is used to log periodic meter readings for customers. To create a new Meter Reading:  
-1. Go to Meter Reading List.  
-2. Click "Add Meter Reading."  
-3. Select the Customer.  
-4. In the Items table, select the Utility Items and set the Current Readings.  
-   - The previous reading will be pulled from the Customer’s previous Sales Invoice, and the Consumption is calculated using the formula:  
-     **Consumption = (Current Reading - Previous Reading)**  
-   - The Meter Number is fetched from the Customer’s associated Warranty Claim and is auto-selected if there is only one meter, or selected manually if multiple meters are available.  
-5. Save and Submit.  
-
-On saving, the consumption rates are auto-calculated based on the associated Item Price.  
-On submitting, the system automatically creates a sales order for that customer, either in "Draft" or "Submitted" status, depending on the Utility Billing Settings.  
-
-#### **2.2 Utility Service Request**  
-![Utility Service Request Screenshot](./utility_billing/docs/images/utility-service-request.png)  
-
-Manage initial customer service requests efficiently. To create a new Utility Service Request:  
-1. Go to Utility Service Request List.  
-2. Click "Add Utility Service Request."  
-3. Fill in the Customer (Requester) details.  
-4. Select the Utility Request Type, e.g., New Connection.  
-5. Tag the appropriate Cost Centers and Projects, if applicable.  
-6. In the Items table, select the Utility Services requested.  
-7. New Meter Numbers can also be assigned to the Customer at this stage by selecting a Metered Item and selecting the Meter Number.  
-8. Save.  
-9. Click on the "Create" button and select "Site Survey."  
-   - A related issue to conduct a site survey is initialized here. The issue captures the findings of the site visit, ensuring all necessary conditions are met for the utility service. It must be in “Closed” or “Resolved” status to proceed.  
-10. Click on the "Create" button and select "BOM."  
-   - Generate a BOM for any required materials or equipment. Ensure all components needed for the request (e.g., meters, pipes) are listed. Submit the BOM to finalize resource allocation.  
-11. Submit and create a Sales Order.  
-   - On creating a Sales Order from the Utility Service Request, the Customer will be automatically created with their associated details, including Meter Number assignment, if any exists.  
-
-#### **2.3 Mass Billing**  
-![Mass Billing Screenshot](./utility_billing/docs/images/mass-billing.png)  
-
-Streamlines the billing process by generating a single invoice from multiple customers’ sales orders.  
-1. Go to Sales Order List.  
-2. Select the specific Sales Orders.  
-3. Click on the "Menu," then click on "Sales Invoice."  
-4. A background job will run to generate the invoices.  
+## 🔍 **Key Features**
 
 ---
 
-### 3. **NOTE**  
+### 🧾 **1. Utility Billing**
 
-#### **3.1 Item Configuration**  
-- Ensure that the "Is Utility Item" checkbox is ticked to clearly identify items that pertain to utility services.  
-![Is Utility Screenshot](./utility_billing/docs/images/is_utility_item.png)  
+#### 🛠️ 1.1 Utility Billing Settings
 
-#### **3.2 Meter Numbers**  
-- Maintain meter numbers as serial numbers in ERPNext. Assign them via Warranty Claims for seamless integration. A customer can have one or more meter numbers.
-- **Single Meter:** If a customer has only one meter, it will be auto-selected during meter reading.
-- **Multiple Meters:** If a customer has multiple meters, the specific meter must be selected from the existing ones linked to the customer.
-![Warranty Claim Screenshot](./utility_billing/docs/images/meter-number.png)  
+Configure utility preferences in the **Utility Settings** doctype.
 
----
+![Utility Settings Screenshot](./utility_billing/docs/images/utility-settings.png)
 
-## **Doctypes**  
+Key Fields:
 
+- 🔄 **Sales Order / Invoice / Stock Entry Creation State** — Choose "Draft" or "Submitted"
+- 📦 **Merge Sales Orders** — One invoice per customer across multiple orders
 
-### Core Doctypes
+#### 👥 1.2 Customer Grouping
 
-### 1. **Utility Service Request**
+- Segment customers (e.g., Residential, Commercial) for tailored billing  
+  🔗 [Customer Groups](https://docs.erpnext.com/docs/user/manual/en/customer-group)
 
-- **Description**: Manages initial service requests for utilities, capturing essential details about the customer and type of service. It includes customer type, request type, and geographic identifiers like territory.
-- **Key Fields**:
-  - **Customer Name**: The full name of the customer initiating the service request.
-  - **Customer Type**: The type of customer (Company, Individual, or Partnership).
-  - **Request Type**: Specific type of utility service requested, linked to the service type.
-  - **Date**: Date of the request, shown in list view and filters.
-  - **Company**: Company handling the request.
-  - **NRC/Passport No**: Unique ID for identification (NRC or Passport number).
-  - **Tariff**: Rate group associated with the customer.
-  - **Territory**: Customer's territory for service allocation.
-  - **Utility Service Request Item**: Childtable to record the request services.
+#### 💲 1.3 Price Lists & Tariffs
 
-![Utility Service Request Screenshot](./utility_billing/docs/images/utility-service-request.png)
+- Define prices based on customer type, block rates, or service tiers  
+  🔗 [Price Lists](https://docs.erpnext.com/docs/user/manual/en/price-lists)
 
 ---
 
-### 2. **Meter Reading**
+### 📊 **2. Billing Management**
 
-- **Description**: Documents meter readings, linking them to utility requests and customer data. Supports periodic data capture for utility billing.
-- **Key Fields**:
-  - **Customer**: Reference to the customer account for which the meter reading is recorded.
-  - **Date**: Reading date for data accuracy and billing cycle linkage.
-  - **Price List**: Helps identify and calculate tariff rates.
-  - **Meter Reading Item**: Childtable to record the meter readings.
-  - **Rates**: Associated rates for this reading, drawn from applicable tariffs and meter reading items table.
+#### ⛽ 2.1 Meter Reading
 
 ![Meter Reading Screenshot](./utility_billing/docs/images/meter-reading.png)
 
+Steps:
+
+1. Select Customer
+2. Add Utility Item & Enter Current Reading
+3. System fetches previous reading & calculates usage
+4. Auto creates Sales Order on Submit
+
+#### 📝 2.2 Service Requests
+
+![Service Request Screenshot](./utility_billing/docs/images/utility-service-request.png)
+
+Flow:
+
+1. Add Request → Survey → BOM → Sales Order
+2. New Meter Numbers may be assigned during request
+3. Auto-create Customer profile & meter linkage
+
+> 🖼️ ![Service Request - Details Tab](./utility_billing/docs/images/service_request_details_tab.png)
+
+> 🖼️ ![Service Request - Sales Order Modal](./utility_billing/docs/images/service_request_salesorder_modal.png)  
+> 🖼️ ![Service Request - Sales Invoice Modal](./utility_billing/docs/images/service_request_salesinvoice_modal.png)
+
+#### 🧮 2.3 Mass Billing
+
+![Mass Billing Screenshot](./utility_billing/docs/images/mass-billing.png)
+
+Steps:
+
+1. Select Sales Orders
+2. Menu → Create Sales Invoice
+3. Background job auto-generates invoices
+
 ---
 
-### 3. **Utility Billing Settings**
+### 📌 **3. Important Notes**
 
-- **Description**: Configures the default operational settings for the utility billing system, including invoice options and notification configurations.
-- **Key Fields**:
-  - **Sales Order Creation State**: Defines whether a sales order is in 'Draft' or 'Submitted' state by default.
-  - **Individual Invoices for Multiple Sales Orders**: Checkbox setting for managing how invoices are generated per sales order.
+#### 🔧 3.1 Item Configuration
 
-![Utility Billing Settings Screenshot](./utility_billing/docs/images/utility-settings.png)
+- ✅ Tick "Is Utility Item" to mark billable services  
+  ![Is Utility Screenshot](./utility_billing/docs/images/is_utility_item.png)
 
-### Customizations
+#### 📟 3.2 Meter Numbers
 
-### **1. Sales Order & Sales Invoice**
+- Managed as **Serial Numbers**, assigned via **Warranty Claim**  
+  ![Warranty Claim Screenshot](./utility_billing/docs/images/meter-number.png)
 
-- Rates (Sales Order Meter Reading & Sales Invoice Meter Reading) child tables to track and calculate charges based on the meter readings associated with each sales order.
-- Block field to link each item in the items child tables to a specific tariff block.
+---
 
-![Sales Order Screenshot](./utility_billing/docs/images/sales-order.png)
-![Sales Invoice Screenshot](./utility_billing/docs/images/sales-invoice.png)
+## 📊 **Visual Process Flows**
 
-### **2. Item**
+### 🔌 **Utility Service Request Process**
 
-- Is Utility Item (is_utility_item) to identify items that should be processed as utility-related.
-
-![Item Screenshot](./utility_billing/docs/images/is_utility_item.png)
-
-### **3. Item Price**
-- Tariff table - This table allows defining blocks with upper and lower limits and corresponding rates. It helps distribute rates based on consumption levels, ensuring accurate billing according to predefined tariff structures.
-
-![Item Screenshot](./utility_billing/docs/images/item-prices.png)
-
-### Manual/Self-Hosted Installation
-
-1. [Install bench](https://github.com/frappe/bench)
-
-2. [Install ERPNext](https://github.com/frappe/erpnext#installation)
-
-3. Once bench and ERPNext are installed, add utility-billing to your bench by running:
-
-```sh
-
-
-$  bench  get-app  --branch  {branch-name}  https://github.com/navariltd/utility-billing.git
-
+```mermaid
+graph TD
+    A["Customer / Lead / Prospect (CRM)"] --> B["Create Service Request"]
+    B --> C["Create Customer"]
+    C --> D["Create Site Survey"]
+    D --> H["Create BOM"]
+    H --> G
+    H --> F
+    C --> F["Create Sales Order"]
+    C --> G["Create Sales Invoice"]
 ```
 
-Replace `{branch-name}` with the desired branch name from the repository. Ensure compatibility with your installed versions of Frappe and ERPNext.
+> 💡 Customer can be automatically created on submit, depending on configuration in settings. **Utility Billing Settings**.
 
-4. Install the utility-billing app on your site by running:
+---
 
-```sh
+### 🔌 **Utility Billing Workflow**
 
-$  bench  --site  {sitename}  install-app  utility_billing
-
+```mermaid
+graph TD
+    A[Service Request] --> B{Meter Reading}
+    B --> C[Sales Order]
+    C --> D[Sales Invoice]
+    D --> E[Payment]
 ```
 
-Replace `{sitename}` with the name of your site.
+---
 
-### Frappe Cloud Installation
+## 🧾 **Doctypes Summary**
 
-- Sign up with Frappe Cloud.
+### 📋 Utility Service Request
 
-- Setup a [bench](https://frappecloud.com/docs/benches/create-new).
+- Captures customer service needs, request type, and associated meters
+- Includes survey, material BOM, and workflow logic
 
-- Create a new site.
+### 📏 Meter Reading
 
-- Choose Frappe Version-14/Version-15 or above, and select ERPNext, and Burundi Compliance from the available Apps to Install.
+- Captures periodic consumption data for customers
+- Auto-calculates bills from usage and tariffs
 
-- Within minutes, the site will be up and running with a fresh install, ready to explore the app's simple and impressive features.
+### ⚙️ Utility Billing Settings
 
-If assistance is needed to get started, reach out for consultation and support from: [Navari](https://navari.co.ke/).
+- Central config for all automation and document generation behavior
 
-### <center>License</center>
+---
 
-<center>GNU General Public License (v3). See [license.txt](https://github.com/navariltd/utility-billing/blob/master/license.txt) for more information.</center>
+### 🧾 Sales Order & Invoice Customization
+
+- Tracks readings & rates via **custom child tables**
+- Links tariff blocks per item for billing precision
+
+---
+
+# II. 🏢 **Property Management**
+
+---
+
+## 🧱 Overview
+
+The **Property Management Module** in ERPNext provides a structured, end-to-end solution for managing rental properties — from onboarding tenants to recurring rent invoicing and utility billing.
+
+It supports:
+
+- 🏠 Property structuring (Project → Building → Unit)
+- 📝 Service Requests to capture tenant intent
+- 📄 Contract generation
+- 💰 Deposit collection
+- 🔁 Rent invoicing via Auto Repeat
+- ⚡ Utility billing
+
+> 🖼️ ![Utility & Property Overview](./utility_billing/docs/images/uility_property.png)
+
+---
+
+## 🏗️ Property Hierarchy
+
+Properties are structured as:
+
+```bash
+Real Estate Project
+ ├── Building A
+ │    ├── Floor 1
+ │    │    └── Unit 101
+ │    ├── Floor 2
+ │    │    └── Unit 201
+ └── Building B
+      └── Unit 301
+```
+
+Each unit is independently managed for contracts, billing, and utilities.
+
+---
+
+## 🔄 Workflow: From Service Request to Billing
+
+### 🔌 **Utility Service Request Process**
+
+> 💡 **Contract is optional but required based on _Utility Billing Settings_.**  
+> 🧠 **Customer can be automatically created on submit**, depending on configuration in settings.
+
+```mermaid
+graph TD
+    A["Customer / Lead / Prospect (CRM)"] --> B["Create Service Request"]
+    B --> C["Auto Create Customer on Submit (if enabled)"]
+    C --> E["Contract (Optional/Required via Settings)"]
+    C --> F["Create Sales Order (Deposit)"]
+    E --> F
+    C --> G["Create Sales Invoice (Rent)"]
+    E --> G
+    G --> H["Auto Repeat (Recurring Invoicing)"]
+```
+
+## 📂 Step-by-Step Functional Process
+
+### 1️⃣ Utility Service Request (Initiation)
+
+> 🖼️ ![Service Request Details Tab](./utility_billing/docs/images/service_request_details_tab.png)  
+> 🖼️ ![Service Request Lease Tab](./utility_billing/docs/images/service_request_lease_tab.png)
+
+Start by creating a **Utility Service Request**, which captures:
+
+- 🧍 Tenant details (customer)
+- 🏢 Desired unit(s)
+- 📅 Contract dates and terms
+- 💼 Lease duration
+
+This acts as the **lead intake form** for tenants and is the **trigger point** for the rental flow.
+
+---
+
+### 2️⃣ Create Property Contract
+
+> 🖼️ ![Contract Screenshot](./utility_billing/docs/images/contract.png)
+
+From an approved Service Request:
+
+- Draft a **Property Contract**
+- Define:
+  - Contract period
+  - Rental frequency (monthly, quarterly, yearly)
+  - Rent escalation rules (optional)
+  - Deposit terms
+- Link:
+  - Tenant (Customer)
+  - Unit(s)
+
+This contract governs all subsequent financial documents.
+
+---
+
+### 3️⃣ Generate Sales Order (Deposit / Booking)
+
+> 🖼️ ![Sales Order Modal](./utility_billing/docs/images/service_request_salesorder_modal.png)
+
+Directly from the service request:
+
+- Create a **Sales Order** for:
+  - 💰 Security deposit
+  - 📌 Booking/advance payments
+- Amounts auto-pulled from service request
+- Tracks payment before lease start
+
+---
+
+### 4️⃣ Sales Invoice (Recurring Rent)
+
+> 🖼️ ![Sales Invoice Modal](./utility_billing/docs/images/service_request_salesinvoice_modal.png)
+
+Rent is billed based on the contract:
+
+- 💼 Auto Repeat can auto-generate invoices
+- Supports:
+  - Monthly / Quarterly / Annual cycles
+  - Rent escalation by %
+
+---
+
+### 5️⃣ Auto Repeat & Escalation
+
+- 🔁 **Recurring Billing**: Set by contract
+- 📈 **Escalation Rules**:
+  - Custom % increase
+  - Custom intervals
+  - Manual override supported
+
+---
+
+## 💎 Strategic Benefits
+
+✅ Captures tenant interest via **Utility Service Request**  
+✅ Smooth transition to **Contracts**, **Sales Orders**, and **Invoices**  
+✅ Centralized control of units, leases, and utilities  
+✅ Seamless **rent + utility billing** under one customer  
+✅ Enables workflows like **vacation notice**, **contract renewal**, or **meter change**
+
+---
+
+## 🛠️ **Installation (Self-Hosted)**
+
+```bash
+# Install Frappe Bench
+https://github.com/frappe/bench
+
+# Install ERPNext
+https://github.com/frappe/erpnext
+```
+
+Clone this app into your apps folder and run:
+
+```bash
+bench get-app utility_billing [app_repo_url]
+bench --site yoursite install-app utility_billing
+```
+
+---
+
+## 📚 **Documentation & Support**
+
+Need help? Browse detailed guides, FAQs, or open an issue in our GitHub repo.  
+👉 [Documentation Link](https://github.com/navariltd/utility-billing)  
+👉 [Community Forum](https://discuss.frappe.io)
