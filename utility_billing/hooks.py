@@ -83,6 +83,7 @@ accounting_dimension_doctypes = [
 
 # include js in doctype views
 doctype_js = {"Item Price": "utility_billing/overrides/client/item_price.js"}
+doctype_js = {"Contract": "utility_billing/overrides/client/contract.js"}
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
     "Sales Order": "utility_billing/overrides/client/sales_order_list.js"

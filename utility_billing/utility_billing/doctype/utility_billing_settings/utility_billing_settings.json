@@ -10,6 +10,10 @@
   "column_break_moce",
   "stock_entry_creation_state",
   "individual_invoices_for_multiple_sales_orders",
+  "service_request_section",
+  "enable_extra_rows_for_sosi_creation",
+  "require_contract_before_sosicustomer_creation",
+  "column_break_rmpo",
   "create_customer_from_utility_service_request_on_submit"
  ],
  "fields": [
@@ -25,7 +29,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "individual_invoices_for_multiple_sales_orders",
    "fieldtype": "Check",
    "label": "Create single invoice for multiple sales orders per customer"
@@ -45,16 +49,37 @@
    "options": "Draft\nSubmitted"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "create_customer_from_utility_service_request_on_submit",
    "fieldtype": "Check",
    "label": "Create Customer from Utility Service Request on Submit"
+  },
+  {
+   "fieldname": "service_request_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_extra_rows_for_sosi_creation",
+   "fieldtype": "Check",
+   "label": "Enable Extra Rows for SO/SI Creation"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_contract_before_sosicustomer_creation",
+   "fieldtype": "Check",
+   "label": "Require Contract Before SO/SI/Customer Creation"
+  },
+  {
+   "fieldname": "column_break_rmpo",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-16 14:52:15.237854",
+ "modified": "2025-04-28 16:41:37.664061",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

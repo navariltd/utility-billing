@@ -1,5 +1,7 @@
+const settingsDoctypeName = "Utility Billing Settings";
+
 frappe.ui.form.on("Utility Service Request", {
-	refresh: function (frm) {
+	refresh: async function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
 		frm.toggle_display("contact_html", !frm.is_new());
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
@@ -37,6 +39,15 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		};
+
+		frm.fields_dict["requested_properties"].grid.get_field("utility_property").get_query =
+			function () {
+				return {
+					filters: {
+						status: "Available",
+					},
+				};
+			};
 
 		let closedWarrantySerials = [];
 
@@ -170,16 +181,16 @@ frappe.ui.form.on("Utility Service Request", {
 function set_dynamic_field_label(frm) {
 	if (frm.doc.service_request_from == "Customer") {
 		frm.set_df_property("party_name", "label", "Customer");
-		frm.fields_dict.party_name.get_query = null;
 	} else if (frm.doc.service_request_from == "Lead") {
 		frm.set_df_property("party_name", "label", "Lead");
-		frm.fields_dict.party_name.get_query = function () {
-			return { query: "erpnext.controllers.queries.lead_query" };
-		};
 	} else if (frm.doc.service_request_from == "Prospect") {
 		frm.set_df_property("party_name", "label", "Prospect");
-		frm.fields_dict.party_name.get_query = null;
+	} else if (frm.doc.service_request_from == "CRM Deal") {
+		frm.set_df_property("party_name", "label", "Frappe CRM Deal");
 	}
+
+	// Remove any custom query for party_name field
+	frm.fields_dict.party_name.get_query = null;
 }
 
 frappe.ui.form.on("Utility Service Request Item", {
@@ -328,8 +339,18 @@ function open_bom_creation_modal(frm) {
 	modal.show();
 }
 
-function addActionButtons(frm) {
+async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
+
+	const settingsDoc = await frappe.db.get_value(settingsDoctypeName, settingsDoctypeName, [
+		"enable_extra_rows_for_sosi_creation",
+		"require_contract_before_sosicustomer_creation",
+	]);
+
+	const settings = settingsDoc?.message || {};
+	const enableExtraRows = settings?.enable_extra_rows_for_sosi_creation == 1 ? true : false;
+	const requireContract =
+		settings?.require_contract_before_sosicustomer_creation == 1 ? true : false;
 
 	if (frm.doc.docstatus === 1) {
 		// Customer creation button
@@ -355,48 +376,50 @@ function addActionButtons(frm) {
 			);
 		} else {
 			// Contract creation button
-			frappe.db.get_value(
+			const contract = await frappe.db.get_value(
 				"Contract",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
-				"name",
-				(r) => {
-					if (!r.name) {
-						frm.add_custom_button(
-							__("Contract"),
-							function () {
-								frappe.call({
-									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_contract",
-									args: {
-										name: frm.doc.name,
-									},
-									callback: function (response) {
-										handle_response(response, __("Contract"), frm);
-										if (response && response.message) {
-											frappe.set_route("Form", "Contract", response.message);
-										}
-									},
-								});
-							},
-							__("Create")
-						);
-					} else {
-						frm.add_custom_button(
-							__("Sales Order / Deposit"),
-							function () {
-								showSalesOrderModal(frm);
-							},
-							__("Create")
-						);
-						frm.add_custom_button(
-							__("Sales Invoice"),
-							function () {
-								showSalesInvoiceModal(frm);
-							},
-							__("Create")
-						);
-					}
-				}
+				"name"
 			);
+
+			const contractName = contract?.message?.name || null;
+
+			if (!contractName) {
+				frm.add_custom_button(
+					__("Contract"),
+					function () {
+						frappe.call({
+							method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_contract",
+							args: {
+								name: frm.doc.name,
+							},
+							callback: function (response) {
+								handle_response(response, __("Contract"), frm);
+								if (response && response.message) {
+									frappe.set_route("Form", "Contract", response.message);
+								}
+							},
+						});
+					},
+					__("Create")
+				);
+			}
+			if ((requireContract && contractName) || !requireContract) {
+				frm.add_custom_button(
+					__("Sales Order / Deposit"),
+					function () {
+						showSalesOrderModal(frm, enableExtraRows);
+					},
+					__("Create")
+				);
+				frm.add_custom_button(
+					__("Sales Invoice"),
+					function () {
+						showSalesInvoiceModal(frm, enableExtraRows);
+					},
+					__("Create")
+				);
+			}
 		}
 	}
 
@@ -422,7 +445,7 @@ function addActionButtons(frm) {
 	} else if (currentStatus === "Site Survey Completed") {
 		frm.add_custom_button(
 			__("BOM"),
-			function () {
+			async function () {
 				const dialog = new frappe.ui.Dialog({
 					title: __("Select or Create BOM"),
 					fields: [
@@ -441,35 +464,30 @@ function addActionButtons(frm) {
 						frappe.set_route("Form", "BOM", new_bom.name);
 					},
 					secondary_action_label: __("New Version"),
-					secondary_action: function () {
+					secondary_action: async function () {
 						const selected_bom = dialog.get_value("selected_bom");
 						if (selected_bom) {
-							frappe.call({
-								method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.bom_new_version",
-								args: {
-									bom: selected_bom,
-								},
-								callback: function (response) {
-									if (response && response.message) {
-										const new_bom = response.message;
-										new_bom.utility_service_request = frm.doc.name;
-										frappe.db
-											.insert(new_bom)
-											.then((doc) => {
-												frappe.set_route("Form", "BOM", doc.name);
-											})
-											.catch((err) => {
-												frappe.msgprint({
-													title: __("Error"),
-													message:
-														__("Failed to save the BOM: ") +
-														err.message,
-													indicator: "red",
-												});
-											});
-									}
-								},
-							});
+							try {
+								const response = await frappe.call({
+									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.bom_new_version",
+									args: {
+										bom: selected_bom,
+									},
+								});
+
+								if (response && response.message) {
+									const new_bom = response.message;
+									new_bom.utility_service_request = frm.doc.name;
+									const doc = await frappe.db.insert(new_bom);
+									frappe.set_route("Form", "BOM", doc.name);
+								}
+							} catch (err) {
+								frappe.msgprint({
+									title: __("Error"),
+									message: __("Failed to save the BOM: ") + err.message,
+									indicator: "red",
+								});
+							}
 						} else {
 							frappe.msgprint(__("Please select a BOM to create a new version."));
 						}
@@ -482,7 +500,6 @@ function addActionButtons(frm) {
 		);
 	}
 }
-
 // Common function to get item table fields configuration dynamically from the form
 function get_item_table_fields(frm) {
 	const child_table = frm.fields_dict["items"];
@@ -613,298 +630,304 @@ function configure_dialog(dialog) {
 	dialog.show();
 }
 
-function showSalesOrderModal(frm) {
-	frappe.db.get_value("Customer", frm.doc.customer, "customer_name").then((response) => {
-		const customerName = response.message.customer_name;
+async function showSalesOrderModal(frm, allowAdditionalRows = false) {
+	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
 
-		const dialog = new frappe.ui.Dialog({
-			title: __("Create Sales Order"),
-			fields: [
-				...get_customer_section_fields(frm, customerName),
-				{
-					fieldname: "transaction_date",
-					label: __("Date"),
-					fieldtype: "Date",
-					default: frappe.datetime.get_today(),
-					reqd: 1,
-				},
-				{
-					fieldname: "company",
-					label: __("Company"),
-					fieldtype: "Link",
-					options: "Company",
-					default: frappe.defaults.get_user_default("Company"),
-					reqd: 1,
-				},
-				{
-					fieldname: "items_section",
-					fieldtype: "Section Break",
-					label: __("Select Items"),
-					collapsible: 0,
-				},
-				{
-					fieldname: "items_table",
-					fieldtype: "Table",
-					label: __("Items"),
-					fields: get_item_table_fields(frm),
-					data: prepare_items_data(frm),
-				},
-			],
-			primary_action_label: __("Create"),
-			primary_action: function (values) {
-				const items = values.items_table.map((row) => {
-					return {
-						name: row.name,
-						item_code: row.item_code,
-						qty: row.qty,
-						rate: row.rate,
-						amount: row.amount,
-						warehouse: row.warehouse,
-					};
-				});
-
-				frappe.call({
-					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc",
-					args: {
-						docname: frm.doc.name,
-						items: items,
-						customer: values.customer,
-						customer_name: values.customer_name,
-						transaction_date: values.transaction_date,
-						company: values.company,
-					},
-					callback: function (response) {
-						dialog.hide();
-						if (response.message) {
-							frappe.show_alert({
-								message: __("Sales Order created successfully!"),
-								indicator: "green",
-							});
-							frappe.set_route("Form", "Sales Order", response.message);
-						}
-					},
-				});
+	const dialog = new frappe.ui.Dialog({
+		title: __("Create Sales Order"),
+		fields: [
+			...get_customer_section_fields(frm, customer?.message?.customer_name),
+			{
+				fieldname: "transaction_date",
+				label: __("Date"),
+				fieldtype: "Date",
+				default: frappe.datetime.get_today(),
+				reqd: 1,
 			},
-		});
-
-		configure_dialog(dialog);
-	});
-}
-
-function showSalesInvoiceModal(frm) {
-	frappe.db.get_value("Customer", frm.doc.customer, "customer_name").then((response) => {
-		const customerName = response.message.customer_name;
-		const today = frappe.datetime.get_today();
-
-		const dialog = new frappe.ui.Dialog({
-			title: __("Create Sales Invoice"),
-			fields: [
-				...get_customer_section_fields(frm, customerName),
-				{
-					fieldname: "posting_date",
-					label: __("Posting Date"),
-					fieldtype: "Date",
-					default: today,
-					reqd: 1,
-				},
-				{
-					fieldname: "company",
-					label: __("Company"),
-					fieldtype: "Link",
-					options: "Company",
-					default: frappe.defaults.get_user_default("Company"),
-					reqd: 1,
-				},
-				{
-					fieldname: "due_date",
-					label: __("Due Date"),
-					fieldtype: "Date",
-					default: frappe.datetime.add_days(today, 30),
-					reqd: 1,
-				},
-
-				// Auto Repeat Section
-				{
-					fieldname: "auto_repeat_section",
-					fieldtype: "Section Break",
-					label: __("Auto Repeat Settings"),
-				},
-				{
-					fieldname: "enable_auto_repeat",
-					label: __("Set Auto Repeat"),
-					fieldtype: "Check",
-					default: frm.doc.frequency ? 1 : 0,
-					change: function () {
-						update_auto_repeat_fields(this.get_value(), dialog.get_value("frequency"));
-					},
-				},
-				{
-					fieldname: "utility_property",
-					label: __("Property"),
-					fieldtype: "Link",
-					options: "Utility Property",
-					depends_on: "eval:doc.enable_auto_repeat",
-					change: function () {
-						let selected_value = this.get_value();
-						let items = dialog.get_value("items_table") || [];
-
-						items.forEach((row) => {
-							row.utility_property = selected_value;
-						});
-
-						dialog.set_value("items_table", items);
-					},
-				},
-				{
-					fieldname: "frequency",
-					label: __("Frequency"),
-					fieldtype: "Select",
-					default: frm.doc.frequency || "Monthly",
-					options: "Daily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
-					onchange: function () {
-						if (dialog.get_value("enable_auto_repeat")) {
-							update_auto_repeat_fields(true, this.get_value());
-						}
-					},
-					depends_on: "eval:doc.enable_auto_repeat",
-				},
-				{
-					fieldname: "col_break_auto",
-					fieldtype: "Column Break",
-				},
-				{
-					fieldname: "repeat_start_date",
-					label: __("Start Date"),
-					fieldtype: "Date",
-					default: frm.doc.start_date || frappe.datetime.get_today(),
-					reqd: 1,
-					depends_on: "eval:doc.enable_auto_repeat",
-				},
-				{
-					fieldname: "repeat_end_date",
-					label: __("End Date"),
-					fieldtype: "Date",
-					default:
-						frm.doc.end_date ||
-						frappe.datetime.add_days(frappe.datetime.get_today(), 365),
-					reqd: 1,
-					depends_on: "eval:doc.enable_auto_repeat",
-				},
-				{
-					fieldname: "repeat_on_days",
-					label: __("Repeat on Days"),
-					fieldtype: "MultiSelect",
-					options: [
-						"Monday",
-						"Tuesday",
-						"Wednesday",
-						"Thursday",
-						"Friday",
-						"Saturday",
-						"Sunday",
-					],
-					default: frm.doc.repeat_on_days || [],
-					depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Weekly'",
-				},
-				{
-					fieldname: "repeat_on_last_day",
-					label: __("Repeat on Last Day of the Month"),
-					fieldtype: "Check",
-					default: frm.doc.repeat_on_last_day || 0,
-					depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Monthly'",
-				},
-				{
-					fieldname: "repeat_on_day",
-					label: __("Repeat on Day"),
-					fieldtype: "Int",
-					default: frm.doc.repeat_on_day || "",
-					depends_on:
-						"eval:doc.enable_auto_repeat && in_list(['Monthly', 'Quarterly', 'Half-yearly', 'Yearly'], doc.frequency) && !doc.repeat_on_last_day",
-				},
-				{
-					fieldname: "submit_on_creation",
-					label: __("Submit on Creation"),
-					fieldtype: "Check",
-					default: frm.doc.submit_on_creation || 0,
-					depends_on: "eval:doc.enable_auto_repeat",
-				},
-
-				// Items Section
-				{
-					fieldname: "items_section",
-					fieldtype: "Section Break",
-					label: __("Select Items"),
-					collapsible: 0,
-				},
-				{
-					fieldname: "items_table",
-					fieldtype: "Table",
-					label: __("Items"),
-					fields: get_item_table_fields(frm),
-					data: prepare_items_data(frm),
-				},
-			],
-			primary_action_label: __("Create"),
-			primary_action: function (values) {
-				const items = values.items_table.map((row) => ({
+			{
+				fieldname: "company",
+				label: __("Company"),
+				fieldtype: "Link",
+				options: "Company",
+				default: frappe.defaults.get_user_default("Company"),
+				reqd: 1,
+			},
+			{
+				fieldname: "items_section",
+				fieldtype: "Section Break",
+				label: __("Select Items"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "items_table",
+				fieldtype: "Table",
+				label: __("Items"),
+				fields: get_item_table_fields(frm),
+				data: prepare_items_data(frm),
+				cannot_add_rows: !allowAdditionalRows,
+			},
+		],
+		primary_action_label: __("Create"),
+		primary_action: function (values) {
+			const items = values.items_table.map((row) => {
+				return {
 					name: row.name,
 					item_code: row.item_code,
 					qty: row.qty,
 					rate: row.rate,
 					amount: row.amount,
 					warehouse: row.warehouse,
-					...row, // Include all other fields from the dialog
-				}));
+				};
+			});
 
-				const auto_repeat_settings = values.enable_auto_repeat
-					? {
-							frequency: values.frequency,
-							start_date: values.repeat_start_date,
-							end_date: values.repeat_end_date,
-							repeat_on_days: values.repeat_on_days,
-							repeat_on_day: values.repeat_on_day,
-							repeat_on_last_day: values.repeat_on_last_day,
-							submit_on_creation: values.submit_on_creation,
-							utility_property: values.utility_property,
-					  }
-					: null;
-
-				frappe.call({
-					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
-					args: {
-						docname: frm.doc.name,
-						items: items,
-						customer: values.customer,
-						customer_name: values.customer_name,
-						posting_date: values.posting_date,
-						due_date: values.due_date,
-						company: values.company,
-						auto_repeat: auto_repeat_settings,
-					},
-					callback: function (response) {
-						dialog.hide();
-						if (response.message) {
-							frappe.show_alert({
-								message: __("Sales Invoice created successfully!"),
-								indicator: "green",
-							});
-							frappe.set_route("Form", "Sales Invoice", response.message);
-						}
-					},
-				});
-			},
-		});
-
-		function update_auto_repeat_fields(enabled, frequency) {
-			const isWeekly = ["Weekly", "Bi-Weekly"].includes(frequency);
-			dialog.toggle_display("frequency", enabled);
-			dialog.toggle_display("repeat_start_date", enabled);
-			dialog.toggle_display("repeat_end_date", enabled);
-			dialog.toggle_display("repeat_on_days", enabled && isWeekly);
-		}
-
-		configure_dialog(dialog);
+			frappe.call({
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc",
+				args: {
+					docname: frm.doc.name,
+					items: items,
+					customer: values.customer,
+					customer_name: values.customer_name,
+					transaction_date: values.transaction_date,
+					company: values.company,
+				},
+				callback: function (response) {
+					dialog.hide();
+					if (response.message) {
+						frappe.show_alert({
+							message: __("Sales Order created successfully!"),
+							indicator: "green",
+						});
+						frappe.set_route("Form", "Sales Order", response.message);
+					}
+				},
+			});
+		},
 	});
+
+	configure_dialog(dialog);
+}
+
+async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
+	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
+	const today = frappe.datetime.get_today();
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Create Sales Invoice"),
+		fields: [
+			...get_customer_section_fields(frm, customer?.message?.customer_name),
+			{
+				fieldname: "posting_date",
+				label: __("Posting Date"),
+				fieldtype: "Date",
+				default: today,
+				reqd: 1,
+			},
+			{
+				fieldname: "company",
+				label: __("Company"),
+				fieldtype: "Link",
+				options: "Company",
+				default: frappe.defaults.get_user_default("Company"),
+				reqd: 1,
+			},
+			{
+				fieldname: "due_date",
+				label: __("Due Date"),
+				fieldtype: "Date",
+				default: frappe.datetime.add_days(today, 30),
+				reqd: 1,
+			},
+
+			// Auto Repeat Section
+			{
+				fieldname: "auto_repeat_section",
+				fieldtype: "Section Break",
+				label: __("Auto Repeat Settings"),
+			},
+			{
+				fieldname: "enable_auto_repeat",
+				label: __("Set Auto Repeat"),
+				fieldtype: "Check",
+				default: frm.doc.frequency ? 1 : 0,
+				change: function () {
+					update_auto_repeat_fields(this.get_value(), dialog.get_value("frequency"));
+				},
+			},
+			{
+				fieldname: "utility_property",
+				label: __("Property"),
+				fieldtype: "Link",
+				options: "Utility Property",
+				depends_on: "eval:doc.enable_auto_repeat",
+				get_query: () => {
+					const properties = (frm.doc.requested_properties || [])
+						.map((p) => p.utility_property)
+						.filter(Boolean);
+					return {
+						filters: [["name", "in", properties]],
+					};
+				},
+				change: function () {
+					let selected_value = this.get_value();
+					let items = dialog.get_value("items_table") || [];
+
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+					});
+
+					dialog.set_value("items_table", items);
+				},
+			},
+
+			{
+				fieldname: "frequency",
+				label: __("Frequency"),
+				fieldtype: "Select",
+				default: frm.doc.frequency || "Monthly",
+				options: "Daily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
+				onchange: function () {
+					if (dialog.get_value("enable_auto_repeat")) {
+						update_auto_repeat_fields(true, this.get_value());
+					}
+				},
+				depends_on: "eval:doc.enable_auto_repeat",
+			},
+			{
+				fieldname: "col_break_auto",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "repeat_start_date",
+				label: __("Start Date"),
+				fieldtype: "Date",
+				default: frm.doc.start_date || frappe.datetime.get_today(),
+				reqd: 1,
+				depends_on: "eval:doc.enable_auto_repeat",
+			},
+			{
+				fieldname: "repeat_end_date",
+				label: __("End Date"),
+				fieldtype: "Date",
+				default:
+					frm.doc.end_date || frappe.datetime.add_days(frappe.datetime.get_today(), 365),
+				reqd: 1,
+				depends_on: "eval:doc.enable_auto_repeat",
+			},
+			{
+				fieldname: "repeat_on_days",
+				label: __("Repeat on Days"),
+				fieldtype: "MultiSelect",
+				options: [
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+					"Sunday",
+				],
+				default: frm.doc.repeat_on_days || [],
+				depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Weekly'",
+			},
+			{
+				fieldname: "repeat_on_last_day",
+				label: __("Repeat on Last Day of the Month"),
+				fieldtype: "Check",
+				default: frm.doc.repeat_on_last_day || 0,
+				depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Monthly'",
+			},
+			{
+				fieldname: "repeat_on_day",
+				label: __("Repeat on Day"),
+				fieldtype: "Int",
+				default: frm.doc.repeat_on_day || "",
+				depends_on:
+					"eval:doc.enable_auto_repeat && in_list(['Monthly', 'Quarterly', 'Half-yearly', 'Yearly'], doc.frequency) && !doc.repeat_on_last_day",
+			},
+			{
+				fieldname: "submit_on_creation",
+				label: __("Submit on Creation"),
+				fieldtype: "Check",
+				default: frm.doc.submit_on_creation || 0,
+				depends_on: "eval:doc.enable_auto_repeat",
+			},
+
+			// Items Section
+			{
+				fieldname: "items_section",
+				fieldtype: "Section Break",
+				label: __("Select Items"),
+				collapsible: 0,
+			},
+			{
+				fieldname: "items_table",
+				fieldtype: "Table",
+				label: __("Items"),
+				fields: get_item_table_fields(frm),
+				data: prepare_items_data(frm),
+				cannot_add_rows: !allowAdditionalRows,
+			},
+		],
+		primary_action_label: __("Create"),
+		primary_action: function (values) {
+			const items = values.items_table.map((row) => ({
+				name: row.name,
+				item_code: row.item_code,
+				qty: row.qty,
+				rate: row.rate,
+				amount: row.amount,
+				warehouse: row.warehouse,
+				...row, // Include all other fields from the dialog
+			}));
+
+			const auto_repeat_settings = values.enable_auto_repeat
+				? {
+						frequency: values.frequency,
+						start_date: values.repeat_start_date,
+						end_date: values.repeat_end_date,
+						repeat_on_days: values.repeat_on_days,
+						repeat_on_day: values.repeat_on_day,
+						repeat_on_last_day: values.repeat_on_last_day,
+						submit_on_creation: values.submit_on_creation,
+						utility_property: values.utility_property,
+				  }
+				: null;
+
+			frappe.call({
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
+				args: {
+					docname: frm.doc.name,
+					items: items,
+					customer: values.customer,
+					customer_name: values.customer_name,
+					posting_date: values.posting_date,
+					due_date: values.due_date,
+					company: values.company,
+					auto_repeat: auto_repeat_settings,
+				},
+				callback: function (response) {
+					dialog.hide();
+					if (response.message) {
+						frappe.show_alert({
+							message: __("Sales Invoice created successfully!"),
+							indicator: "green",
+						});
+						frappe.set_route("Form", "Sales Invoice", response.message);
+					}
+				},
+			});
+		},
+	});
+
+	function update_auto_repeat_fields(enabled, frequency) {
+		const isWeekly = ["Weekly", "Bi-Weekly"].includes(frequency);
+		dialog.toggle_display("frequency", enabled);
+		dialog.toggle_display("repeat_start_date", enabled);
+		dialog.toggle_display("repeat_end_date", enabled);
+		dialog.toggle_display("repeat_on_days", enabled && isWeekly);
+	}
+
+	configure_dialog(dialog);
 }
 
 // Handle the response from the server

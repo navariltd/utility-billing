@@ -1,0 +1,50 @@
+[
+  {
+    "fieldname": "increment_tab",
+    "label": "Increment Settings",
+    "fieldtype": "Tab Break",
+    "insert_after": "status"
+  },
+  {
+    "fieldname": "enable_increment",
+    "label": "Enable Increment",
+    "fieldtype": "Check",
+    "default": 0,
+    "insert_after": "increment_tab"
+  },
+  {
+    "fieldname": "contract_start_date",
+    "label": "Contract Start Date",
+    "fieldtype": "Date",
+    "depends_on": "eval:doc.enable_increment",
+    "insert_after": "enable_increment"
+  },
+  {
+    "fieldname": "contract_end_date",
+    "label": "Contract End Date",
+    "fieldtype": "Date",
+    "depends_on": "eval:doc.enable_increment",
+    "insert_after": "contract_start_date"
+  },
+  {
+    "fieldtype": "Column Break",
+    "fieldname": "invoice_generation_col",
+    "insert_after": "contract_end_date"
+  },
+  {
+    "fieldname": "increment_interval_months",
+    "label": "Increment Interval (Months)",
+    "fieldtype": "Int",
+    "default": 12,
+    "depends_on": "eval:doc.enable_increment",
+    "insert_after": "invoice_generation_col"
+  },
+  {
+    "fieldname": "increment_percentage",
+    "label": "Increment Percentage",
+    "fieldtype": "Float",
+    "default": 0.0,
+    "depends_on": "eval:doc.enable_increment",
+    "insert_after": "increment_interval_months"
+  }
+]
