@@ -338,7 +338,7 @@
    "fieldname": "service_request_from",
    "fieldtype": "Link",
    "label": "Service Request From",
-   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Lead\",\"Customer\",\"Prospect\"]]]",
+   "link_filters": "[[\"DocType\",\"name\",\"in\", [\"Customer\", \"Lead\", \"Prospect\", \"CRM Deal\"]]]",
    "options": "DocType",
    "reqd": 1
   },
@@ -346,7 +346,8 @@
    "fieldname": "party_name",
    "fieldtype": "Dynamic Link",
    "label": "Party Name",
-   "options": "service_request_from"
+   "options": "service_request_from",
+   "reqd": 1
   },
   {
    "fieldname": "payment_terms_template",
@@ -380,7 +381,8 @@
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "auto_repeat_settings_section",
@@ -471,7 +473,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-25 16:04:18.519356",
+ "modified": "2025-04-30 15:22:43.453397",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

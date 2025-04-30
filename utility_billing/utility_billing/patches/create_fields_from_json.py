@@ -14,14 +14,21 @@ def create_fields_from_json(json_file_name: str, doctype: str) -> None:
             custom_fields_data: list = json.load(f)
 
         for field in custom_fields_data:
+            field_name = field.get("fieldname")
+            if field_name:
+                existing_field = frappe.db.exists("Custom Field", {"dt": doctype, "fieldname": field_name})
+                if existing_field:
+                    frappe.delete_doc("Custom Field", existing_field)
+
             field["module"] = "Utility Billing"
 
         custom_fields: dict = {doctype: custom_fields_data}
 
-        create_custom_fields(custom_fields, update=True)
+        create_custom_fields(custom_fields, update=False)
 
     except Exception as e:
         frappe.log_error(
             f"Error in creating custom fields for {doctype}: {str(e)}",
             "Custom Field Creation Error",
         )
+        raise e
