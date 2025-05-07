@@ -6,7 +6,7 @@ The **Utility Billing & Property Management App** is a powerful addition to [ERP
 
 ![Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/workspace.png)
 
-## 🔌 [Utility Billing](./utility_billing/docs/Utility-Billing)
+## 🔌 [Utility Billing](./utility_billing/docs/Utility-Billing.md)
 
 A comprehensive module for managing utility services (water, electricity, gas, etc.) with end-to-end billing automation.
 
@@ -38,9 +38,9 @@ A comprehensive module for managing utility services (water, electricity, gas, e
 - **Inventory**: Meters as serials
 - **Accounting**: Auto-invoicing
 
-[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Utility-Billing)
+[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Utility-Billing.md)
 
-## 🏢 [Property Management](./utility_billing/docs/Property-Management)
+## 🏢 [Property Management](./utility_billing/docs/Property-Management.md)
 
 The **ERPNext Property Management** module simplifies rental operations from tenant onboarding to recurring rent and utility billing.
 
@@ -61,7 +61,7 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 - Recurring and utility billing under a single customer record
 - Built-in support for renewals, notices, and changes
 
-## [![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Property-Management)
+## [![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Property-Management.md)
 
 ## 🧾 Key Doctypes & Customizations
 
@@ -69,18 +69,18 @@ Explore the doctypes that power the system. Below are categorized lists of **new
 
 ### ✨ Customized Doctypes
 
-- 📑 [Contract](./utility_billing/docs/Contract)
+- 📑 [Contract](./utility_billing/docs/Contract.md)
 - 🧾 [Sales Order and Sales Invoice](./utility_billing/docs/Sales-Order-and-Invoice)
-- 📦 [Item](./utility_billing/docs/Utility-Billing#-3-important-notes)
-- 💲 [Item Price](./utility_billing/docs/Utility-Billing#-13-price-lists--tariffs)
+- 📦 [Item](./utility_billing/docs/Utility-Billing.md#-3-important-notes.md)
+- 💲 [Item Price](./utility_billing/docs/Utility-Billing.md#-13-price-lists--tariffs)
 
 ### 🆕 New Doctypes
 
-- 🏠 [Utility Billing Settings](./utility_billing/docs/Settings)
-- 🏠 [Utility Property](./utility_billing/docs/Property)
-- 📨 [Utility Service Request](./utility_billing/docs/Service-Request)
-- 📊 [Utility Bill Structure](./utility_billing/docs/Bill-Structure)
-- 🔢 [Meter Reading](./utility_billing/docs/Meter-Reading)
+- 🏠 [Utility Billing Settings](./utility_billing/docs/Settings.md)
+- 🏠 [Utility Property](./utility_billing/docs/Property.md)
+- 📨 [Utility Service Request](./utility_billing/docs/Service-Request.md)
+- 📊 [Utility Bill Structure](./utility_billing/docs/Bill-Structure.md)
+- 🔢 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
 
 ## 🛠️ Installation (Self-Hosted)
 

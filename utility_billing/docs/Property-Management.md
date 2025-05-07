@@ -15,7 +15,7 @@ It supports:
 - 🔁 Rent invoicing via Auto Repeat
 - ⚡ Utility billing
 
-![Utility & Property Overview](./utility_billing/docs/images/uility_property.png)
+![Utility & Property Overview](./images/uility_property.png)
 
 ---
 
@@ -61,8 +61,8 @@ graph TD
 
 ### 1️⃣ Utility Service Request (Initiation)
 
-![Service Request Details Tab](./utility_billing/docs/images/service_request_details_tab.png)  
-![Service Request Lease Tab](./utility_billing/docs/images/service_request_lease_tab.png)
+![Service Request Details Tab](./images/service_request_details_tab.png)  
+![Service Request Lease Tab](./images/service_request_lease_tab.png)
 
 Start by creating a **Utility Service Request**, which captures:
 
@@ -77,7 +77,7 @@ This acts as the **lead intake form** for tenants and is the **trigger point** f
 
 ### 2️⃣ Create Property Contract
 
-![Contract Screenshot](./utility_billing/docs/images/contract.png)
+![Contract Screenshot](./images/contract.png)
 
 From an approved Service Request:
 
@@ -97,7 +97,7 @@ This contract governs all subsequent financial documents.
 
 ### 3️⃣ Generate Sales Order (Deposit / Booking)
 
-![Sales Order Modal](./utility_billing/docs/images/service_request_salesorder_modal.png)
+![Sales Order Modal](./images/service_request_salesorder_modal.png)
 
 Directly from the service request:
 
@@ -111,7 +111,7 @@ Directly from the service request:
 
 ### 4️⃣ Sales Invoice (Recurring Rent)
 
-![Sales Invoice Modal](./utility_billing/docs/images/service_request_salesinvoice_modal.png)
+![Sales Invoice Modal](./images/service_request_salesinvoice_modal.png)
 
 Rent is billed based on the contract:
 

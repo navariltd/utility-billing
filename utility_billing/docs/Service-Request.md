@@ -54,14 +54,14 @@ The **Utility Bill Structure** provides a reusable billing configuration templat
 
 > Link the **Utility Bill Structure** to the Utility Service Request to auto-populate item rows and configure billing behavior.
 
-## [![👉 Explore Utility Bill Structure](https://img.shields.io/badge/👉_Explore_Utility_Bill_Structure-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Bill-Structure)
+## [![👉 Explore Utility Bill Structure](https://img.shields.io/badge/👉_Explore_Utility_Bill_Structure-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Bill-Structure.md)
 
 ### 🧾 Contract & Billing
 
 - **Contract Dates (start_date, end_date)**: Define service period.
 - **Price List / Currency**: For dynamic pricing.
 
-## [![👉 Explore Contract](https://img.shields.io/badge/👉_Explore_Contract-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Contract)
+## [![👉 Explore Contract](https://img.shields.io/badge/👉_Explore_Contract-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Contract.md)
 
 ---
 
