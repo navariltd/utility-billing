@@ -47,7 +47,7 @@ accounting_dimension_doctypes = [
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext", "crm"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -140,7 +140,7 @@ doctype_list_js = {
 # Name of the app being installed is passed as an argument
 
 # before_app_install = "utility_billing.utils.before_app_install"
-# after_app_install = "utility_billing.utils.after_app_install"
+after_app_install = "utility_billing.utility_billing.patches.after_install.create_fields"
 
 # Integration Cleanup
 # -------------------
@@ -190,6 +190,9 @@ doc_events = {
         "before_validate": [
             "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
         ],
+        "on_submit": [
+            "utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"
+        ],
     },
     "Contract": {
         "before_submit": [
@@ -208,10 +211,11 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"utility_billing.tasks.all"
-# 	],
+scheduler_events = {
+    # 
+	"all": [
+		"utility_billing.utility_billing.utils.auto_repeat.create_dunning_for_overdue_invoices"
+	],
 # 	"daily": [
 # 		"utility_billing.tasks.daily"
 # 	],
@@ -224,7 +228,7 @@ doc_events = {
 # 	"monthly": [
 # 		"utility_billing.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

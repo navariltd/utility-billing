@@ -39,7 +39,13 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		};
-
+		frm.fields_dict["utility_property"].get_query = function () {
+			return {
+				filters: {
+					status: "Available",
+				},
+			};
+		};
 		frm.fields_dict["requested_properties"].grid.get_field("utility_property").get_query =
 			function () {
 				return {
@@ -48,6 +54,33 @@ frappe.ui.form.on("Utility Service Request", {
 					},
 				};
 			};
+
+		// Function to get selected utility_property values
+		frm.get_selected_utility_properties = function () {
+			let selected = [];
+
+			(frm.doc.requested_properties || []).forEach((row) => {
+				if (row.utility_property) {
+					selected.push(row.utility_property);
+				}
+			});
+
+			if (frm.doc.utility_property) {
+				selected.push(frm.doc.utility_property);
+			}
+
+			return [...new Set(selected)];
+		};
+
+		frm.fields_dict["items"].grid.get_field("utility_property").get_query = function () {
+			const selected_properties = frm.get_selected_utility_properties();
+
+			return {
+				filters: {
+					name: ["in", selected_properties.length ? selected_properties : ["__none"]],
+				},
+			};
+		};
 
 		let closedWarrantySerials = [];
 
@@ -177,10 +210,10 @@ frappe.ui.form.on("Utility Service Request", {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 	},
 });
-
 function set_dynamic_field_label(frm) {
 	if (frm.doc.service_request_from == "Customer") {
 		frm.set_df_property("party_name", "label", "Customer");
+		frm.set_df_property("customer", "hidden", 1);
 	} else if (frm.doc.service_request_from == "Lead") {
 		frm.set_df_property("party_name", "label", "Lead");
 	} else if (frm.doc.service_request_from == "Prospect") {
@@ -622,12 +655,68 @@ function get_customer_section_fields(frm, customerName) {
 		},
 	];
 }
+function configure_dialog(dialog, frm) {
+	dialog.fields_dict["items_table"].grid.get_field("utility_property").get_query = function () {
+		const selected_properties = frm.get_selected_utility_properties?.() || [];
 
-// Common function to configure dialog
-function configure_dialog(dialog) {
+		return {
+			filters: {
+				name: ["in", selected_properties.length ? selected_properties : ["__none"]],
+			},
+		};
+	};
+
 	dialog.$wrapper.find(".modal-dialog").css("max-width", "max-content");
 	dialog.$wrapper.find(".modal-content").css("width", "1000px");
 	dialog.show();
+
+	const appliedStyleMap = new WeakMap();
+
+	const observer = new MutationObserver(() => {
+		const openGridRow = document.querySelector(".grid-row.grid-row-open");
+
+		if (openGridRow && !openGridRow.classList.contains("custom-grid-modal")) {
+			openGridRow.classList.add("custom-grid-modal");
+
+			const customStyles = {
+				background: "#fff",
+				zIndex: "1051",
+				padding: "50px",
+				position: "fixed",
+				top: "60px",
+				left: "50%",
+				transform: "translateX(-50%)",
+				maxWidth: "900px",
+				width: "100%",
+				maxHeight: "90vh",
+				overflowY: "auto",
+				overflowX: "hidden",
+				opacity: "1",
+				pointerEvents: "auto",
+				boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
+				borderRadius: "8px",
+			};
+
+			appliedStyleMap.set(openGridRow, customStyles);
+			Object.assign(openGridRow.style, customStyles);
+		}
+
+		document.querySelectorAll(".custom-grid-modal").forEach((el) => {
+			if (!el.classList.contains("grid-row-open")) {
+				el.classList.remove("custom-grid-modal");
+
+				const appliedStyles = appliedStyleMap.get(el);
+				if (appliedStyles) {
+					for (const prop in appliedStyles) {
+						el.style[prop] = "";
+					}
+					appliedStyleMap.delete(el);
+				}
+			}
+		});
+	});
+
+	observer.observe(document.body, { childList: true, subtree: true });
 }
 
 async function showSalesOrderModal(frm, allowAdditionalRows = false) {
@@ -704,7 +793,7 @@ async function showSalesOrderModal(frm, allowAdditionalRows = false) {
 		},
 	});
 
-	configure_dialog(dialog);
+	configure_dialog(dialog, frm);
 }
 
 async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
@@ -738,27 +827,19 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 				reqd: 1,
 			},
 
-			// Auto Repeat Section
+			// Items Section
 			{
-				fieldname: "auto_repeat_section",
+				fieldname: "items_section",
 				fieldtype: "Section Break",
-				label: __("Auto Repeat Settings"),
-			},
-			{
-				fieldname: "enable_auto_repeat",
-				label: __("Set Auto Repeat"),
-				fieldtype: "Check",
-				default: frm.doc.frequency ? 1 : 0,
-				change: function () {
-					update_auto_repeat_fields(this.get_value(), dialog.get_value("frequency"));
-				},
+				label: __("Select Items"),
+				collapsible: 0,
 			},
 			{
 				fieldname: "utility_property",
 				label: __("Property"),
 				fieldtype: "Link",
 				options: "Utility Property",
-				depends_on: "eval:doc.enable_auto_repeat",
+				reqd: 1,
 				get_query: () => {
 					const properties = (frm.doc.requested_properties || [])
 						.map((p) => p.utility_property)
@@ -771,93 +852,21 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 					let selected_value = this.get_value();
 					let items = dialog.get_value("items_table") || [];
 
-					items.forEach((row) => {
-						row.utility_property = selected_value;
+					let frequency = null;
+					frm.doc.requested_properties.forEach((property) => {
+						if (property.utility_property === selected_value) {
+							frequency = property.frequency;
+						}
 					});
 
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = frequency;
+					});
+
+					dialog.set_value("frequency", frequency);
 					dialog.set_value("items_table", items);
 				},
-			},
-
-			{
-				fieldname: "frequency",
-				label: __("Frequency"),
-				fieldtype: "Select",
-				default: frm.doc.frequency || "Monthly",
-				options: "Daily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
-				onchange: function () {
-					if (dialog.get_value("enable_auto_repeat")) {
-						update_auto_repeat_fields(true, this.get_value());
-					}
-				},
-				depends_on: "eval:doc.enable_auto_repeat",
-			},
-			{
-				fieldname: "col_break_auto",
-				fieldtype: "Column Break",
-			},
-			{
-				fieldname: "repeat_start_date",
-				label: __("Start Date"),
-				fieldtype: "Date",
-				default: frm.doc.start_date || frappe.datetime.get_today(),
-				reqd: 1,
-				depends_on: "eval:doc.enable_auto_repeat",
-			},
-			{
-				fieldname: "repeat_end_date",
-				label: __("End Date"),
-				fieldtype: "Date",
-				default:
-					frm.doc.end_date || frappe.datetime.add_days(frappe.datetime.get_today(), 365),
-				reqd: 1,
-				depends_on: "eval:doc.enable_auto_repeat",
-			},
-			{
-				fieldname: "repeat_on_days",
-				label: __("Repeat on Days"),
-				fieldtype: "MultiSelect",
-				options: [
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-					"Sunday",
-				],
-				default: frm.doc.repeat_on_days || [],
-				depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Weekly'",
-			},
-			{
-				fieldname: "repeat_on_last_day",
-				label: __("Repeat on Last Day of the Month"),
-				fieldtype: "Check",
-				default: frm.doc.repeat_on_last_day || 0,
-				depends_on: "eval:doc.enable_auto_repeat && doc.frequency === 'Monthly'",
-			},
-			{
-				fieldname: "repeat_on_day",
-				label: __("Repeat on Day"),
-				fieldtype: "Int",
-				default: frm.doc.repeat_on_day || "",
-				depends_on:
-					"eval:doc.enable_auto_repeat && in_list(['Monthly', 'Quarterly', 'Half-yearly', 'Yearly'], doc.frequency) && !doc.repeat_on_last_day",
-			},
-			{
-				fieldname: "submit_on_creation",
-				label: __("Submit on Creation"),
-				fieldtype: "Check",
-				default: frm.doc.submit_on_creation || 0,
-				depends_on: "eval:doc.enable_auto_repeat",
-			},
-
-			// Items Section
-			{
-				fieldname: "items_section",
-				fieldtype: "Section Break",
-				label: __("Select Items"),
-				collapsible: 0,
 			},
 			{
 				fieldname: "items_table",
@@ -866,6 +875,18 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 				fields: get_item_table_fields(frm),
 				data: prepare_items_data(frm),
 				cannot_add_rows: !allowAdditionalRows,
+				on_edit: function (row, row_modal) {
+					// Hide parent dialog
+					dialog.$wrapper.addClass("frappe-modal-hidden");
+
+					// Ensure row modal has a higher z-index
+					row_modal.$wrapper.css("z-index", 1052);
+
+					// On close of the row modal, show the parent dialog again
+					row_modal.onhide = () => {
+						dialog.$wrapper.removeClass("frappe-modal-hidden");
+					};
+				},
 			},
 		],
 		primary_action_label: __("Create"),
@@ -880,19 +901,6 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 				...row, // Include all other fields from the dialog
 			}));
 
-			const auto_repeat_settings = values.enable_auto_repeat
-				? {
-						frequency: values.frequency,
-						start_date: values.repeat_start_date,
-						end_date: values.repeat_end_date,
-						repeat_on_days: values.repeat_on_days,
-						repeat_on_day: values.repeat_on_day,
-						repeat_on_last_day: values.repeat_on_last_day,
-						submit_on_creation: values.submit_on_creation,
-						utility_property: values.utility_property,
-				  }
-				: null;
-
 			frappe.call({
 				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
 				args: {
@@ -903,7 +911,7 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 					posting_date: values.posting_date,
 					due_date: values.due_date,
 					company: values.company,
-					auto_repeat: auto_repeat_settings,
+					property: values.utility_property,
 				},
 				callback: function (response) {
 					dialog.hide();
@@ -919,15 +927,7 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 		},
 	});
 
-	function update_auto_repeat_fields(enabled, frequency) {
-		const isWeekly = ["Weekly", "Bi-Weekly"].includes(frequency);
-		dialog.toggle_display("frequency", enabled);
-		dialog.toggle_display("repeat_start_date", enabled);
-		dialog.toggle_display("repeat_end_date", enabled);
-		dialog.toggle_display("repeat_on_days", enabled && isWeekly);
-	}
-
-	configure_dialog(dialog);
+	configure_dialog(dialog, frm);
 }
 
 // Handle the response from the server

@@ -6,15 +6,26 @@
  "engine": "InnoDB",
  "field_order": [
   "sales_order_creation_state",
-  "sales_invoice_creation_state",
-  "column_break_moce",
   "stock_entry_creation_state",
   "individual_invoices_for_multiple_sales_orders",
+  "column_break_moce",
+  "sales_invoice_creation_state",
+  "grace_period",
+  "sales_invoice_auto_repeat_frequency",
   "service_request_section",
   "enable_extra_rows_for_sosi_creation",
   "require_contract_before_sosicustomer_creation",
   "column_break_rmpo",
-  "create_customer_from_utility_service_request_on_submit"
+  "create_customer_from_utility_service_request_on_submit",
+  "penalty_settings_section",
+  "apply_penalty",
+  "penalty_type",
+  "penalty_value",
+  "penalty_grace_days",
+  "column_break_gthj",
+  "recurring_penalty",
+  "recurrence_interval_days",
+  "max_penalty_amount"
  ],
  "fields": [
   {
@@ -74,12 +85,87 @@
   {
    "fieldname": "column_break_rmpo",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "penalty_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Penalty Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "apply_penalty",
+   "fieldtype": "Check",
+   "label": "Apply Penalty"
+  },
+  {
+   "default": "Percentage",
+   "depends_on": "eval: doc.apply_penalty",
+   "fieldname": "penalty_type",
+   "fieldtype": "Select",
+   "label": "Penalty Type",
+   "mandatory_depends_on": "eval: doc.apply_penalty",
+   "options": "\nPercentage\nFixed Amount"
+  },
+  {
+   "depends_on": "eval: doc.apply_penalty",
+   "description": "Either a % (e.g. 2%) or amount (e.g. 500 KES) depending on type",
+   "fieldname": "penalty_value",
+   "fieldtype": "Float",
+   "label": "Penalty Value",
+   "mandatory_depends_on": "eval: doc.apply_penalty"
+  },
+  {
+   "depends_on": "eval: doc.apply_penalty",
+   "description": "Days after due date before penalty applies",
+   "fieldname": "penalty_grace_days",
+   "fieldtype": "Float",
+   "label": "Penalty Grace Period (days)"
+  },
+  {
+   "fieldname": "column_break_gthj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.apply_penalty",
+   "description": "Whether to apply penalty daily/weekly/monthly after grace period",
+   "fieldname": "recurring_penalty",
+   "fieldtype": "Check",
+   "label": "Recurring Penalty"
+  },
+  {
+   "depends_on": "eval: doc.recurring_penalty",
+   "description": "If recurring, how frequently to reapply (e.g., 7 = weekly)",
+   "fieldname": "recurrence_interval_days",
+   "fieldtype": "Int",
+   "label": "Recurrence Interval (in days)"
+  },
+  {
+   "depends_on": "eval: doc.recurring_penalty",
+   "fieldname": "max_penalty_amount",
+   "fieldtype": "Currency",
+   "label": "Max Penalty Cap"
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "sales_invoice_auto_repeat_frequency",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Sales Invoice Auto Repeat Frequency",
+   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly"
+  },
+  {
+   "default": "Draft",
+   "description": "Number of days after invoice posting to calculate due date",
+   "fieldname": "grace_period",
+   "fieldtype": "Int",
+   "label": "Sales Invoice Grace Period (in days)"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-28 16:41:37.664061",
+ "modified": "2025-05-06 15:28:59.084268",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

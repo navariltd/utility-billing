@@ -4,7 +4,8 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
-utility_billing.utility_billing.patches.create_custom_fields # 28/04/25
-utility_billing.utility_billing.patches.create_connection_links # 28/04/25
-utility_billing.utility_billing.patches.accounting_dimension # 28/04/25
-utility_billing.utility_billing.patches.set_allow_auto_repeat_sales_invoice # 28/04/25
+utility_billing.utility_billing.patches.create_custom_fields # 08/05/25
+utility_billing.utility_billing.patches.create_connection_links # 08/05/25
+utility_billing.utility_billing.patches.accounting_dimension # 08/05/25
+utility_billing.utility_billing.patches.set_allow_auto_repeat_sales_invoice # 08/05/25
+utility_billing.utility_billing.patches.initiate_frappe_crm # 08/05/25   

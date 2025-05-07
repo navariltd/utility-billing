@@ -2,6 +2,8 @@ import frappe
 from erpnext.controllers.accounts_controller import AccountsController
 from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
 from frappe.model.document import Document
+from frappe.utils import add_days
+from ...utils.update_service_request import update_billing_status
 
 
 def before_validate(doc: Document, method: str) -> None:
@@ -17,6 +19,10 @@ def before_validate(doc: Document, method: str) -> None:
             fields=["sales_order"],
         )
     }
+    
+    settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+    grace_period = settings.grace_period or 10
+    doc.due_date = add_days(doc.posting_date , grace_period)
 
     for sales_order in unique_sales_orders:
         map_sales_order_meter_readings_to_invoice(sales_order, doc)
@@ -37,3 +43,8 @@ def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
         new_reading_data.pop("name", None)
         new_reading = target_doc.append("meter_readings", new_reading_data)
         new_reading.parent = target_doc.name
+
+def on_submit(doc: Document, method: str) -> None:
+    """Intercepts submit event for document"""
+    if doc.utility_service_request:
+        update_billing_status(doc.utility_service_request)

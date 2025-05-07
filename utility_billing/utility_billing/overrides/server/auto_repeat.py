@@ -13,6 +13,9 @@ def on_update(doc: Document, method: str) -> None:
         if getattr(doc, 'enable_increment', 0):
             from frappe.utils import add_months, getdate, add_days, formatdate, today
             
+            settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+            grace_period = settings.grace_period or 10
+            
             # Check if contract has already ended
             contract_end_date = getattr(doc, 'contract_end_date', None)
             if contract_end_date and getdate(contract_end_date) < getdate(today()):
@@ -44,7 +47,7 @@ def on_update(doc: Document, method: str) -> None:
             new_invoice.modified = None
             new_invoice.docstatus = 0
             new_invoice.posting_date = new_start_date
-            new_invoice.due_date = add_days(new_start_date, 30)
+            new_invoice.due_date = add_days(new_start_date, grace_period)
             
             # Apply rate increment
             for item in new_invoice.items:
@@ -92,7 +95,7 @@ def on_update(doc: Document, method: str) -> None:
                 end=formatdate(new_end_date) if new_end_date else _("No end date"),
                 inc=increment_percent,
                 ar=new_auto_repeat.name
-            )
+            ) 
             
             frappe.get_doc({
                 "doctype": "Comment",
