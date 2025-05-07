@@ -22,7 +22,7 @@ Configure preferences in the **Utility Settings** doctype.
 
 ![Utility Settings Screenshot](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/utility-settings.png)
 
-[![👉 Explore Utility Billing Settings](https://img.shields.io/badge/👉_Explore_Utility_Billing_Settings-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Settings)
+[![👉 Explore Utility Billing Settings](https://img.shields.io/badge/👉_Explore_Utility_Billing_Settings-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Settings.md)
 
 #### 👥 1.2 Customer Grouping
 
@@ -60,7 +60,7 @@ graph TD
     C --> G["Create Sales Invoice"]
 ```
 
-[![👉 Explore Service Request](https://img.shields.io/badge/👉_Explore_Utility_Service_Request-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Service-Request)
+[![👉 Explore Service Request](https://img.shields.io/badge/👉_Explore_Utility_Service_Request-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Service-Request.md)
 
 #### ⛽ 2.2 Meter Reading
 
@@ -81,7 +81,7 @@ graph TD
     D --> E[Payment]
 ```
 
-[![👉 Explore Meter Reading](https://img.shields.io/badge/👉_Explore_Meter_Reading-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Meter-Reading)
+[![👉 Explore Meter Reading](https://img.shields.io/badge/👉_Explore_Meter_Reading-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Meter-Reading.md)
 
 #### 🧮 2.3 Mass Billing
 
@@ -114,7 +114,7 @@ The **Sales Order** and **Sales Invoice** Doctypes in ERPNext have been customiz
 ![Sales Order Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/sales-order.png)
 ![Sales Invoice Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/sales-invoice.png)
 
-[![👉 Explore Sales Order and Invoice](https://img.shields.io/badge/👉_Explore_Sales_Order_and_Invoice-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Sales-Order-and-Invoice)
+[![👉 Explore Sales Order and Invoice](https://img.shields.io/badge/👉_Explore_Sales_Order_and_Invoice-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Sales-Order-and-Invoice.md)
 
 ## 🚀 Quick Navigation
 
