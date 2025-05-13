@@ -402,8 +402,7 @@
    "allow_on_submit": 1,
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "Contract End Date",
-   "mandatory_depends_on": "eval: doc.requested_properties.length > 0"
+   "label": "Contract End Date"
   },
   {
    "fieldname": "auto_repeat_schedule_tab",
@@ -477,7 +476,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-07 16:17:39.604609",
+ "modified": "2025-05-12 13:49:21.228278",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

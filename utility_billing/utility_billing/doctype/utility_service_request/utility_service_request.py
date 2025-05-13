@@ -29,12 +29,12 @@ class UtilityServiceRequest(Document):
         if self.end_date:
             for prop in self.requested_properties:
                 if prop.end_date and self.end_date <= prop.end_date:
-                    frappe.throw(_("End Date must be after the End Date of all requested properties."))
+                    frappe.throw(_("Contract End Date must be after the End Date of all requested properties."))
 
         if self.start_date:
             for prop in self.requested_properties:
                 if prop.start_date and self.start_date > prop.start_date:
-                    frappe.throw(_("Start Date must not be after the Start Date of any requested properties."))
+                    frappe.throw(_("Contract Start Date must not be after the Start Date of any requested properties."))
 
         
     def before_submit(self):
@@ -73,18 +73,20 @@ def create_contract(name):
     contract.end_date = doc.end_date
     contract.frequency = doc.frequency
 
+    # Fields to ignore
+    ignore_fields = {"parent", "parenttype", "parentfield", "idx", "name", 
+                     "creation", "modified", "owner", "docstatus"}
+
     for item in doc.requested_properties:
-        contract.append("properties", {
-            "frequency": item.frequency,
-            "utility_property": item.utility_property,
-            "increment_interval_months": item.increment_interval_months,
-            "increment_percentage": item.increment_percentage
-        })
-    
+        row_data = {}
+        for key, value in item.as_dict().items():
+            if key not in ignore_fields:
+                row_data[key] = value
+        contract.append("properties", row_data)
+
     contract.flags.ignore_mandatory = True
-    
     contract.insert()
-    
+
     return contract.name
 
 
