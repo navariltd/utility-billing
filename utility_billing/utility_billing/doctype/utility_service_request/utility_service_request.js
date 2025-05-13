@@ -263,6 +263,50 @@ frappe.ui.form.on("Utility Service Request Item", {
 	},
 });
 
+frappe.ui.form.on("Contract Utility Property Item", {
+	adjustment_rule: function (frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+
+		if (row.adjustment_rule) {
+			frappe.db
+				.get_doc("Billing Adjustment Rule", row.adjustment_rule)
+				.then((doc) => {
+					const child_table = frm.fields_dict["requested_properties"];
+					const child_fields = child_table.grid.docfields.map((df) => df.fieldname);
+
+					const fields_to_skip = [
+						"name",
+						"creation",
+						"modified",
+						"modified_by",
+						"owner",
+						"docstatus",
+						"idx",
+						"parent",
+						"parenttype",
+						"parentfield",
+					];
+
+					let updated_fields = {};
+
+					Object.keys(doc).forEach((key) => {
+						if (!fields_to_skip.includes(key) && child_fields.includes(key)) {
+							updated_fields[key] = doc[key];
+						}
+					});
+
+					if (Object.keys(updated_fields).length) {
+						frappe.model.set_value(cdt, cdn, updated_fields);
+					}
+				})
+				.catch((err) => {
+					console.error(err);
+					frappe.msgprint("Unable to fetch Billing Adjustment Rule.");
+				});
+		}
+	},
+});
+
 function handle_item_code(frm, cdt, cdn, item_code, update_fields = false) {
 	if (item_code) {
 		frappe.call({
@@ -583,6 +627,12 @@ function get_item_table_fields(frm) {
 			};
 		}
 
+		// Ensure utility_property is visible in the list view
+		if (field.fieldname === "utility_property") {
+			config.in_list_view = 1;
+			config.reqd = 1;
+		}
+
 		return config;
 	});
 
@@ -839,7 +889,6 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 				label: __("Property"),
 				fieldtype: "Link",
 				options: "Utility Property",
-				reqd: 1,
 				get_query: () => {
 					const properties = (frm.doc.requested_properties || [])
 						.map((p) => p.utility_property)

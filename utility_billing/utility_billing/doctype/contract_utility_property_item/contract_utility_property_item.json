@@ -8,18 +8,19 @@
  "field_order": [
   "is_active",
   "utility_property",
+  "adjustment_rule",
+  "start_date",
+  "end_date",
   "column_break_eglj",
   "increment_frequency",
   "increment_interval_months",
   "increment_percentage",
   "auto_repeat_settings_section",
   "frequency",
-  "repeat_on_day",
-  "repeat_on_last_day",
   "submit_on_creation",
   "column_break_fexi",
-  "start_date",
-  "end_date"
+  "repeat_on_day",
+  "repeat_on_last_day"
  ],
  "fields": [
   {
@@ -65,10 +66,10 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Start Date"
+   "label": "Start Date",
+   "reqd": 1
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "end_date",
    "fieldtype": "Date",
    "in_filter": 1,
@@ -89,9 +90,6 @@
    "fieldname": "frequency",
    "fieldtype": "Select",
    "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
    "label": "Frequency",
    "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly"
   },
@@ -116,9 +114,7 @@
    "fieldtype": "Select",
    "hidden": 1,
    "in_filter": 1,
-   "in_list_view": 1,
    "in_preview": 1,
-   "in_standard_filter": 1,
    "label": "Increment Frequency",
    "options": "\nMonthly\nQuarterly\nYearly"
   },
@@ -128,27 +124,31 @@
    "fieldname": "increment_interval_months",
    "fieldtype": "Float",
    "in_filter": 1,
-   "in_list_view": 1,
    "in_preview": 1,
-   "in_standard_filter": 1,
    "label": "Increment Interval (Months)"
   },
   {
    "default": "0",
    "fieldname": "increment_percentage",
    "fieldtype": "Percent",
+   "label": "Increment Percentage"
+  },
+  {
+   "fieldname": "adjustment_rule",
+   "fieldtype": "Link",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Increment Percentage"
+   "label": "Adjustment Rule",
+   "options": "Billing Adjustment Rule"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-07 16:19:12.041452",
+ "modified": "2025-05-13 06:53:46.138135",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Contract Utility Property Item",

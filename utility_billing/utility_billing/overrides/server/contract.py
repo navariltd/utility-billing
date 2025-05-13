@@ -12,8 +12,18 @@ def before_submit(doc: Document, method: str) -> None:
             status = frappe.db.get_value("Utility Property", utility_property, "status")
             if status != "Available":
                 frappe.throw(_("Utility Property {0} is not available. Current status: {1}. It must be available to submit the contract.").format(utility_property, status))
-            elif doc.status == "Active":
+            
+@frappe.whitelist()
+def on_submit(doc: Document, method: str) -> None:
+    for entry in doc.properties:
+        utility_property = entry.utility_property
+       
+        if utility_property and entry.is_active:
+            status = frappe.db.get_value("Utility Property", utility_property, "status")
+            if doc.status == "Active" and status == ("Available" or "Reserved"):
                 frappe.db.set_value("Utility Property", utility_property, "status", "Occupied")
+            elif doc.status == "Unsigned" and status == ("Available" or "Reserved"):
+                frappe.db.set_value("Utility Property", utility_property, "status", "Reserved")
 
 
 @frappe.whitelist()
@@ -35,19 +45,19 @@ def on_update_after_submit(doc: Document, method: str) -> None:
         if not utility_property:
             continue
 
-        # Prevent setting is_active to True after submission
-        if entry.has_value_changed("is_active") and entry.is_active:
-            error_message = (
-                f"Activation of Utility Property '{utility_property}' in Contract '{doc.name}' "
-                f"for Property '{entry.property}' is not allowed after submission."
-            )
-            frappe.log_error(error_message, title="Activation Not Allowed")
-            frappe.msgprint(
-                error_message,
-                title="Activation Not Allowed",
-                indicator="red"
-            )
-            return
+        # # Prevent setting is_active to True after submission
+        # if entry.has_value_changed("is_active") and entry.is_active:
+        #     error_message = (
+        #         f"Activation of Utility Property '{utility_property}' in Contract '{doc.name}' "
+        #         f"for Property '{entry.utility_property}' is not allowed after submission."
+        #     )
+        #     # frappe.log_error(error_message, title="Activation Not Allowed")
+        #     frappe.msgprint(
+        #         error_message,
+        #         title="Activation Not Allowed",
+        #         indicator="red"
+        #     )
+        #     return
 
         if current_status == "Active" and entry.is_active:
             frappe.db.set_value("Utility Property", utility_property, "status", "Occupied")

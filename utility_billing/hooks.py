@@ -203,7 +203,10 @@ doc_events = {
         ],
         "on_update_after_submit": [
             "utility_billing.utility_billing.overrides.server.contract.on_update_after_submit"
-        ]
+        ],
+        "on_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.on_submit"
+        ],
 
     },
 }
