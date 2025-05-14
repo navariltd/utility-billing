@@ -523,15 +523,9 @@ function open_bom_creation_modal(frm) {
 async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
-	const settingsDoc = await frappe.db.get_value(settingsDoctypeName, settingsDoctypeName, [
-		"enable_extra_rows_for_sosi_creation",
-		"require_contract_before_sosicustomer_creation",
-	]);
+	const settings = await frappe.db.get_doc(settingsDoctypeName, settingsDoctypeName);
 
-	const settings = settingsDoc?.message || {};
 	const enableExtraRows = settings?.enable_extra_rows_for_sosi_creation == 1 ? true : false;
-	const requireContract =
-		settings?.require_contract_before_sosicustomer_creation == 1 ? true : false;
 
 	if (frm.doc.docstatus === 1) {
 		// Customer creation button
@@ -563,9 +557,27 @@ async function addActionButtons(frm) {
 				"name"
 			);
 
-			const contractName = contract?.message?.name || null;
+			const deposit = await frappe.db.get_value(
+				"Sales Order",
+				{ utility_service_request: frm.doc.name, docstatus: 1 },
+				"name"
+			);
 
-			if (!contractName) {
+			const contractName = contract?.message?.name || null;
+			const depositName = deposit?.message?.name || null;
+			const creteContract =
+				!contractName &&
+				(!settings?.require_deposit_before_contract_creation || depositName);
+
+			frm.add_custom_button(
+				__("Sales Order / Deposit"),
+				function () {
+					showSalesOrderModal(frm, enableExtraRows);
+				},
+				__("Create")
+			);
+
+			if (creteContract) {
 				frm.add_custom_button(
 					__("Contract"),
 					function () {
@@ -585,14 +597,10 @@ async function addActionButtons(frm) {
 					__("Create")
 				);
 			}
-			if ((requireContract && contractName) || !requireContract) {
-				frm.add_custom_button(
-					__("Sales Order / Deposit"),
-					function () {
-						showSalesOrderModal(frm, enableExtraRows);
-					},
-					__("Create")
-				);
+			if (
+				(settings?.require_contract_before_sales_invoice_creation && contractName) ||
+				!settings?.require_contract_before_sales_invoice_creation
+			) {
 				frm.add_custom_button(
 					__("Sales Invoice"),
 					function () {
@@ -604,7 +612,7 @@ async function addActionButtons(frm) {
 		}
 	}
 
-	if (currentStatus === "") {
+	if (currentStatus === "" && settings?.enable_site_survey == 1) {
 		frm.add_custom_button(
 			__("Site Survey"),
 			function () {
@@ -623,7 +631,7 @@ async function addActionButtons(frm) {
 			},
 			__("Create")
 		);
-	} else if (currentStatus === "Site Survey Completed") {
+	} else if (currentStatus === "Site Survey Completed" && settings?.enable_site_survey == 1) {
 		frm.add_custom_button(
 			__("BOM"),
 			async function () {
