@@ -7,5 +7,5 @@
 utility_billing.utility_billing.patches.create_custom_fields # 14/05/25
 utility_billing.utility_billing.patches.create_connection_links # 14/05/25
 utility_billing.utility_billing.patches.accounting_dimension # 14/05/25
-utility_billing.utility_billing.patches.set_allow_auto_repeat_sales_invoice # 14/05/25
+utility_billing.utility_billing.patches.set_allow_auto_repeat_sales_invoice # 14/05/25 
 utility_billing.utility_billing.patches.initiate_frappe_crm # 14/05/25   

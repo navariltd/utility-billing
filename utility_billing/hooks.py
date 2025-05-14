@@ -220,22 +220,23 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-    # 
-	"all": [
-		"utility_billing.utility_billing.utils.auto_repeat.create_dunning_for_overdue_invoices"
-	],
-# 	"daily": [
-# 		"utility_billing.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"utility_billing.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"utility_billing.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"utility_billing.tasks.monthly"
-# 	],
+    # "cron": {
+    #     "*/1 * * * *": [
+    #         "utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
+    #     ]
+    # },
+    	"daily": [
+    		"utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
+    	],
+    # 	"hourly": [
+    # 		"utility_billing.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"utility_billing.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"utility_billing.tasks.monthly"
+    # 	],
 }
 
 # Testing

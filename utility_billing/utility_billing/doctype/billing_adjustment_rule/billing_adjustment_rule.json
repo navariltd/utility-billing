@@ -33,6 +33,7 @@
   "grace_period_days",
   "penalty_cap",
   "is_compounding",
+  "submit_penalty_invoice",
   "section_break_accounting",
   "penalty_income_account",
   "penalty_receivable_account",
@@ -260,12 +261,18 @@
    "fieldtype": "Int",
    "label": "Overdue After (Days)",
    "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "submit_penalty_invoice",
+   "fieldtype": "Check",
+   "label": "Submit Penalty Invoice"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-14 11:40:55.320347",
+ "modified": "2025-05-14 16:25:59.464529",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Billing Adjustment Rule",

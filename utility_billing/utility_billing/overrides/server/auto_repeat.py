@@ -225,3 +225,21 @@ def add_audit_comment(doc: Document, new_invoice: Document,
             "reference_name": name,
             "content": comment_msg
         }).insert(ignore_permissions=True)
+    
+    # users = frappe.get_all(
+    #     "User",
+    #     filters={"enabled": 1},
+    #     fields=["name"]
+    # )
+
+    # for user in users:
+    #     if user.name != "Guest":
+    #         frappe.get_doc({
+    #             "doctype": "Notification Log",
+    #             "subject": "Billing Increment Renewal Applied",
+    #             "for_user": user.name,
+    #             "type": "Alert",
+    #             "document_type": "Sales Invoice",
+    #             "document_name": new_invoice.name,
+    #             "email_content": frappe.utils.strip_html(comment_msg)
+    #         }).insert(ignore_permissions=True)
