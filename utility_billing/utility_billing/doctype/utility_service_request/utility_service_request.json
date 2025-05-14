@@ -51,6 +51,12 @@
   "contract_length_months",
   "requested_properties_section",
   "requested_properties",
+  "contract_terms_section",
+  "contract_template",
+  "contract_terms",
+  "requires_fulfilment",
+  "fulfilment_deadline",
+  "fulfilment_terms",
   "address_and_contacts_tab",
   "section_break_ywar",
   "address_html",
@@ -422,7 +428,8 @@
   {
    "fieldname": "requested_properties_section",
    "fieldtype": "Section Break",
-   "label": "Requested Properties"
+   "label": "Requested Properties",
+   "no_copy": 1
   },
   {
    "allow_on_submit": 1,
@@ -487,12 +494,47 @@
    "hide_seconds": 1,
    "label": "Contract Length (Months)",
    "non_negative": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "contract_terms_section",
+   "fieldtype": "Section Break",
+   "label": "Contract Terms",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "contract_template",
+   "fieldtype": "Link",
+   "label": "Contract Template",
+   "options": "Contract Template"
+  },
+  {
+   "fieldname": "contract_terms",
+   "fieldtype": "Text Editor",
+   "label": "Contract Terms"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_fulfilment",
+   "fieldtype": "Check",
+   "label": "Requires Fulfilment"
+  },
+  {
+   "fieldname": "fulfilment_deadline",
+   "fieldtype": "Date",
+   "label": "Fulfilment Deadline"
+  },
+  {
+   "fieldname": "fulfilment_terms",
+   "fieldtype": "Table",
+   "label": "Fulfilment Terms",
+   "options": "Contract Fulfilment Checklist"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-14 08:36:14.096730",
+ "modified": "2025-05-14 11:24:14.519675",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

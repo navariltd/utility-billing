@@ -17,7 +17,7 @@
     "label": "Contract Start Date",
     "fieldtype": "Date",
     "depends_on": "eval:doc.enable_increment",
-    "insert_after": "enable_increment"
+    "insert_after": "invoice_generation_col"
   },
   {
     "fieldname": "contract_end_date",
@@ -29,22 +29,14 @@
   {
     "fieldtype": "Column Break",
     "fieldname": "invoice_generation_col",
-    "insert_after": "contract_end_date"
+    "insert_after": "adjustment_rule"
   },
   {
-    "fieldname": "increment_interval_months",
-    "label": "Increment Interval (Months)",
-    "fieldtype": "Int",
-    "default": 12,
+    "fieldname": "adjustment_rule",
+    "label": "Billing Adjustment Rule",
+    "options": "Billing Adjustment Rule",
+    "fieldtype": "Link",
     "depends_on": "eval:doc.enable_increment",
-    "insert_after": "invoice_generation_col"
-  },
-  {
-    "fieldname": "increment_percentage",
-    "label": "Increment Percentage",
-    "fieldtype": "Float",
-    "default": 0.0,
-    "depends_on": "eval:doc.enable_increment",
-    "insert_after": "increment_interval_months"
+    "insert_after": "enable_increment"
   }
 ]

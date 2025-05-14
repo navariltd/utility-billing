@@ -209,6 +209,11 @@ doc_events = {
         ],
 
     },
+    "Auto Repeat": {
+        "on_update": [
+            "utility_billing.utility_billing.overrides.server.auto_repeat.on_update"
+        ],
+    }
 }
 
 # Scheduled Tasks

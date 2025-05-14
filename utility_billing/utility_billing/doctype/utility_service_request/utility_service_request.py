@@ -111,10 +111,12 @@ def create_contract(name):
     contract.party_type = "Customer"
     contract.party_name = doc.customer
     contract.utility_service_request = name
-    contract.property = doc.utility_property
     contract.start_date = doc.start_date
     contract.end_date = doc.end_date
-    contract.frequency = doc.frequency
+    contract.contract_template = doc.contract_template
+    contract.contract_terms = doc.contract_terms
+    contract.requires_fulfilment = doc.requires_fulfilment
+    contract.fulfilment_terms = doc.fulfilment_terms
 
     # Fields to ignore
     ignore_fields = {"parent", "parenttype", "parentfield", "idx", "name", 
@@ -585,28 +587,31 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
                                  posting_date, due_date, company)
     
     # Handle auto repeat creation with contract details
-    if property_line and property_line.frequency:
+    if property_line and property_line.adjustment_rule:
+        adjustment_rule = frappe.get_doc("Billing Adjustment Rule", property_line.adjustment_rule)
         create_single_auto_repeat_with_contract_details(
             si, 
-            usr,
+            usr, 
+            adjustment_rule,
             {
-                "frequency": property_line.frequency,
+                "frequency": adjustment_rule.frequency,
                 "start_date": property_line.start_date,
                 "end_date": property_line.end_date,
                 "utility_property": property_line.utility_property,
-                "submit_on_creation": property_line.submit_on_creation,
-                "repeat_on_day": property_line.repeat_on_day,
-                "repeat_on_last_day": property_line.repeat_on_last_day,
+                "submit_on_creation": adjustment_rule.submit_on_creation,
+                "repeat_on_day": adjustment_rule.repeat_on_day,
+                "repeat_on_last_day": adjustment_rule.repeat_on_last_day,
+                "repeat_on_days": adjustment_rule.repeat_on_days,
             }
         )
 
-    # Add comprehensive comments to relevant documents
-    add_transaction_comments(si, docname, {
-        "frequency": property_line.frequency,
-        "start_date": property_line.start_date,
-        "end_date": property_line.end_date,
-        "utility_property": property_line.utility_property,
-    } if property_line else None)
+        # Add comprehensive comments to relevant documents
+        add_transaction_comments(si, docname, {
+            "frequency": property_line.frequency,
+            "start_date": property_line.start_date,
+            "end_date": property_line.end_date,
+            "utility_property": property_line.utility_property,
+        } if property_line else None)
 
     return si.name
 
@@ -742,7 +747,7 @@ def create_base_sales_invoice(usr, items, customer, customer_name, posting_date,
     return si
 
 
-def create_single_auto_repeat_with_contract_details(si, usr, auto_repeat):
+def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, auto_repeat):
     """
     Creates an Auto Repeat document for a Sales Invoice with comprehensive contract details,
     including rent increment settings from the associated property.
@@ -778,8 +783,8 @@ def create_single_auto_repeat_with_contract_details(si, usr, auto_repeat):
     )
     
     # Extract increment settings from property with fallback to 0 if not set
-    increment_interval = property_doc.increment_interval_months if property_doc else 0
-    increment_percent = property_doc.increment_percentage if property_doc else 0
+    increment_interval = adjustment_rule.increment_interval_months if property_doc else 0
+    increment_percent = adjustment_rule.increment_percentage if property_doc else 0
     has_increment = increment_interval > 0 and increment_percent > 0
     
     # Date calculations for billing intervals
@@ -791,7 +796,9 @@ def create_single_auto_repeat_with_contract_details(si, usr, auto_repeat):
     # - Without increments: Use contract end date directly
     if has_increment:
         # Calculate when the first billing interval should end
-        interval_end_date = add_months(start_date, increment_interval)
+        interval_end_date = add_months(start_date, float(increment_interval))
+        if adjustment_rule.effective_after_months and float(adjustment_rule.effective_after_months) > 0:
+            interval_end_date = add_months(start_date, float(adjustment_rule.effective_after_months))
         
         # Respect contract term limits if they exist
         if contract_end_date and interval_end_date > contract_end_date:
@@ -818,15 +825,9 @@ def create_single_auto_repeat_with_contract_details(si, usr, auto_repeat):
         
         # Contract metadata for reference and future processing
         "contract_start_date": start_date,
-        "contract_end_date": contract_end_date,  # Full contract term
-        "increment_interval_months": increment_interval,
-        "increment_percentage": increment_percent,
-        "enable_increment": 1 if has_increment else 0,  # Flag for increment handling
-        
-        # Additional reference fields (not shown in UI but useful for queries)
-        "linked_customer": si.customer,
-        "linked_property": auto_repeat.get("utility_property"),
-        "base_invoice": si.name  # Original invoice template
+        "contract_end_date": contract_end_date,
+        "adjustment_rule": adjustment_rule.name,
+        "enable_increment": 1 if has_increment else 0, 
     })
     
     # Save the Auto Repeat and link it to the invoice

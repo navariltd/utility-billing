@@ -218,6 +218,37 @@ frappe.ui.form.on("Utility Service Request", {
 		update_contract_fields(frm, "contract_length_months");
 	},
 
+	contract_template: function (frm) {
+		if (frm.doc.contract_template) {
+			frappe.call({
+				method: "erpnext.crm.doctype.contract_template.contract_template.get_contract_template",
+				args: {
+					template_name: frm.doc.contract_template,
+					doc: frm.doc,
+				},
+				callback: function (r) {
+					if (r && r.message) {
+						let contract_template = r.message.contract_template;
+						frm.set_value("contract_terms", r.message.contract_terms);
+						frm.set_value(
+							"requires_fulfilment",
+							contract_template.requires_fulfilment
+						);
+
+						if (frm.doc.requires_fulfilment) {
+							// Populate the fulfilment terms table from a contract template, if any
+							r.message.contract_template.fulfilment_terms.forEach((element) => {
+								let d = frm.add_child("fulfilment_terms");
+								d.requirement = element.requirement;
+							});
+							frm.refresh_field("fulfilment_terms");
+						}
+					}
+				},
+			});
+		}
+	},
+
 	onload: function (frm) {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 	},
@@ -816,7 +847,7 @@ function configure_dialog(dialog, frm) {
 				overflowX: "hidden",
 				opacity: "1",
 				pointerEvents: "auto",
-				boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
+				boxShadow: "0 0 5px rgba(0, 0, 0, 0.3)",
 				borderRadius: "8px",
 			};
 
@@ -869,6 +900,41 @@ async function showSalesOrderModal(frm, allowAdditionalRows = false) {
 				fieldtype: "Section Break",
 				label: __("Select Items"),
 				collapsible: 0,
+			},
+
+			{
+				fieldname: "utility_property",
+				label: __("Property"),
+				fieldtype: "Link",
+				options: "Utility Property",
+				reqd: 1,
+				get_query: () => {
+					const properties = (frm.doc.requested_properties || [])
+						.map((p) => p.utility_property)
+						.filter(Boolean);
+					return {
+						filters: [["name", "in", properties]],
+					};
+				},
+				change: function () {
+					let selected_value = this.get_value();
+					let items = dialog.get_value("items_table") || [];
+
+					let frequency = null;
+					frm.doc.requested_properties.forEach((property) => {
+						if (property.utility_property === selected_value) {
+							frequency = property.frequency;
+						}
+					});
+
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = frequency;
+					});
+
+					dialog.set_value("frequency", frequency);
+					dialog.set_value("items_table", items);
+				},
 			},
 			{
 				fieldname: "items_table",
@@ -962,6 +1028,7 @@ async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
 				label: __("Property"),
 				fieldtype: "Link",
 				options: "Utility Property",
+				reqd: 1,
 				get_query: () => {
 					const properties = (frm.doc.requested_properties || [])
 						.map((p) => p.utility_property)
