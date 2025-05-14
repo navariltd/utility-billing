@@ -47,6 +47,8 @@
   "start_date",
   "column_break_fexi",
   "end_date",
+  "column_break_yzlm",
+  "contract_length_months",
   "requested_properties_section",
   "requested_properties",
   "address_and_contacts_tab",
@@ -357,7 +359,8 @@
    "fieldname": "utility_bill_structure",
    "fieldtype": "Link",
    "label": "Utility Bill Structure",
-   "options": "Utility Bill Structure"
+   "options": "Utility Bill Structure",
+   "search_index": 1
   },
   {
    "fieldname": "payment_terms_section",
@@ -380,7 +383,8 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "auto_repeat_settings_section",
@@ -471,12 +475,24 @@
    "fieldtype": "Data",
    "label": "Customer Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_yzlm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The number of months the contract will run from the Start Date. ",
+   "fieldname": "contract_length_months",
+   "fieldtype": "Float",
+   "hide_seconds": 1,
+   "label": "Contract Length (Months)",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-12 13:49:21.228278",
+ "modified": "2025-05-14 08:36:14.096730",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

@@ -206,25 +206,22 @@ frappe.ui.form.on("Utility Service Request", {
 		});
 	},
 
+	start_date: function (frm) {
+		update_contract_fields(frm, "start_date");
+	},
+
+	end_date: function (frm) {
+		update_contract_fields(frm, "end_date");
+	},
+
+	contract_length_months: function (frm) {
+		update_contract_fields(frm, "contract_length_months");
+	},
+
 	onload: function (frm) {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 	},
 });
-function set_dynamic_field_label(frm) {
-	if (frm.doc.service_request_from == "Customer") {
-		frm.set_df_property("party_name", "label", "Customer");
-		frm.set_df_property("customer", "hidden", 1);
-	} else if (frm.doc.service_request_from == "Lead") {
-		frm.set_df_property("party_name", "label", "Lead");
-	} else if (frm.doc.service_request_from == "Prospect") {
-		frm.set_df_property("party_name", "label", "Prospect");
-	} else if (frm.doc.service_request_from == "CRM Deal") {
-		frm.set_df_property("party_name", "label", "Frappe CRM Deal");
-	}
-
-	// Remove any custom query for party_name field
-	frm.fields_dict.party_name.get_query = null;
-}
 
 frappe.ui.form.on("Utility Service Request Item", {
 	form_render: function (frm, cdt, cdn) {
@@ -264,48 +261,124 @@ frappe.ui.form.on("Utility Service Request Item", {
 });
 
 frappe.ui.form.on("Contract Utility Property Item", {
-	adjustment_rule: function (frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
-
-		if (row.adjustment_rule) {
-			frappe.db
-				.get_doc("Billing Adjustment Rule", row.adjustment_rule)
-				.then((doc) => {
-					const child_table = frm.fields_dict["requested_properties"];
-					const child_fields = child_table.grid.docfields.map((df) => df.fieldname);
-
-					const fields_to_skip = [
-						"name",
-						"creation",
-						"modified",
-						"modified_by",
-						"owner",
-						"docstatus",
-						"idx",
-						"parent",
-						"parenttype",
-						"parentfield",
-					];
-
-					let updated_fields = {};
-
-					Object.keys(doc).forEach((key) => {
-						if (!fields_to_skip.includes(key) && child_fields.includes(key)) {
-							updated_fields[key] = doc[key];
-						}
-					});
-
-					if (Object.keys(updated_fields).length) {
-						frappe.model.set_value(cdt, cdn, updated_fields);
-					}
-				})
-				.catch((err) => {
-					console.error(err);
-					frappe.msgprint("Unable to fetch Billing Adjustment Rule.");
-				});
+	requested_properties_add: function (frm, cdt, cdn) {
+		if (frm.doc.start_date) {
+			frappe.model.set_value(cdt, cdn, "start_date", frm.doc.start_date);
+		}
+		if (frm.doc.end_date) {
+			frappe.model.set_value(cdt, cdn, "end_date", frm.doc.end_date);
+		}
+		if (frm.doc.contract_length_months) {
+			frappe.model.set_value(
+				cdt,
+				cdn,
+				"contract_length_months",
+				frm.doc.contract_length_months
+			);
 		}
 	},
+	start_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "start_date"),
+	end_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "end_date"),
+	contract_length_months: (frm, cdt, cdn) =>
+		update_child_contract_fields(frm, cdt, cdn, "contract_length_months"),
 });
+
+function set_dynamic_field_label(frm) {
+	if (frm.doc.service_request_from == "Customer") {
+		frm.set_df_property("party_name", "label", "Customer");
+		frm.set_df_property("customer", "hidden", 1);
+	} else if (frm.doc.service_request_from == "Lead") {
+		frm.set_df_property("party_name", "label", "Lead");
+	} else if (frm.doc.service_request_from == "Prospect") {
+		frm.set_df_property("party_name", "label", "Prospect");
+	} else if (frm.doc.service_request_from == "CRM Deal") {
+		frm.set_df_property("party_name", "label", "Frappe CRM Deal");
+	}
+
+	frm.fields_dict.party_name.get_query = null;
+}
+
+function update_child_contract_fields(frm, cdt, cdn, changed_field) {
+	const row = locals[cdt][cdn];
+
+	const parent_start = frm.doc.start_date
+		? frappe.datetime.str_to_obj(frm.doc.start_date)
+		: null;
+	const parent_end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
+
+	const start = row.start_date ? frappe.datetime.str_to_obj(row.start_date) : null;
+	const end = row.end_date ? frappe.datetime.str_to_obj(row.end_date) : null;
+	const length = row.contract_length_months;
+
+	if (start && parent_start && start < parent_start) {
+		frappe.model.set_value(cdt, cdn, "start_date", null);
+		frappe.msgprint("Property start date cannot be before contract start date.");
+		return;
+	}
+
+	if (end && parent_end && end > parent_end) {
+		frappe.model.set_value(cdt, cdn, "end_date", null);
+		frappe.msgprint("Property end date cannot be after contract end date.");
+		return;
+	}
+
+	if (changed_field === "start_date" && end) {
+		const diff = get_month_diff(end, start);
+		frappe.model.set_value(cdt, cdn, "contract_length_months", diff);
+	} else if (changed_field === "end_date" && start) {
+		const diff = get_month_diff(end, start);
+		frappe.model.set_value(cdt, cdn, "contract_length_months", diff);
+	} else if (changed_field === "contract_length_months" && start && length != null) {
+		let new_end = frappe.datetime.add_months(start, length);
+		const parent_end_date = parent_end ? frappe.datetime.str_to_obj(parent_end) : null;
+		const new_end_date = new_end ? new_end : null;
+
+		if (parent_end_date && new_end_date && new_end_date > parent_end_date) {
+			new_end = parent_end_date;
+			frappe.msgprint("Adjusted property end date to match contract end date.");
+		}
+
+		frappe.model.set_value(cdt, cdn, "end_date", frappe.datetime.obj_to_str(new_end));
+	}
+
+	if (row.start_date && row.end_date) {
+		const diff = get_month_diff(row.start_date, row.end_date);
+		frappe.model.set_value(cdt, cdn, "contract_length_months", diff);
+	}
+}
+
+function get_month_diff(start_date, end_date) {
+	const start = frappe.datetime.str_to_obj(start_date);
+	const end = frappe.datetime.str_to_obj(end_date);
+
+	let months;
+	months = (end.getFullYear() - start.getFullYear()) * 12;
+	months -= start.getMonth();
+	months += end.getMonth();
+
+	if (end.getDate() < start.getDate()) {
+		months -= 1;
+	}
+
+	return months <= 0 ? 0 : months;
+}
+
+function update_contract_fields(frm, changed_field) {
+	const start = frm.doc.start_date ? frappe.datetime.str_to_obj(frm.doc.start_date) : null;
+	const end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
+	const length = frm.doc.contract_length_months;
+
+	if (changed_field === "start_date" && end) {
+		const months = get_month_diff(start, end);
+		frm.set_value("contract_length_months", months);
+	} else if (changed_field === "end_date" && start) {
+		const months = get_month_diff(start, end);
+		frm.set_value("contract_length_months", months);
+	} else if (changed_field === "contract_length_months" && start && length !== undefined) {
+		const new_end = frappe.datetime.add_months(start, length);
+		frm.set_value("end_date", frappe.datetime.obj_to_str(new_end));
+	}
+}
 
 function handle_item_code(frm, cdt, cdn, item_code, update_fields = false) {
 	if (item_code) {

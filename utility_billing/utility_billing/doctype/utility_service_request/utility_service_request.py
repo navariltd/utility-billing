@@ -7,7 +7,8 @@ from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import add_months, nowdate, add_days
+from frappe.utils import add_months, nowdate, add_days, getdate
+
 
 class UtilityServiceRequest(Document):
     def onload(self):
@@ -15,26 +16,18 @@ class UtilityServiceRequest(Document):
 
     def validate(self):
         self.set_customer_if_needed()
-        self.validate_dates()
+        self.validate_contract_dates()
+        self.validate_child_items()
+
 
     def before_update_after_submit(self):
         # Re-run validation logic when updating after submission
-        self.validate_dates()
+        self.validate_contract_dates()
+        self.validate_child_items()
 
     def set_customer_if_needed(self):
         if self.service_request_from == "Customer":
             self.customer = self.party_name
-
-    def validate_dates(self):
-        if self.end_date:
-            for prop in self.requested_properties:
-                if prop.end_date and self.end_date <= prop.end_date:
-                    frappe.throw(_("Contract End Date must be after the End Date of all requested properties."))
-
-        if self.start_date:
-            for prop in self.requested_properties:
-                if prop.start_date and self.start_date > prop.start_date:
-                    frappe.throw(_("Contract Start Date must not be after the Start Date of any requested properties."))
 
         
     def before_submit(self):
@@ -44,6 +37,56 @@ class UtilityServiceRequest(Document):
         settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
         if settings.create_customer_from_utility_service_request_on_submit:
             make_customer(self.name)
+            
+    
+    def validate_contract_dates(self):
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            frappe.throw("Contract start date cannot be after the end date.")
+
+        if self.start_date and self.contract_length_months is not None:
+            expected_end = add_months(self.start_date, self.contract_length_months)
+            if self.end_date and expected_end != self.end_date:
+                self.end_date = expected_end
+
+        elif self.start_date and self.end_date:
+            self.contract_length_months = self.get_month_diff(self.start_date, self.end_date)
+
+    def validate_child_items(self):
+        parent_start = getdate(self.start_date) if self.start_date else None
+        parent_end = getdate(self.end_date) if self.end_date else None
+
+        for row in self.requested_properties:
+            row_start = getdate(row.start_date) if row.start_date else None
+            row_end = getdate(row.end_date) if row.end_date else None
+            length = row.contract_length_months
+
+            if row_start and parent_start and row_start < parent_start:
+                frappe.throw(f"Property start date '{row_start}' in row {row.idx} cannot be before contract start date '{parent_start}'.")
+
+            if row_end and parent_end and row_end > parent_end:
+                frappe.throw(f"Property end date '{row_end}' in row {row.idx} cannot be after contract end date '{parent_end}'.")
+
+            if row_start and row_end:
+                row.contract_length_months = self.get_month_diff(row_start, row_end)
+
+            elif row_start and length is not None:
+                new_end = add_months(row_start, length)
+                if parent_end and new_end > parent_end:
+                    row.end_date = parent_end
+                else:
+                    row.end_date = new_end
+
+    def get_month_diff(self, start, end):
+        """Return month difference between two date objects"""
+        if not start or not end:
+            return 0
+
+        months = (end.year - start.year) * 12 + (end.month - start.month)
+        if end.day < start.day:
+            months -= 1
+
+        return max(months, 0)
+
         
   
 @frappe.whitelist()
