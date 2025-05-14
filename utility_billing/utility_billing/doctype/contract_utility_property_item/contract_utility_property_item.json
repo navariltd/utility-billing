@@ -9,21 +9,14 @@
   "is_active",
   "utility_property",
   "adjustment_rule",
+  "column_break_cqbg",
   "start_date",
   "end_date",
-  "column_break_eglj",
-  "increment_frequency",
-  "increment_interval_months",
-  "increment_percentage",
-  "auto_repeat_settings_section",
-  "frequency",
-  "submit_on_creation",
-  "column_break_fexi",
-  "repeat_on_day",
-  "repeat_on_last_day"
+  "contract_length_months"
  ],
  "fields": [
   {
+   "columns": 2,
    "fieldname": "utility_property",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -35,31 +28,8 @@
    "reqd": 1
   },
   {
-   "fieldname": "auto_repeat_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Recurring Billing Schedule"
-  },
-  {
    "allow_on_submit": 1,
-   "default": "0",
-   "depends_on": "eval:doc.frequency === 'Monthly'",
-   "fieldname": "repeat_on_last_day",
-   "fieldtype": "Check",
-   "label": "Repeat on Last Day of the Month"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "submit_on_creation",
-   "fieldtype": "Check",
-   "label": "Submit on Creation"
-  },
-  {
-   "fieldname": "column_break_fexi",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_on_submit": 1,
+   "columns": 2,
    "fieldname": "start_date",
    "fieldtype": "Date",
    "in_filter": 1,
@@ -70,6 +40,7 @@
    "reqd": 1
   },
   {
+   "columns": 2,
    "fieldname": "end_date",
    "fieldtype": "Date",
    "in_filter": 1,
@@ -80,26 +51,7 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: in_list([\"Monthly\", \"Quarterly\", \"Half-yearly\", \"Yearly\"], doc.frequency) && !doc.repeat_on_last_day\n",
-   "fieldname": "repeat_on_day",
-   "fieldtype": "Int",
-   "label": "Repeat on Day"
-  },
-  {
-   "default": "Monthly",
-   "fieldname": "frequency",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "label": "Frequency",
-   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly"
-  },
-  {
-   "fieldname": "column_break_eglj",
-   "fieldtype": "Column Break",
-   "label": "Billing Increment Settings"
-  },
-  {
-   "allow_on_submit": 1,
+   "columns": 1,
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
@@ -110,30 +62,7 @@
    "label": "Is Active?"
   },
   {
-   "fieldname": "increment_frequency",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "in_filter": 1,
-   "in_preview": 1,
-   "label": "Increment Frequency",
-   "options": "\nMonthly\nQuarterly\nYearly"
-  },
-  {
-   "default": "0",
-   "description": "The number of months between each increment. For example, enter 12 for annual increments or 6 for semi-annual increments.",
-   "fieldname": "increment_interval_months",
-   "fieldtype": "Float",
-   "in_filter": 1,
-   "in_preview": 1,
-   "label": "Increment Interval (Months)"
-  },
-  {
-   "default": "0",
-   "fieldname": "increment_percentage",
-   "fieldtype": "Percent",
-   "label": "Increment Percentage"
-  },
-  {
+   "columns": 2,
    "fieldname": "adjustment_rule",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -141,14 +70,29 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Adjustment Rule",
-   "options": "Billing Adjustment Rule"
+   "options": "Billing Adjustment Rule",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cqbg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "contract_length_months",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Contract Length (Months)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-13 06:53:46.138135",
+ "modified": "2025-05-14 09:00:59.870759",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Contract Utility Property Item",

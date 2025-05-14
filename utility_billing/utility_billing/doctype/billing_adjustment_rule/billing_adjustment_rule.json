@@ -13,6 +13,7 @@
     "frequency",
     "repeat_on_day",
     "column_break_12",
+    "overdue_after_days",
     "repeat_on_last_day",
     "submit_on_creation",
     "section_break_16",
@@ -32,6 +33,7 @@
     "grace_period_days",
     "penalty_cap",
     "is_compounding",
+    "submit_penalty_invoice",
     "section_break_accounting",
     "penalty_income_account",
     "penalty_receivable_account",
@@ -251,31 +253,32 @@
       "depends_on": "eval:doc.frequency==='Weekly';",
       "fieldname": "section_break_16",
       "fieldtype": "Section Break"
+    },
+    {
+      "default": "0",
+      "description": "Number of days after the invoice posting date before the invoice is marked as overdue",
+      "fieldname": "overdue_after_days",
+      "fieldtype": "Int",
+      "label": "Overdue After (Days)",
+      "non_negative": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "submit_penalty_invoice",
+      "fieldtype": "Check",
+      "label": "Submit Penalty Invoice"
     }
   ],
   "grid_page_length": 50,
   "index_web_pages_for_search": 1,
   "links": [],
-  "modified": "2025-05-12 13:53:43.923202",
+  "modified": "2025-05-14 16:25:59.464529",
   "modified_by": "Administrator",
   "module": "Utility Billing",
   "name": "Billing Adjustment Rule",
   "naming_rule": "By fieldname",
   "owner": "Administrator",
-  "permissions": [
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "System Manager",
-      "share": 1,
-      "write": 1
-    }
-  ],
+  "permissions": [],
   "row_format": "Dynamic",
   "sort_field": "modified",
   "sort_order": "DESC",

@@ -172,8 +172,7 @@
    "fieldtype": "Link",
    "label": "Asset Category",
    "mandatory_depends_on": "eval: (doc.is_fixed_asset == 1) && (!doc.item)",
-   "options": "Asset Category",
-   "read_only_depends_on": "eval: doc.item"
+   "options": "Asset Category"
   },
   {
    "default": "0",
@@ -234,8 +233,7 @@
    "fieldname": "gross_purchase_amount",
    "fieldtype": "Currency",
    "label": "Gross Purchase Amount",
-   "mandatory_depends_on": "eval: (doc.is_fixed_asset == 1) && (!doc.item)",
-   "read_only_depends_on": "eval: doc.item"
+   "mandatory_depends_on": "eval: (doc.is_fixed_asset == 1) && (!doc.item)"
   },
   {
    "fieldname": "dashboard_tab",
@@ -344,7 +342,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-04-28 15:06:45.179099",
+ "modified": "2025-05-14 17:42:51.312033",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",

@@ -41,9 +41,10 @@ class UtilityProperty(NestedSet):
                     "asset_category": self.asset_category,
                     "is_sales_item": 1,
                     "is_utility_item": 1,
-                    "stock_uom": "Nos"
+                    "stock_uom": "Nos",
+                    "disabled": 0,
                 })
-                item_doc.insert()
+                item_doc.insert(ignore_permissions=True)
                 self.item = item_doc.name
 
             asset_exists = frappe.db.exists("Asset", {
@@ -51,6 +52,7 @@ class UtilityProperty(NestedSet):
                 "asset_name": self.property_name,
             })
             if not asset_exists:
+                frappe.db.set_value("Item", self.item, "disabled", 0)
                 asset_doc = frappe.get_doc({
                     "doctype": "Asset",
                     "item_code": self.item,

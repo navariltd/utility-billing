@@ -1,189 +1,106 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2024-10-02 20:42:41.626150",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "sales_order_creation_state",
-  "stock_entry_creation_state",
-  "individual_invoices_for_multiple_sales_orders",
-  "column_break_moce",
-  "sales_invoice_creation_state",
-  "grace_period",
-  "sales_invoice_auto_repeat_frequency",
-  "service_request_section",
-  "enable_extra_rows_for_sosi_creation",
-  "require_contract_before_sosicustomer_creation",
-  "column_break_rmpo",
-  "create_customer_from_utility_service_request_on_submit",
-  "penalty_settings_section",
-  "apply_penalty",
-  "penalty_type",
-  "penalty_value",
-  "penalty_grace_days",
-  "column_break_gthj",
-  "recurring_penalty",
-  "recurrence_interval_days",
-  "max_penalty_amount"
- ],
- "fields": [
-  {
-   "default": "Draft",
-   "fieldname": "sales_order_creation_state",
-   "fieldtype": "Select",
-   "label": "Sales Order Creation State",
-   "options": "Draft\nSubmitted"
-  },
-  {
-   "fieldname": "column_break_moce",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "fieldname": "individual_invoices_for_multiple_sales_orders",
-   "fieldtype": "Check",
-   "label": "Create single invoice for multiple sales orders per customer"
-  },
-  {
-   "default": "Draft",
-   "fieldname": "sales_invoice_creation_state",
-   "fieldtype": "Select",
-   "label": "Sales Invoice Creation State",
-   "options": "Draft\nSubmitted"
-  },
-  {
-   "default": "Draft",
-   "fieldname": "stock_entry_creation_state",
-   "fieldtype": "Select",
-   "label": "Stock Entry Creation State",
-   "options": "Draft\nSubmitted"
-  },
-  {
-   "default": "1",
-   "fieldname": "create_customer_from_utility_service_request_on_submit",
-   "fieldtype": "Check",
-   "label": "Create Customer from Utility Service Request on Submit"
-  },
-  {
-   "fieldname": "service_request_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_extra_rows_for_sosi_creation",
-   "fieldtype": "Check",
-   "label": "Enable Extra Rows for SO/SI Creation"
-  },
-  {
-   "default": "1",
-   "fieldname": "require_contract_before_sosicustomer_creation",
-   "fieldtype": "Check",
-   "label": "Require Contract Before SO/SI/Customer Creation"
-  },
-  {
-   "fieldname": "column_break_rmpo",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "penalty_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Penalty Settings"
-  },
-  {
-   "default": "0",
-   "fieldname": "apply_penalty",
-   "fieldtype": "Check",
-   "label": "Apply Penalty"
-  },
-  {
-   "default": "Percentage",
-   "depends_on": "eval: doc.apply_penalty",
-   "fieldname": "penalty_type",
-   "fieldtype": "Select",
-   "label": "Penalty Type",
-   "mandatory_depends_on": "eval: doc.apply_penalty",
-   "options": "\nPercentage\nFixed Amount"
-  },
-  {
-   "depends_on": "eval: doc.apply_penalty",
-   "description": "Either a % (e.g. 2%) or amount (e.g. 500 KES) depending on type",
-   "fieldname": "penalty_value",
-   "fieldtype": "Float",
-   "label": "Penalty Value",
-   "mandatory_depends_on": "eval: doc.apply_penalty"
-  },
-  {
-   "depends_on": "eval: doc.apply_penalty",
-   "description": "Days after due date before penalty applies",
-   "fieldname": "penalty_grace_days",
-   "fieldtype": "Float",
-   "label": "Penalty Grace Period (days)"
-  },
-  {
-   "fieldname": "column_break_gthj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.apply_penalty",
-   "description": "Whether to apply penalty daily/weekly/monthly after grace period",
-   "fieldname": "recurring_penalty",
-   "fieldtype": "Check",
-   "label": "Recurring Penalty"
-  },
-  {
-   "depends_on": "eval: doc.recurring_penalty",
-   "description": "If recurring, how frequently to reapply (e.g., 7 = weekly)",
-   "fieldname": "recurrence_interval_days",
-   "fieldtype": "Int",
-   "label": "Recurrence Interval (in days)"
-  },
-  {
-   "depends_on": "eval: doc.recurring_penalty",
-   "fieldname": "max_penalty_amount",
-   "fieldtype": "Currency",
-   "label": "Max Penalty Cap"
-  },
-  {
-   "default": "Monthly",
-   "fieldname": "sales_invoice_auto_repeat_frequency",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Sales Invoice Auto Repeat Frequency",
-   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly"
-  },
-  {
-   "default": "Draft",
-   "description": "Number of days after invoice posting to calculate due date",
-   "fieldname": "grace_period",
-   "fieldtype": "Int",
-   "label": "Sales Invoice Grace Period (in days)"
-  }
- ],
- "index_web_pages_for_search": 1,
- "issingle": 1,
- "links": [],
- "modified": "2025-05-06 15:28:59.084268",
- "modified_by": "Administrator",
- "module": "Utility Billing",
- "name": "Utility Billing Settings",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "print": 1,
-   "read": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": []
+  "actions": [],
+  "allow_rename": 1,
+  "creation": "2024-10-02 20:42:41.626150",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "sales_order_creation_state",
+    "stock_entry_creation_state",
+    "individual_invoices_for_multiple_sales_orders",
+    "column_break_moce",
+    "sales_invoice_creation_state",
+    "service_request_section",
+    "enable_site_survey",
+    "require_deposit_before_contract_creation",
+    "require_contract_before_sales_invoice_creation",
+    "column_break_rmpo",
+    "create_customer_from_utility_service_request_on_submit",
+    "enable_extra_rows_for_sosi_creation"
+  ],
+  "fields": [
+    {
+      "default": "Draft",
+      "fieldname": "sales_order_creation_state",
+      "fieldtype": "Select",
+      "label": "Sales Order Creation State",
+      "options": "Draft\nSubmitted"
+    },
+    {
+      "fieldname": "column_break_moce",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "1",
+      "fieldname": "individual_invoices_for_multiple_sales_orders",
+      "fieldtype": "Check",
+      "label": "Create single invoice for multiple sales orders per customer"
+    },
+    {
+      "default": "Draft",
+      "fieldname": "sales_invoice_creation_state",
+      "fieldtype": "Select",
+      "label": "Sales Invoice Creation State",
+      "options": "Draft\nSubmitted"
+    },
+    {
+      "default": "Draft",
+      "fieldname": "stock_entry_creation_state",
+      "fieldtype": "Select",
+      "label": "Stock Entry Creation State",
+      "options": "Draft\nSubmitted"
+    },
+    {
+      "default": "1",
+      "fieldname": "create_customer_from_utility_service_request_on_submit",
+      "fieldtype": "Check",
+      "label": "Create Customer from Utility Service Request on Submit"
+    },
+    {
+      "fieldname": "service_request_section",
+      "fieldtype": "Section Break",
+      "label": "Service Request"
+    },
+    {
+      "default": "0",
+      "fieldname": "enable_extra_rows_for_sosi_creation",
+      "fieldtype": "Check",
+      "label": "Enable Adding Extra Rows for SO/SI Creation"
+    },
+    {
+      "fieldname": "column_break_rmpo",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "1",
+      "fieldname": "require_contract_before_sales_invoice_creation",
+      "fieldtype": "Check",
+      "label": "Require Contract Before Sales Invoice Creation"
+    },
+    {
+      "default": "1",
+      "fieldname": "require_deposit_before_contract_creation",
+      "fieldtype": "Check",
+      "label": "Require Deposit Before Contract Creation"
+    },
+    {
+      "default": "0",
+      "fieldname": "enable_site_survey",
+      "fieldtype": "Check",
+      "label": "Enable Site Survey"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "issingle": 1,
+  "links": [],
+  "modified": "2025-05-14 17:12:14.310330",
+  "modified_by": "Administrator",
+  "module": "Utility Billing",
+  "name": "Utility Billing Settings",
+  "owner": "Administrator",
+  "permissions": [],
+  "row_format": "Dynamic",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": []
 }
