@@ -1,569 +1,552 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "naming_series:",
- "creation": "2024-10-08 16:29:52.921205",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "section_break_cpzx",
-  "naming_series",
-  "request_type",
-  "service_request_from",
-  "party_name",
-  "customer_name",
-  "column_break_nqzi",
-  "date",
-  "customer_group",
-  "territory",
-  "column_break_wxld",
-  "company",
-  "tax_id",
-  "nrcpassport_no",
-  "accounting_dimensions_section",
-  "cost_center",
-  "dimension_col_break",
-  "project",
-  "currency_and_price_list_section",
-  "currency",
-  "column_break_tviv",
-  "price_list",
-  "section_break_jqrx",
-  "utility_bill_structure",
-  "items",
-  "remarks",
-  "section_break_asmx",
-  "amended_from",
-  "terms_tab",
-  "payment_terms_section",
-  "ignore_default_payment_terms_template",
-  "payment_terms_template",
-  "section_break_qgrb",
-  "tc_name",
-  "terms",
-  "auto_repeat_schedule_tab",
-  "auto_repeat_settings_section",
-  "start_date",
-  "column_break_fexi",
-  "end_date",
-  "column_break_yzlm",
-  "contract_length_months",
-  "requested_properties_section",
-  "requested_properties",
-  "contract_terms_section",
-  "contract_template",
-  "contract_terms",
-  "requires_fulfilment",
-  "fulfilment_deadline",
-  "fulfilment_terms",
-  "address_and_contacts_tab",
-  "section_break_ywar",
-  "address_html",
-  "column_break_kzdt",
-  "contact_html",
-  "tab_6_tab",
-  "section_break_lpoa",
-  "connection_size",
-  "pipes_typedistance",
-  "column_break_bfhu",
-  "water_network",
-  "column_break_omtp",
-  "location",
-  "more_info_tab",
-  "section_break_usdz",
-  "status",
-  "request_status",
-  "billing_status",
-  "column_break_vdbu",
-  "customer",
-  "billed_amount",
-  "per_billed",
-  "connections_tab"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_asmx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Utility Service Request",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "default": "UT-SER-REQ-.YYYY.-",
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "UT-SER-REQ-.YYYY.-",
-   "reqd": 1
-  },
-  {
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Date",
-   "read_only": 1
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
-   "fieldname": "customer_group",
-   "fieldtype": "Link",
-   "label": "Tariff / Customer Group",
-   "options": "Customer Group"
-  },
-  {
-   "fieldname": "territory",
-   "fieldtype": "Link",
-   "label": "Territory",
-   "options": "Territory"
-  },
-  {
-   "fieldname": "column_break_nqzi",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "request_type",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Utility Request Type",
-   "options": "Issue Type",
-   "reqd": 1
-  },
-  {
-   "fieldname": "nrcpassport_no",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_standard_filter": 1,
-   "label": "NRC/Passport No"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "accounting_dimensions_section",
-   "fieldtype": "Section Break",
-   "label": "Accounting Dimensions"
-  },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center"
-  },
-  {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "label": "Project",
-   "options": "Project"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "currency_and_price_list_section",
-   "fieldtype": "Section Break",
-   "label": "Currency and Price List"
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency"
-  },
-  {
-   "fieldname": "column_break_tviv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "price_list",
-   "fieldtype": "Link",
-   "label": "Price List",
-   "options": "Price List"
-  },
-  {
-   "fieldname": "address_and_contacts_tab",
-   "fieldtype": "Tab Break",
-   "label": "Address & Contacts"
-  },
-  {
-   "fieldname": "column_break_kzdt",
-   "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "section_break_lpoa",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "connection_size",
-   "fieldtype": "Data",
-   "label": "Connection Size"
-  },
-  {
-   "fieldname": "water_network",
-   "fieldtype": "Data",
-   "label": "Water Network"
-  },
-  {
-   "fieldname": "pipes_typedistance",
-   "fieldtype": "Data",
-   "label": "Pipes type/Distance"
-  },
-  {
-   "fieldname": "address_html",
-   "fieldtype": "HTML",
-   "label": "Address HTML",
-   "options": "Address"
-  },
-  {
-   "fieldname": "contact_html",
-   "fieldtype": "HTML",
-   "label": "Contact",
-   "options": "Contact"
-  },
-  {
-   "fieldname": "tax_id",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_standard_filter": 1,
-   "label": "Organisation Registration No"
-  },
-  {
-   "fieldname": "section_break_jqrx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "allow_bulk_edit": 1,
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "Utility Service Request Item",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_wxld",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_bfhu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_omtp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "more_info_tab",
-   "fieldtype": "Tab Break",
-   "label": "More Info"
-  },
-  {
-   "fieldname": "column_break_vdbu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "section_break_cpzx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "section_break_ywar",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "section_break_usdz",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "connections_tab",
-   "fieldtype": "Tab Break",
-   "label": "Connections",
-   "show_dashboard": 1
-  },
-  {
-   "fieldname": "terms_tab",
-   "fieldtype": "Tab Break",
-   "label": "Terms"
-  },
-  {
-   "fieldname": "tab_6_tab",
-   "fieldtype": "Tab Break",
-   "label": "Coordinates"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "request_status",
-   "fieldtype": "Select",
-   "ignore_user_permissions": 1,
-   "in_filter": 1,
-   "label": "Request Status",
-   "options": "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
-   "read_only": 1
-  },
-  {
-   "fieldname": "terms",
-   "fieldtype": "Text Editor",
-   "label": "Terms and Conditions Details"
-  },
-  {
-   "fieldname": "tc_name",
-   "fieldtype": "Link",
-   "label": "Terms",
-   "options": "Terms and Conditions"
-  },
-  {
-   "fieldname": "location",
-   "fieldtype": "Link",
-   "label": "Location",
-   "options": "Location"
-  },
-  {
-   "fieldname": "dimension_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "Customer",
-   "fieldname": "service_request_from",
-   "fieldtype": "Link",
-   "label": "Service Request From",
-   "link_filters": "[[\"DocType\",\"name\",\"in\", [\"Customer\", \"Lead\", \"Prospect\", \"CRM Deal\"]]]",
-   "options": "DocType",
-   "reqd": 1
-  },
-  {
-   "fieldname": "party_name",
-   "fieldtype": "Dynamic Link",
-   "label": "Party Name",
-   "options": "service_request_from",
-   "reqd": 1
-  },
-  {
-   "fieldname": "payment_terms_template",
-   "fieldtype": "Link",
-   "label": "Payment Terms Template",
-   "options": "Payment Terms Template"
-  },
-  {
-   "fieldname": "utility_bill_structure",
-   "fieldtype": "Link",
-   "label": "Utility Bill Structure",
-   "options": "Utility Bill Structure",
-   "search_index": 1
-  },
-  {
-   "fieldname": "payment_terms_section",
-   "fieldtype": "Section Break",
-   "label": "Payment Terms"
-  },
-  {
-   "fieldname": "section_break_qgrb",
-   "fieldtype": "Section Break",
-   "label": "Terms & Conditions"
-  },
-  {
-   "default": "0",
-   "fieldname": "ignore_default_payment_terms_template",
-   "fieldtype": "Check",
-   "label": "Ignore Default Payment Terms Template"
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "auto_repeat_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Contract Details"
-  },
-  {
-   "fieldname": "column_break_fexi",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "label": "Contract Start Date",
-   "mandatory_depends_on": "eval: doc.requested_properties.length > 0"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "label": "Contract End Date"
-  },
-  {
-   "fieldname": "auto_repeat_schedule_tab",
-   "fieldtype": "Tab Break",
-   "label": "Lease Details"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "remarks",
-   "fieldtype": "Text Editor",
-   "label": "Remarks"
-  },
-  {
-   "fieldname": "requested_properties_section",
-   "fieldtype": "Section Break",
-   "label": "Requested Properties",
-   "no_copy": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "requested_properties",
-   "fieldtype": "Table",
-   "label": "Requested Properties",
-   "options": "Contract Utility Property Item"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "billed_amount",
-   "fieldtype": "Currency",
-   "label": "Billed Amount",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "billing_status",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_standard_filter": 1,
-   "label": "Billing Status",
-   "options": "Not Billed\nFully Billed\nPartly Billed\nClosed",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "per_billed",
-   "fieldtype": "Percent",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "% Amount Billed",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "\nDraft\nOn Hold\nTo Pay\nTo Bill\nTo Deliver\nCompleted\nCancelled\nClosed",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fetch_from": "customer.customer_name",
-   "fieldname": "customer_name",
-   "fieldtype": "Data",
-   "label": "Customer Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_yzlm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "The number of months the contract will run from the Start Date. ",
-   "fieldname": "contract_length_months",
-   "fieldtype": "Float",
-   "hide_seconds": 1,
-   "label": "Contract Length (Months)",
-   "non_negative": 1
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "contract_terms_section",
-   "fieldtype": "Section Break",
-   "label": "Contract Terms",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "contract_template",
-   "fieldtype": "Link",
-   "label": "Contract Template",
-   "options": "Contract Template"
-  },
-  {
-   "fieldname": "contract_terms",
-   "fieldtype": "Text Editor",
-   "label": "Contract Terms"
-  },
-  {
-   "default": "0",
-   "fieldname": "requires_fulfilment",
-   "fieldtype": "Check",
-   "label": "Requires Fulfilment"
-  },
-  {
-   "fieldname": "fulfilment_deadline",
-   "fieldtype": "Date",
-   "label": "Fulfilment Deadline"
-  },
-  {
-   "fieldname": "fulfilment_terms",
-   "fieldtype": "Table",
-   "label": "Fulfilment Terms",
-   "options": "Contract Fulfilment Checklist"
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [],
- "modified": "2025-05-14 11:24:14.519675",
- "modified_by": "Administrator",
- "module": "Utility Billing",
- "name": "Utility Service Request",
- "naming_rule": "By \"Naming Series\" field",
- "owner": "Administrator",
- "permissions": [
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "select": 1,
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "search_fields": "party_name,customer_group,territory,request_type,nrcpassport_no",
- "show_title_field_in_link": 1,
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "title_field": "party_name",
- "translated_doctype": 1
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "naming_series:",
+  "creation": "2024-10-08 16:29:52.921205",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "section_break_cpzx",
+    "naming_series",
+    "request_type",
+    "service_request_from",
+    "party_name",
+    "customer_name",
+    "column_break_nqzi",
+    "date",
+    "customer_group",
+    "territory",
+    "column_break_wxld",
+    "company",
+    "tax_id",
+    "nrcpassport_no",
+    "accounting_dimensions_section",
+    "cost_center",
+    "dimension_col_break",
+    "project",
+    "currency_and_price_list_section",
+    "currency",
+    "column_break_tviv",
+    "price_list",
+    "section_break_jqrx",
+    "utility_bill_structure",
+    "items",
+    "remarks",
+    "section_break_asmx",
+    "amended_from",
+    "terms_tab",
+    "payment_terms_section",
+    "ignore_default_payment_terms_template",
+    "payment_terms_template",
+    "section_break_qgrb",
+    "tc_name",
+    "terms",
+    "auto_repeat_schedule_tab",
+    "auto_repeat_settings_section",
+    "start_date",
+    "column_break_fexi",
+    "end_date",
+    "column_break_yzlm",
+    "contract_length_months",
+    "requested_properties_section",
+    "requested_properties",
+    "contract_terms_section",
+    "contract_template",
+    "contract_terms",
+    "requires_fulfilment",
+    "fulfilment_deadline",
+    "fulfilment_terms",
+    "address_and_contacts_tab",
+    "section_break_ywar",
+    "address_html",
+    "column_break_kzdt",
+    "contact_html",
+    "tab_6_tab",
+    "section_break_lpoa",
+    "connection_size",
+    "pipes_typedistance",
+    "column_break_bfhu",
+    "water_network",
+    "column_break_omtp",
+    "location",
+    "more_info_tab",
+    "section_break_usdz",
+    "status",
+    "request_status",
+    "billing_status",
+    "column_break_vdbu",
+    "customer",
+    "billed_amount",
+    "per_billed",
+    "connections_tab"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_break_asmx",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Utility Service Request",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "default": "UT-SER-REQ-.YYYY.-",
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "label": "Series",
+      "options": "UT-SER-REQ-.YYYY.-",
+      "reqd": 1
+    },
+    {
+      "fieldname": "date",
+      "fieldtype": "Date",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Date",
+      "read_only": 1
+    },
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Company",
+      "options": "Company",
+      "reqd": 1
+    },
+    {
+      "fieldname": "customer_group",
+      "fieldtype": "Link",
+      "label": "Tariff / Customer Group",
+      "options": "Customer Group"
+    },
+    {
+      "fieldname": "territory",
+      "fieldtype": "Link",
+      "label": "Territory",
+      "options": "Territory"
+    },
+    {
+      "fieldname": "column_break_nqzi",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "request_type",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Utility Request Type",
+      "options": "Issue Type",
+      "reqd": 1
+    },
+    {
+      "fieldname": "nrcpassport_no",
+      "fieldtype": "Data",
+      "in_filter": 1,
+      "in_standard_filter": 1,
+      "label": "NRC/Passport No"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "accounting_dimensions_section",
+      "fieldtype": "Section Break",
+      "label": "Accounting Dimensions"
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "label": "Cost Center",
+      "options": "Cost Center"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "currency_and_price_list_section",
+      "fieldtype": "Section Break",
+      "label": "Currency and Price List"
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency"
+    },
+    {
+      "fieldname": "column_break_tviv",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "price_list",
+      "fieldtype": "Link",
+      "label": "Price List",
+      "options": "Price List"
+    },
+    {
+      "fieldname": "address_and_contacts_tab",
+      "fieldtype": "Tab Break",
+      "label": "Address & Contacts"
+    },
+    {
+      "fieldname": "column_break_kzdt",
+      "fieldtype": "Column Break"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "section_break_lpoa",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "connection_size",
+      "fieldtype": "Data",
+      "label": "Connection Size"
+    },
+    {
+      "fieldname": "water_network",
+      "fieldtype": "Data",
+      "label": "Water Network"
+    },
+    {
+      "fieldname": "pipes_typedistance",
+      "fieldtype": "Data",
+      "label": "Pipes type/Distance"
+    },
+    {
+      "fieldname": "address_html",
+      "fieldtype": "HTML",
+      "label": "Address HTML",
+      "options": "Address"
+    },
+    {
+      "fieldname": "contact_html",
+      "fieldtype": "HTML",
+      "label": "Contact",
+      "options": "Contact"
+    },
+    {
+      "fieldname": "tax_id",
+      "fieldtype": "Data",
+      "in_filter": 1,
+      "in_standard_filter": 1,
+      "label": "Organisation Registration No"
+    },
+    {
+      "fieldname": "section_break_jqrx",
+      "fieldtype": "Section Break"
+    },
+    {
+      "allow_bulk_edit": 1,
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Items",
+      "options": "Utility Service Request Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "column_break_wxld",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "column_break_bfhu",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "column_break_omtp",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "more_info_tab",
+      "fieldtype": "Tab Break",
+      "label": "More Info"
+    },
+    {
+      "fieldname": "column_break_vdbu",
+      "fieldtype": "Column Break"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "section_break_cpzx",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "section_break_ywar",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "section_break_usdz",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "connections_tab",
+      "fieldtype": "Tab Break",
+      "label": "Connections",
+      "show_dashboard": 1
+    },
+    {
+      "fieldname": "terms_tab",
+      "fieldtype": "Tab Break",
+      "label": "Terms"
+    },
+    {
+      "fieldname": "tab_6_tab",
+      "fieldtype": "Tab Break",
+      "label": "Coordinates"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "request_status",
+      "fieldtype": "Select",
+      "ignore_user_permissions": 1,
+      "in_filter": 1,
+      "label": "Request Status",
+      "options": "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
+      "read_only": 1
+    },
+    {
+      "fieldname": "terms",
+      "fieldtype": "Text Editor",
+      "label": "Terms and Conditions Details"
+    },
+    {
+      "fieldname": "tc_name",
+      "fieldtype": "Link",
+      "label": "Terms",
+      "options": "Terms and Conditions"
+    },
+    {
+      "fieldname": "location",
+      "fieldtype": "Link",
+      "label": "Location",
+      "options": "Location"
+    },
+    {
+      "fieldname": "dimension_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "Customer",
+      "fieldname": "service_request_from",
+      "fieldtype": "Link",
+      "label": "Service Request From",
+      "link_filters": "[[\"DocType\",\"name\",\"in\", [\"Customer\", \"Lead\", \"Prospect\", \"CRM Deal\"]]]",
+      "options": "DocType",
+      "reqd": 1
+    },
+    {
+      "fieldname": "party_name",
+      "fieldtype": "Dynamic Link",
+      "label": "Party Name",
+      "options": "service_request_from",
+      "reqd": 1
+    },
+    {
+      "fieldname": "payment_terms_template",
+      "fieldtype": "Link",
+      "label": "Payment Terms Template",
+      "options": "Payment Terms Template"
+    },
+    {
+      "fieldname": "utility_bill_structure",
+      "fieldtype": "Link",
+      "label": "Utility Bill Structure",
+      "options": "Utility Bill Structure",
+      "search_index": 1
+    },
+    {
+      "fieldname": "payment_terms_section",
+      "fieldtype": "Section Break",
+      "label": "Payment Terms"
+    },
+    {
+      "fieldname": "section_break_qgrb",
+      "fieldtype": "Section Break",
+      "label": "Terms & Conditions"
+    },
+    {
+      "default": "0",
+      "fieldname": "ignore_default_payment_terms_template",
+      "fieldtype": "Check",
+      "label": "Ignore Default Payment Terms Template"
+    },
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer",
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "auto_repeat_settings_section",
+      "fieldtype": "Section Break",
+      "label": "Contract Details"
+    },
+    {
+      "fieldname": "column_break_fexi",
+      "fieldtype": "Column Break"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Contract Start Date",
+      "mandatory_depends_on": "eval: doc.requested_properties.length > 0"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "Contract End Date"
+    },
+    {
+      "fieldname": "auto_repeat_schedule_tab",
+      "fieldtype": "Tab Break",
+      "label": "Lease Details"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "remarks",
+      "fieldtype": "Text Editor",
+      "label": "Remarks"
+    },
+    {
+      "fieldname": "requested_properties_section",
+      "fieldtype": "Section Break",
+      "label": "Requested Properties",
+      "no_copy": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "requested_properties",
+      "fieldtype": "Table",
+      "label": "Requested Properties",
+      "options": "Contract Utility Property Item"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "billed_amount",
+      "fieldtype": "Currency",
+      "label": "Billed Amount",
+      "read_only": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "billing_status",
+      "fieldtype": "Select",
+      "in_filter": 1,
+      "in_standard_filter": 1,
+      "label": "Billing Status",
+      "options": "Not Billed\nFully Billed\nPartly Billed\nClosed",
+      "read_only": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "per_billed",
+      "fieldtype": "Percent",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "% Amount Billed",
+      "read_only": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "\nDraft\nOn Hold\nTo Pay\nTo Bill\nTo Deliver\nCompleted\nCancelled\nClosed",
+      "read_only": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "fetch_from": "customer.customer_name",
+      "fieldname": "customer_name",
+      "fieldtype": "Data",
+      "label": "Customer Name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_yzlm",
+      "fieldtype": "Column Break"
+    },
+    {
+      "description": "The number of months the contract will run from the Start Date. ",
+      "fieldname": "contract_length_months",
+      "fieldtype": "Float",
+      "hide_seconds": 1,
+      "label": "Contract Length (Months)",
+      "non_negative": 1
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "contract_terms_section",
+      "fieldtype": "Section Break",
+      "label": "Contract Terms",
+      "no_copy": 1
+    },
+    {
+      "fieldname": "contract_template",
+      "fieldtype": "Link",
+      "label": "Contract Template",
+      "options": "Contract Template"
+    },
+    {
+      "fieldname": "contract_terms",
+      "fieldtype": "Text Editor",
+      "label": "Contract Terms"
+    },
+    {
+      "default": "0",
+      "fieldname": "requires_fulfilment",
+      "fieldtype": "Check",
+      "label": "Requires Fulfilment"
+    },
+    {
+      "fieldname": "fulfilment_deadline",
+      "fieldtype": "Date",
+      "label": "Fulfilment Deadline"
+    },
+    {
+      "fieldname": "fulfilment_terms",
+      "fieldtype": "Table",
+      "label": "Fulfilment Terms",
+      "options": "Contract Fulfilment Checklist"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [],
+  "modified": "2025-05-14 11:24:14.519675",
+  "modified_by": "Administrator",
+  "module": "Utility Billing",
+  "name": "Utility Service Request",
+  "naming_rule": "By \"Naming Series\" field",
+  "owner": "Administrator",
+  "permissions": [],
+  "row_format": "Dynamic",
+  "search_fields": "party_name,customer_group,territory,request_type,nrcpassport_no",
+  "show_title_field_in_link": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "party_name",
+  "translated_doctype": 1
 }
