@@ -1,0 +1,10 @@
+[
+  {
+    "fieldname": "utility_service_request",
+    "fieldtype": "Link",
+    "insert_after": "more_info_tab",
+    "label": "Utility Service Request",
+    "name": "BOM-custom_utility_request",
+    "options": "Utility Service Request"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "fieldname": "is_utility_item",
+    "fieldtype": "Check",
+    "insert_after": "is_sales_item",
+    "label": "Is Utility Item",
+    "name": "Item-custom_allow_utility_billing"
+  }
+]

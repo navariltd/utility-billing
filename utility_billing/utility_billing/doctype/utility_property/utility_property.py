@@ -2,10 +2,65 @@
 # For license information, please see license.txt
 
 from frappe.contacts.address_and_contact import load_address_and_contact
-# import frappe
 from frappe.utils.nestedset import NestedSet
-
+import frappe
 
 class UtilityProperty(NestedSet):
     def onload(self):
         load_address_and_contact(self)
+
+    def validate(self):
+        if self.item:
+            asset = frappe.db.get_value("Asset", {
+                "item_code": self.item,
+                "asset_name": self.property_name
+            }, ["location", "asset_category", "gross_purchase_amount"], as_dict=True)
+
+            if asset:
+                self.location = asset.location
+                self.asset_category = asset.asset_category
+                self.gross_purchase_amount = asset.gross_purchase_amount
+
+        if self.is_fixed_asset:
+            if not frappe.db.exists("Item Group", "Fixed Asset"):
+                frappe.get_doc({
+                    "doctype": "Item Group",
+                    "item_group_name": "Fixed Asset",
+                    "is_group": 0,
+                    "parent_item_group": "All Item Groups"
+                }).insert()
+
+            if not self.item:
+                item_doc = frappe.get_doc({
+                    "doctype": "Item",
+                    "item_code": self.property_name,
+                    "item_name": self.property_name,
+                    "is_fixed_asset": 1,
+                    "is_stock_item": 0,
+                    "item_group": "Fixed Asset",
+                    "asset_category": self.asset_category,
+                    "is_sales_item": 1,
+                    "is_utility_item": 1,
+                    "stock_uom": "Nos",
+                    "disabled": 0,
+                })
+                item_doc.insert(ignore_permissions=True)
+                self.item = item_doc.name
+
+            asset_exists = frappe.db.exists("Asset", {
+                "item_code": self.item,
+                "asset_name": self.property_name,
+            })
+            if not asset_exists:
+                frappe.db.set_value("Item", self.item, "disabled", 0)
+                asset_doc = frappe.get_doc({
+                    "doctype": "Asset",
+                    "item_code": self.item,
+                    "asset_name": self.property_name,
+                    "asset_category": self.asset_category,
+                    "naming_series": self.asset_naming_series or "ACC-ASS-.YYYY.-",
+                    "is_existing_asset": 1,
+                    "gross_purchase_amount": self.gross_purchase_amount,
+                    "location": self.location
+                })
+                asset_doc.insert()

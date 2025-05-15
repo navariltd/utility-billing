@@ -1,0 +1,145 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "naming_series:",
+  "creation": "2025-04-16 12:44:28.416587",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "naming_series",
+    "fiscal_year",
+    "column_break_xsni",
+    "start_date",
+    "end_date",
+    "accounting_dimensions_section",
+    "cost_center",
+    "dimension_col_break",
+    "project",
+    "section_break_ibij",
+    "items",
+    "total_amount",
+    "section_break_9z5c",
+    "amended_from",
+    "dashboard_tab"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_break_9z5c",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Utility Bill Structure",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "label": "Naming Series",
+      "options": "UBS-.YYYY.-"
+    },
+    {
+      "fieldname": "column_break_xsni",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "fiscal_year",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Fiscal Year",
+      "options": "Fiscal Year",
+      "reqd": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "End Date"
+    },
+    {
+      "fieldname": "section_break_ibij",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Items",
+      "options": "Utility Bill Structure Item"
+    },
+    {
+      "fieldname": "total_amount",
+      "fieldtype": "Currency",
+      "label": "Total Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "label": "Cost Center",
+      "options": "Cost Center"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "accounting_dimensions_section",
+      "fieldtype": "Section Break",
+      "label": "Accounting Dimensions"
+    },
+    {
+      "fieldname": "dimension_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "dashboard_tab",
+      "fieldtype": "Tab Break",
+      "label": "Dashboard",
+      "show_dashboard": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [
+    {
+      "group": "Utility Billing",
+      "link_doctype": "Utility Service Request",
+      "link_fieldname": "utility_bill_structure"
+    }
+  ],
+  "modified": "2025-04-16 18:14:07.880312",
+  "modified_by": "Administrator",
+  "module": "Utility Billing",
+  "name": "Utility Bill Structure",
+  "naming_rule": "By \"Naming Series\" field",
+  "owner": "Administrator",
+  "permissions": [],
+  "row_format": "Dynamic",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": []
+}

@@ -36,11 +36,18 @@ fixtures = [
     },
 ]
 
+accounting_dimension_doctypes = [
+    "Utility Bill Structure",
+    "Utility Service Request",
+    "Utility Service Request Item",
+    "Meter Reading"
+]
+
 
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext", "crm"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -76,6 +83,7 @@ fixtures = [
 
 # include js in doctype views
 doctype_js = {"Item Price": "utility_billing/overrides/client/item_price.js"}
+doctype_js = {"Contract": "utility_billing/overrides/client/contract.js"}
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
     "Sales Order": "utility_billing/overrides/client/sales_order_list.js"
@@ -118,7 +126,7 @@ doctype_list_js = {
 # ------------
 
 # before_install = "utility_billing.install.before_install"
-# after_install = "utility_billing.install.after_install"
+# after_install = "utility_billing.setup.install.create_utility_property_dimension"
 
 # Uninstallation
 # ------------
@@ -132,7 +140,7 @@ doctype_list_js = {
 # Name of the app being installed is passed as an argument
 
 # before_app_install = "utility_billing.utils.before_app_install"
-# after_app_install = "utility_billing.utils.after_app_install"
+after_app_install = "utility_billing.utility_billing.patches.after_install.create_fields"
 
 # Integration Cleanup
 # -------------------
@@ -182,29 +190,54 @@ doc_events = {
         "before_validate": [
             "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
         ],
+        "on_submit": [
+            "utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"
+        ],
     },
+    "Contract": {
+        "before_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.before_submit"
+        ],
+        "on_cancel": [
+            "utility_billing.utility_billing.overrides.server.contract.on_cancel"
+        ],
+        "on_update_after_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.on_update_after_submit"
+        ],
+        "on_submit": [
+            "utility_billing.utility_billing.overrides.server.contract.on_submit"
+        ],
+
+    },
+    "Auto Repeat": {
+        "on_update": [
+            "utility_billing.utility_billing.overrides.server.auto_repeat.on_update"
+        ],
+    }
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"utility_billing.tasks.all"
-# 	],
-# 	"daily": [
-# 		"utility_billing.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"utility_billing.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"utility_billing.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"utility_billing.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    # "cron": {
+    #     "*/1 * * * *": [
+    #         "utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
+    #     ]
+    # },
+    	"daily": [
+    		"utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
+    	],
+    # 	"hourly": [
+    # 		"utility_billing.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"utility_billing.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"utility_billing.tasks.monthly"
+    # 	],
+}
 
 # Testing
 # -------

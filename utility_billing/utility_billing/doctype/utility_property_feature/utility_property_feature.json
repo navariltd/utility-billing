@@ -1,0 +1,32 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "field:feature",
+  "creation": "2025-04-28 14:38:50.403418",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": ["feature"],
+  "fields": [
+    {
+      "fieldname": "feature",
+      "fieldtype": "Data",
+      "label": "Feature",
+      "unique": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-04-28 14:45:43.171995",
+  "modified_by": "Administrator",
+  "module": "Utility Billing",
+  "name": "Utility Property Feature",
+  "naming_rule": "By fieldname",
+  "owner": "Administrator",
+  "permissions": [],
+  "quick_entry": 1,
+  "row_format": "Dynamic",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": []
+}

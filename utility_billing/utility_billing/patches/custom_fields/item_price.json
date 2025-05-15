@@ -1,0 +1,17 @@
+[
+  {
+    "fieldname": "is_fixed_meter_charge",
+    "fieldtype": "Check",
+    "insert_after": "item_description",
+    "label": "Is Fixed Meter Charge",
+    "name": "Item Price-custom_is_fixed_meter_charge"
+  },
+  {
+    "fieldname": "tariffs",
+    "fieldtype": "Table",
+    "insert_after": "section_break_24",
+    "label": "Tariffs",
+    "name": "Item Price-custom_tariffs",
+    "options": "Item Price Tariff"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "fieldname": "nrc_or_passport_no",
+    "fieldtype": "Data",
+    "insert_after": "customer_group",
+    "label": "NRC or Passport No",
+    "name": "Customer-custom_nrc_or_passport_no"
+  }
+]
