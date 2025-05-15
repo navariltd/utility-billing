@@ -76,11 +76,12 @@ Explore the doctypes that power the system. Below are categorized lists of **new
 
 ### 🆕 New Doctypes
 
-- 🏠 [Utility Billing Settings](./utility_billing/docs/Settings.md)
-- 🏠 [Utility Property](./utility_billing/docs/Property.md)
-- 📨 [Utility Service Request](./utility_billing/docs/Service-Request.md)
-- 📊 [Utility Bill Structure](./utility_billing/docs/Bill-Structure.md)
-- 🔢 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
+- ⚙️ [Utility Billing Settings](./utility_billing/docs/Settings.md)
+- 🏢 [Utility Property](./utility_billing/docs/Property.md)
+- 📝 [Utility Service Request](./utility_billing/docs/Service-Request.md)
+- 🧾 [Utility Bill Structure](./utility_billing/docs/Bill-Structure.md)
+- 📈 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
+- 🪙 [Billing Adjustment Rule](./utility_billing/docs/Billing-Adjustment-Rule.md)
 
 ## 🛠️ Installation (Self-Hosted)
 

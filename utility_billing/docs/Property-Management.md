@@ -10,8 +10,8 @@ It supports:
 
 - 🏠 Property structuring (Project → Building → Unit)
 - 📝 Service Requests to capture tenant intent
-- 📄 Contract generation
 - 💰 Deposit collection
+- 📄 Contract generation
 - 🔁 Rent invoicing via Auto Repeat
 - ⚡ Utility billing
 
@@ -49,9 +49,10 @@ Each unit is independently managed for contracts, billing, and utilities.
 graph TD
     A["Customer / Lead / Prospect (CRM)"] --> B["Create Service Request"]
     B --> C["Auto Create Customer on Submit (if enabled)"]
-    C --> E["Contract (Optional/Required via Settings)"]
-    C --> F["Create Sales Order (Deposit)"]
+    C --> F["Contract"]
+    C --> E["Create Sales Order (Deposit) - Optional/Required via Settings"]
     E --> F
+    F --> G
     C --> G["Create Sales Invoice (Rent)"]
     E --> G
     G --> H["Auto Repeat (Recurring Invoicing)"]
@@ -75,27 +76,7 @@ This acts as the **lead intake form** for tenants and is the **trigger point** f
 
 ---
 
-### 2️⃣ Create Property Contract
-
-![Contract Screenshot](./images/contract.png)
-
-From an approved Service Request:
-
-- Draft a **Property Contract**
-- Define:
-  - Contract period
-  - Rental frequency (monthly, quarterly, yearly)
-  - Rent escalation rules (optional)
-  - Deposit terms
-- Link:
-  - Tenant (Customer)
-  - Unit(s)
-
-This contract governs all subsequent financial documents.
-
----
-
-### 3️⃣ Generate Sales Order (Deposit / Booking)
+### 2️⃣ Generate Sales Order (Deposit / Booking)
 
 ![Sales Order Modal](./images/service_request_salesorder_modal.png)
 
@@ -106,6 +87,24 @@ Directly from the service request:
   - 📌 Booking/advance payments
 - Amounts auto-pulled from service request
 - Tracks payment before lease start
+
+---
+
+### 3️⃣ Create Property Contract
+
+![Contract Screenshot](./images/contract.png)
+
+From an approved Service Request:
+
+- Draft a **Property Contract**
+- Define:
+  - Contract period
+  - Deposit terms
+- Link:
+  - Tenant (Customer)
+  - Unit(s)
+
+This contract manages the tenency.
 
 ---
 
@@ -125,10 +124,16 @@ Rent is billed based on the contract:
 ### 5️⃣ Auto Repeat & Escalation
 
 - 🔁 **Recurring Billing**: Set by contract
-- 📈 **Escalation Rules**:
-  - Custom % increase
-  - Custom intervals
-  - Manual override supported
+
+- 🪙 **[Billing Adjustment Rule](./Billing-Adjustment-Rule.md)**
+  Defines **all escalation logic**, including:
+
+  - Recurrence frequency (e.g., monthly, quarterly)
+  - Penalty and surcharge conditions
+  - Custom increase rates
+  - Escalation intervals
+  - Manual override permissions
+    Applied **per property** to control billing behavior and adjustments comprehensively.
 
 ---
 

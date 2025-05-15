@@ -86,42 +86,29 @@ service_request_coord_tab.png
 ### 🏠 Requested Properties
 
 This section allows you to assign and manage multiple utility or rental properties within a single service request. Each property item supports advanced billing and automation features designed to streamline lease and invoice generation processes.
-
-- 🔗 **Utility Property**: Link a specific property to this contract or service request.
-- 🏷️ **Is Active?**: Enable or disable this item from billing or invoicing actions.
-
-#### 📈 Billing Increment Settings
-
-Use these settings to configure automatic rent or service charge increases over time:
-
-- **Increment Frequency**: Set how often the increment should be applied (e.g., Monthly, Quarterly, Yearly).
-- **Increment Interval (Months)**: Define the number of months between each increment (e.g., `12` for yearly, `6` for semi-annual).
-- **Increment Percentage**: The percentage by which the amount increases at each interval. For example, enter `5` to increase by 5% each cycle.
-
-These settings ensure your contracts remain inflation-adjusted or aligned with periodic rate revisions.
-
-#### 🔁 Recurring Billing Schedule
-
-This section mimics the behavior of the **Auto Repeat** feature used in ERPNext:
-
-- **Frequency**: Choose how often to generate recurring invoices (e.g., Monthly, Quarterly).
-- **Repeat on Day**: For monthly/quarterly frequencies, specify the exact day (e.g., 5 for the 5th of each month).
-- **Repeat on Last Day of the Month**: Automatically sets recurrence to the last day regardless of the month's length.
-- **Submit on Creation**: Automatically submits the generated document on creation—useful for billing workflows.
-
-Together, these fields enable automated invoice generation based on the contract terms defined in each property row, allowing for hands-free recurring billing that aligns with lease or utility agreements.
-
-#### 📅 Date Constraints
-
-- **Start Date / End Date**: Defines the period during which the utility contract or billing should remain active for that property. These dates are validated against the main request to ensure consistency.
-
----
-
 ![Lease Tab](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_lease_tab.png)
-_Lease settings overview for managing multiple properties in a single contract._
 
 ![Property Item](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_property.png)
-_Each property row includes settings for auto-repeat and billing increments._
+
+- #### 🏘️ **Utility Property**
+
+  A required field that links to the specific property associated with this contract item.
+
+- #### ✅ **Is Active?**
+
+  Indicates whether the property is currently active for billing. Uncheck to temporarily disable invoicing or adjustments for the item.
+
+- #### 📅 **Start Date / End Date**
+
+  Defines the contract duration for the property. Billing and adjustments are only applied within this date range.
+
+- #### 📐 **Contract Length (Months)**
+
+  Automatically calculated or manually defined, this represents the total duration of the contract in months. Useful for internal reporting or rule application.
+
+- #### ⚙️ **Adjustment Rule**
+
+  Links to a `Billing Adjustment Rule`, which determines how rates change over time (e.g., percentage-based rent increments or conditional adjustments).
 
 ---
 
