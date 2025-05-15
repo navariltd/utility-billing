@@ -1,51 +1,33 @@
 ## ⚙️ Utility Billing Settings
 
-The **Utility Billing Settings** Doctype centralizes critical configuration options to control how utility billing behaves in ERPNext, specifically around automation, customer creation, sales flows, and penalty management.
+The **Utility Billing Settings** Doctype centralizes critical configuration options for managing automation, service flows, customer onboarding, penalties, and document creation in ERPNext.
+
 ![Utility Settings Screenshot](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/utility-settings.png)
+
+---
 
 ### 📦 Sales & Stock Settings
 
-| **Field**                                                        | **Description**                                                                                                                         |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sales Order Creation State**                                   | Determines whether Sales Orders are created in `Draft` or `Submitted` state upon generation from utility workflows.                     |
-| **Stock Entry Creation State**                                   | Sets the default submission state (`Draft` or `Submitted`) for Stock Entries. Useful when tracking inventory with utilities.            |
-| **Create single invoice for multiple sales orders per customer** | When enabled, consolidates multiple Sales Orders for the same customer into a single Sales Invoice.                                     |
-| **Sales Invoice Creation State**                                 | Specifies if new Sales Invoices are automatically created as `Draft` or `Submitted`.                                                    |
-| **Sales Invoice Grace Period (in days)**                         | Defines the number of days after invoice posting before the due date. It affects the calculation of overdue invoices and penalty logic. |
+| **Field**                                                        | **Description**                                                                                     |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Sales Order Creation State**                                   | Sets whether Sales Orders are created in `Draft` or `Submitted` state during utility workflows.     |
+| **Stock Entry Creation State**                                   | Determines the default state (`Draft` or `Submitted`) of Stock Entries linked to utility processes. |
+| **Create single invoice for multiple sales orders per customer** | If enabled, merges multiple Sales Orders for a customer into a single Sales Invoice.                |
+| **Sales Invoice Creation State**                                 | Specifies if Sales Invoices are automatically created as `Draft` or `Submitted`.                    |
 
 ---
 
 ### 📝 Service Request Settings
 
-| **Field**                                                  | **Description**                                                                                                        |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Create Customer from Utility Service Request on Submit** | Automatically creates a Customer when a Utility Service Request is submitted, simplifying onboarding.                  |
-| **Enable Extra Rows for SO/SI Creation**                   | Allows additional table rows for complex service plans during Sales Order or Invoice creation.                         |
-| **Require Contract Before SO/SI/Customer Creation**        | Prevents Sales Orders, Invoices, or Customer creation without a valid linked contract. Ensures contractual compliance. |
+| **Field**                                                  | **Description**                                                                                       |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Create Customer from Utility Service Request on Submit** | Automatically creates a Customer when a Utility Service Request is submitted.                         |
+| **Enable Adding Extra Rows for SO/SI Creation**            | Allows extra table rows for complex billing structures when generating Sales Orders or Invoices.      |
+| **Enable Site Survey**                                     | Enables site surveys as part of the utility request process before generating contracts or documents. |
+| **Require Deposit Before Contract Creation**               | Prevents contract creation unless a deposit is received.                                              |
+| **Require Contract Before Sales Invoice Creation**         | Blocks invoice generation unless a valid contract exists.                                             |
 
 ---
-
-### 💸 Penalty Settings
-
-Penalties are used to encourage timely payment and enforce billing discipline.
-
-| **Field**                         | **Description**                                                                                            |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Apply Penalty**                 | Master switch to activate penalty rules on overdue invoices.                                               |
-| **Penalty Type**                  | Determines the type of penalty: `Percentage` of overdue amount or a `Fixed Amount`.                        |
-| **Penalty Value**                 | Numeric value of the penalty. A percentage (e.g., `2`) or amount (e.g., `500`) based on the selected type. |
-| **Penalty Grace Period (days)**   | Grace period after the due date before penalty is applied.                                                 |
-| **Recurring Penalty**             | When enabled, the penalty will reapply periodically (e.g., weekly) after the grace period.                 |
-| **Recurrence Interval (in days)** | Interval in days for recurring penalty application (e.g., `7` for weekly).                                 |
-| **Max Penalty Cap**               | Maximum amount that penalties can accumulate to per invoice to prevent overcharging.                       |
-
----
-
-### 🔁 Auto Repeat Settings (Hidden)
-
-| **Field**                                          | **Description**                                                                                                                                     |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sales Invoice Auto Repeat Frequency** _(Hidden)_ | Defines auto-generation frequency for recurring invoices. Options include `Daily`, `Weekly`, `Monthly`, etc. Used by background jobs if configured. |
 
 ## 🚀 Quick Navigation
 

@@ -10,8 +10,7 @@ The **Contract Doctype** is an essential component in managing tenancy agreement
 
 - **Utility Service Request**: Link a utility service request to the contract.
 - **Properties Management**: Manage multiple properties under one contract.
-- **Billing Increments**: Configure automatic rent or service charge increases over time.
-- **Recurring Billing**: Set up recurring billing schedules for tenants or property utilities.
+- **Billing Adjustment Rule**: Set up rules for automatic billing adjustments, such as rent or service charge increments, late payment penalties, or other recurring changes. This feature enables you to configure and automate complex billing scenarios for tenants or property utilities.
 - **Contract Start and End Dates**: Automatically fetch start and end dates from the related utility service request to ensure consistency.
 
 ## Custom Fields and Functionality
@@ -24,38 +23,35 @@ This field allows you to link the contract to a specific **Utility Service Reque
 
 ### 2. **Requested Properties Table**
 
-This table allows you to manage multiple utility or rental properties within a single contract. Each property item supports advanced billing and automation features designed to streamline lease and invoice generation processes.
+This table is used to associate multiple utility or rental properties with a service contract. Each row defines a specific property's billing configuration, activation status, billing rule, and contract period.
 
 ![Utility & Property Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_property.png)
 
-- #### Utility Property: Links a specific property to this contract or service request.
+- #### 🏘️ **Utility Property**
 
-- #### Is Active?: Enable or disable this item from billing or invoicing actions.
+  A required field that links to the specific property associated with this contract item.
 
-- #### 📈 **Billing Increment Settings**
+- #### ✅ **Is Active?**
 
-  This allows you to configure automatic rent or service charge increases over time for each property:
+  Indicates whether the property is currently active for billing. Uncheck to temporarily disable invoicing or adjustments for the item.
 
-  - **Increment Frequency**: Set how often the increment should be applied (e.g., Monthly, Quarterly, Yearly).
-  - **Increment Interval (Months)**: Define the number of months between each increment (e.g., `12` for yearly, `6` for semi-annual).
-  - **Increment Percentage**: The percentage by which the amount increases at each interval. For example, enter `5` to increase by 5% each cycle.
+- #### 📅 **Start Date / End Date**
 
-- #### 🔁 **Recurring Billing Schedule**
+  Defines the contract duration for the property. Billing and adjustments are only applied within this date range.
 
-  This section automates recurring billing based on contract terms for properties:
+- #### 📐 **Contract Length (Months)**
 
-  - **Frequency**: Choose how often to generate recurring invoices (e.g., Monthly, Quarterly).
-  - **Repeat on Day**: For monthly/quarterly frequencies, specify the exact day (e.g., 5 for the 5th of each month).
-  - **Repeat on Last Day of the Month**: Automatically sets recurrence to the last day of the month, no matter the month's length.
-  - **Submit on Creation**: Automatically submits the generated document on creation, useful for seamless billing workflows.
+  Automatically calculated or manually defined, this represents the total duration of the contract in months. Useful for internal reporting or rule application.
 
-- #### 📅 **Date Constraints**
+- #### ⚙️ **Adjustment Rule**
 
-  - **Start Date / End Date**: Defines the period during which the utility contract or billing should remain active for the property. These dates are validated against the utility service request to ensure consistency.
+  Links to a `Billing Adjustment Rule`, which determines how rates change over time (e.g., percentage-based rent increments or conditional adjustments).
+
+## [![👉 Billing Adjustment Rule](https://img.shields.io/badge/👉_Billing_Adjustment_Rule-6f42c1?style=for-the-badge&logo=readthedocs&logoColor=fff)](./Billing-Adjustment-Rule.md)
 
 ---
 
-### 4. **Start and End Dates**
+### 3. **Start and End Dates**
 
 The **Start Date** and **End Date** fields for the contract are automatically fetched from the linked **Utility Service Request**. This ensures that the contract is aligned with the actual service request and avoids inconsistencies between the requested service and contract duration.
 

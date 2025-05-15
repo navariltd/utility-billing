@@ -9,9 +9,9 @@
  "hide_custom": 0,
  "icon": "color-energy-points",
  "idx": 0,
- "indicator_color": "green",
+ "indicator_color": "",
  "is_hidden": 0,
- "label": "Utility & Property Mgmt",
+ "label": "Utility and Rental",
  "links": [
   {
    "hidden": 0,
@@ -162,10 +162,10 @@
    "type": "Link"
   }
  ],
- "modified": "2025-05-14 17:37:54.715760",
+ "modified": "2025-05-14 20:30:21.742614",
  "modified_by": "Administrator",
  "module": "Utility Billing",
- "name": "Utility & Property Mgmt",
+ "name": "Utility and Rental",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -206,5 +206,5 @@
    "type": "DocType"
   }
  ],
- "title": "Utility & Property Mgmt"
+ "title": "Utility and Rental"
 }
