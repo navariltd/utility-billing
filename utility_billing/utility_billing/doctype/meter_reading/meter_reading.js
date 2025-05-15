@@ -134,7 +134,6 @@ function update_meter_number_query(frm) {
 			frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
 				return {
 					filters: {
-						status: "Active",
 						name: ["in", closedWarrantySerials],
 					},
 				};

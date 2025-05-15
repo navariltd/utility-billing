@@ -565,7 +565,7 @@ async function addActionButtons(frm) {
 
 			const contractName = contract?.message?.name || null;
 			const depositName = deposit?.message?.name || null;
-			const creteContract =
+			const canCreateContract =
 				!contractName &&
 				(!settings?.require_deposit_before_contract_creation || depositName);
 
@@ -577,7 +577,7 @@ async function addActionButtons(frm) {
 				__("Create")
 			);
 
-			if (creteContract) {
+			if (canCreateContract) {
 				frm.add_custom_button(
 					__("Contract"),
 					function () {
