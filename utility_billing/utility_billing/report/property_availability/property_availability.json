@@ -1,0 +1,34 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-05-19 18:31:01.504267",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-05-19 18:31:45.604979",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Property Availability",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Utility Property",
+ "report_name": "Property Availability",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Projects User"
+  },
+  {
+   "role": "Property Manager"
+  }
+ ],
+ "timeout": 0
+}
