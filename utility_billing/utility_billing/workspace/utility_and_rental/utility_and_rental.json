@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"RdhNZhI39s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Utility Billing &amp; Property Management</span>\",\"col\":12}},{\"id\":\"96Uspmh80R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sYe8H-efqi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"yjYKVDPGXJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":3}},{\"id\":\"eqpOxmo372\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":3}},{\"id\":\"FnxJmE8cHW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"_kaF7CGr06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Property\",\"col\":3}},{\"id\":\"AfmnnngAoW\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-YDI6I1EU\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Operations\",\"col\":4}},{\"id\":\"7gy7uB2rhz\",\"type\":\"card\",\"data\":{\"card_name\":\"Property Management\",\"col\":4}},{\"id\":\"MTQmyxb7W8\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Transactions\",\"col\":4}},{\"id\":\"r7y6y33VM7\",\"type\":\"card\",\"data\":{\"card_name\":\"Rules and Structure\",\"col\":4}},{\"id\":\"uem37c79xh\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
+ "content": "[{\"id\":\"RdhNZhI39s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Utility Billing &amp; Property Management</span>\",\"col\":12}},{\"id\":\"96Uspmh80R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sYe8H-efqi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"yjYKVDPGXJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":3}},{\"id\":\"eqpOxmo372\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":3}},{\"id\":\"FnxJmE8cHW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"_kaF7CGr06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Property\",\"col\":3}},{\"id\":\"AfmnnngAoW\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-YDI6I1EU\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Operations\",\"col\":4}},{\"id\":\"7gy7uB2rhz\",\"type\":\"card\",\"data\":{\"card_name\":\"Property Management\",\"col\":4}},{\"id\":\"MTQmyxb7W8\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Transactions\",\"col\":4}},{\"id\":\"r7y6y33VM7\",\"type\":\"card\",\"data\":{\"card_name\":\"Rules and Structure\",\"col\":4}},{\"id\":\"_QwacqP-jP\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"uem37c79xh\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
  "creation": "2025-05-02 19:43:46.526258",
  "custom_blocks": [],
  "docstatus": 0,
@@ -267,9 +267,58 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tenancy Summary",
+   "link_count": 0,
+   "link_to": "Tenancy Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Service Request Summary",
+   "link_count": 0,
+   "link_to": "Service Request Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Property Availability",
+   "link_count": 0,
+   "link_to": "Property Availability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Meter Reading Summary",
+   "link_count": 0,
+   "link_to": "Meter Reading Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-05-19 13:06:32.259112",
+ "modified": "2025-05-19 20:20:01.632263",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility and Rental",
