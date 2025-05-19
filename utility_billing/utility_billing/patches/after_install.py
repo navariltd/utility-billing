@@ -1,7 +1,7 @@
 from .create_fields_from_json import create_fields_from_json
 
 
-def create_fields() -> None:
+def create_fields(site: str) -> None:
     create_fields_from_json("./custom_fields/bom.json", "BOM")
     
     create_fields_from_json("./custom_fields/contract.json", "Contract")
