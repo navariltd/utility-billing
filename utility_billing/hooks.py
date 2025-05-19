@@ -1,8 +1,8 @@
 app_name = "utility_billing"
-app_title = "Utility Billing"
-app_publisher = "Navari"
-app_description = "WWSSC Billing System"
-app_email = "info@navari.co.ke"
+app_title = "Utility and Rental"
+app_publisher = "Navari Ltd"
+app_description = "Utility Billing & Property Management"
+app_email = "support@navari.co.ke"
 app_license = "agpl-3.0"
 
 fixtures = [
