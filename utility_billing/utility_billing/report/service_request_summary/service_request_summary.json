@@ -1,0 +1,40 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-05-19 19:52:30.605525",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-05-19 19:52:30.605525",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Service Request Summary",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Utility Service Request",
+ "report_name": "Service Request Summary",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Projects User"
+  },
+  {
+   "role": "Property Manager"
+  },
+  {
+   "role": "Utility Manager"
+  },
+  {
+   "role": "Utility User"
+  }
+ ],
+ "timeout": 0
+}

@@ -18,11 +18,7 @@ def before_validate(doc: Document, method: str) -> None:
             filters={"parent": doc.name, "sales_order": ["is", "set"]},
             fields=["sales_order"],
         )
-    }
-    
-    settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
-    grace_period = settings.grace_period or 10
-    doc.due_date = add_days(doc.posting_date , grace_period)
+    }   
 
     for sales_order in unique_sales_orders:
         map_sales_order_meter_readings_to_invoice(sales_order, doc)

@@ -9,6 +9,7 @@
   "is_active",
   "utility_property",
   "adjustment_rule",
+  "insurance",
   "column_break_cqbg",
   "start_date",
   "end_date",
@@ -40,7 +41,7 @@
    "reqd": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "end_date",
    "fieldtype": "Date",
    "in_filter": 1,
@@ -85,14 +86,25 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Contract Length (Months)"
+   "label": "Length (Months)"
+  },
+  {
+   "columns": 1,
+   "fieldname": "insurance",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Insurance",
+   "options": "Insurance"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-14 09:00:59.870759",
+ "modified": "2025-05-19 11:54:46.604438",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Contract Utility Property Item",

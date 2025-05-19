@@ -540,7 +540,65 @@
   "name": "Utility Service Request",
   "naming_rule": "By \"Naming Series\" field",
   "owner": "Administrator",
-  "permissions": [],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 1
+    },
+    {
+      "role": "Property Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 1
+    },
+    {
+      "role": "Utility Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "print": 1,
+      "email": 1,
+      "export": 1,
+      "report": 1,
+      "share": 1
+    },
+    {
+      "role": "Utility User",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "Property User",
+      "read": 1,
+      "create": 1,
+      "print": 1,
+      "email": 1
+    }
+  ],
   "row_format": "Dynamic",
   "search_fields": "party_name,customer_group,territory,request_type,nrcpassport_no",
   "show_title_field_in_link": 1,

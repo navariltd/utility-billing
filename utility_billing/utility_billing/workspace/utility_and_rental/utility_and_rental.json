@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"RdhNZhI39s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Utility Billing &amp; Property Management</span>\",\"col\":12}},{\"id\":\"96Uspmh80R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sYe8H-efqi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"yjYKVDPGXJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":4}},{\"id\":\"eqpOxmo372\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":4}},{\"id\":\"FnxJmE8cHW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":4}},{\"id\":\"_kaF7CGr06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Property\",\"col\":3}},{\"id\":\"AfmnnngAoW\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"eRmrhgifY7\",\"type\":\"card\",\"data\":{\"card_name\":\"Utility Billing\",\"col\":4}},{\"id\":\"M1yA5bCtfb\",\"type\":\"card\",\"data\":{\"card_name\":\"Property Management\",\"col\":4}}]",
+ "content": "[{\"id\":\"RdhNZhI39s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Utility Billing &amp; Property Management</span>\",\"col\":12}},{\"id\":\"96Uspmh80R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sYe8H-efqi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"yjYKVDPGXJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":3}},{\"id\":\"eqpOxmo372\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":3}},{\"id\":\"FnxJmE8cHW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"_kaF7CGr06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Property\",\"col\":3}},{\"id\":\"AfmnnngAoW\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-YDI6I1EU\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Operations\",\"col\":4}},{\"id\":\"7gy7uB2rhz\",\"type\":\"card\",\"data\":{\"card_name\":\"Property Management\",\"col\":4}},{\"id\":\"MTQmyxb7W8\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Transactions\",\"col\":4}},{\"id\":\"r7y6y33VM7\",\"type\":\"card\",\"data\":{\"card_name\":\"Rules and Structure\",\"col\":4}},{\"id\":\"_QwacqP-jP\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"uem37c79xh\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
  "creation": "2025-05-02 19:43:46.526258",
  "custom_blocks": [],
  "docstatus": 0,
@@ -16,8 +16,8 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Utility Billing",
-   "link_count": 6,
+   "label": "Settings",
+   "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -25,9 +25,28 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Utility Service Request",
+   "label": "Utility Billing Settings",
    "link_count": 0,
-   "link_to": "Utility Service Request",
+   "link_to": "Utility Billing Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rules and Structure",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing Adjustment Rule",
+   "link_count": 0,
+   "link_to": "Billing Adjustment Rule",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -45,26 +64,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Utility Category",
-   "link_count": 0,
-   "link_to": "Utility Category",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Utility Request Type",
-   "link_count": 0,
-   "link_to": "Utility Request Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Utility Tariff Block",
    "link_count": 0,
    "link_to": "Utility Tariff Block",
@@ -75,9 +74,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Meter Reading",
+   "label": "Utility Category",
    "link_count": 0,
-   "link_to": "Meter Reading",
+   "link_to": "Utility Category",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -86,10 +85,20 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Property Management",
-   "link_count": 7,
+   "link_count": 5,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asset",
+   "link_count": 0,
+   "link_to": "Asset",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -114,29 +123,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Utility Property Feature Type",
+   "label": "Insurance",
    "link_count": 0,
-   "link_to": "Utility Property Feature Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Utility Property Unit Type",
-   "link_count": 0,
-   "link_to": "Utility Property Unit Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Utility Service Request",
-   "link_count": 0,
-   "link_to": "Utility Service Request",
+   "link_to": "Insurance",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -154,15 +143,182 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Billing Adjustment Rule",
-   "link_count": 0,
-   "link_to": "Billing Adjustment Rule",
+   "label": "Service Operations",
+   "link_count": 5,
    "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Contract",
+   "link_count": 0,
+   "link_to": "Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Utility Service Request",
+   "link_count": 0,
+   "link_to": "Utility Service Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Meter Reading",
+   "link_count": 0,
+   "link_to": "Meter Reading",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Issue",
+   "link_count": 0,
+   "link_to": "Issue",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing & Transactions",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Auto Repeat",
+   "link_count": 0,
+   "link_to": "Auto Repeat",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order",
+   "link_count": 0,
+   "link_to": "Sales Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Price",
+   "link_count": 0,
+   "link_to": "Item Price",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Price List",
+   "link_count": 0,
+   "link_to": "Price List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tenancy Summary",
+   "link_count": 0,
+   "link_to": "Tenancy Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Service Request Summary",
+   "link_count": 0,
+   "link_to": "Service Request Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Property Availability",
+   "link_count": 0,
+   "link_to": "Property Availability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Meter Reading Summary",
+   "link_count": 0,
+   "link_to": "Meter Reading Summary",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-05-14 20:30:21.742614",
+ "modified": "2025-05-19 20:20:01.632263",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility and Rental",
@@ -171,7 +327,11 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
+ "roles": [
+  {
+   "role": "All"
+  }
+ ],
  "sequence_id": 29.0,
  "shortcuts": [
   {
