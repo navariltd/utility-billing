@@ -57,7 +57,6 @@ class MeterReading(Document):
                 )
             )
 
-
 def create_sales_order(meter_reading):
     """Create a Sales Order based on the Meter Reading."""
     sales_order = frappe.get_doc(
@@ -70,11 +69,16 @@ def create_sales_order(meter_reading):
             "selling_price_list": meter_reading.price_list,
         }
     )
-    utility_property = frappe.get_value(
-        "Customer", meter_reading.customer, "utility_property"
-    )
-    if utility_property:
-        sales_order.utility_property = utility_property
+    
+    accounting_dimensions = frappe.get_all("Accounting Dimension", pluck="document_type")
+    for dim in accounting_dimensions:
+        dim_field = frappe.scrub(dim)
+        if hasattr(meter_reading, dim_field):
+            setattr(sales_order, dim_field, getattr(meter_reading, dim_field))
+
+    for field in ["project", "cost_center"]:
+        if hasattr(meter_reading, field):
+            setattr(sales_order, field, getattr(meter_reading, field))
 
     for rate in meter_reading.rates:
         rate_dict = rate.as_dict()
