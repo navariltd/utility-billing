@@ -1,5 +1,5 @@
 app_name = "utility_billing"
-app_title = "Utility and Rental"
+app_title = "Utility & Rental Billing"
 app_publisher = "Navari Ltd"
 app_description = "Utility Billing & Property Management"
 app_email = "support@navari.co.ke"
