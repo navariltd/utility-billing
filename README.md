@@ -4,7 +4,7 @@
 
 The **Utility Billing & Property Management App** is a powerful addition to [ERPNext](https://erpnext.com), designed to streamline **utility billing**, **property leasing**, and **tenant management**. Ideal for municipal utilities, real estate managers, and property developers.
 
-![Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/workspace.png)
+![Overview](./utility_billing/docs/images/workspace.png)
 
 ## 🔌 [Utility Billing](./utility_billing/docs/Utility-Billing.md)
 
