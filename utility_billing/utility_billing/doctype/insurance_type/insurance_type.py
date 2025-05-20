@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class UtilityTariffBlock(Document):
+class InsuranceType(Document):
 	pass

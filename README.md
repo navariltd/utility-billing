@@ -4,7 +4,7 @@
 
 The **Utility Billing & Property Management App** is a powerful addition to [ERPNext](https://erpnext.com), designed to streamline **utility billing**, **property leasing**, and **tenant management**. Ideal for municipal utilities, real estate managers, and property developers.
 
-![Overview](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/workspace.png)
+![Overview](./utility_billing/docs/images/workspace.png)
 
 ## 🔌 [Utility Billing](./utility_billing/docs/Utility-Billing.md)
 
@@ -82,6 +82,19 @@ Explore the doctypes that power the system. Below are categorized lists of **new
 - 🧾 [Utility Bill Structure](./utility_billing/docs/Bill-Structure.md)
 - 📈 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
 - 🪙 [Billing Adjustment Rule](./utility_billing/docs/Billing-Adjustment-Rule.md)
+
+## 📊 Reports
+
+Get actionable insights from your utility and property data with our built-in reports. These reports help you monitor availability, manage service requests, oversee tenancy details, and track utility consumption—empowering better decision-making across your operations.
+
+### Main Reports:
+
+- **🏢 Property Availability Report** – Track real-time inventory, occupancy, and asset value.
+- **🛠️ Service Request Summary** – Monitor service request lifecycles and billing progress.
+- **📝 Tenancy Summary Report** – Manage leases, durations, and contract changes.
+- **🔌 Meter Reading Summary** – Analyze utility consumption, tariff blocks, and billing.
+
+## [![View Reports](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Reports.md)
 
 ## 🛠️ Installation (Self-Hosted)
 
