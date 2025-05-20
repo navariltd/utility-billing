@@ -2,23 +2,27 @@
 
 ### 🏢 Property Availability Report
 
-![Property Availability](./images/property-availability-report.png)  
-Track real-time property inventory with occupancy status, unit specifications (bedrooms, bathrooms, size), and total asset value across your portfolio. Visualize vacancy rates and property distribution.
+![Property Availability](./images/property-availability-report.png)
+
+> Track real-time property inventory with occupancy status, unit specifications (bedrooms, bathrooms, size), and total asset value across your portfolio. Visualize vacancy rates and property distribution.
 
 ### 🛠️ Service Request Summary
 
-![Service Requests](./images/service-request-report.png)  
-Monitor the complete lifecycle of service requests from initiation to billing. Analyze request types, completion statuses, and associated billing progress across different customer segments.
+![Service Requests](./images/service-request-report.png)
+
+> Monitor the complete lifecycle of service requests from initiation to billing. Analyze request types, completion statuses, and associated billing progress across different customer segments.
 
 ### 📝 Tenancy Summary Report
 
-![Tenancy](./images/tenancy-report.png)  
-Manage lease contracts with visibility on active/expired agreements, remaining lease durations, and property assignments. Track contract adjustments and insurance coverage status.
+![Tenancy](./images/tenancy-report.png)
+
+> Manage lease contracts with visibility on active/expired agreements, remaining lease durations, and property assignments. Track contract adjustments and insurance coverage status.
 
 ### 🔌 Meter Reading Summary
 
-![Meter Readings](./images/meter-reading-report.png)  
-Analyze utility consumption patterns with detailed meter reading comparisons. View consumption by item type, tariff block rates, and generated billing amounts for accurate utility cost tracking.
+![Meter Readings](./images/meter-reading-report.png)
+
+> Analyze utility consumption patterns with detailed meter reading comparisons. View consumption by item type, tariff block rates, and generated billing amounts for accurate utility cost tracking.
 
 ## 🚀 Quick Navigation
 
