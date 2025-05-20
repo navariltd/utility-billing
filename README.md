@@ -83,6 +83,19 @@ Explore the doctypes that power the system. Below are categorized lists of **new
 - 📈 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
 - 🪙 [Billing Adjustment Rule](./utility_billing/docs/Billing-Adjustment-Rule.md)
 
+## 📊 Reports
+
+Get actionable insights from your utility and property data with our built-in reports. These reports help you monitor availability, manage service requests, oversee tenancy details, and track utility consumption—empowering better decision-making across your operations.
+
+### Main Reports:
+
+- **🏢 Property Availability Report** – Track real-time inventory, occupancy, and asset value.
+- **🛠️ Service Request Summary** – Monitor service request lifecycles and billing progress.
+- **📝 Tenancy Summary Report** – Manage leases, durations, and contract changes.
+- **🔌 Meter Reading Summary** – Analyze utility consumption, tariff blocks, and billing.
+
+## [![View Reports](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Reports.md)
+
 ## 🛠️ Installation (Self-Hosted)
 
 ```bash
