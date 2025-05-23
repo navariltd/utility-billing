@@ -51,6 +51,7 @@ frappe.ui.form.on("Utility Service Request", {
 				return {
 					filters: {
 						status: "Available",
+						is_group: 0,
 					},
 				};
 			};

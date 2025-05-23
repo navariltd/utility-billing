@@ -8,6 +8,13 @@ frappe.ui.form.on("Utility Property", {
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
 		}
+		frm.set_query("parent_utility_property", function () {
+			return {
+				filters: {
+					is_group: 1,
+				},
+			};
+		});
 	},
 
 	item(frm) {
