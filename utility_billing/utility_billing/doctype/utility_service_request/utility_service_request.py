@@ -607,7 +607,7 @@ def create_sales_invoice_doc(docname, items, customer=None, customer_name=None, 
 
         # Add comprehensive comments to relevant documents
         add_transaction_comments(si, docname, {
-            "frequency": property_line.frequency,
+            "frequency": adjustment_rule.frequency,
             "start_date": property_line.start_date,
             "end_date": property_line.end_date,
             "utility_property": property_line.utility_property,
