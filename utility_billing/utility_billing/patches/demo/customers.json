@@ -1,0 +1,14 @@
+[
+  {
+    "customer_name": "John Smith",
+    "customer_type": "Individual"
+  },
+  {
+    "customer_name": "Alice Johnson",
+    "customer_type": "Individual"
+  },
+  {
+    "customer_name": "Generic Group Inc",
+    "customer_type": "Company"
+  }
+]
