@@ -5,6 +5,8 @@ from typing import Dict, List, Union, Optional, Any, Tuple, TypeVar, Callable
 
 import frappe
 
+BASE_DIR = Path(__file__).parent 
+
 # Colored logging setup
 COLORS: Dict[str, str] = {
     'DEBUG': '\033[94m',
@@ -118,7 +120,8 @@ def safe_load_json(path: Union[str, Path]) -> Optional[Union[List[Any], Dict[str
         Optional[Union[List[Any], Dict[str, Any]]]: Parsed JSON content or None on failure
     """
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        full_path = BASE_DIR / path if isinstance(path, str) else path
+        with open(full_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data
     except Exception as e:
@@ -126,7 +129,7 @@ def safe_load_json(path: Union[str, Path]) -> Optional[Union[List[Any], Dict[str
         return None
 
 
-def insert_from_json(base_dir: Union[str, Path], filename: str, doctype: str, 
+def insert_from_json(filename: str, doctype: str, 
                     unique_key: Union[str, Dict[str, Any]]) -> None:
     """
     Generic function to insert records from JSON file.
@@ -137,9 +140,9 @@ def insert_from_json(base_dir: Union[str, Path], filename: str, doctype: str,
         doctype: DocType name to insert
         unique_key: Unique key to check for existence
     """
-    path = Path(base_dir) / filename
+    path = Path(BASE_DIR) / filename
     if not path.exists():
-        logger.warning(f"File {filename} not found in {base_dir}")
+        logger.warning(f"File {filename} not found in {BASE_DIR}")
         return
 
     records = safe_load_json(path)

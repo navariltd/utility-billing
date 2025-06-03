@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from .utils import logger, safe_load_json
 
-BASE_DIR = Path(__file__).parent 
 
 COMPANY_NAME: Optional[str] = None
 COMPANY_ABBR: Optional[str] = None
@@ -17,12 +16,8 @@ def create_sample_company() -> None:
         None
     """
     global COMPANY_NAME, COMPANY_ABBR
-    path = BASE_DIR / "company.json"
-    if not path.exists():
-        logger.warning(f"File company.json not found in {BASE_DIR}")
-        return
 
-    data: Dict[str, Any] = safe_load_json(path)
+    data: Dict[str, Any] = safe_load_json("company.json")
 
     COMPANY_NAME = data.get("company_name")
     COMPANY_ABBR = data.get("abbr")
