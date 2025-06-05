@@ -1,7 +1,8 @@
 import frappe
 from typing import List, Dict, Any
 from .utils import safe_insert_doc, safe_load_json
-
+from datetime import timedelta
+from frappe.utils import nowdate, add_months, getdate
 
 def insert_insurances(insurances: List[Dict[str, Any]]) -> None:
     """Insert insurance records with error handling."""
@@ -90,43 +91,113 @@ def insert_contract_terms(contract_terms: List[Dict[str, Any]]) -> None:
             unique_key="title"
         )
         
-def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
-    """Insert service request records with error handling."""
-    for request in service_requests:
-        bill_structures = frappe.get_list("Utility Bill Structure", 
-                                            filters={"docstatus": 1},
-                                            fields=["name"],
-                                            limit=1,
-                                            order_by="RAND()")
-        bill_structure = bill_structures[0].name if bill_structures else None
+
+def clear_existing_contracts() -> None:
+    """Cancel and delete all submitted contracts."""
+    existing_contracts = frappe.get_all("Contract", filters={"docstatus": 1})
+    for contract in existing_contracts:
+        doc = frappe.get_doc("Contract", contract.name)
+        doc.flags.ignore_permissions = True
+        if doc.docstatus == 1:
+            doc.cancel()
+        frappe.delete_doc("Contract", doc.name, force=1, ignore_permissions=True)
+
+def get_random_bill_structure() -> str:
+    """Fetch a random bill structure if available."""
+    structures = frappe.get_list(
+        "Utility Bill Structure",
+        filters={"docstatus": 1},
+        fields=["name"],
+        limit=1,
+        order_by="RAND()"
+    )
+    return structures[0].name if structures else None
+
+def assign_properties_to_request(doc, requested_props: List[Dict[str, Any]], service_start, service_end, is_signed: bool) -> None:
+    """Assign utility properties with calculated dates and status."""
+    total_props = len(requested_props)
+    if not total_props:
+        return
+
+    total_days = (service_end - service_start).days
+    days_per_prop = total_days // total_props
+
+    for i, prop in enumerate(requested_props):
+        prop_start = service_start + timedelta(days=i * days_per_prop)
+        prop_end = prop_start + timedelta(days=days_per_prop - 1)
+        if prop_end > service_end:
+            prop_end = service_end
+
+        doc.append("requested_properties", {
+            "utility_property": prop.get("utility_property"),
+            "start_date": prop_start,
+            "end_date": prop_end,
+            "adjustment_rule": prop.get("adjustment_rule"),
+            "status": "Occupied" if is_signed else "Reserved"
+        })
+
+def apply_contract_terms(doc, template_name: str) -> None:
+    """Copy contract terms from template."""
+    if not template_name:
+        return
+    template_doc = frappe.get_doc("Contract Template", template_name)
+    if template_doc and template_doc.contract_terms:
+        doc.contract_terms = template_doc.contract_terms
         
+def create_and_finalize_contract(service_request_name: str, is_signed: bool, properties: List) -> None:
+    """Create, submit, and optionally sign the associated contract."""
+    from utility_billing.utility_billing.doctype.utility_service_request.utility_service_request import create_contract
+    contract_name = create_contract(service_request_name)
+    contract = frappe.get_doc("Contract", contract_name)
+    contract.save(ignore_permissions=True)
+    contract.submit()
+    
+    status = "Occupied" if is_signed else "Reserved"
+    for prop in properties:
+        if prop.get("utility_property"):
+            try:
+                property_doc = frappe.get_doc("Utility Property", prop.get("utility_property"))
+                property_doc.status = status
+                property_doc.save(ignore_permissions=True)
+            except Exception as e:
+                frappe.log_error(f"Failed to update property status: {str(e)}")
+    
+    if is_signed:
+        contract.is_signed = 1
+        contract.save(ignore_permissions=True)
+
+def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
+    """Insert service request records with calculated property dates."""
+    clear_existing_contracts()
+
+    for request in service_requests:
+        service_start = getdate(nowdate())
+        contract_length = request.get("contract_length_months", 12)
+        service_end = add_months(service_start, contract_length)
+
+        bill_structure = get_random_bill_structure()
+        is_signed = request.get("is_signed", False)
+
         doc = frappe.get_doc({
             "doctype": "Utility Service Request",
             "request_type": request.get("request_type"),
             "party_name": request.get("party_name"),
             "customer_group": request.get("customer_group"),
-            "start_date": request.get("start_date"),
-            "contract_length_months": request.get("contract_length_months"),
+            "start_date": service_start,
+            "contract_length_months": contract_length,
             "contract_template": request.get("contract_template"),
             "utility_bill_structure": bill_structure,
         })
-        
-        for prop in request.get("requested_properties", []):
-            doc.append("requested_properties", {
-                "utility_property": prop.get("utility_property"),
-                "start_date": prop.get("start_date"),
-                "end_date": prop.get("end_date"),
-                "adjustment_rule": prop.get("adjustment_rule")
-            })
-        
-        contract_template = request.get("contract_template")
-        if contract_template:
-            template_doc = frappe.get_doc("Contract Template", contract_template)
-            if template_doc and template_doc.contract_terms:
-                doc.contract_terms = template_doc.contract_terms
-        
+
+        assign_properties_to_request(doc, request.get("requested_properties", []), service_start, service_end, is_signed)
+        apply_contract_terms(doc, request.get("contract_template"))
+
         doc.insert(ignore_permissions=True)
         doc.submit()
+
+        if request.get("requested_properties"):
+            create_and_finalize_contract(doc.name, is_signed, request.get("requested_properties"))
+
 
 
 def structures_setup():

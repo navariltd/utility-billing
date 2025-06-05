@@ -72,13 +72,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "require_contract_before_sales_invoice_creation",
    "fieldtype": "Check",
    "label": "Require Contract Before Sales Invoice Creation"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "require_deposit_before_contract_creation",
    "fieldtype": "Check",
    "label": "Require Deposit Before Contract Creation"
@@ -93,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-23 18:02:27.899396",
+ "modified": "2025-06-05 20:30:55.528379",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

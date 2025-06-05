@@ -85,7 +85,7 @@
         {
           "name": "Pinnacle Tower - Unit 1B",
           "unit_type": "1-Bedroom",
-          "status": "Occupied",
+          "status": "Available",
           "is_fixed_asset": 0,
           "bedrooms": 1,
           "bathrooms": 1
@@ -101,7 +101,7 @@
         {
           "name": "Pinnacle Tower - Penthouse",
           "unit_type": "Penthouse",
-          "status": "Occupied",
+          "status": "Available",
           "is_fixed_asset": 0,
           "bedrooms": 4,
           "bathrooms": 4
@@ -129,7 +129,7 @@
         {
           "name": "Greenpark - House A1",
           "unit_type": "3-Bedroom",
-          "status": "Occupied",
+          "status": "Available",
           "is_fixed_asset": 0,
           "bedrooms": 3,
           "bathrooms": 3
@@ -188,7 +188,7 @@
         {
           "name": "Westlands Plaza - Suite 201",
           "unit_type": "Office Space",
-          "status": "Occupied",
+          "status": "Available",
           "is_fixed_asset": 0
         },
         {
@@ -223,7 +223,7 @@
         {
           "name": "Kileleshwa Heights - Unit 2",
           "unit_type": "1-Bedroom",
-          "status": "Occupied",
+          "status": "Available",
           "is_fixed_asset": 0,
           "bedrooms": 1,
           "bathrooms": 1

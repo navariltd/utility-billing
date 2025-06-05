@@ -21,11 +21,7 @@ def run_demo_setup() -> None:
     Run the complete demo setup process.
     """
     try:
-        data: Optional[Dict[str, Any]] = safe_load_json("property.json")
-        if not data:
-            logger.warning("property.json file missing or invalid")
-            return
-
+            
         logger.info("Starting demo setup...")
 
         create_sample_company()
@@ -33,6 +29,7 @@ def run_demo_setup() -> None:
         insert_from_json("customer_group.json", "Customer Group", "customer_group_name")
         insert_from_json("customers.json", "Customer", "customer_name")
 
+        data: Optional[Dict[str, Any]] = safe_load_json("property.json")
         insert_feature_types(data.get("utility_property_feature_types", []))
         insert_property_features(data.get("utility_property_features", []))
         insert_unit_types(data.get("utility_property_unit_types", []))
