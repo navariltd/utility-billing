@@ -77,9 +77,49 @@ def insert_bill_structures(bill_structures: List[Dict[str, Any]]) -> None:
         doc.submit()
 
 
+def insert_contract_terms(contract_terms: List[Dict[str, Any]]) -> None:
+    """Insert contract terms with error handling."""
+    for term in contract_terms:
+        safe_insert_doc(
+            "Contract Template",
+            {
+                "doctype": "Contract Template",
+                "title": term.get("title"),
+                "contract_terms": term.get("contract_terms"),
+            },
+            unique_key="title"
+        )
+
+def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
+    """Insert service request records with error handling."""
+    for request in service_requests:
+        doc = frappe.get_doc({
+            "doctype": "Utility Service Request",
+            "request_type": request.get("request_type"),
+            "party_name": request.get("party_name"),
+            "customer_group": request.get("customer_group"),
+            "start_date": request.get("start_date"),
+            "contract_length_months": request.get("contract_length_months"),
+            "contract_template": request.get("contract_template"),
+        })
+        doc.insert(ignore_permissions=True)
+
+
 def structures_setup():
     data = safe_load_json("structures.json")
 
     insert_insurances(data["insurances"])
     insert_billing_adjustment_rules(data["billing_adjustment_rules"])
     insert_bill_structures(data["bill_structures"])
+    insert_contract_terms(data["contract_terms"])
+
+
+def service_request_setup():
+    """
+    Setup service request structures.
+    """
+    data = safe_load_json("service_request.json")
+    
+    insert_service_requests(data)
+    
+    

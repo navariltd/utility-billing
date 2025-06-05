@@ -170,5 +170,15 @@
       "expiration_date": "2025-01-31",
       "description": "Covers all meters and utility equipment"
     }
+  ],
+  "contract_terms": [
+    {
+      "title": "Standard Residential Lease",
+      "contract_terms": "This lease agreement automatically renews on a month-to-month basis after the initial 12-month term unless either party provides written notice 30 days prior to termination. Tenant is responsible for utilities as specified in the agreement. Security deposit equal to one month's rent is required at signing and will be refunded within 30 days of move-out, subject to deductions for damages beyond normal wear and tear. Rent increases are limited to 5% annually after the initial term."
+    },
+    {
+      "title": "Commercial Property Agreement",
+      "contract_terms": "This commercial lease is for an initial term of 36 months with an option to renew for two additional 36-month terms at market rates to be negotiated. Tenant is responsible for all utilities, maintenance, and a proportionate share of common area maintenance costs. Triple net (NNN) lease structure applies with tenant responsible for property taxes, insurance, and maintenance. Rent escalation of 3% annually applies. Security deposit of three months' rent required. Business hours access is guaranteed with after-hours access available with key card system."
+    }
   ]
 }

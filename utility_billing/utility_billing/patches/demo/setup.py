@@ -4,7 +4,7 @@ from typing import Dict, List, Any, Optional, Union
 from .company import create_sample_company
 from .utils import logger, safe_load_json, insert_from_json
 from .billing import billing_setup
-from .service_request import structures_setup
+from .service_request import structures_setup, service_request_setup
 from .property_setup import (
     insert_feature_types,
     insert_property_features,
@@ -49,6 +49,8 @@ def run_demo_setup() -> None:
         insert_from_json("suppliers.json", "Supplier", "supplier_name")
         
         structures_setup()
+        
+        service_request_setup()
 
         logger.info("Demo setup completed successfully.")
         

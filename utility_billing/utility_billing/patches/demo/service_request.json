@@ -1,0 +1,42 @@
+[
+  {
+    "request_type": "New Connection",
+    "party_name": "Wanjiku Kamau",
+    "customer_group": "Standard Residential",
+    "start_date": "2023-01-01",
+    "contract_length_months": 12,
+    "contract_template": "Standard Residential Lease"
+  },
+  {
+    "request_type": "Disconnection",
+    "party_name": "Ochieng Otieno",
+    "customer_group": "Standard Residential",
+    "start_date": "2023-02-15",
+    "contract_length_months": 6,
+    "contract_template": "Standard Residential Lease"
+  },
+  {
+    "request_type": "Meter Replacement",
+    "party_name": "Nairobi Enterprises Ltd",
+    "customer_group": "Standard Commercial",
+    "start_date": "2023-03-10",
+    "contract_length_months": 24,
+    "contract_template": "Commercial Property Agreement"
+  },
+  {
+    "request_type": "Billing Inquiry",
+    "party_name": "Mombasa Trading Co.",
+    "customer_group": "Standard Commercial",
+    "start_date": "2023-04-05",
+    "contract_length_months": 36,
+    "contract_template": "Commercial Property Agreement"
+  },
+  {
+    "request_type": "Tariff Change",
+    "party_name": "Daniel Mwangi",
+    "customer_group": "Standard Residential",
+    "start_date": "2023-05-20",
+    "contract_length_months": 12,
+    "contract_template": "Standard Residential Lease"
+  }
+]
