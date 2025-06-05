@@ -15,6 +15,7 @@ class UtilityServiceRequest(Document):
         load_address_and_contact(self)
 
     def validate(self):
+        self.validate_items()
         self.set_customer_if_needed()
         self.validate_contract_dates()
         self.validate_child_items()
@@ -38,18 +39,41 @@ class UtilityServiceRequest(Document):
         if settings.create_customer_from_utility_service_request_on_submit:
             make_customer(self.name)
             
-    
+    def validate_items(self):
+        if not self.items:
+            if not self.utility_bill_structure:
+                frappe.throw(_("At least one item is required in the Utility Service Request."))
+            else:
+                response = get_utility_bill_structure_details(self.utility_bill_structure)
+                
+                self.items = []
+                for item in response.get('items', []):
+                    item_row = self.append('items', {})
+                    for field, value in item.items():
+                        item_row.set(field, value)
+                
+                dimensions = response.get('dimensions', {})
+                for field, value in dimensions.items():
+                    if hasattr(self, field):
+                        self.set(field, value)
+                        
     def validate_contract_dates(self):
-        if self.start_date and self.end_date and self.start_date > self.end_date:
+        if self.start_date and self.end_date and getdate(self.start_date) > getdate(self.end_date):
             frappe.throw("Contract start date cannot be after the end date.")
-
-        if self.start_date and self.contract_length_months is not None:
-            expected_end = add_months(self.start_date, self.contract_length_months)
-            if self.end_date and expected_end != self.end_date:
-                self.end_date = expected_end
-
+            
+        if self.start_date and self.contract_length_months and not self.end_date:
+            self.end_date = add_months(getdate(self.start_date), self.contract_length_months)
+            
+        elif self.end_date and self.contract_length_months and not self.start_date:
+            self.start_date = add_months(getdate(self.end_date), -self.contract_length_months)
+            
         elif self.start_date and self.end_date:
-            self.contract_length_months = self.get_month_diff(self.start_date, self.end_date)
+            self.contract_length_months = self.get_month_diff(getdate(self.start_date), getdate(self.end_date))
+            
+        if self.start_date and self.contract_length_months and self.end_date:
+            expected_end = add_months(getdate(self.start_date), self.contract_length_months)
+            if getdate(expected_end) != getdate(self.end_date):
+                self.end_date = expected_end
 
     def validate_child_items(self):
         parent_start = getdate(self.start_date) if self.start_date else None
