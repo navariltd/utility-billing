@@ -1,0 +1,7 @@
+[
+  { "name": "New Connection" },
+  { "name": "Disconnection" },
+  { "name": "Meter Replacement" },
+  { "name": "Billing Inquiry" },
+  { "name": "Tariff Change" }
+]

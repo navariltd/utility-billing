@@ -74,11 +74,11 @@
    "options": "Fixed Amount\nPercentage"
   },
   {
+   "default": "0",
    "description": "Fixed amount or percentage to charge as penalty",
    "fieldname": "penalty_value",
    "fieldtype": "Float",
-   "label": "Penalty Value",
-   "reqd": 1
+   "label": "Penalty Value"
   },
   {
    "description": "Maximum penalty amount that can be charged",
@@ -284,7 +284,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-23 17:50:52.305710",
+ "modified": "2025-06-05 19:22:46.530257",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Billing Adjustment Rule",

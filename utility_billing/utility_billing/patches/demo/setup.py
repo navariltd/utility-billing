@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional, Union
 from .company import create_sample_company
 from .utils import logger, safe_load_json, insert_from_json
 from .billing import billing_setup
+from .service_request import structures_setup
 from .property_setup import (
     insert_feature_types,
     insert_property_features,
@@ -29,6 +30,7 @@ def run_demo_setup() -> None:
 
         create_sample_company()
 
+        insert_from_json("customer_group.json", "Customer Group", "customer_group_name")
         insert_from_json("customers.json", "Customer", "customer_name")
 
         insert_feature_types(data.get("utility_property_feature_types", []))
@@ -41,7 +43,14 @@ def run_demo_setup() -> None:
         insert_properties(data)
         
         billing_setup()
+        
+        insert_from_json("insurance_types.json", "Insurance Type", "name")
+        insert_from_json("utility_request_types.json", "Issue Type", "name")
+        insert_from_json("suppliers.json", "Supplier", "supplier_name")
+        
+        structures_setup()
 
         logger.info("Demo setup completed successfully.")
+        
     except Exception:
         logger.exception("Demo setup failed")

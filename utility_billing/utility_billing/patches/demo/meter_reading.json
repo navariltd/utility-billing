@@ -1,6 +1,6 @@
 [
   {
-    "customer": "John Smith",
+    "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
     "currency": "KES",
@@ -16,7 +16,7 @@
     ]
   },
   {
-    "customer": "Alice Johnson",
+    "customer": "Daniel Mwangi",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
     "currency": "KES",
@@ -32,7 +32,7 @@
     ]
   },
   {
-    "customer": "Generic Group Inc",
+    "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
     "currency": "KES",
@@ -48,7 +48,7 @@
     ]
   },
   {
-    "customer": "Generic Group Inc",
+    "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
     "currency": "KES",
@@ -64,7 +64,7 @@
     ]
   },
   {
-    "customer": "John Smith",
+    "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
     "currency": "KES",

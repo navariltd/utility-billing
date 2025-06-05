@@ -11,35 +11,35 @@
       "serial_no": "MTR10001",
       "status": "Closed",
       "complaint_date": "2023-05-15",
-      "customer": "John Smith",
+      "customer": "Wanjiku Kamau",
       "complaint": "Meter not displaying readings properly"
     },
     {
       "serial_no": "MTR10001",
       "status": "Closed",
       "complaint_date": "2022-11-20",
-      "customer": "John Smith",
+      "customer": "Wanjiku Kamau",
       "complaint": "Meter stopped working after power surge"
     },
     {
       "serial_no": "MTR10002",
       "status": "Closed",
       "complaint_date": "2023-06-10",
-      "customer": "Alice Johnson",
+      "customer": "Daniel Mwangi",
       "complaint": "Meter is making unusual noises"
     },
     {
       "serial_no": "MTR20001",
       "status": "Closed",
       "complaint_date": "2023-01-05",
-      "customer": "Generic Group Inc",
+      "customer": "Nairobi Enterprises Ltd",
       "complaint": "Water meter leaking at connection point"
     },
     {
       "serial_no": "MTR20001",
       "status": "Closed",
       "complaint_date": "2023-06-18",
-      "customer": "Generic Group Inc",
+      "customer": "Nairobi Enterprises Ltd",
       "complaint": "Digital display malfunctioning"
     }
   ]

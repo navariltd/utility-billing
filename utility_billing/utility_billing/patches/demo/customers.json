@@ -1,14 +1,27 @@
 [
   {
-    "customer_name": "John Smith",
-    "customer_type": "Individual"
+    "customer_name": "Wanjiku Kamau",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
   },
   {
-    "customer_name": "Alice Johnson",
-    "customer_type": "Individual"
+    "customer_name": "Ochieng Otieno",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
   },
   {
-    "customer_name": "Generic Group Inc",
-    "customer_type": "Company"
+    "customer_name": "Nairobi Enterprises Ltd",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial"
+  },
+  {
+    "customer_name": "Mombasa Trading Co.",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial"
+  },
+  {
+    "customer_name": "Daniel Mwangi",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
   }
 ]
