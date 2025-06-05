@@ -3,5 +3,6 @@
   { "name": "Disconnection" },
   { "name": "Meter Replacement" },
   { "name": "Billing Inquiry" },
-  { "name": "Tariff Change" }
+  { "name": "Tariff Change" },
+  { "name": "Property Lease" }
 ]

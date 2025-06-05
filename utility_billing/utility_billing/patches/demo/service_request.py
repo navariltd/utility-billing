@@ -89,10 +89,17 @@ def insert_contract_terms(contract_terms: List[Dict[str, Any]]) -> None:
             },
             unique_key="title"
         )
-
+        
 def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
     """Insert service request records with error handling."""
     for request in service_requests:
+        bill_structures = frappe.get_list("Utility Bill Structure", 
+                                            filters={"docstatus": 1},
+                                            fields=["name"],
+                                            limit=1,
+                                            order_by="RAND()")
+        bill_structure = bill_structures[0].name if bill_structures else None
+        
         doc = frappe.get_doc({
             "doctype": "Utility Service Request",
             "request_type": request.get("request_type"),
@@ -101,8 +108,25 @@ def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
             "start_date": request.get("start_date"),
             "contract_length_months": request.get("contract_length_months"),
             "contract_template": request.get("contract_template"),
+            "utility_bill_structure": bill_structure,
         })
+        
+        for prop in request.get("requested_properties", []):
+            doc.append("requested_properties", {
+                "utility_property": prop.get("utility_property"),
+                "start_date": prop.get("start_date"),
+                "end_date": prop.get("end_date"),
+                "adjustment_rule": prop.get("adjustment_rule")
+            })
+        
+        contract_template = request.get("contract_template")
+        if contract_template:
+            template_doc = frappe.get_doc("Contract Template", contract_template)
+            if template_doc and template_doc.contract_terms:
+                doc.contract_terms = template_doc.contract_terms
+        
         doc.insert(ignore_permissions=True)
+        doc.submit()
 
 
 def structures_setup():

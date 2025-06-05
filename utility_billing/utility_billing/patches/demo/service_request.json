@@ -16,27 +16,91 @@
     "contract_template": "Standard Residential Lease"
   },
   {
-    "request_type": "Meter Replacement",
+    "request_type": "Property Lease",
     "party_name": "Nairobi Enterprises Ltd",
     "customer_group": "Standard Commercial",
     "start_date": "2023-03-10",
     "contract_length_months": 24,
-    "contract_template": "Commercial Property Agreement"
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Greenpark - House A1",
+        "start_date": "2023-03-10",
+        "end_date": "2023-06-30",
+        "adjustment_rule": "Standard Rent Adjustment"
+      },
+      {
+        "utility_property": "Greenpark - House A2",
+        "start_date": "2023-07-01",
+        "end_date": "2025-03-09",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
   },
   {
-    "request_type": "Billing Inquiry",
+    "request_type": "Property Lease",
     "party_name": "Mombasa Trading Co.",
     "customer_group": "Standard Commercial",
     "start_date": "2023-04-05",
     "contract_length_months": 36,
-    "contract_template": "Commercial Property Agreement"
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Greenpark - House B1",
+        "start_date": "2023-04-05",
+        "end_date": "2023-05-15",
+        "adjustment_rule": "Commercial Late Payment"
+      },
+      {
+        "utility_property": "Greenpark - House B2",
+        "start_date": "2023-05-16",
+        "end_date": "2023-08-14",
+        "adjustment_rule": "Standard Rent Adjustment"
+      },
+      {
+        "utility_property": "Westlands Plaza - Suite 101",
+        "start_date": "2023-04-05",
+        "end_date": "2024-03-09",
+        "adjustment_rule": "Commercial Late Payment"
+      },
+      {
+        "utility_property": "Westlands Plaza - Suite 201",
+        "start_date": "2024-03-10",
+        "end_date": "2026-04-04",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
   },
   {
-    "request_type": "Tariff Change",
+    "request_type": "Property Lease",
     "party_name": "Daniel Mwangi",
     "customer_group": "Standard Residential",
     "start_date": "2023-05-20",
     "contract_length_months": 12,
-    "contract_template": "Standard Residential Lease"
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Pinnacle Tower - Unit 1A",
+        "start_date": "2023-05-20",
+        "end_date": "2024-05-19",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "request_type": "Property Lease",
+    "party_name": "Ochieng Otieno",
+    "customer_group": "Standard Residential",
+    "start_date": "2023-05-20",
+    "contract_length_months": 12,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Pinnacle Tower - Unit 1B",
+        "start_date": "2023-05-20",
+        "end_date": "2024-05-19",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
   }
 ]
