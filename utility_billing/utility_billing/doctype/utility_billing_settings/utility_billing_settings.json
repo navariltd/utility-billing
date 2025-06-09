@@ -16,7 +16,11 @@
   "require_contract_before_sales_invoice_creation",
   "column_break_rmpo",
   "create_customer_from_utility_service_request_on_submit",
-  "enable_extra_rows_for_sosi_creation"
+  "enable_extra_rows_for_sosi_creation",
+  "demo_section",
+  "generate_demo_data",
+  "column_break_agjn",
+  "clear_demo_data"
  ],
  "fields": [
   {
@@ -88,12 +92,31 @@
    "fieldname": "enable_site_survey",
    "fieldtype": "Check",
    "label": "Enable Site Survey"
+  },
+  {
+   "fieldname": "demo_section",
+   "fieldtype": "Section Break",
+   "label": "Demo Data"
+  },
+  {
+   "fieldname": "generate_demo_data",
+   "fieldtype": "Button",
+   "label": "Generate Demo Data"
+  },
+  {
+   "fieldname": "column_break_agjn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "clear_demo_data",
+   "fieldtype": "Button",
+   "label": "Clear Demo Data"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-05 20:30:55.528379",
+ "modified": "2025-06-09 17:54:16.495777",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

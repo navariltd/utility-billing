@@ -1,0 +1,190 @@
+[
+  {
+    "name": "The Pinnacle Towers - Kilimani",
+    "doctype": "Utility Property",
+    "category": "Apartment",
+    "unit_type": "Furnished Apartment",
+    "features": [
+      "Swimming Pool",
+      "Gym",
+      "24/7 Security",
+      "CCTV Surveillance",
+      "Elevator"
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 185000000,
+    "location": "Kilimani",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "units": [
+      {
+        "name": "Pinnacle Tower - Unit 1A",
+        "unit_type": "2-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 2,
+        "bathrooms": 2
+      },
+      {
+        "name": "Pinnacle Tower - Unit 1B",
+        "unit_type": "1-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 1,
+        "bathrooms": 1
+      },
+      {
+        "name": "Pinnacle Tower - Unit 1C",
+        "unit_type": "Studio",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 0,
+        "bathrooms": 1
+      },
+      {
+        "name": "Pinnacle Tower - Penthouse",
+        "unit_type": "Penthouse",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 4,
+        "bathrooms": 4
+      }
+    ]
+  },
+  {
+    "name": "Greenpark Estate - Runda",
+    "doctype": "Utility Property",
+    "category": "Townhouse",
+    "features": [
+      "Gated Community",
+      "Children's Playground",
+      "Landscaped Garden",
+      "24/7 Security"
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 250000000,
+    "location": "Runda",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "units": [
+      {
+        "name": "Greenpark - House A1",
+        "unit_type": "3-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 3,
+        "bathrooms": 3
+      },
+      {
+        "name": "Greenpark - House A2",
+        "unit_type": "4-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 4,
+        "bathrooms": 4
+      },
+      {
+        "name": "Greenpark - House B1",
+        "unit_type": "2-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 2,
+        "bathrooms": 2
+      },
+      {
+        "name": "Greenpark - House B2",
+        "unit_type": "Maisonette",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 3,
+        "bathrooms": 3
+      }
+    ]
+  },
+  {
+    "name": "Westlands Business Plaza",
+    "doctype": "Utility Property",
+    "category": "Office",
+    "features": [
+      "Secure Parking",
+      "Elevator",
+      "High-Speed Internet",
+      "Backup Generator",
+      "Concierge Service"
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Commercial Property",
+    "gross_purchase_amount": 320000000,
+    "location": "Westlands",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "units": [
+      {
+        "name": "Westlands Plaza - Suite 101",
+        "unit_type": "Office Space",
+        "status": "Available",
+        "is_fixed_asset": 0
+      },
+      {
+        "name": "Westlands Plaza - Suite 201",
+        "unit_type": "Office Space",
+        "status": "Available",
+        "is_fixed_asset": 0
+      },
+      {
+        "name": "Westlands Plaza - Serviced Office",
+        "unit_type": "Serviced Office",
+        "status": "Available",
+        "is_fixed_asset": 0
+      }
+    ]
+  },
+  {
+    "name": "Kileleshwa Heights Apartments",
+    "doctype": "Utility Property",
+    "category": "Apartment",
+    "features": ["24/7 Security", "Water Storage", "Balcony", "Elevator"],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 120000000,
+    "location": "Kileleshwa",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "units": [
+      {
+        "name": "Kileleshwa Heights - Unit 1",
+        "unit_type": "Bedsitter",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 0,
+        "bathrooms": 1
+      },
+      {
+        "name": "Kileleshwa Heights - Unit 2",
+        "unit_type": "1-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 1,
+        "bathrooms": 1
+      },
+      {
+        "name": "Kileleshwa Heights - Unit 3",
+        "unit_type": "2-Bedroom",
+        "status": "Available",
+        "is_fixed_asset": 0,
+        "bedrooms": 2,
+        "bathrooms": 2
+      }
+    ]
+  }
+]

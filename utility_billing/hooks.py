@@ -142,6 +142,36 @@ doctype_list_js = {
 # before_app_install = "utility_billing.utils.before_app_install"
 after_app_install = "utility_billing.utility_billing.patches.after_install.create_fields"
 
+utility_demo_master_doctypes = [
+	"billing_adjustment_rule",
+    "company",
+    "contract_template",
+	"customer_group",
+	"customer",
+    "insurance_type",
+	"supplier",
+    "insurance",
+    "issue_type",
+	"item",
+    "price_list",
+    "utility_tariff_block",
+    "item_price",
+    "location",
+    "serial_no",
+    "utility_property_feature_type",
+    "utility_property_feature",
+    "utility_property_unit_type", 
+    "utility_category",
+    "warranty_claim",  
+]
+demo_transaction_doctypes = [
+    "utility_bill_structure", 
+    "utility_property",
+    "meter_reading",
+	"utility_service_request",
+]
+
+
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps

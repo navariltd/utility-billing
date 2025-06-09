@@ -1,0 +1,47 @@
+[
+  {
+    "doctype": "Billing Adjustment Rule",
+    "rule_name": "Standard Rent Adjustment",
+    "frequency": "Monthly",
+    "repeat_on_day": 1,
+    "overdue_after_days": 15,
+    "increment_interval_months": 12,
+    "increment_percentage": 5.0,
+    "adjustment_cap": 10.0,
+    "adjustment_basis": "Original Amount",
+    "effective_after_months": 12,
+    "penalty_type": "Percentage",
+    "penalty_value": 2.0,
+    "penalty_frequency": "Monthly",
+    "grace_period_days": 7,
+    "penalty_cap": 1000.0,
+    "is_compounding": false,
+    "disabled": false
+  },
+  {
+    "doctype": "Billing Adjustment Rule",
+    "rule_name": "Commercial Late Payment",
+    "frequency": "Monthly",
+    "repeat_on_day": 5,
+    "overdue_after_days": 10,
+    "penalty_type": "Fixed Amount",
+    "penalty_value": 500.0,
+    "penalty_frequency": "Daily",
+    "grace_period_days": 3,
+    "penalty_cap": 2000.0,
+    "is_compounding": true,
+    "disabled": false
+  },
+  {
+    "doctype": "Billing Adjustment Rule",
+    "frequency": "Monthly",
+    "rule_name": "Utility Inflation Adjustment",
+    "repeat_on_day": 1,
+    "increment_interval_months": 6,
+    "increment_percentage": 3.0,
+    "adjustment_cap": 6.0,
+    "adjustment_basis": "Last Adjusted Amount",
+    "effective_after_months": 6,
+    "disabled": false
+  }
+]

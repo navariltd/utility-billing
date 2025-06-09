@@ -1,0 +1,14 @@
+[
+  {
+    "doctype": "Asset Category",
+    "asset_category_name": "Residential Property"
+  },
+  {
+    "doctype": "Asset Category",
+    "asset_category_name": "Commercial Property"
+  },
+  {
+    "doctype": "Asset Category",
+    "asset_category_name": "Land"
+  }
+]

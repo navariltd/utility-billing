@@ -1,0 +1,92 @@
+[
+  {
+    "item_code": "Water",
+    "price_list_rate": 0,
+    "uom": "Unit",
+    "price_list": "Standard Residential",
+    "doctype": "Item Price",
+    "tariffs": [
+      {
+        "block": "Block 1",
+        "lower_limit": 0,
+        "upper_limit": 10,
+        "rate": 50.0
+      },
+      {
+        "block": "Block 2",
+        "lower_limit": 10,
+        "upper_limit": 20,
+        "rate": 75
+      },
+      {
+        "block": "Block 3",
+        "lower_limit": 20,
+        "upper_limit": 50,
+        "rate": 100
+      },
+      {
+        "block": "Block 4",
+        "lower_limit": 50,
+        "upper_limit": 999999999,
+        "rate": 150
+      }
+    ]
+  },
+  {
+    "item_code": "Electricity",
+    "price_list_rate": 0,
+    "uom": "Unit",
+    "price_list": "Standard Residential",
+    "doctype": "Item Price",
+    "tariffs": [
+      {
+        "block": "Block 1",
+        "lower_limit": 0,
+        "upper_limit": 10,
+        "rate": 60
+      },
+      {
+        "block": "Block 2",
+        "lower_limit": 10,
+        "upper_limit": 20,
+        "rate": 90
+      },
+      {
+        "block": "Block 3",
+        "lower_limit": 20,
+        "upper_limit": 50,
+        "rate": 120
+      },
+      {
+        "block": "Block 4",
+        "lower_limit": 50,
+        "upper_limit": 999999999,
+        "rate": 180
+      }
+    ]
+  },
+  {
+    "item_code": "Rent",
+    "price_list_rate": 7000,
+    "uom": "Unit",
+    "price_list": "Standard Residential",
+    "doctype": "Item Price",
+    "tariffs": []
+  },
+  {
+    "item_code": "Deposit",
+    "price_list_rate": 10000,
+    "uom": "Unit",
+    "price_list": "Standard Residential",
+    "doctype": "Item Price",
+    "tariffs": []
+  },
+  {
+    "item_code": "Meter",
+    "price_list_rate": 2000,
+    "uom": "Unit",
+    "price_list": "Standard Residential",
+    "doctype": "Item Price",
+    "tariffs": []
+  }
+]

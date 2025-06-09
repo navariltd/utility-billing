@@ -1,0 +1,14 @@
+[
+  {
+    "doctype": "Price List",
+    "price_list_name": "Standard Residential",
+    "currency": "KES",
+    "selling": 1
+  },
+  {
+    "doctype": "Price List",
+    "price_list_name": "Standard Commercial",
+    "currency": "KES",
+    "selling": 1
+  }
+]

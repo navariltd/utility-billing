@@ -1,5 +1,6 @@
 [
   {
+    "doctype": "Meter Reading",
     "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -16,6 +17,7 @@
     ]
   },
   {
+    "doctype": "Meter Reading",
     "customer": "Daniel Mwangi",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -32,6 +34,7 @@
     ]
   },
   {
+    "doctype": "Meter Reading",
     "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -48,6 +51,7 @@
     ]
   },
   {
+    "doctype": "Meter Reading",
     "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -64,6 +68,7 @@
     ]
   },
   {
+    "doctype": "Meter Reading",
     "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",

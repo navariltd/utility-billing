@@ -1,0 +1,51 @@
+[
+  {
+    "doctype": "Item",
+    "item_code": "Water",
+    "item_name": "Water",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Electricity",
+    "item_name": "Electricity",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Rent",
+    "item_name": "Rent",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Deposit",
+    "item_name": "Deposit",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Meter",
+    "item_name": "Meter",
+    "item_group": "Products",
+    "stock_uom": "Nos"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Service Charge",
+    "item_name": "Service Charge",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Maintenance Charge",
+    "item_name": "Maintenance Charge",
+    "item_group": "Services",
+    "stock_uom": "Unit"
+  }
+]

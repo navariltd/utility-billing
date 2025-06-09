@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Apartment",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Townhouse",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Maisonette",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Bungalow",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Office",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Land",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Retail",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Warehouse",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Residential Plot",
+    "doctype": "Utility Category"
+  },
+  {
+    "title": "Commercial Plot",
+    "doctype": "Utility Category"
+  }
+]

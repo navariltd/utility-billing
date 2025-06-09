@@ -1,0 +1,102 @@
+[
+  {
+    "doctype": "Utility Bill Structure",
+    "items": [
+      {
+        "item": "Water",
+        "amount": 50.0,
+        "total": 50.0
+      },
+      {
+        "item": "Electricity",
+        "amount": 60.0,
+        "total": 60.0
+      },
+      {
+        "item": "Rent",
+        "amount": 7000,
+        "total": "Month"
+      },
+      {
+        "item": "Deposit",
+        "amount": 10000,
+        "total": 10000
+      },
+      {
+        "item": "Meter",
+        "amount": 2000,
+        "total": 2000
+      },
+      {
+        "item": "Sewer",
+        "amount": 30.0,
+        "total": 30.0
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Bill Structure",
+    "items": [
+      {
+        "item": "Water",
+        "amount": 75.0,
+        "total": 75.0
+      },
+      {
+        "item": "Electricity",
+        "amount": 90.0,
+        "total": 90.0
+      },
+      {
+        "item": "Rent",
+        "amount": 12000,
+        "total": "Month"
+      },
+      {
+        "item": "Maintenance Charge",
+        "amount": 1500,
+        "total": "Month"
+      },
+      {
+        "item": "Sewer",
+        "amount": 45.0,
+        "total": 45.0
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Bill Structure",
+    "items": [
+      {
+        "item": "Water",
+        "amount": 80.0,
+        "total": 80.0
+      },
+      {
+        "item": "Electricity",
+        "amount": 100.0,
+        "total": 100.0
+      },
+      {
+        "item": "Rent",
+        "amount": 25000,
+        "total": "Month"
+      },
+      {
+        "item": "Service Charge",
+        "amount": 5000,
+        "total": "Month"
+      },
+      {
+        "item": "Maintenance Charge",
+        "amount": 2500,
+        "total": "Month"
+      },
+      {
+        "item": "Meter",
+        "amount": 3000,
+        "total": 3000
+      }
+    ]
+  }
+]
