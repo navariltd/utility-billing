@@ -47,5 +47,12 @@
     "item_name": "Maintenance Charge",
     "item_group": "Services",
     "stock_uom": "Unit"
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Sewer",
+    "item_name": "Sewer",
+    "item_group": "Services",
+    "stock_uom": "Unit"
   }
 ]

@@ -4,56 +4,27 @@ from .utils import safe_insert_doc, safe_load_json
 from datetime import timedelta
 from frappe.utils import nowdate, add_months, getdate
 
-def insert_insurances(insurances: List[Dict[str, Any]]) -> None:
-    """Insert insurance records with error handling."""
-    for insurance in insurances:
-        safe_insert_doc(
-            "Insurance",
-            {
-                "doctype": "Insurance",
-                "insurance_provider": insurance.get("insurance_provider"),
-                "insurance_type": insurance.get("insurance_type"),
-                "premium_price": insurance.get("premium_price"),
-                "policy_number": insurance.get("policy_number"),
-                "effective_date": insurance.get("effective_date"),
-                "expiration_date": insurance.get("expiration_date"),
-                "description": insurance.get("description"),
-                "enabled": 1,
-            },
-            unique_key="policy_number"
-        )
+
+def clear_bill_structures() -> None:
+    docs = frappe.get_list("Utility Bill Structure", 
+                          filters={"company": "Utility and Rental (Demo)"}, 
+                          fields=["name"])
+
+    for d in docs:
+        try:
+            doc = frappe.get_doc("Utility Bill Structure", d.name)
+            if doc.docstatus == 1:
+                doc.cancel()
+            doc.delete()
+        except Exception as e:
+            frappe.log_error(f"Error deleting {d.name}: {str(e)}", "clear_all_bill_structures")
+
+    frappe.db.commit()
 
 
-def insert_billing_adjustment_rules(billing_adjustment_rules: List[Dict[str, Any]]) -> None:
-    """Insert billing adjustment rules with error handling."""
-    for rule in billing_adjustment_rules:
-        safe_insert_doc(
-            "Billing Adjustment Rule",
-            {
-                "doctype": "Billing Adjustment Rule",
-                "rule_name": rule.get("rule_name"),
-                "frequency": rule.get("frequency"),
-                "repeat_on_day": rule.get("repeat_on_day"),
-                "overdue_after_days": rule.get("overdue_after_days"),
-                "increment_interval_months": rule.get("increment_interval_months"),
-                "increment_percentage": rule.get("increment_percentage"),
-                "adjustment_cap": rule.get("adjustment_cap"),
-                "adjustment_basis": rule.get("adjustment_basis"),
-                "effective_after_months": rule.get("effective_after_months"),
-                "penalty_type": rule.get("penalty_type"),
-                "penalty_value": rule.get("penalty_value"),
-                "penalty_frequency": rule.get("penalty_frequency"),
-                "grace_period_days": rule.get("grace_period_days"),
-                "penalty_cap": rule.get("penalty_cap"),
-                "is_compounding": rule.get("is_compounding"),
-                "disabled": rule.get("disabled"),
-            },
-            unique_key="rule_name"
-        )
-
-
-def insert_bill_structures(bill_structures: List[Dict[str, Any]]) -> None:
-    """Insert utility bill structures with the latest fiscal year."""
+def insert_bill_structures() -> None:
+    """Insert utility bill structures with the latest fiscal year.""" 
+    bill_structures = safe_load_json("data/utility_bill_structure.json")
     fiscal_years = frappe.get_list("Fiscal Year", 
                                   filters={"disabled": 0},
                                   order_by="year_start_date desc",
@@ -64,7 +35,8 @@ def insert_bill_structures(bill_structures: List[Dict[str, Any]]) -> None:
         doc = frappe.get_doc({
             "doctype": "Utility Bill Structure",
             "fiscal_year": fiscal_year,
-            "items": []
+            "items": [],
+            "company": structure.get("company", "Utility and Rental (Demo)"),
         })
         
         for item in structure.get("items", []):
@@ -166,55 +138,46 @@ def create_and_finalize_contract(service_request_name: str, is_signed: bool, pro
         contract.is_signed = 1
         contract.save(ignore_permissions=True)
 
-def insert_service_requests(service_requests: List[Dict[str, Any]]) -> None:
+def insert_service_requests() -> None:
     """Insert service request records with calculated property dates."""
-    clear_existing_contracts()
-
-    for request in service_requests:
-        service_start = getdate(nowdate())
-        contract_length = request.get("contract_length_months", 12)
-        service_end = add_months(service_start, contract_length)
-
-        bill_structure = get_random_bill_structure()
-        is_signed = request.get("is_signed", False)
-
-        doc = frappe.get_doc({
-            "doctype": "Utility Service Request",
-            "request_type": request.get("request_type"),
-            "party_name": request.get("party_name"),
-            "customer_group": request.get("customer_group"),
-            "start_date": service_start,
-            "contract_length_months": contract_length,
-            "contract_template": request.get("contract_template"),
-            "utility_bill_structure": bill_structure,
-        })
-
-        assign_properties_to_request(doc, request.get("requested_properties", []), service_start, service_end, is_signed)
-        apply_contract_terms(doc, request.get("contract_template"))
-
-        doc.insert(ignore_permissions=True)
-        doc.submit()
-
-        if request.get("requested_properties"):
-            create_and_finalize_contract(doc.name, is_signed, request.get("requested_properties"))
-
-
-
-def structures_setup():
-    data = safe_load_json("structures.json")
-
-    insert_insurances(data["insurances"])
-    insert_billing_adjustment_rules(data["billing_adjustment_rules"])
-    insert_bill_structures(data["bill_structures"])
-    insert_contract_terms(data["contract_terms"])
-
-
-def service_request_setup():
-    """
-    Setup service request structures.
-    """
-    data = safe_load_json("service_request.json")
+    service_requests = safe_load_json("data/utility_service_request.json")
     
-    insert_service_requests(data)
+    for request in service_requests:
+        try:
+            service_start = getdate(nowdate())
+            contract_length = request.get("contract_length_months", 12)
+            service_end = add_months(service_start, contract_length)
+
+            bill_structure = get_random_bill_structure()
+            is_signed = request.get("is_signed", False)
+
+            doc = frappe.get_doc({
+                "doctype": "Utility Service Request",
+                "request_type": request.get("request_type"),
+                "party_name": request.get("party_name"),
+                "customer_group": request.get("customer_group"),
+                "start_date": service_start,
+                "contract_length_months": contract_length,
+                "contract_template": request.get("contract_template"),
+                "utility_bill_structure": bill_structure,
+            })
+
+            assign_properties_to_request(doc, request.get("requested_properties", []), service_start, service_end, is_signed)
+            apply_contract_terms(doc, request.get("contract_template"))
+
+            doc.insert(ignore_permissions=True)
+            doc.submit()
+
+            if request.get("requested_properties"):
+                create_and_finalize_contract(doc.name, is_signed, request.get("requested_properties"))
+        except Exception as e:
+            frappe.log_error(
+                "insert_service_requests",
+                f"Error creating service request for {request.get('party_name')}: {str(e)}",
+            )
+ 
+
+
+
     
     

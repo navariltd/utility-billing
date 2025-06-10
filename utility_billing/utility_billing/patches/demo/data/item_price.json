@@ -5,6 +5,7 @@
     "uom": "Unit",
     "price_list": "Standard Residential",
     "doctype": "Item Price",
+    "valid_from": "2025-05-10",
     "tariffs": [
       {
         "block": "Block 1",
@@ -38,6 +39,7 @@
     "uom": "Unit",
     "price_list": "Standard Residential",
     "doctype": "Item Price",
+    "valid_from": "2025-05-10",
     "tariffs": [
       {
         "block": "Block 1",
@@ -71,6 +73,7 @@
     "uom": "Unit",
     "price_list": "Standard Residential",
     "doctype": "Item Price",
+    "valid_from": "2025-05-10",
     "tariffs": []
   },
   {
@@ -79,6 +82,7 @@
     "uom": "Unit",
     "price_list": "Standard Residential",
     "doctype": "Item Price",
+    "valid_from": "2025-05-10",
     "tariffs": []
   },
   {
@@ -87,6 +91,7 @@
     "uom": "Unit",
     "price_list": "Standard Residential",
     "doctype": "Item Price",
+    "valid_from": "2025-05-10",
     "tariffs": []
   }
 ]

@@ -1,20 +1,14 @@
 import frappe
 import json
 import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
 from .company import create_sample_company
-from .utils import logger, safe_load_json, insert_from_json
-from .billing import billing_setup
-from .service_request import structures_setup, service_request_setup
-from .property_setup import (
-    insert_feature_types,
-    insert_property_features,
-    insert_unit_types,
-    insert_property_categories,
-    create_asset_categories,
-    create_locations,
-    insert_properties,
+from .utils import logger
+from .billing import insert_meter_readings, clear_meter_readings, delete_sales_orders
+from .service_request import insert_bill_structures, clear_bill_structures, insert_service_requests
+
+from erpnext.setup.demo import (
+    create_transaction_deletion_record,
+    delete_company,
 )
 
 
@@ -22,31 +16,57 @@ def run_demo_setup() -> None:
     """
     Run the complete demo setup process.
     """
+    logger.info("Starting demo setup...")
+    
     try:
-            
-        logger.info("Starting demo setup...")
-
-        # create_sample_company()
+        frappe.db.begin()
         
+        create_sample_company()
         process_masters()
-
-        # data: Optional[Dict[str, Any]] = safe_load_json("property.json")
-       
+        insert_meter_readings()
+        insert_bill_structures()
+        insert_service_requests()
         
-        # insert_properties(data)
-        
-        # billing_setup()
-        
-        
-        # structures_setup()
-        
-        # service_request_setup()
-
+        frappe.db.commit()
+        frappe.msgprint("Demo setup completed successfully.")
         logger.info("Demo setup completed successfully.")
         
-    except Exception:
-        logger.exception("Demo setup failed")
+    except Exception as e:
+        frappe.db.rollback()
+        error_msg = f"Demo setup failed: {str(e)}"
+        frappe.msgprint(error_msg, indicator='red')
+        logger.exception(error_msg)
+        raise
+
+
+def delete_demo_data() -> None:
+    """
+    Delete all demo data created by the setup process.
+    """
+    logger.info("Starting demo data deletion...")
+    
+    try:
+        frappe.db.begin()
+        company = "Utility and Rental (Demo)"
         
+        create_transaction_deletion_record(company)
+        process_masters_deletion()
+        delete_sales_orders()
+        clear_meter_readings()
+        clear_bill_structures()
+        delete_company(company)
+        
+        frappe.db.commit()
+        frappe.msgprint("Demo data deletion completed successfully.")
+        logger.info("Demo data deletion completed successfully.")
+        
+    except Exception as e:
+        frappe.db.rollback()
+        error_msg = f"Demo data deletion failed: {str(e)}"
+        frappe.msgprint(error_msg, indicator='red')
+        logger.exception(error_msg)
+        raise
+
 
 def process_masters():
     try:
@@ -57,10 +77,15 @@ def process_masters():
                     for item in json.loads(data):
                         create_demo_record(item)
             except Exception as e:
-                frappe.log_error("Demo Setup Error", f"Failed to process master doctype {doctype}: {str(e)}")
+                error_msg = f"Failed to process master doctype {doctype}: {str(e)}"
+                frappe.msgprint(error_msg, indicator='orange')
+                logger.error(error_msg)
     except Exception as e:
-        frappe.log_error("Demo Setup Error", f"Failed to process masters: {str(e)}")
-        
+        error_msg = f"Failed to process masters: {str(e)}"
+        frappe.msgprint(error_msg, indicator='red')
+        logger.error(error_msg)
+        raise
+
         
 def create_demo_record(item):
     try:
@@ -84,8 +109,6 @@ def create_demo_record(item):
         doc.insert(ignore_permissions=True)
     except frappe.exceptions.DuplicateEntryError:
         frappe.logger().debug(f"Duplicate record for {item.get('doctype', 'Unknown')}, skipping")
-    except frappe.db.IntegrityError:
-        frappe.logger().debug(f"IntegrityError for {item.get('doctype', 'Unknown')}, skipping")
     except Exception as e:
         frappe.log_error("Demo Setup Error", f"Failed to create demo record for {item.get('doctype', 'Unknown')}: {str(e)}")
  
@@ -96,3 +119,38 @@ def read_data_file_using_hooks(doctype):
 		data = f.read()
 
 	return data
+
+
+def process_masters_deletion():
+    try:
+        # Process doctypes in reverse order to handle dependencies
+        for doctype in reversed(frappe.get_hooks("utility_demo_master_doctypes")):
+            try:
+                data = read_data_file_using_hooks(doctype)
+                if data:
+                    for item in reversed(json.loads(data)):
+                        delete_demo_record(item)
+            except Exception as e:
+                frappe.log_error("Demo Deletion Error", f"Failed to process deletion for doctype {doctype}: {str(e)}")
+    except Exception as e:
+        frappe.log_error("Demo Deletion Error", f"Failed to delete masters: {str(e)}")
+
+
+def delete_demo_record(item):
+    try:
+        # Extract doctype from the item
+        doctype = item.get("doctype")
+        if not doctype:
+            frappe.log_error("Demo Deletion Error", f"Missing doctype in item: {item}")
+            return
+            
+        filters = {}
+        for field, value in item.items():
+            if field != "doctype" and isinstance(value, (str, int, float, bool)) and not isinstance(value, list) and not isinstance(value, dict):
+                filters[field] = value
+                
+        if filters and frappe.db.exists(doctype, filters):
+            frappe.delete_doc(doctype, frappe.db.get_value(doctype, filters, 'name'), force=True)
+            frappe.logger().debug(f"Deleted record for {doctype} with filters {filters}")
+    except Exception as e:
+        frappe.log_error("Demo Deletion Error", f"Failed to delete demo record for {item.get('doctype', 'Unknown')}: {str(e)}")

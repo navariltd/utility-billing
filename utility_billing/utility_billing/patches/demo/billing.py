@@ -1,108 +1,10 @@
 import json
 import frappe
-from typing import List, Dict, Any
-from .utils import safe_insert_doc, safe_load_json
-from .company import COMPANY_NAME
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
+from .utils import safe_load_json
 
 
-def insert_price_lists(price_lists: List[str]) -> None:
-    for price_list in price_lists:
-        safe_insert_doc(
-            "Price List",
-            {
-                "doctype": "Price List",
-                "price_list_name": price_list,
-                "selling": 1,
-                "currency": "KES",
-                "enabled": 1,
-            },
-            unique_key="price_list_name"
-        )
-
-def insert_items(items: List[str]) -> None:
-    for item in items:
-        safe_insert_doc(
-            "Item",
-            {
-                "doctype": "Item",
-                "item_code": item,
-                "item_name": item,
-                "stock_uom": "Unit",
-                "is_stock_item": 0,
-                "is_sales_item": 1,
-                "is_utility_item": 1,
-                "item_group": "All Item Groups",
-                "disabled": 0,
-            },
-            unique_key="item_code"
-        )
-        
-def insert_tariff_blocks(blocks: List[Dict[str, Any]]) -> None:
-    for block in blocks:
-        safe_insert_doc(
-            "Utility Tariff Block",
-            {
-                "doctype": "Utility Tariff Block",
-                "name": block,
-            },
-            unique_key="name"
-        )
-
-def insert_tariff_prices(prices: List[Dict[str, Any]]) -> None:
-    
-    valid_from = datetime.now().date() - relativedelta(months=1)
-    
-    for price_item in prices:
-        item_price_name = frappe.db.get_value("Item Price", 
-            filters={
-                "item_code": price_item["item_code"],
-                "price_list": price_item.get("price_list", "Standard Selling"),
-                "uom": price_item["uom"]
-            },
-            fieldname="name"
-        )
-
-        item_price_data = {
-            "doctype": "Item Price",
-            "item_code": price_item["item_code"],
-            "price_list": price_item.get("price_list", "Standard Selling"),
-            "price_list_rate": price_item["rate"],
-            "uom": price_item["uom"],
-            "currency": "KES",
-            "valid_from": valid_from
-        }
-
-        if item_price_name:
-            for field, value in item_price_data.items():
-                if field != "doctype":
-                    frappe.db.set_value("Item Price", item_price_name, field, value)
-            item_price = frappe.get_doc("Item Price", item_price_name)
-        else:
-            item_price = frappe.get_doc(item_price_data)
-            item_price.insert()
-
-        if price_item.get("tariffs"):
-            frappe.db.delete("Item Price Tariff", {"parent": item_price.name})
-            
-            for tariff in price_item["tariffs"]:
-                tariff_data = {
-                    "doctype": "Item Price Tariff",
-                    "parent": item_price.name,
-                    "parenttype": "Item Price",
-                    "parentfield": "tariffs",
-                    "block": tariff["block"],
-                    "lower_limit": tariff["lower_limit"],
-                    "upper_limit": tariff["upper_limit"],
-                    "rate": tariff["rate"]
-                }
-                tariff_doc = frappe.get_doc(tariff_data)
-                tariff_doc.insert()
-
-
-
-def insert_meter_readings(readings: List[Dict[str, Any]]) -> None:
+def insert_meter_readings() -> None:
+    readings = safe_load_json("data/meter_reading.json")
     for entry in readings:
         meter_reading_name = frappe.db.get_value("Meter Reading",
             filters={
@@ -118,7 +20,7 @@ def insert_meter_readings(readings: List[Dict[str, Any]]) -> None:
             doc.update({
                 "price_list": entry["price_list"],
                 "currency": entry["currency"],
-                "company": COMPANY_NAME
+                "company":  entry["company"],
             })
         else:
             doc = frappe.get_doc({
@@ -127,8 +29,8 @@ def insert_meter_readings(readings: List[Dict[str, Any]]) -> None:
                 "date": entry["date"],
                 "price_list": entry["price_list"],
                 "currency": entry["currency"],
-                "property": entry["property"],
-                "company": COMPANY_NAME
+                "property": entry["property"], 
+                "company":  entry["company"],
             })
 
         doc.set("items", [])
@@ -146,57 +48,88 @@ def insert_meter_readings(readings: List[Dict[str, Any]]) -> None:
         doc.submit()
             
             
-def create_serial_numbers_and_warranty_claims(data: Dict[str, Any]) -> None:
-    """Create Serial No and Warranty Claim records from JSON data.
+def delete_sales_orders() -> None:
+    customers_data = safe_load_json("data/customer.json")
+    demo_customers = [c["customer_name"] for c in customers_data]
+    if not demo_customers:
+        return
 
-    Args:
-        data (dict): Dictionary containing serial numbers and warranty claims.
-    """
+    demo_sales_orders = {
+        so.name: so for so in frappe.get_all(
+            "Sales Order",
+            filters={"customer": ["in", demo_customers]},
+            fields=["name", "docstatus", "customer"]
+        )
+    }
+    
+    if not demo_sales_orders:
+        return
+    
+    
+    deleted_count = 0
+    for so_name, so in demo_sales_orders.items():
+        try:
+            if so.docstatus == 1:  
+                frappe.get_doc("Sales Order", so_name).cancel()
+            frappe.delete_doc("Sales Order", so_name)
+            frappe.db.commit()
+            deleted_count += 1
+        except Exception as e:
+            frappe.db.rollback()
+       
+def clear_meter_readings() -> None:
+    readings = safe_load_json("data/meter_reading.json")
 
-    serial_numbers = data.get("serial_numbers", [])
-    warranty_claims = data.get("warranty_claims", [])
-
-    for serial_no in serial_numbers:
-        safe_insert_doc(
-            "Serial No",
-            {
-                "doctype": "Serial No",
-                "serial_no": serial_no,
-                "item_code": "Meter",  
-                "status": "Active",
+    for entry in readings:
+        meter_reading_name = frappe.db.get_value(
+            "Meter Reading",
+            filters={
+                "customer": entry["customer"],
+                "date": entry["date"],
+                "property": entry["property"]
             },
-            unique_key="serial_no"
+            fieldname="name"
         )
 
-    for claim in warranty_claims:
-        serial_no = claim.get("serial_no")
-        customer = claim.get("customer")
+        if not meter_reading_name:
+            continue
 
-        if not frappe.db.exists("Serial No", serial_no):
-            frappe.throw(f"Serial No {serial_no} not found. Ensure it is created before creating warranty claims.")
+        try:
+            doc = frappe.get_doc("Meter Reading", meter_reading_name)
 
-        safe_insert_doc(
-            "Warranty Claim",
-            {
-                "doctype": "Warranty Claim",
-                "serial_no": serial_no,
-                "status": claim.get("status", "Open"),
-                "complaint_date": claim.get("complaint_date"),
-                "customer": customer,
-                "complaint": claim.get("complaint"),
-            },
-            unique_key=None  
-        )
+            # Match items
+            json_items = sorted([
+                {
+                    "item_code": item["item_code"],
+                    "current_reading": item["current_reading"],
+                    "previous_reading": item["previous_reading"],
+                    "consumption": item["consumption"],
+                    "meter_number": item["meter_number"]
+                } for item in entry.get("items", [])
+            ], key=lambda x: (x["item_code"], x["meter_number"]))
 
+            doc_items = sorted([
+                {
+                    "item_code": i.item_code,
+                    "current_reading": i.current_reading,
+                    "previous_reading": i.previous_reading,
+                    "consumption": i.consumption,
+                    "meter_number": i.meter_number
+                } for i in doc.items
+            ], key=lambda x: (x["item_code"], x["meter_number"]))
 
-def billing_setup():
-    tariff_data = safe_load_json("tariff.json")
-    reading_data = safe_load_json("meter_reading.json")
-    meter_data = safe_load_json("meter.json")  
+            if json_items != doc_items:
+                continue  
 
-    insert_price_lists(tariff_data["price_lists"])
-    insert_items(tariff_data["items"])
-    insert_tariff_blocks(tariff_data["blocks"])
-    insert_tariff_prices(tariff_data["prices"])
-    create_serial_numbers_and_warranty_claims(meter_data)
-    insert_meter_readings(reading_data)
+            if doc.docstatus == 1:
+                doc.cancel()
+            doc.delete()
+
+            frappe.db.commit()
+
+        except Exception as e:
+            frappe.log_error(
+                f"Failed to delete Meter Reading {meter_reading_name}: {str(e)}",
+                "Meter Reading Deletion"
+            )
+

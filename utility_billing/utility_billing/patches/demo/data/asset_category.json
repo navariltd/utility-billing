@@ -1,14 +1,41 @@
 [
   {
     "doctype": "Asset Category",
-    "asset_category_name": "Residential Property"
+    "asset_category_name": "Residential Property",
+    "accounts": [
+      {
+        "company_name": "Utility and Rental (Demo)",
+        "fixed_asset_account": "Buildings - URD",
+        "accumulated_depreciation_account": "Accumulated Depreciation - URD",
+        "depreciation_expense_account": "Depreciation - URD",
+        "capital_work_in_progress_account": "CWIP Account - URD"
+      }
+    ]
   },
   {
     "doctype": "Asset Category",
-    "asset_category_name": "Commercial Property"
+    "asset_category_name": "Commercial Property",
+    "accounts": [
+      {
+        "company_name": "Utility and Rental (Demo)",
+        "fixed_asset_account": "Buildings - URD",
+        "accumulated_depreciation_account": "Accumulated Depreciation - URD",
+        "depreciation_expense_account": "Depreciation - URD",
+        "capital_work_in_progress_account": "CWIP Account - URD"
+      }
+    ]
   },
   {
     "doctype": "Asset Category",
-    "asset_category_name": "Land"
+    "asset_category_name": "Land",
+    "accounts": [
+      {
+        "company_name": "Utility and Rental (Demo)",
+        "fixed_asset_account": "Buildings - URD",
+        "accumulated_depreciation_account": "Accumulated Depreciation - URD",
+        "depreciation_expense_account": "Depreciation - URD",
+        "capital_work_in_progress_account": "CWIP Account - URD"
+      }
+    ]
   }
 ]

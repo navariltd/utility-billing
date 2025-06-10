@@ -11,22 +11,29 @@ COMPANY_ABBR: Optional[str] = None
 def create_sample_company() -> None:
     """
     Create a sample company from JSON configuration.
+    Handles case where company.json contains a list and picks the first entry.
     
     Returns:
         None
     """
     global COMPANY_NAME, COMPANY_ABBR
 
-    data: Dict[str, Any] = safe_load_json("company.json")
+    data = safe_load_json("data/company.json")
+    
+    # Handle case where data is a list
+    if isinstance(data, list) and data:
+        company_data = data[0]
+    else:
+        company_data = data
 
-    COMPANY_NAME = data.get("company_name")
-    COMPANY_ABBR = data.get("abbr")
+    COMPANY_NAME = company_data.get("company_name")
+    COMPANY_ABBR = company_data.get("abbr")
 
     if not COMPANY_NAME or frappe.db.exists("Company", COMPANY_NAME):
         return
 
     try:
-        company = frappe.get_doc({"doctype": "Company", **data})
+        company = frappe.get_doc({"doctype": "Company", **company_data})
         company.insert()
         logger.info(f"Company {COMPANY_NAME} created successfully.")
     except Exception:

@@ -1,8 +1,8 @@
 [
   {
     "doctype": "Company",
-    "company_name": "Demo Utilities Ltd",
-    "abbr": "DUL",
+    "company_name": "Utility and Rental (Demo)",
+    "abbr": "URD",
     "default_currency": "KES",
     "country": "Kenya"
   }

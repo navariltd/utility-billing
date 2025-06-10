@@ -144,7 +144,6 @@ after_app_install = "utility_billing.utility_billing.patches.after_install.creat
 
 utility_demo_master_doctypes = [
 	"billing_adjustment_rule",
-    "company",
     "contract_template",
 	"customer_group",
 	"customer",
@@ -163,6 +162,8 @@ utility_demo_master_doctypes = [
     "utility_property_unit_type", 
     "utility_category",
     "warranty_claim",  
+    "asset_category",
+    "utility_property",
 ]
 demo_transaction_doctypes = [
     "utility_bill_structure", 

@@ -1,6 +1,7 @@
 [
   {
     "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
     "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -18,6 +19,7 @@
   },
   {
     "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
     "customer": "Daniel Mwangi",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -35,6 +37,7 @@
   },
   {
     "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
     "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -52,6 +55,7 @@
   },
   {
     "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
     "customer": "Nairobi Enterprises Ltd",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
@@ -69,6 +73,7 @@
   },
   {
     "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
     "customer": "Wanjiku Kamau",
     "date": "2025-06-01",
     "price_list": "Standard Residential",
