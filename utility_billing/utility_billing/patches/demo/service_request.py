@@ -66,13 +66,38 @@ def insert_contract_terms(contract_terms: List[Dict[str, Any]]) -> None:
 
 def clear_existing_contracts() -> None:
     """Cancel and delete all submitted contracts."""
-    existing_contracts = frappe.get_all("Contract", filters={"docstatus": 1})
-    for contract in existing_contracts:
-        doc = frappe.get_doc("Contract", contract.name)
-        doc.flags.ignore_permissions = True
-        if doc.docstatus == 1:
-            doc.cancel()
-        frappe.delete_doc("Contract", doc.name, force=1, ignore_permissions=True)
+    customers_data = safe_load_json("data/customer.json")
+    demo_parties = [c["customer_name"] for c in customers_data]
+    
+    if not demo_parties:
+        return
+
+    demo_contracts = {
+        contract.name: contract for contract in frappe.get_all(
+            "Contract",
+            filters={"party_name": ["in", demo_parties]},
+            fields=["name", "docstatus", "party_name"]
+        )
+    }
+
+    if not demo_contracts:
+        return
+
+    deleted_count = 0
+    for contract_name, contract in demo_contracts.items():
+        try:
+            if contract.docstatus == 1:  
+                contract_doc = frappe.get_doc("Contract", contract_name)
+                contract_doc.cancel()
+                frappe.db.commit()
+            
+            frappe.delete_doc("Contract", contract_name)
+            frappe.db.commit()
+            deleted_count += 1
+        except Exception as e:
+            frappe.db.rollback()
+            frappe.log_error(f"Failed to delete Contract {contract_name}: {str(e)}")
+
 
 def get_random_bill_structure() -> str:
     """Fetch a random bill structure if available."""
@@ -176,6 +201,40 @@ def insert_service_requests() -> None:
                 f"Error creating service request for {request.get('party_name')}: {str(e)}",
             )
  
+def clear_service_requests() -> None:
+    """
+    Cancel and delete demo Utility Service Requests 
+    """
+    service_requests_data = safe_load_json("data/utility_service_request.json")
+    if not service_requests_data:
+        return
+
+    demo_parties = list({req["party_name"] for req in service_requests_data if req.get("party_name")})
+    
+    if not demo_parties:
+        return
+
+    demo_requests = frappe.get_all(
+        "Utility Service Request",
+        filters={"party_name": ["in", demo_parties]},
+        fields=["name", "docstatus"]
+    )
+
+    deleted_count = 0
+    for req in demo_requests:
+        try:
+            if req.docstatus == 1:
+                frappe.get_doc("Utility Service Request", req.name).cancel()
+
+            frappe.delete_doc("Utility Service Request", req.name)
+            deleted_count += 1
+
+        except Exception as e:
+            frappe.log_error(
+                title="Service Request Deletion Failed",
+                message=f"Request: {req.name}\nError: {str(e)}"
+            )
+
 
 
 
