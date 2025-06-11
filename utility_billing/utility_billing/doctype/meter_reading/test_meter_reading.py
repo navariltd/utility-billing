@@ -1,5 +1,3 @@
-
-
 # Copyright (c) 2024, Navari and Contributors
 # See license.txt
 
@@ -27,7 +25,7 @@ from erpnext.controllers.accounts_controller import AccountsController
 
 class TestMeterReading(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """
         Runs once before all test methods in this class.
         Used to set up essential Frappe records (like Company, Item Group, UOM, Territory,
@@ -47,6 +45,14 @@ class TestMeterReading(unittest.TestCase):
                 "default_currency": "INR", # Or your default currency, e.g., "USD"
             }).insert(ignore_permissions=True)
 
+      
+        # Ensure 'All Item Groups' exists (used internally by ERPNext)
+        if not frappe.db.exists("Item Group", "All Item Groups"):
+            frappe.get_doc({
+                "doctype": "Item Group",
+                "item_group_name": "All Item Groups",
+                "is_group": 1
+            }).insert(ignore_permissions=True)
         # 2. Create 'All Product Groups' Item Group if it doesn't exist (needed for Items)
         if not frappe.db.exists("Item Group", "All Product Groups"):
             frappe.get_doc({
@@ -62,6 +68,13 @@ class TestMeterReading(unittest.TestCase):
                 "uom_name": "Unit"
             }).insert(ignore_permissions=True)
 
+        # 4. Create 'Nos' UOM if it doesn't exist
+        if not frappe.db.exists("UOM", "Nos"):
+            frappe.get_doc({
+                "doctype": "UOM",
+                "uom_name": "Nos"
+            }).insert(ignore_permissions=True)
+        
         # 4. Create 'All' Territory if it doesn't exist (needed for Customer creation)
         if not frappe.db.exists("Territory", "All"):
             frappe.get_doc({
@@ -80,7 +93,14 @@ class TestMeterReading(unittest.TestCase):
 
         # --- App-Specific Data Setup ---
 
-        # Create a dummy Customer if it doesn't exist
+        # Ensure 'Commercial' Customer Group exists
+        if not frappe.db.exists("Customer Group", "Commercial"):
+            frappe.get_doc({
+                "doctype": "Customer Group",
+                "customer_group_name": "Commercial",
+                "is_group": 0
+            }).insert(ignore_permissions=True)
+
         if not frappe.db.exists("Customer", "Test Customer MR"):
             frappe.get_doc({
                 "doctype": "Customer",
@@ -107,7 +127,7 @@ class TestMeterReading(unittest.TestCase):
                 "item_code": "Test Item MR",
                 "item_name": "Test Meter Item",
                 "is_stock_item": 0, # Typically not a stock item for utility services
-                "uom": "Unit",
+                "stock_uom": "Unit",
                 "item_group": "All Product Groups", # <-- ADDED THIS MANDATORY FIELD
             }).insert(ignore_permissions=True)
 
@@ -136,9 +156,53 @@ class TestMeterReading(unittest.TestCase):
         frappe.db.delete("Sales Invoice")
         frappe.db.delete("Meter Reading")
         frappe.db.delete("Warranty Claim")
+    @classmethod
+
+    def tearDownClass(cls):
+        """
+        Runs once after all test methods.
+        Cleans up data created by setUpClass to prevent interference between test runs.
+        """
+        doctype_list = [
+            "Warranty Claim",
+            "Customer",
+            "Item",
+            "Item Group",
+            "UOM",
+            "Territory",
+            "Price List",
+            "Company",
+            "Customer Group"
+        ]
+
+        for doctype in doctype_list:
+            if frappe.db.has_table(f"tab{doctype}"):
+                frappe.db.delete(doctype)
+
+        # Special check for Utility Billing Settings since it's a Singleton
+        if frappe.db.has_table("tabUtility Billing Settings"):
+            frappe.db.delete("Utility Billing Settings")
 
 
-    # --- Test methods for MeterReading DocType ---
+
+    def test_get_serial_numbers_filters_empty_and_none_values(self):
+        """
+        Tests that only valid serial numbers are returned from warranty claims,
+        and empty or None values are filtered out.
+        """
+        customer = "Test Customer WC Filter"
+    
+        # Ensure the customer exists
+        if not frappe.db.exists("Customer", customer):
+            frappe.get_doc({
+                "doctype": "Customer",
+                "customer_name": customer,
+                "customer_type": "Company",
+                "customer_group": "Commercial",
+                "territory": "All"
+            }).insert(ignore_permissions=True)
+
+       # --- Test methods for MeterReading DocType ---
 
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.create_meter_reading_rates')
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.MeterReading.validate_item_readings')
@@ -381,6 +445,7 @@ class TestMeterReading(unittest.TestCase):
         `get_previous_invoice_reading` returns 0 (no previous reading found).
         """
         meter_reading = frappe.new_doc("Meter Reading")
+        meter_reading.company = "Test Company" 
         meter_reading.customer = "Test Customer MR"
         item = frappe.new_doc("Meter Reading Item", parent_doc=meter_reading)
         item.item_code = "Test Item MR"
@@ -753,14 +818,14 @@ class TestMeterReading(unittest.TestCase):
                 "doctype": "Company",
                 "company_name": company,
                 "default_currency": "KES"  # or your system's currency
-        }).insert(ignore_permissions=True, ignore_links=True)
+        }).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Warehouse", warehouse):
             frappe.get_doc({
                 "doctype": "Warehouse",
                 "warehouse_name": "Test Warehouse",
                 "company": company
-            }).insert(ignore_permissions=True, ignore_links=True)
+            }).insert(ignore_permissions=True)
 
         customer = "Test Customer WC"  # Use a new customer for isolation
         if not frappe.db.exists("Customer", customer):
@@ -770,7 +835,7 @@ class TestMeterReading(unittest.TestCase):
                 "customer_type": "Company",
                 "customer_group": "Commercial",
                 "territory": "All"
-            }).insert(ignore_permissions=True, ignore_links=True)
+            }).insert(ignore_permissions=True)
 
         # Ensure the test Item exists for the Serial No child records
         item_code = "Test Item"
@@ -781,7 +846,7 @@ class TestMeterReading(unittest.TestCase):
                 "item_name": item_code,
                 "stock_uom": "Nos",
                 "item_group": "All Item Groups"
-            }).insert(ignore_permissions=True, ignore_links=True)
+            }).insert(ignore_permissions=True)
 
         # Create Serial No documents used in warranty claims
         serial_numbers = ["SN001", "SN002", "SN003", "SN004"]
@@ -793,31 +858,38 @@ class TestMeterReading(unittest.TestCase):
                     "item_code": item_code,
                     "warehouse": warehouse,  # Required field
                     "company": company       # Required field
-                }).insert(ignore_permissions=True, ignore_links=True)
+                }).insert(ignore_permissions=True)
+         # First group of claims: SN001, SN002, SN004
+        serials_1 = ["SN001", "SN002", "SN004"]
+        for sn in serials_1:
+            claim_name = f"WC-001-{sn}"
+            if not frappe.db.exists("Warranty Claim", claim_name):
+                frappe.get_doc({
+                    "doctype": "Warranty Claim",
+                    "name": claim_name,
+                    "customer": customer,
+                    "status": "Closed",
+                    "serial_no": sn,
+                    "warranty_claim_type": "Repair",
+                    "complaint": f"Test complaint for serial {sn}",
+                    "company": company
+                }).insert(ignore_permissions=True)
 
-        # Create a warranty claim with multiple serial numbers
-        if not frappe.db.exists("Warranty Claim", "WC-001-TEST-MULTIPLE"):
-            frappe.get_doc({
-                "doctype": "Warranty Claim",
-                "name": "WC-001-TEST-MULTIPLE",
-                "customer": customer,
-                "status": "Closed",
-                "serial_no": "SN001\nSN002\nSN004",
-                "warranty_claim_type": "Repair",
-                "complaint": "Test complaint for multiple serials 1"
-            }).insert(ignore_permissions=True,ignore_links=True)
-
-        # Create another claim with a duplicate and a new one
-        if not frappe.db.exists("Warranty Claim", "WC-002-TEST-DUPLICATE"):
-            frappe.get_doc({
-                "doctype": "Warranty Claim",
-                "name": "WC-002-TEST-DUPLICATE",
-                "customer": customer,
-                "status": "Closed",
-                "serial_no": "SN003\nSN001",  # SN001 is duplicated
-                "warranty_claim_type": "Repair",
-                "complaint": "Test complaint for multiple serials 2"
-            }).insert(ignore_permissions=True, ignore_links=True)
+        # Second group of claims: SN003 and SN001 (duplicate)
+        serials_2 = ["SN003", "SN001"]
+        for sn in serials_2:
+            claim_name = f"WC-002-{sn}"
+            if not frappe.db.exists("Warranty Claim", claim_name):
+                frappe.get_doc({
+                    "doctype": "Warranty Claim",
+                    "name": claim_name,
+                    "customer": customer,
+                    "status": "Closed",
+                    "serial_no": sn,
+                    "warranty_claim_type": "Repair",
+                    "complaint": f"Duplicate test for serial {sn}",
+                    "company": company
+                }).insert(ignore_permissions=True)
 
         serial_numbers_result = get_serial_numbers_from_warranty_claims(customer)
         expected_serial_numbers = ["SN001", "SN002", "SN003", "SN004"]
@@ -839,8 +911,16 @@ class TestMeterReading(unittest.TestCase):
         """
         customer = "Test Customer WC Status"
         item_code = "Test Item For Serial"
+        company = "Test Company"
+        warehouse = "Test Warehouse - TC"
 
-         # Ensure Item exists
+        if not frappe.db.exists("Company", company):
+            frappe.get_doc({
+                "doctype": "Company",
+                "company_name": company,
+                "default_currency": "KES"
+            }).insert(ignore_permissions=True)
+        # Ensure Item exists
         if not frappe.db.exists("Item", item_code):
             frappe.get_doc({
                 "doctype": "Item",
@@ -858,7 +938,9 @@ class TestMeterReading(unittest.TestCase):
                     "doctype": "Serial No",
                     "name": serial,
                     "serial_no": serial,
-                    "item_code": item_code
+                    "item_code": item_code,
+                    "warehouse": warehouse,
+                    "company": company 
                 }).insert(ignore_permissions=True)
 
         # Ensure Customer exists
@@ -875,8 +957,8 @@ class TestMeterReading(unittest.TestCase):
         if not frappe.db.exists("Warranty Claim", "WC-003-TEST-OPEN"):
             frappe.get_doc({
                 "doctype": "Warranty Claim",
-                "name": "WC-003-TEST-OPEN",
                 "customer": customer,
+                "company": company,
                 "status": "Open",  # Not Closed
                 "serial_no": "SN-OPEN-1",
                 "warranty_claim_type": "Repair",
@@ -888,6 +970,7 @@ class TestMeterReading(unittest.TestCase):
                 "doctype": "Warranty Claim",
                 "name": "WC-004-TEST-CLOSED",
                 "customer": customer,
+                "company": company,
                 "status": "Closed",
                 "serial_no": "SN-CLOSED-1",
                 "warranty_claim_type": "Repair",
@@ -909,7 +992,8 @@ class TestMeterReading(unittest.TestCase):
             "status": "Closed",
             "serial_no": serial_no,
             "complaint": "Test issue",
-            "warranty_claim_type": "Repair"
+            "warranty_claim_type": "Repair",
+            "company": "Test Company"
         }).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Warranty Claim", "WC-005-TEST-EMPTY-SN"):
@@ -931,35 +1015,57 @@ class TestMeterReading(unittest.TestCase):
     def test_get_serial_numbers_from_warranty_claims_duplicate_serial_nos(self):
         """
         Tests that `get_serial_numbers_from_warranty_claims` returns only unique
-        serial numbers even if they appear in multiple claims or multiple times
-        within the same claim.
+        serial numbers even if they appear in multiple claims or multiple times.
         """
         customer = "Test Customer WC Duplicates"
+        company = "Test Company"
+        serials = ["A123", "B456", "C789"]
+    
+        # Ensure customer exists
         if not frappe.db.exists("Customer", customer):
-            frappe.get_doc({"doctype": "Customer", "customer_name": customer, "customer_type": "Company", "customer_group": "Commercial", "territory": "All"}).insert(ignore_permissions=True)
+            frappe.get_doc({
+                "doctype": "Customer",
+                "customer_name": customer,
+                "customer_type": "Company",
+                "customer_group": "Commercial",
+                "territory": "All"
+            }).insert(ignore_permissions=True)
 
-        if not frappe.db.exists("Warranty Claim", "WC-DUP1-TEST"):
-            frappe.get_doc({
-                "doctype": "Warranty Claim",
-                "name": "WC-DUP1-TEST",
-                "customer": customer,
-                "status": "Closed",
-                "serial_no": "A123\nB456",
-                "warranty_claim_type": "Repair",
-                "complaint": "Test duplicate serials complaint"
-            }).insert(ignore_permissions=True,ignore_links=True)
-        if not frappe.db.exists("Warranty Claim", "WC-DUP2-TEST"):
-            frappe.get_doc({
-                "doctype": "Warranty Claim",
-                "name": "WC-DUP2-TEST",
-                "customer": customer,
-                "status": "Closed",
-                "serial_no": "B456\nC789\nA123", # B456 and A123 are duplicated
-                "warranty_claim_type": "Repair",
-                "complaint": "Test duplicate serials complaint"
-            }).insert(ignore_permissions=True,ignore_links=True)
+        # Create individual warranty claims for each serial
+        claims = [
+            ("WC-DUP1-A123", "A123"),
+            ("WC-DUP1-B456", "B456"),
+            ("WC-DUP2-B456", "B456"),  
+            ("WC.-DUP2-C789", "C789"),
+            ("WC-DUP2-A123", "A123")   
+        ]
+        # Ensure Serial Nos exist
+        for sn in ["A123", "B456", "C789"]:
+            if not frappe.db.exists("Serial No", sn):
+                frappe.get_doc({
+                    "doctype": "Serial No",
+                    "serial_no": sn,
+                    "item_code": "Test Item MR",  
+                    "company": "Test Company"
+                }).insert(ignore_permissions=True)
+
+
+        for name, serial in claims:
+            if not frappe.db.exists("Warranty Claim", name):
+                frappe.get_doc({
+                    "doctype": "Warranty Claim",
+                    "name": name,
+                    "customer": customer,
+                    "status": "Closed",
+                    "serial_no": serial,
+                    "warranty_claim_type": "Repair",
+                    "complaint": f"Claim for {serial}",
+                    "company": company
+                }).insert(ignore_permissions=True)
+
 
         serial_numbers = get_serial_numbers_from_warranty_claims(customer)
         expected_serial_numbers = ["A123", "B456", "C789"]
         self.assertCountEqual(serial_numbers, expected_serial_numbers) # Checks for same elements, regardless of order
         self.assertEqual(len(serial_numbers), len(set(expected_serial_numbers))) # Confirms uniqueness
+ 
