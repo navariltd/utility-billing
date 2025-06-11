@@ -1,0 +1,341 @@
+[
+  {
+    "property_name": "The Pinnacle Towers - Kilimani",
+    "category": "Apartment",
+    "utility_category": "Apartment",
+    "unit_type": "Furnished Apartment",
+    "doctype": "Utility Property",
+    "features": [
+      {
+        "doctype": "Property Feature",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 185000000,
+    "location": "Kilimani",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Kileleshwa Heights Apartments",
+    "category": "Apartment",
+    "utility_category": "Apartment",
+    "doctype": "Utility Property",
+    "features": [
+      {
+        "doctype": "Property Feature",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 120000000,
+    "location": "Kileleshwa",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Greenpark Estate - Runda",
+    "category": "Townhouse",
+    "utility_category": "Townhouse",
+    "doctype": "Utility Property",
+    "features": [
+      {
+        "doctype": "Property Feature",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Residential Property",
+    "gross_purchase_amount": 250000000,
+    "location": "Runda",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Westlands Business Plaza",
+    "category": "Office",
+    "utility_category": "Office",
+    "doctype": "Utility Property",
+    "features": [
+      {
+        "doctype": "Property Feature",
+        "feature": "Secure Parking",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Property Feature",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      }
+    ],
+    "status": "Available",
+    "is_fixed_asset": 1,
+    "is_group": 1,
+    "asset_category": "Commercial Property",
+    "gross_purchase_amount": 320000000,
+    "location": "Westlands",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Pinnacle Tower - Unit 1A",
+    "unit_type": "2-Bedroom",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "doctype": "Utility Property",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Pinnacle Tower - Unit 1B",
+    "unit_type": "1-Bedroom",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "doctype": "Utility Property",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Pinnacle Tower - Unit 1C",
+    "unit_type": "Studio",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 0,
+    "bathrooms": 1,
+    "doctype": "Utility Property",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Pinnacle Tower - Penthouse",
+    "unit_type": "Penthouse",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "doctype": "Utility Property",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Greenpark - House A1",
+    "unit_type": "3-Bedroom",
+    "utility_category": "Townhouse",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Greenpark - House A2",
+    "unit_type": "4-Bedroom",
+    "utility_category": "Townhouse",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Greenpark - House B1",
+    "unit_type": "2-Bedroom",
+    "utility_category": "Townhouse",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Greenpark - House B2",
+    "unit_type": "Maisonette",
+    "utility_category": "Maisonette",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Westlands Plaza - Suite 101",
+    "unit_type": "Office Space",
+    "utility_category": "Office",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Westlands Business Plaza",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Westlands Plaza - Suite 201",
+    "unit_type": "Office Space",
+    "utility_category": "Office",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Westlands Business Plaza",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Westlands Plaza - Serviced Office",
+    "unit_type": "Serviced Office",
+    "utility_category": "Office",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Westlands Business Plaza",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Kileleshwa Heights - Unit 1",
+    "unit_type": "Bedsitter",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 0,
+    "bathrooms": 1,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Kileleshwa Heights - Unit 2",
+    "unit_type": "1-Bedroom",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
+    "company": "Utility and Rental (Demo)"
+  },
+  {
+    "property_name": "Kileleshwa Heights - Unit 3",
+    "unit_type": "2-Bedroom",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_fixed_asset": 0,
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "doctype": "Utility Property",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
+    "company": "Utility and Rental (Demo)"
+  }
+]

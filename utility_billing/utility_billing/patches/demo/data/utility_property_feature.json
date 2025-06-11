@@ -1,0 +1,16 @@
+[
+  { "feature": "Swimming Pool", "doctype": "Utility Property Feature" },
+  { "feature": "Gym", "doctype": "Utility Property Feature" },
+  { "feature": "Secure Parking", "doctype": "Utility Property Feature" },
+  { "feature": "Landscaped Garden", "doctype": "Utility Property Feature" },
+  { "feature": "24/7 Security", "doctype": "Utility Property Feature" },
+  { "feature": "Children's Playground", "doctype": "Utility Property Feature" },
+  { "feature": "Elevator", "doctype": "Utility Property Feature" },
+  { "feature": "High-Speed Internet", "doctype": "Utility Property Feature" },
+  { "feature": "Backup Generator", "doctype": "Utility Property Feature" },
+  { "feature": "Concierge Service", "doctype": "Utility Property Feature" },
+  { "feature": "CCTV Surveillance", "doctype": "Utility Property Feature" },
+  { "feature": "Water Storage", "doctype": "Utility Property Feature" },
+  { "feature": "Gated Community", "doctype": "Utility Property Feature" },
+  { "feature": "Balcony", "doctype": "Utility Property Feature" }
+]

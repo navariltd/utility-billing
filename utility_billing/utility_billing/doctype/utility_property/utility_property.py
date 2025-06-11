@@ -1,9 +1,9 @@
 # Copyright (c) 2024, Navari and contributors
 # For license information, please see license.txt
 
+import frappe
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils.nestedset import NestedSet
-import frappe
 
 class UtilityProperty(NestedSet):
     def onload(self):
@@ -11,11 +11,15 @@ class UtilityProperty(NestedSet):
 
     def validate(self):
         if self.item:
-            asset = frappe.db.get_value("Asset", {
-                "item_code": self.item,
-                "asset_name": self.property_name
-            }, ["location", "asset_category", "gross_purchase_amount"], as_dict=True)
-
+            asset = frappe.db.get_value(
+                "Asset",
+                {
+                    "item_code": self.item,
+                    "asset_name": self.property_name
+                },
+                ["location", "asset_category", "gross_purchase_amount"],
+                as_dict=True
+            )
             if asset:
                 self.location = asset.location
                 self.asset_category = asset.asset_category
@@ -31,27 +35,20 @@ class UtilityProperty(NestedSet):
                 }).insert()
 
             if not self.item:
-                item_doc = frappe.get_doc({
-                    "doctype": "Item",
-                    "item_code": self.property_name,
-                    "item_name": self.property_name,
-                    "is_fixed_asset": 1,
-                    "is_stock_item": 0,
-                    "item_group": "Fixed Asset",
-                    "asset_category": self.asset_category,
-                    "is_sales_item": 1,
-                    "is_utility_item": 1,
-                    "stock_uom": "Nos",
-                    "disabled": 0,
-                })
-                item_doc.insert(ignore_permissions=True)
-                self.item = item_doc.name
+                if frappe.db.exists("Item", {"item_code": self.property_name}):
+                    self.item = self.property_name
+                else:
+                    item_doc = self._create_item()
+                    self.item = item_doc.name
+            else:
+                if not frappe.db.exists("Item", self.item):
+                    item_doc = self._create_item()
+                    self.item = item_doc.name
 
-            asset_exists = frappe.db.exists("Asset", {
+            if not frappe.db.exists("Asset", {
                 "item_code": self.item,
                 "asset_name": self.property_name,
-            })
-            if not asset_exists:
+            }):
                 frappe.db.set_value("Item", self.item, "disabled", 0)
                 asset_doc = frappe.get_doc({
                     "doctype": "Asset",
@@ -64,3 +61,19 @@ class UtilityProperty(NestedSet):
                     "location": self.location
                 })
                 asset_doc.insert()
+
+    def _create_item(self):
+        """Helper method to create a new item document."""
+        return frappe.get_doc({
+            "doctype": "Item",
+            "item_code": self.property_name,
+            "item_name": self.property_name,
+            "is_fixed_asset": 1,
+            "is_stock_item": 0,
+            "item_group": "Fixed Asset",
+            "asset_category": self.asset_category,
+            "is_sales_item": 1,
+            "is_utility_item": 1,
+            "stock_uom": "Nos",
+            "disabled": 0,
+        }).insert(ignore_permissions=True)

@@ -1,0 +1,9 @@
+[
+  {
+    "doctype": "Company",
+    "company_name": "Utility and Rental (Demo)",
+    "abbr": "URD",
+    "default_currency": "KES",
+    "country": "Kenya"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "doctype": "Warranty Claim",
+    "serial_no": "MTR10001",
+    "item_code": "Meter",
+    "status": "Closed",
+    "complaint_date": "2023-05-15",
+    "customer": "Wanjiku Kamau",
+    "complaint": "Meter not displaying readings properly"
+  },
+  {
+    "doctype": "Warranty Claim",
+    "serial_no": "MTR10001",
+    "item_code": "Meter",
+    "status": "Closed",
+    "complaint_date": "2022-11-20",
+    "customer": "Wanjiku Kamau",
+    "complaint": "Meter stopped working after power surge"
+  },
+  {
+    "doctype": "Warranty Claim",
+    "serial_no": "MTR10002",
+    "item_code": "Meter",
+    "status": "Closed",
+    "complaint_date": "2023-06-10",
+    "customer": "Daniel Mwangi",
+    "complaint": "Meter is making unusual noises"
+  },
+  {
+    "doctype": "Warranty Claim",
+    "serial_no": "MTR20001",
+    "item_code": "Meter",
+    "status": "Closed",
+    "complaint_date": "2023-01-05",
+    "customer": "Nairobi Enterprises Ltd",
+    "complaint": "Water meter leaking at connection point"
+  },
+  {
+    "doctype": "Warranty Claim",
+    "serial_no": "MTR20001",
+    "item_code": "Meter",
+    "status": "Closed",
+    "complaint_date": "2023-06-18",
+    "customer": "Nairobi Enterprises Ltd",
+    "complaint": "Digital display malfunctioning"
+  }
+]
