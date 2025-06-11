@@ -1,3 +1,5 @@
+
+
 # Copyright (c) 2024, Navari and Contributors
 # See license.txt
 
@@ -957,6 +959,7 @@ class TestMeterReading(unittest.TestCase):
         if not frappe.db.exists("Warranty Claim", "WC-003-TEST-OPEN"):
             frappe.get_doc({
                 "doctype": "Warranty Claim",
+                "name": "WC-003-TEST-OPEN",
                 "customer": customer,
                 "company": company,
                 "status": "Open",  # Not Closed
