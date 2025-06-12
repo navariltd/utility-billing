@@ -65,7 +65,7 @@ required_apps = ["erpnext", "crm"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/utility_billing/css/utility_billing.css"
-# app_include_js = "/assets/utility_billing/js/utility_billing.js"
+app_include_js = "/assets/utility_billing/js/demo.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/utility_billing/css/utility_billing.css"
