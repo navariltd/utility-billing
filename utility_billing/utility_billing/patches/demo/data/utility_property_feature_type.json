@@ -1,0 +1,6 @@
+[
+  { "doctype": "Utility Property Feature Type", "feature_type": "Amenity" },
+  { "doctype": "Utility Property Feature Type", "feature_type": "Facility" },
+  { "doctype": "Utility Property Feature Type", "feature_type": "Service" },
+  { "doctype": "Utility Property Feature Type", "feature_type": "Security" }
+]

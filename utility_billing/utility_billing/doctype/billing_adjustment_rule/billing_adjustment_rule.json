@@ -1,344 +1,350 @@
 {
-  "actions": [],
-  "allow_rename": 1,
-  "autoname": "field:rule_name",
-  "creation": "2025-05-12 08:42:48.987729",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "rule_name",
-    "column_break_uqtk",
-    "disabled",
-    "section_break_10",
-    "frequency",
-    "repeat_on_day",
-    "column_break_12",
-    "overdue_after_days",
-    "repeat_on_last_day",
-    "submit_on_creation",
-    "section_break_16",
-    "repeat_on_days",
-    "increment_settings_section",
-    "increment_interval_months",
-    "increment_percentage",
-    "adjustment_cap",
-    "column_break_ghug",
-    "adjustment_basis",
-    "effective_after_months",
-    "section_break_general",
-    "penalty_frequency",
-    "penalty_type",
-    "penalty_value",
-    "column_break_penalty",
-    "grace_period_days",
-    "penalty_cap",
-    "is_compounding",
-    "submit_penalty_invoice",
-    "section_break_accounting",
-    "penalty_income_account",
-    "penalty_receivable_account",
-    "column_break_accounts",
-    "adjustment_income_account",
-    "write_off_account",
-    "section_break_description",
-    "description"
-  ],
-  "fields": [
-    {
-      "fieldname": "rule_name",
-      "fieldtype": "Data",
-      "label": "Rule Name",
-      "reqd": 1,
-      "unique": 1
-    },
-    {
-      "fieldname": "section_break_general",
-      "fieldtype": "Section Break",
-      "label": "Penalty Settings"
-    },
-    {
-      "default": "0",
-      "description": "Number of days after due date before penalties apply",
-      "fieldname": "grace_period_days",
-      "fieldtype": "Int",
-      "label": "Grace Period (Days)",
-      "non_negative": 1
-    },
-    {
-      "default": "Fixed Amount",
-      "fieldname": "penalty_type",
-      "fieldtype": "Select",
-      "label": "Penalty Type",
-      "options": "Fixed Amount\nPercentage"
-    },
-    {
-      "description": "Fixed amount or percentage to charge as penalty",
-      "fieldname": "penalty_value",
-      "fieldtype": "Float",
-      "label": "Penalty Value",
-      "reqd": 1
-    },
-    {
-      "description": "Maximum penalty amount that can be charged",
-      "fieldname": "penalty_cap",
-      "fieldtype": "Currency",
-      "label": "Maximum Penalty Cap"
-    },
-    {
-      "default": "Daily",
-      "fieldname": "penalty_frequency",
-      "fieldtype": "Select",
-      "label": "Penalty Frequency",
-      "options": "Daily\nWeekly\nMonthly\nOne-time"
-    },
-    {
-      "default": "0",
-      "description": "Whether penalties compound over time",
-      "fieldname": "is_compounding",
-      "fieldtype": "Check",
-      "label": "Compounding Penalty"
-    },
-    {
-      "fieldname": "column_break_penalty",
-      "fieldtype": "Column Break"
-    },
-    {
-      "default": "0",
-      "description": "The number of months between each increment. For example, enter 12 for annual increments or 6 for semi-annual increments.",
-      "fieldname": "increment_interval_months",
-      "fieldtype": "Float",
-      "in_filter": 1,
-      "in_list_view": 1,
-      "in_preview": 1,
-      "in_standard_filter": 1,
-      "label": "Increment Interval (Months)"
-    },
-    {
-      "default": "0",
-      "fieldname": "increment_percentage",
-      "fieldtype": "Percent",
-      "in_filter": 1,
-      "in_list_view": 1,
-      "in_preview": 1,
-      "in_standard_filter": 1,
-      "label": "Increment Percentage"
-    },
-    {
-      "default": "0",
-      "description": "Number of months after lease start when first increment applies",
-      "fieldname": "effective_after_months",
-      "fieldtype": "Int",
-      "label": "Effective After (Months)"
-    },
-    {
-      "description": "Maximum percentage increase allowed for rent adjustments",
-      "fieldname": "adjustment_cap",
-      "fieldtype": "Percent",
-      "label": "Maximum Adjustment Cap (%)"
-    },
-    {
-      "default": "Original Amount",
-      "description": "Whether adjustments are based on original or last adjusted amount",
-      "fieldname": "adjustment_basis",
-      "fieldtype": "Select",
-      "label": "Adjustment Basis",
-      "options": "Original Amount\nLast Adjusted Amount"
-    },
-    {
-      "fieldname": "section_break_accounting",
-      "fieldtype": "Section Break",
-      "label": "Accounting Settings"
-    },
-    {
-      "fieldname": "penalty_income_account",
-      "fieldtype": "Link",
-      "label": "Penalty Income Account",
-      "options": "Account"
-    },
-    {
-      "fieldname": "penalty_receivable_account",
-      "fieldtype": "Link",
-      "label": "Penalty Receivable Account",
-      "options": "Account"
-    },
-    {
-      "fieldname": "column_break_accounts",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "adjustment_income_account",
-      "fieldtype": "Link",
-      "label": "Adjustment Income Account",
-      "options": "Account"
-    },
-    {
-      "fieldname": "write_off_account",
-      "fieldtype": "Link",
-      "label": "Write Off Account",
-      "options": "Account"
-    },
-    {
-      "fieldname": "section_break_description",
-      "fieldtype": "Section Break",
-      "label": "Additional Information"
-    },
-    {
-      "fieldname": "description",
-      "fieldtype": "Text Editor",
-      "label": "Description"
-    },
-    {
-      "fieldname": "column_break_uqtk",
-      "fieldtype": "Column Break"
-    },
-    {
-      "default": "0",
-      "fieldname": "disabled",
-      "fieldtype": "Check",
-      "label": "Disabled"
-    },
-    {
-      "fieldname": "increment_settings_section",
-      "fieldtype": "Section Break",
-      "label": "Increment Settings"
-    },
-    {
-      "fieldname": "column_break_ghug",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "section_break_10",
-      "fieldtype": "Section Break",
-      "label": "Recurring Billing Schedule"
-    },
-    {
-      "fieldname": "frequency",
-      "fieldtype": "Select",
-      "in_list_view": 1,
-      "label": "Frequency",
-      "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
-      "reqd": 1
-    },
-    {
-      "fieldname": "column_break_12",
-      "fieldtype": "Column Break"
-    },
-    {
-      "depends_on": "eval: in_list([\"Monthly\", \"Quarterly\", \"Half-yearly\", \"Yearly\"], doc.frequency) && !doc.repeat_on_last_day\n",
-      "fieldname": "repeat_on_day",
-      "fieldtype": "Int",
-      "label": "Repeat on Day"
-    },
-    {
-      "default": "0",
-      "depends_on": "eval:doc.frequency === 'Monthly'",
-      "fieldname": "repeat_on_last_day",
-      "fieldtype": "Check",
-      "label": "Repeat on Last Day of the Month"
-    },
-    {
-      "depends_on": "eval:doc.frequency==='Weekly';",
-      "fieldname": "repeat_on_days",
-      "fieldtype": "Table",
-      "label": "Repeat on Days",
-      "options": "Auto Repeat Day"
-    },
-    {
-      "default": "0",
-      "fieldname": "submit_on_creation",
-      "fieldtype": "Check",
-      "label": "Submit on Creation"
-    },
-    {
-      "depends_on": "eval:doc.frequency==='Weekly';",
-      "fieldname": "section_break_16",
-      "fieldtype": "Section Break"
-    },
-    {
-      "default": "0",
-      "description": "Number of days after the invoice posting date before the invoice is marked as overdue",
-      "fieldname": "overdue_after_days",
-      "fieldtype": "Int",
-      "label": "Overdue After (Days)",
-      "non_negative": 1
-    },
-    {
-      "default": "0",
-      "fieldname": "submit_penalty_invoice",
-      "fieldtype": "Check",
-      "label": "Submit Penalty Invoice"
-    }
-  ],
-  "grid_page_length": 50,
-  "index_web_pages_for_search": 1,
-  "links": [],
-  "modified": "2025-05-14 16:25:59.464529",
-  "modified_by": "Administrator",
-  "module": "Utility Billing",
-  "name": "Billing Adjustment Rule",
-  "naming_rule": "By fieldname",
-  "owner": "Administrator",
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 1,
-      "cancel": 1,
-      "print": 1,
-      "email": 1,
-      "export": 1,
-      "report": 1,
-      "share": 1
-    },
-    {
-      "role": "Property Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 1,
-      "cancel": 1,
-      "print": 1,
-      "email": 1,
-      "export": 1,
-      "report": 1,
-      "share": 1
-    },
-    {
-      "role": "Utility Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 1,
-      "cancel": 1,
-      "print": 1,
-      "email": 1,
-      "export": 1,
-      "report": 1,
-      "share": 1
-    },
-    {
-      "role": "Utility User",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "print": 1,
-      "email": 1
-    },
-    {
-      "role": "Property User",
-      "read": 1,
-      "create": 1,
-      "print": 1,
-      "email": 1
-    }
-  ],
-  "row_format": "Dynamic",
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "states": []
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_name",
+ "creation": "2025-05-12 08:42:48.987729",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "column_break_uqtk",
+  "disabled",
+  "section_break_10",
+  "frequency",
+  "repeat_on_day",
+  "column_break_12",
+  "overdue_after_days",
+  "repeat_on_last_day",
+  "submit_on_creation",
+  "section_break_16",
+  "repeat_on_days",
+  "section_break_description",
+  "description",
+  "increment_settings_tab",
+  "increment_settings_section",
+  "increment_interval_months",
+  "increment_percentage",
+  "adjustment_cap",
+  "column_break_ghug",
+  "adjustment_basis",
+  "effective_after_months",
+  "penalty_settings_tab",
+  "section_break_general",
+  "penalty_frequency",
+  "penalty_type",
+  "penalty_value",
+  "column_break_penalty",
+  "grace_period_days",
+  "penalty_cap",
+  "is_compounding",
+  "submit_penalty_invoice",
+  "section_break_accounting",
+  "penalty_income_account",
+  "penalty_receivable_account",
+  "column_break_accounts",
+  "adjustment_income_account",
+  "write_off_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_general",
+   "fieldtype": "Section Break",
+   "label": "Penalty Settings"
+  },
+  {
+   "default": "0",
+   "description": "Number of days after due date before penalties apply",
+   "fieldname": "grace_period_days",
+   "fieldtype": "Int",
+   "label": "Grace Period (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "Fixed Amount",
+   "fieldname": "penalty_type",
+   "fieldtype": "Select",
+   "label": "Penalty Type",
+   "options": "Fixed Amount\nPercentage"
+  },
+  {
+   "default": "0",
+   "description": "Fixed amount or percentage to charge as penalty",
+   "fieldname": "penalty_value",
+   "fieldtype": "Float",
+   "label": "Penalty Value"
+  },
+  {
+   "description": "Maximum penalty amount that can be charged",
+   "fieldname": "penalty_cap",
+   "fieldtype": "Currency",
+   "label": "Maximum Penalty Cap"
+  },
+  {
+   "default": "Daily",
+   "fieldname": "penalty_frequency",
+   "fieldtype": "Select",
+   "label": "Penalty Frequency",
+   "options": "Daily\nWeekly\nMonthly\nOne-time"
+  },
+  {
+   "default": "0",
+   "description": "Whether penalties compound over time",
+   "fieldname": "is_compounding",
+   "fieldtype": "Check",
+   "label": "Compounding Penalty"
+  },
+  {
+   "fieldname": "column_break_penalty",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "The number of months between each increment. For example, enter 12 for annual increments or 6 for semi-annual increments.",
+   "fieldname": "increment_interval_months",
+   "fieldtype": "Float",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Increment Interval (Months)"
+  },
+  {
+   "default": "0",
+   "fieldname": "increment_percentage",
+   "fieldtype": "Percent",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Increment Percentage"
+  },
+  {
+   "default": "0",
+   "description": "Number of months after lease start when first increment applies",
+   "fieldname": "effective_after_months",
+   "fieldtype": "Int",
+   "label": "Effective After (Months)"
+  },
+  {
+   "description": "Maximum percentage increase allowed for rent adjustments",
+   "fieldname": "adjustment_cap",
+   "fieldtype": "Percent",
+   "label": "Maximum Adjustment Cap (%)"
+  },
+  {
+   "default": "Original Amount",
+   "description": "Whether adjustments are based on original or last adjusted amount",
+   "fieldname": "adjustment_basis",
+   "fieldtype": "Select",
+   "label": "Adjustment Basis",
+   "options": "Original Amount\nLast Adjusted Amount"
+  },
+  {
+   "fieldname": "section_break_accounting",
+   "fieldtype": "Section Break",
+   "label": "Accounting Settings"
+  },
+  {
+   "fieldname": "penalty_income_account",
+   "fieldtype": "Link",
+   "label": "Penalty Income Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "penalty_receivable_account",
+   "fieldtype": "Link",
+   "label": "Penalty Receivable Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_accounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "adjustment_income_account",
+   "fieldtype": "Link",
+   "label": "Adjustment Income Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "write_off_account",
+   "fieldtype": "Link",
+   "label": "Write Off Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "section_break_description",
+   "fieldtype": "Section Break",
+   "label": "Additional Information"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_uqtk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "increment_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Increment Settings"
+  },
+  {
+   "fieldname": "column_break_ghug",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_10",
+   "fieldtype": "Section Break",
+   "label": "Recurring Billing Schedule"
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Frequency",
+   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: in_list([\"Monthly\", \"Quarterly\", \"Half-yearly\", \"Yearly\"], doc.frequency) && !doc.repeat_on_last_day\n",
+   "fieldname": "repeat_on_day",
+   "fieldtype": "Int",
+   "label": "Repeat on Day"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.frequency === 'Monthly'",
+   "fieldname": "repeat_on_last_day",
+   "fieldtype": "Check",
+   "label": "Repeat on Last Day of the Month"
+  },
+  {
+   "depends_on": "eval:doc.frequency==='Weekly';",
+   "fieldname": "repeat_on_days",
+   "fieldtype": "Table",
+   "label": "Repeat on Days",
+   "options": "Auto Repeat Day"
+  },
+  {
+   "default": "0",
+   "fieldname": "submit_on_creation",
+   "fieldtype": "Check",
+   "label": "Submit on Creation"
+  },
+  {
+   "depends_on": "eval:doc.frequency==='Weekly';",
+   "fieldname": "section_break_16",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "description": "Number of days after the invoice posting date before the invoice is marked as overdue",
+   "fieldname": "overdue_after_days",
+   "fieldtype": "Int",
+   "label": "Overdue After (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "submit_penalty_invoice",
+   "fieldtype": "Check",
+   "label": "Submit Penalty Invoice"
+  },
+  {
+   "fieldname": "increment_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Increment Settings"
+  },
+  {
+   "fieldname": "penalty_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Penalty Settings"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-06-05 19:22:46.530257",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Billing Adjustment Rule",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Property Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Utility Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Utility User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Property User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "doctype": "Insurance",
+    "insurance_provider": "ABC Insurance Co.",
+    "insurance_type": "Property Insurance",
+    "premium_price": 50000,
+    "policy_number": "POL-2024-001",
+    "effective_date": "2024-01-01",
+    "expiration_date": "2024-12-31",
+    "description": "Annual property insurance coverage"
+  },
+  {
+    "doctype": "Insurance",
+    "insurance_provider": "XYZ Insurers",
+    "insurance_type": "Liability Insurance",
+    "premium_price": 35000,
+    "policy_number": "LI-2024-045",
+    "effective_date": "2024-03-15",
+    "expiration_date": "2025-03-14",
+    "description": "Public liability coverage for all properties"
+  },
+  {
+    "doctype": "Insurance",
+    "insurance_provider": "Utility Shield",
+    "insurance_type": "Equipment Insurance",
+    "premium_price": 28000,
+    "policy_number": "EQ-2024-102",
+    "effective_date": "2024-02-01",
+    "expiration_date": "2025-01-31",
+    "description": "Covers all meters and utility equipment"
+  }
+]

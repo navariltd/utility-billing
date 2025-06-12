@@ -1,0 +1,37 @@
+[
+  {
+    "serial_no": "MTR10001",
+    "item_code": "Meter",
+    "company": "Utility and Rental (Demo)",
+    "doctype": "Serial No",
+    "status": "Inactive"
+  },
+  {
+    "serial_no": "MTR10002",
+    "item_code": "Meter",
+    "company": "Utility and Rental (Demo)",
+    "doctype": "Serial No",
+    "status": "Inactive"
+  },
+  {
+    "serial_no": "MTR10003",
+    "item_code": "Meter",
+    "company": "Utility and Rental (Demo)",
+    "doctype": "Serial No",
+    "status": "Inactive"
+  },
+  {
+    "serial_no": "MTR20001",
+    "item_code": "Meter",
+    "company": "Utility and Rental (Demo)",
+    "doctype": "Serial No",
+    "status": "Inactive"
+  },
+  {
+    "serial_no": "MTR20002",
+    "item_code": "Meter",
+    "company": "Utility and Rental (Demo)",
+    "doctype": "Serial No",
+    "status": "Inactive"
+  }
+]

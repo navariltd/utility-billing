@@ -1,0 +1,92 @@
+[
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Wanjiku Kamau",
+    "date": "2025-06-01",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "property": "Pinnacle Tower - Unit 1B",
+    "items": [
+      {
+        "item_code": "Water",
+        "current_reading": 350,
+        "previous_reading": 300,
+        "consumption": 50,
+        "meter_number": "MTR10001"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Daniel Mwangi",
+    "date": "2025-06-01",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "property": "Pinnacle Tower - Unit 1C",
+    "items": [
+      {
+        "item_code": "Electricity",
+        "current_reading": 1200,
+        "previous_reading": 1100,
+        "consumption": 100,
+        "meter_number": "MTR10002"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Nairobi Enterprises Ltd",
+    "date": "2025-06-01",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "property": "Westlands Plaza - Suite 201",
+    "items": [
+      {
+        "item_code": "Water",
+        "current_reading": 870,
+        "previous_reading": 800,
+        "consumption": 70,
+        "meter_number": "MTR20001"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Nairobi Enterprises Ltd",
+    "date": "2025-06-01",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "property": "Westlands Plaza - Suite 101",
+    "items": [
+      {
+        "item_code": "Electricity",
+        "current_reading": 2300,
+        "previous_reading": 2150,
+        "consumption": 150,
+        "meter_number": "MTR20002"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Wanjiku Kamau",
+    "date": "2025-06-01",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "property": "Pinnacle Tower - Penthouse",
+    "items": [
+      {
+        "item_code": "Electricity",
+        "current_reading": 5400,
+        "previous_reading": 5000,
+        "consumption": 400,
+        "meter_number": "MTR10003"
+      }
+    ]
+  }
+]

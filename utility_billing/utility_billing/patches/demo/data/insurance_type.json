@@ -1,0 +1,5 @@
+[
+  { "name": "Property Insurance", "doctype": "Insurance Type" },
+  { "name": "Liability Insurance", "doctype": "Insurance Type" },
+  { "name": "Equipment Insurance", "doctype": "Insurance Type" }
+]

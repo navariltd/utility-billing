@@ -1,0 +1,58 @@
+[
+  {
+    "unit_type": "Studio",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Bedsitter",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "1-Bedroom",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "2-Bedroom",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "3-Bedroom",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "4-Bedroom",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Maisonette",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Townhouse",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Penthouse",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Office Space",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Retail Shop",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Warehouse",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Serviced Office",
+    "doctype": "Utility Property Unit Type"
+  },
+  {
+    "unit_type": "Furnished Apartment",
+    "doctype": "Utility Property Unit Type"
+  }
+]

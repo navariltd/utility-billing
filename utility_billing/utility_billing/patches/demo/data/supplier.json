@@ -1,0 +1,20 @@
+[
+  {
+    "doctype": "Supplier",
+    "supplier_name": "ABC Insurance Co.",
+    "supplier_type": "Company",
+    "supplier_details": "Leading provider of property insurance with 25 years in the market"
+  },
+  {
+    "doctype": "Supplier",
+    "supplier_name": "XYZ Insurers",
+    "supplier_type": "Individual",
+    "supplier_details": "Independent insurance broker specializing in liability coverage"
+  },
+  {
+    "doctype": "Supplier",
+    "supplier_name": "Utility Shield",
+    "supplier_type": "Partnership",
+    "supplier_details": "Joint venture between equipment manufacturers offering specialized coverage"
+  }
+]

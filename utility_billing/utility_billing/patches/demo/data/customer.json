@@ -1,0 +1,32 @@
+[
+  {
+    "doctype": "Customer",
+    "customer_name": "Wanjiku Kamau",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Ochieng Otieno",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Nairobi Enterprises Ltd",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Mombasa Trading Co.",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Daniel Mwangi",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential"
+  }
+]

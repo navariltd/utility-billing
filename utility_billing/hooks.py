@@ -65,7 +65,7 @@ required_apps = ["erpnext", "crm"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/utility_billing/css/utility_billing.css"
-# app_include_js = "/assets/utility_billing/js/utility_billing.js"
+app_include_js = "/assets/utility_billing/js/demo.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/utility_billing/css/utility_billing.css"
@@ -141,6 +141,37 @@ doctype_list_js = {
 
 # before_app_install = "utility_billing.utils.before_app_install"
 after_app_install = "utility_billing.utility_billing.patches.after_install.create_fields"
+
+utility_demo_master_doctypes = [
+	"billing_adjustment_rule",
+    "contract_template",
+	"customer_group",
+	"customer",
+    "insurance_type",
+	"supplier",
+    "insurance",
+    "issue_type",
+	"item",
+    "price_list",
+    "utility_tariff_block",
+    "item_price",
+    "location",
+    "serial_no",
+    "utility_property_feature_type",
+    "utility_property_feature",
+    "utility_property_unit_type", 
+    "utility_category",
+    "warranty_claim",  
+    "asset_category",
+    "utility_property",
+]
+demo_transaction_doctypes = [
+    "utility_bill_structure", 
+    "utility_property",
+    "meter_reading",
+	"utility_service_request",
+]
+
 
 # Integration Cleanup
 # -------------------

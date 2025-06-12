@@ -51,6 +51,7 @@ frappe.ui.form.on("Utility Service Request", {
 				return {
 					filters: {
 						status: "Available",
+						is_group: 0,
 					},
 				};
 			};
@@ -520,6 +521,493 @@ function open_bom_creation_modal(frm) {
 	modal.show();
 }
 
+// Common function to get customer section fields with 2 columns
+function get_customer_section_fields(frm, customerName) {
+	return [
+		{
+			fieldname: "customer_section",
+			fieldtype: "Section Break",
+			label: __("Customer Details"),
+			collapsible: 0,
+		},
+		{
+			fieldname: "customer",
+			label: __("Customer"),
+			fieldtype: "Link",
+			options: "Customer",
+			default: frm.doc.customer,
+			read_only: 1,
+		},
+		{
+			fieldname: "col_break_customer", // Column Break for 2 columns
+			fieldtype: "Column Break",
+		},
+		{
+			fieldname: "customer_name",
+			label: __("Customer Name"),
+			fieldtype: "Data",
+			default: customerName,
+			read_only: 1,
+		},
+	];
+}
+
+// Common function to get item table fields configuration dynamically from the form
+function get_item_table_fields(frm) {
+	const child_table = frm.fields_dict["items"];
+	const child_fields = child_table.grid.docfields;
+
+	// Filter and map fields with custom logic
+	const dialog_item_fields = child_fields.map((field) => {
+		let config = {
+			label: field.label,
+			fieldname: field.fieldname,
+			fieldtype: field.fieldtype,
+			in_list_view: field.in_list_view,
+			read_only: field.read_only,
+			depends_on: field.depends_on,
+			options: field.options,
+			reqd: field.reqd,
+			default: field.default,
+		};
+
+		// Add onchange handlers
+		if (field.fieldname === "qty" || field.fieldname === "rate") {
+			config.onchange = function () {
+				calculate_row_amount(this.grid_row);
+			};
+		}
+
+		if (field.fieldname === "item_code") {
+			config.onchange = function () {
+				const row = this.grid_row;
+				if (this.value) {
+					frappe.call({
+						method: "frappe.client.get_value",
+						args: {
+							doctype: "Item",
+							fieldname: ["item_name", "standard_rate"],
+							filters: { name: this.value },
+						},
+						callback: (r) => {
+							if (!r.exc) {
+								row.doc.item_name = r.message.item_name;
+								row.doc.rate = r.message.standard_rate;
+								calculate_row_amount(row);
+								// Note: refresh_field("items_table") might not work directly on dialog table.
+								// You might need to refresh the grid if it's a custom table.
+								row.grid.refresh();
+							}
+						},
+					});
+				}
+			};
+		}
+
+		// Ensure utility_property is visible in the list view
+		if (field.fieldname === "utility_property") {
+			config.in_list_view = 1;
+			config.reqd = 1;
+		}
+
+		return config;
+	});
+
+	return dialog_item_fields;
+}
+
+// Common function to prepare items data dynamically based on allowed fields
+function prepare_items_data(frm) {
+	const child_table = frm.fields_dict["items"];
+	const child_fields = child_table.grid.docfields;
+	const allowedFields = child_fields.map((f) => f.fieldname);
+
+	return frm.doc.items.map((item) => {
+		const qty = item.qty || 1;
+		const rate = item.rate || 0;
+
+		// Original data with only the necessary fields
+		const fullData = {
+			name: item.name,
+			item_code: item.item_code,
+			rate: rate,
+			amount: flt(rate * qty),
+			qty: qty,
+			warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
+			...item, // Include all other fields from the original item
+		};
+
+		// Filter out fields not in child table fields
+		return Object.fromEntries(
+			Object.entries(fullData).filter(([key]) => allowedFields.includes(key))
+		);
+	});
+}
+
+// Common function to calculate row amount
+function calculate_row_amount(row) {
+	const qty = parseFloat(row.doc.qty) || 0;
+	const rate = parseFloat(row.doc.rate) || 0;
+	row.doc.amount = parseFloat(qty * rate);
+	row.grid.refresh();
+}
+
+// Common function to configure dialog properties
+function configure_dialog(dialog, frm) {
+	dialog.fields_dict["items_table"].grid.get_field("utility_property").get_query = function () {
+		const selected_properties = frm.get_selected_utility_properties?.() || [];
+
+		return {
+			filters: {
+				name: ["in", selected_properties.length ? selected_properties : ["__none"]],
+			},
+		};
+	};
+
+	dialog.$wrapper.find(".modal-dialog").css("max-width", "max-content");
+	dialog.$wrapper.find(".modal-content").css("width", "1000px");
+	dialog.show();
+
+	const appliedStyleMap = new WeakMap();
+
+	const observer = new MutationObserver(() => {
+		const openGridRow = document.querySelector(".grid-row.grid-row-open");
+
+		if (openGridRow && !openGridRow.classList.contains("custom-grid-modal")) {
+			openGridRow.classList.add("custom-grid-modal");
+
+			const customStyles = {
+				background: "#fff",
+				zIndex: "1051",
+				padding: "50px",
+				position: "fixed",
+				top: "60px",
+				left: "50%",
+				transform: "translateX(-50%)",
+				maxWidth: "900px",
+				width: "100%",
+				maxHeight: "90vh",
+				overflowY: "auto",
+				overflowX: "hidden",
+				opacity: "1",
+				pointerEvents: "auto",
+				boxShadow: "0 0 5px rgba(0, 0, 0, 0.3)",
+				borderRadius: "8px",
+			};
+
+			appliedStyleMap.set(openGridRow, customStyles);
+			Object.assign(openGridRow.style, customStyles);
+		}
+
+		document.querySelectorAll(".custom-grid-modal").forEach((el) => {
+			if (!el.classList.contains("grid-row-open")) {
+				el.classList.remove("custom-grid-modal");
+
+				const appliedStyles = appliedStyleMap.get(el);
+				if (appliedStyles) {
+					for (const prop in appliedStyles) {
+						el.style[prop] = "";
+					}
+					appliedStyleMap.delete(el);
+				}
+			}
+		});
+	});
+
+	observer.observe(document.body, { childList: true, subtree: true });
+}
+
+async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
+	// Fetch customer details to pre-fill the dialog
+	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
+	const today = frappe.datetime.get_today(); // Get today's date
+
+	// Determine the title of the dialog based on document type
+	const title =
+		docType === "Sales Order" ? __("Create Sales Order") : __("Create Sales Invoice");
+	// Determine the primary action method to call on form submission
+	const primaryActionMethod =
+		docType === "Sales Order"
+			? "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc"
+			: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc";
+
+	// Define the fields for the dialog
+	const fields = [
+		...get_customer_section_fields(frm, customer?.message?.customer_name), // Customer-related fields
+		{
+			fieldname: "transaction_details_section",
+			fieldtype: "Section Break",
+			label: __(""),
+			collapsible: 0,
+		},
+		{
+			fieldname: "posting_date", // Use posting_date for both for consistency, label will change
+			label: docType === "Sales Order" ? __("Date") : __("Posting Date"),
+			fieldtype: "Date",
+			default: today,
+			reqd: 1,
+		},
+		{
+			fieldname: "col_break_transaction", // Column Break for 2 columns in transaction details
+			fieldtype: "Column Break",
+		},
+		{
+			fieldname: "company",
+			label: __("Company"),
+			fieldtype: "Link",
+			options: "Company",
+			default: frappe.defaults.get_user_default("Company"),
+			reqd: 1,
+		},
+	];
+
+	// Add due_date field specifically for Sales Invoice
+	if (docType === "Sales Invoice") {
+		fields.push({
+			fieldname: "due_date",
+			label: __("Due Date"),
+			fieldtype: "Date",
+			default: frappe.datetime.add_days(today, 30), // Default due date to 30 days from today
+			reqd: 1,
+		});
+	}
+
+	// Add fields for Property and Auto Repeat settings
+	fields.push(
+		{
+			fieldname: "property_auto_repeat_section", // New section for Property and Auto Repeat
+			fieldtype: "Section Break",
+			label: __(""),
+			collapsible: 0,
+		},
+		{
+			fieldname: "utility_property",
+			label: __("Property"),
+			fieldtype: "Link",
+			options: "Utility Property",
+			// Custom query to filter properties based on `requested_properties` in the parent form
+			get_query: () => {
+				const properties = (frm.doc.requested_properties || [])
+					.map((p) => p.utility_property)
+					.filter(Boolean);
+
+				// If no properties in requested_properties, don't filter
+				if (!properties.length) {
+					return {};
+				}
+
+				return {
+					filters: [["name", "in", properties]],
+				};
+			},
+			// Logic to execute when the utility_property field changes
+			change: function () {
+				let selected_value = this.get_value(); // Get the currently selected property
+				let items = dialog.get_value("items_table") || []; // Get current items in the table
+
+				let property_line = null;
+				if (selected_value) {
+					// Find the corresponding property line in the parent form's requested_properties
+					property_line = (frm.doc.requested_properties || []).find(
+						(prop) => prop.utility_property === selected_value
+					);
+				}
+
+				// Update items with property and frequency if a matching property line is found
+				if (property_line) {
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = property_line.frequency; // Set frequency from property line
+
+						// Set adjustment_rule if it exists in the property line
+						if (property_line.adjustment_rule) {
+							dialog.set_value("adjustment_rule", property_line.adjustment_rule);
+						} // Set start_date if it exists in the property line
+						if (property_line.start_date) {
+							dialog.set_value("start_date", property_line.start_date);
+						} // Set end_date if it exists in the property line
+						if (property_line.end_date) {
+							dialog.set_value("end_date", property_line.end_date);
+						}
+					});
+				} else {
+					// Clear property and frequency from items if no matching property line
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = null;
+					});
+					// Clear auto-repeat dates if no property is selected or matched
+					dialog.set_value("start_date", null);
+					dialog.set_value("end_date", null);
+				}
+
+				dialog.set_value("items_table", items); // Update the items table in the dialog
+			},
+		},
+		{
+			fieldname: "adjustment_rule",
+			label: __("Billing Adjustment Rule"),
+			fieldtype: "Link",
+			options: "Billing Adjustment Rule",
+			depends_on: "eval:doc.enable_auto_repeat==1",
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
+			description: __("Rule defining how billing amounts will adjust over time"),
+		},
+		{
+			fieldname: "col_break_auto_repeat", // Column Break for 2 columns in this new section
+			fieldtype: "Column Break",
+		},
+		{
+			fieldname: "enable_auto_repeat",
+			label: __("Enable Auto Repeat"),
+			fieldtype: "Check",
+			default: 0,
+			description: __("Enable recurring billing for this document"),
+			change: function () {
+				// When enable_auto_repeat changes, update the visibility and mandatory status of date fields
+				const isChecked = this.get_value();
+				dialog.toggle_display(["start_date", "end_date", "adjustment_rule"], isChecked);
+				dialog.set_df_property("start_date", "reqd", isChecked);
+				dialog.set_df_property("end_date", "reqd", isChecked);
+				dialog.set_df_property("adjustment_rule", "reqd", isChecked);
+
+				// If enabled, and a property is selected, auto-set start date
+				if (isChecked && dialog.get_value("utility_property")) {
+					const selectedProperty = dialog.get_value("utility_property");
+					const property_line = (frm.doc.requested_properties || []).find(
+						(prop) => prop.utility_property === selectedProperty
+					);
+
+					if (property_line) {
+						const startDate = today;
+						dialog.set_value("start_date", startDate);
+						// No automatic end date calculation without calculateEndDate
+					}
+				} else if (!isChecked) {
+					// If disabled, clear the dates
+					dialog.set_value("start_date", null);
+					dialog.set_value("end_date", null);
+				}
+			},
+		},
+		{
+			fieldname: "start_date",
+			label: __("Recurring Billing Start Date"),
+			fieldtype: "Date",
+			default: today, // Default start date to today
+			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
+			description: __("Date when recurring billing will begin"),
+		},
+		{
+			fieldname: "end_date",
+			label: __("Recurring Billing End Date"),
+			fieldtype: "Date",
+			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
+			description: __("Date when recurring billing will stop"),
+		},
+		{
+			fieldname: "items_table_section", // New section for Items Table
+			fieldtype: "Section Break",
+			label: __(""),
+			collapsible: 0,
+		},
+		{
+			fieldname: "items_table",
+			fieldtype: "Table",
+			label: __("Items"),
+			fields: get_item_table_fields(frm), // Get item table field definitions
+			data: prepare_items_data(frm), // Prepare initial data for the item table
+			cannot_add_rows: !allowAdditionalRows, // Prevent adding rows if not allowed
+			// Custom handler for when a row in the table is edited (opens a row modal)
+			on_edit: function (row, row_modal) {
+				// Hide parent dialog temporarily to avoid overlap
+				dialog.$wrapper.addClass("frappe-modal-hidden");
+
+				// Ensure row modal has a higher z-index to be on top
+				row_modal.$wrapper.css("z-index", 1052);
+
+				// On close of the row modal, show the parent dialog again
+				row_modal.onhide = () => {
+					dialog.$wrapper.removeClass("frappe-modal-hidden");
+				};
+			},
+		}
+	);
+
+	// Create a new Frappe UI Dialog instance
+	const dialog = new frappe.ui.Dialog({
+		title: title,
+		fields: fields,
+		primary_action_label: __("Create"),
+		// Primary action to be executed when the "Create" button is clicked
+		primary_action: function (values) {
+			// Map table data to the required format for the API call
+			const items = values.items_table.map((row) => ({
+				// Include all necessary fields from the dialog item rows
+				item_code: row.item_code,
+				qty: row.qty,
+				rate: row.rate,
+				amount: row.amount,
+				warehouse: row.warehouse,
+				utility_property: row.utility_property,
+				frequency: row.frequency, // Ensure frequency is passed if applicable
+				...row, // Include any other relevant fields from the item table
+			}));
+
+			// Prepare arguments for the API call
+			const args = {
+				docname: frm.doc.name, // Parent document name
+				items: items,
+				customer: values.customer,
+				customer_name: values.customer_name,
+				company: values.company,
+				property: values.utility_property, // Pass the selected property
+				enable_auto_repeat: values.enable_auto_repeat, // Pass the checkbox value
+				adjustment_rule: values.adjustment_rule, // Pass the adjustment rule if auto repeat is enabled
+				start_date: values.start_date, // Pass the start date
+				end_date: values.end_date, // Pass the end date
+			};
+
+			// Add transaction-specific dates based on document type
+			if (docType === "Sales Order") {
+				args.transaction_date = values.posting_date;
+			} else {
+				args.posting_date = values.posting_date;
+				args.due_date = values.due_date;
+			}
+
+			// Make the API call to create the document
+			frappe.call({
+				method: primaryActionMethod,
+				args: args,
+				callback: function (response) {
+					dialog.hide(); // Hide the dialog after the call
+					if (response.message) {
+						// Show success message and navigate to the newly created document
+						frappe.show_alert({
+							message: `${docType} created successfully!`,
+							indicator: "green",
+						});
+						frappe.set_route("Form", docType, response.message);
+					}
+				},
+			});
+		},
+	});
+
+	// Configure the dialog after initialization (e.g., initial field visibility)
+	configure_dialog(dialog, frm);
+
+	// Manually trigger initial visibility for auto-repeat fields based on default value
+	dialog.toggle_display(
+		["start_date", "end_date", "adjustment_rule"],
+		dialog.get_value("enable_auto_repeat")
+	);
+}
+
+// Update the action buttons to use the new common modal function
 async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
@@ -572,7 +1060,7 @@ async function addActionButtons(frm) {
 			frm.add_custom_button(
 				__("Sales Order / Deposit"),
 				function () {
-					showSalesOrderModal(frm, enableExtraRows);
+					showSalesDocumentModal(frm, "Sales Order", enableExtraRows);
 				},
 				__("Create")
 			);
@@ -604,7 +1092,7 @@ async function addActionButtons(frm) {
 				frm.add_custom_button(
 					__("Sales Invoice"),
 					function () {
-						showSalesInvoiceModal(frm, enableExtraRows);
+						showSalesDocumentModal(frm, "Sales Invoice", enableExtraRows);
 					},
 					__("Create")
 				);
@@ -688,443 +1176,6 @@ async function addActionButtons(frm) {
 			__("Create")
 		);
 	}
-}
-// Common function to get item table fields configuration dynamically from the form
-function get_item_table_fields(frm) {
-	const child_table = frm.fields_dict["items"];
-	const child_fields = child_table.grid.docfields;
-
-	// Filter and map fields with custom logic
-	const dialog_item_fields = child_fields.map((field) => {
-		let config = {
-			label: field.label,
-			fieldname: field.fieldname,
-			fieldtype: field.fieldtype,
-			in_list_view: field.in_list_view,
-			read_only: field.read_only,
-			depends_on: field.depends_on,
-			options: field.options,
-			reqd: field.reqd,
-			default: field.default,
-		};
-
-		// Add onchange handlers
-		if (field.fieldname === "qty" || field.fieldname === "rate") {
-			config.onchange = function () {
-				calculate_row_amount(this.grid_row);
-			};
-		}
-
-		if (field.fieldname === "item_code") {
-			config.onchange = function () {
-				const row = this.grid_row;
-				if (this.value) {
-					frappe.call({
-						method: "frappe.client.get_value",
-						args: {
-							doctype: "Item",
-							fieldname: ["item_name", "standard_rate"],
-							filters: { name: this.value },
-						},
-						callback: (r) => {
-							if (!r.exc) {
-								row.doc.item_name = r.message.item_name;
-								row.doc.rate = r.message.standard_rate;
-								calculate_row_amount(row);
-								refresh_field("items_table");
-							}
-						},
-					});
-				}
-			};
-		}
-
-		// Ensure utility_property is visible in the list view
-		if (field.fieldname === "utility_property") {
-			config.in_list_view = 1;
-			config.reqd = 1;
-		}
-
-		return config;
-	});
-
-	return dialog_item_fields;
-}
-
-// Common function to prepare items data dynamically based on allowed fields
-function prepare_items_data(frm) {
-	const child_table = frm.fields_dict["items"];
-	const child_fields = child_table.grid.docfields;
-	const allowedFields = child_fields.map((f) => f.fieldname);
-
-	return frm.doc.items.map((item) => {
-		const qty = item.qty || 1;
-		const rate = item.rate || 0;
-
-		// Original data with only the necessary fields
-		const fullData = {
-			name: item.name,
-			item_code: item.item_code,
-			rate: rate,
-			amount: flt(rate * qty),
-			qty: qty,
-			warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
-			...item, // Include all other fields from the original item
-		};
-
-		// Filter out fields not in child table fields
-		return Object.fromEntries(
-			Object.entries(fullData).filter(([key]) => allowedFields.includes(key))
-		);
-	});
-}
-
-// Common function to calculate row amount
-function calculate_row_amount(row) {
-	const qty = parseFloat(row.doc.qty) || 0;
-	const rate = parseFloat(row.doc.rate) || 0;
-	row.doc.amount = parseFloat(qty * rate);
-	row.grid.refresh();
-}
-
-// Common function for customer section fields
-function get_customer_section_fields(frm, customerName) {
-	return [
-		{
-			fieldname: "customer_section",
-			fieldtype: "Section Break",
-			label: __("Customer Details"),
-			collapsible: 0,
-		},
-		{
-			fieldname: "customer",
-			label: __("Customer"),
-			fieldtype: "Link",
-			options: "Customer",
-			default: frm.doc.customer,
-			read_only: 1,
-		},
-		{
-			fieldname: "customer_name",
-			label: __("Customer Name"),
-			fieldtype: "Data",
-			default: customerName,
-			read_only: 1,
-		},
-		{
-			fieldname: "col_break",
-			fieldtype: "Column Break",
-		},
-	];
-}
-function configure_dialog(dialog, frm) {
-	dialog.fields_dict["items_table"].grid.get_field("utility_property").get_query = function () {
-		const selected_properties = frm.get_selected_utility_properties?.() || [];
-
-		return {
-			filters: {
-				name: ["in", selected_properties.length ? selected_properties : ["__none"]],
-			},
-		};
-	};
-
-	dialog.$wrapper.find(".modal-dialog").css("max-width", "max-content");
-	dialog.$wrapper.find(".modal-content").css("width", "1000px");
-	dialog.show();
-
-	const appliedStyleMap = new WeakMap();
-
-	const observer = new MutationObserver(() => {
-		const openGridRow = document.querySelector(".grid-row.grid-row-open");
-
-		if (openGridRow && !openGridRow.classList.contains("custom-grid-modal")) {
-			openGridRow.classList.add("custom-grid-modal");
-
-			const customStyles = {
-				background: "#fff",
-				zIndex: "1051",
-				padding: "50px",
-				position: "fixed",
-				top: "60px",
-				left: "50%",
-				transform: "translateX(-50%)",
-				maxWidth: "900px",
-				width: "100%",
-				maxHeight: "90vh",
-				overflowY: "auto",
-				overflowX: "hidden",
-				opacity: "1",
-				pointerEvents: "auto",
-				boxShadow: "0 0 5px rgba(0, 0, 0, 0.3)",
-				borderRadius: "8px",
-			};
-
-			appliedStyleMap.set(openGridRow, customStyles);
-			Object.assign(openGridRow.style, customStyles);
-		}
-
-		document.querySelectorAll(".custom-grid-modal").forEach((el) => {
-			if (!el.classList.contains("grid-row-open")) {
-				el.classList.remove("custom-grid-modal");
-
-				const appliedStyles = appliedStyleMap.get(el);
-				if (appliedStyles) {
-					for (const prop in appliedStyles) {
-						el.style[prop] = "";
-					}
-					appliedStyleMap.delete(el);
-				}
-			}
-		});
-	});
-
-	observer.observe(document.body, { childList: true, subtree: true });
-}
-
-async function showSalesOrderModal(frm, allowAdditionalRows = false) {
-	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
-
-	const dialog = new frappe.ui.Dialog({
-		title: __("Create Sales Order"),
-		fields: [
-			...get_customer_section_fields(frm, customer?.message?.customer_name),
-			{
-				fieldname: "transaction_date",
-				label: __("Date"),
-				fieldtype: "Date",
-				default: frappe.datetime.get_today(),
-				reqd: 1,
-			},
-			{
-				fieldname: "company",
-				label: __("Company"),
-				fieldtype: "Link",
-				options: "Company",
-				default: frappe.defaults.get_user_default("Company"),
-				reqd: 1,
-			},
-			{
-				fieldname: "items_section",
-				fieldtype: "Section Break",
-				label: __("Select Items"),
-				collapsible: 0,
-			},
-
-			{
-				fieldname: "utility_property",
-				label: __("Property"),
-				fieldtype: "Link",
-				options: "Utility Property",
-				reqd: 1,
-				get_query: () => {
-					const properties = (frm.doc.requested_properties || [])
-						.map((p) => p.utility_property)
-						.filter(Boolean);
-					return {
-						filters: [["name", "in", properties]],
-					};
-				},
-				change: function () {
-					let selected_value = this.get_value();
-					let items = dialog.get_value("items_table") || [];
-
-					let frequency = null;
-					frm.doc.requested_properties.forEach((property) => {
-						if (property.utility_property === selected_value) {
-							frequency = property.frequency;
-						}
-					});
-
-					items.forEach((row) => {
-						row.utility_property = selected_value;
-						row.frequency = frequency;
-					});
-
-					dialog.set_value("frequency", frequency);
-					dialog.set_value("items_table", items);
-				},
-			},
-			{
-				fieldname: "items_table",
-				fieldtype: "Table",
-				label: __("Items"),
-				fields: get_item_table_fields(frm),
-				data: prepare_items_data(frm),
-				cannot_add_rows: !allowAdditionalRows,
-			},
-		],
-		primary_action_label: __("Create"),
-		primary_action: function (values) {
-			const items = values.items_table.map((row) => {
-				return {
-					name: row.name,
-					item_code: row.item_code,
-					qty: row.qty,
-					rate: row.rate,
-					amount: row.amount,
-					warehouse: row.warehouse,
-				};
-			});
-
-			frappe.call({
-				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc",
-				args: {
-					docname: frm.doc.name,
-					items: items,
-					customer: values.customer,
-					customer_name: values.customer_name,
-					transaction_date: values.transaction_date,
-					company: values.company,
-				},
-				callback: function (response) {
-					dialog.hide();
-					if (response.message) {
-						frappe.show_alert({
-							message: __("Sales Order created successfully!"),
-							indicator: "green",
-						});
-						frappe.set_route("Form", "Sales Order", response.message);
-					}
-				},
-			});
-		},
-	});
-
-	configure_dialog(dialog, frm);
-}
-
-async function showSalesInvoiceModal(frm, allowAdditionalRows = false) {
-	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
-	const today = frappe.datetime.get_today();
-
-	const dialog = new frappe.ui.Dialog({
-		title: __("Create Sales Invoice"),
-		fields: [
-			...get_customer_section_fields(frm, customer?.message?.customer_name),
-			{
-				fieldname: "posting_date",
-				label: __("Posting Date"),
-				fieldtype: "Date",
-				default: today,
-				reqd: 1,
-			},
-			{
-				fieldname: "company",
-				label: __("Company"),
-				fieldtype: "Link",
-				options: "Company",
-				default: frappe.defaults.get_user_default("Company"),
-				reqd: 1,
-			},
-			{
-				fieldname: "due_date",
-				label: __("Due Date"),
-				fieldtype: "Date",
-				default: frappe.datetime.add_days(today, 30),
-				reqd: 1,
-			},
-
-			// Items Section
-			{
-				fieldname: "items_section",
-				fieldtype: "Section Break",
-				label: __("Select Items"),
-				collapsible: 0,
-			},
-			{
-				fieldname: "utility_property",
-				label: __("Property"),
-				fieldtype: "Link",
-				options: "Utility Property",
-				reqd: 1,
-				get_query: () => {
-					const properties = (frm.doc.requested_properties || [])
-						.map((p) => p.utility_property)
-						.filter(Boolean);
-					return {
-						filters: [["name", "in", properties]],
-					};
-				},
-				change: function () {
-					let selected_value = this.get_value();
-					let items = dialog.get_value("items_table") || [];
-
-					let frequency = null;
-					frm.doc.requested_properties.forEach((property) => {
-						if (property.utility_property === selected_value) {
-							frequency = property.frequency;
-						}
-					});
-
-					items.forEach((row) => {
-						row.utility_property = selected_value;
-						row.frequency = frequency;
-					});
-
-					dialog.set_value("frequency", frequency);
-					dialog.set_value("items_table", items);
-				},
-			},
-			{
-				fieldname: "items_table",
-				fieldtype: "Table",
-				label: __("Items"),
-				fields: get_item_table_fields(frm),
-				data: prepare_items_data(frm),
-				cannot_add_rows: !allowAdditionalRows,
-				on_edit: function (row, row_modal) {
-					// Hide parent dialog
-					dialog.$wrapper.addClass("frappe-modal-hidden");
-
-					// Ensure row modal has a higher z-index
-					row_modal.$wrapper.css("z-index", 1052);
-
-					// On close of the row modal, show the parent dialog again
-					row_modal.onhide = () => {
-						dialog.$wrapper.removeClass("frappe-modal-hidden");
-					};
-				},
-			},
-		],
-		primary_action_label: __("Create"),
-		primary_action: function (values) {
-			const items = values.items_table.map((row) => ({
-				name: row.name,
-				item_code: row.item_code,
-				qty: row.qty,
-				rate: row.rate,
-				amount: row.amount,
-				warehouse: row.warehouse,
-				...row, // Include all other fields from the dialog
-			}));
-
-			frappe.call({
-				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc",
-				args: {
-					docname: frm.doc.name,
-					items: items,
-					customer: values.customer,
-					customer_name: values.customer_name,
-					posting_date: values.posting_date,
-					due_date: values.due_date,
-					company: values.company,
-					property: values.utility_property,
-				},
-				callback: function (response) {
-					dialog.hide();
-					if (response.message) {
-						frappe.show_alert({
-							message: __("Sales Invoice created successfully!"),
-							indicator: "green",
-						});
-						frappe.set_route("Form", "Sales Invoice", response.message);
-					}
-				},
-			});
-		},
-	});
-
-	configure_dialog(dialog, frm);
 }
 
 // Handle the response from the server

@@ -1,0 +1,10 @@
+[
+  {
+    "doctype": "Customer Group",
+    "customer_group_name": "Standard Residential"
+  },
+  {
+    "doctype": "Customer Group",
+    "customer_group_name": "Standard Commercial"
+  }
+]

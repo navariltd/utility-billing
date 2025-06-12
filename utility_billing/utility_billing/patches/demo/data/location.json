@@ -1,0 +1,34 @@
+[
+  {
+    "doctype": "Location",
+    "location_name": "Nairobi"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Mombasa"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Kisumu"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Ruiru"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Kilimani"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Westlands"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Runda"
+  },
+  {
+    "doctype": "Location",
+    "location_name": "Kileleshwa"
+  }
+]
