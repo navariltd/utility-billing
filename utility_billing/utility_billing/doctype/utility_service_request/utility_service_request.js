@@ -718,17 +718,22 @@ function configure_dialog(dialog, frm) {
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
+	// Fetch customer details to pre-fill the dialog
 	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
-	const today = frappe.datetime.get_today();
+	const today = frappe.datetime.get_today(); // Get today's date
+
+	// Determine the title of the dialog based on document type
 	const title =
 		docType === "Sales Order" ? __("Create Sales Order") : __("Create Sales Invoice");
+	// Determine the primary action method to call on form submission
 	const primaryActionMethod =
 		docType === "Sales Order"
 			? "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc"
 			: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc";
 
+	// Define the fields for the dialog
 	const fields = [
-		...get_customer_section_fields(frm, customer?.message?.customer_name),
+		...get_customer_section_fields(frm, customer?.message?.customer_name), // Customer-related fields
 		{
 			fieldname: "transaction_details_section",
 			fieldtype: "Section Break",
@@ -756,16 +761,18 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		},
 	];
 
+	// Add due_date field specifically for Sales Invoice
 	if (docType === "Sales Invoice") {
 		fields.push({
 			fieldname: "due_date",
 			label: __("Due Date"),
 			fieldtype: "Date",
-			default: frappe.datetime.add_days(today, 30),
+			default: frappe.datetime.add_days(today, 30), // Default due date to 30 days from today
 			reqd: 1,
 		});
 	}
 
+	// Add fields for Property and Auto Repeat settings
 	fields.push(
 		{
 			fieldname: "property_auto_repeat_section", // New section for Property and Auto Repeat
@@ -778,32 +785,73 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Property"),
 			fieldtype: "Link",
 			options: "Utility Property",
+			// Custom query to filter properties based on `requested_properties` in the parent form
 			get_query: () => {
 				const properties = (frm.doc.requested_properties || [])
 					.map((p) => p.utility_property)
 					.filter(Boolean);
+
+				// If no properties in requested_properties, don't filter
+				if (!properties.length) {
+					return {};
+				}
+
 				return {
 					filters: [["name", "in", properties]],
 				};
 			},
+			// Logic to execute when the utility_property field changes
 			change: function () {
-				let selected_value = this.get_value();
-				let items = dialog.get_value("items_table") || [];
+				let selected_value = this.get_value(); // Get the currently selected property
+				let items = dialog.get_value("items_table") || []; // Get current items in the table
 
-				let frequency = null;
-				frm.doc.requested_properties.forEach((property) => {
-					if (property.utility_property === selected_value) {
-						frequency = property.frequency;
-					}
-				});
+				let property_line = null;
+				if (selected_value) {
+					// Find the corresponding property line in the parent form's requested_properties
+					property_line = (frm.doc.requested_properties || []).find(
+						(prop) => prop.utility_property === selected_value
+					);
+				}
 
-				items.forEach((row) => {
-					row.utility_property = selected_value;
-					row.frequency = frequency;
-				});
+				// Update items with property and frequency if a matching property line is found
+				if (property_line) {
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = property_line.frequency; // Set frequency from property line
 
-				dialog.set_value("items_table", items);
+						// Set adjustment_rule if it exists in the property line
+						if (property_line.adjustment_rule) {
+							dialog.set_value("adjustment_rule", property_line.adjustment_rule);
+						} // Set start_date if it exists in the property line
+						if (property_line.start_date) {
+							dialog.set_value("start_date", property_line.start_date);
+						} // Set end_date if it exists in the property line
+						if (property_line.end_date) {
+							dialog.set_value("end_date", property_line.end_date);
+						}
+					});
+				} else {
+					// Clear property and frequency from items if no matching property line
+					items.forEach((row) => {
+						row.utility_property = selected_value;
+						row.frequency = null;
+					});
+					// Clear auto-repeat dates if no property is selected or matched
+					dialog.set_value("start_date", null);
+					dialog.set_value("end_date", null);
+				}
+
+				dialog.set_value("items_table", items); // Update the items table in the dialog
 			},
+		},
+		{
+			fieldname: "adjustment_rule",
+			label: __("Billing Adjustment Rule"),
+			fieldtype: "Link",
+			options: "Billing Adjustment Rule",
+			depends_on: "eval:doc.enable_auto_repeat==1",
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
+			description: __("Rule defining how billing amounts will adjust over time"),
 		},
 		{
 			fieldname: "col_break_auto_repeat", // Column Break for 2 columns in this new section
@@ -814,6 +862,50 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Enable Auto Repeat"),
 			fieldtype: "Check",
 			default: 0,
+			description: __("Enable recurring billing for this document"),
+			change: function () {
+				// When enable_auto_repeat changes, update the visibility and mandatory status of date fields
+				const isChecked = this.get_value();
+				dialog.toggle_display(["start_date", "end_date", "adjustment_rule"], isChecked);
+				dialog.set_df_property("start_date", "reqd", isChecked);
+				dialog.set_df_property("end_date", "reqd", isChecked);
+				dialog.set_df_property("adjustment_rule", "reqd", isChecked);
+
+				// If enabled, and a property is selected, auto-set start date
+				if (isChecked && dialog.get_value("utility_property")) {
+					const selectedProperty = dialog.get_value("utility_property");
+					const property_line = (frm.doc.requested_properties || []).find(
+						(prop) => prop.utility_property === selectedProperty
+					);
+
+					if (property_line) {
+						const startDate = today;
+						dialog.set_value("start_date", startDate);
+						// No automatic end date calculation without calculateEndDate
+					}
+				} else if (!isChecked) {
+					// If disabled, clear the dates
+					dialog.set_value("start_date", null);
+					dialog.set_value("end_date", null);
+				}
+			},
+		},
+		{
+			fieldname: "start_date",
+			label: __("Recurring Billing Start Date"),
+			fieldtype: "Date",
+			default: today, // Default start date to today
+			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
+			description: __("Date when recurring billing will begin"),
+		},
+		{
+			fieldname: "end_date",
+			label: __("Recurring Billing End Date"),
+			fieldtype: "Date",
+			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
+			description: __("Date when recurring billing will stop"),
 		},
 		{
 			fieldname: "items_table_section", // New section for Items Table
@@ -825,14 +917,15 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldname: "items_table",
 			fieldtype: "Table",
 			label: __("Items"),
-			fields: get_item_table_fields(frm),
-			data: prepare_items_data(frm),
-			cannot_add_rows: !allowAdditionalRows,
+			fields: get_item_table_fields(frm), // Get item table field definitions
+			data: prepare_items_data(frm), // Prepare initial data for the item table
+			cannot_add_rows: !allowAdditionalRows, // Prevent adding rows if not allowed
+			// Custom handler for when a row in the table is edited (opens a row modal)
 			on_edit: function (row, row_modal) {
-				// Hide parent dialog
+				// Hide parent dialog temporarily to avoid overlap
 				dialog.$wrapper.addClass("frappe-modal-hidden");
 
-				// Ensure row modal has a higher z-index
+				// Ensure row modal has a higher z-index to be on top
 				row_modal.$wrapper.css("z-index", 1052);
 
 				// On close of the row modal, show the parent dialog again
@@ -843,11 +936,14 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		}
 	);
 
+	// Create a new Frappe UI Dialog instance
 	const dialog = new frappe.ui.Dialog({
 		title: title,
 		fields: fields,
 		primary_action_label: __("Create"),
+		// Primary action to be executed when the "Create" button is clicked
 		primary_action: function (values) {
+			// Map table data to the required format for the API call
 			const items = values.items_table.map((row) => ({
 				// Include all necessary fields from the dialog item rows
 				item_code: row.item_code,
@@ -857,20 +953,24 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				warehouse: row.warehouse,
 				utility_property: row.utility_property,
 				frequency: row.frequency, // Ensure frequency is passed if applicable
-				// Add any other relevant fields from the item table
-				...row,
+				...row, // Include any other relevant fields from the item table
 			}));
 
+			// Prepare arguments for the API call
 			const args = {
-				docname: frm.doc.name,
+				docname: frm.doc.name, // Parent document name
 				items: items,
 				customer: values.customer,
 				customer_name: values.customer_name,
 				company: values.company,
 				property: values.utility_property, // Pass the selected property
-				enable_auto_repeat: values.enable_auto_repeat, // Always pass the checkbox value
+				enable_auto_repeat: values.enable_auto_repeat, // Pass the checkbox value
+				adjustment_rule: values.adjustment_rule, // Pass the adjustment rule if auto repeat is enabled
+				start_date: values.start_date, // Pass the start date
+				end_date: values.end_date, // Pass the end date
 			};
 
+			// Add transaction-specific dates based on document type
 			if (docType === "Sales Order") {
 				args.transaction_date = values.posting_date;
 			} else {
@@ -878,12 +978,14 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				args.due_date = values.due_date;
 			}
 
+			// Make the API call to create the document
 			frappe.call({
 				method: primaryActionMethod,
 				args: args,
 				callback: function (response) {
-					dialog.hide();
+					dialog.hide(); // Hide the dialog after the call
 					if (response.message) {
+						// Show success message and navigate to the newly created document
 						frappe.show_alert({
 							message: `${docType} created successfully!`,
 							indicator: "green",
@@ -895,7 +997,14 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		},
 	});
 
+	// Configure the dialog after initialization (e.g., initial field visibility)
 	configure_dialog(dialog, frm);
+
+	// Manually trigger initial visibility for auto-repeat fields based on default value
+	dialog.toggle_display(
+		["start_date", "end_date", "adjustment_rule"],
+		dialog.get_value("enable_auto_repeat")
+	);
 }
 
 // Update the action buttons to use the new common modal function
