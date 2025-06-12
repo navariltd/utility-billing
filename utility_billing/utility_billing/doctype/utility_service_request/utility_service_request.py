@@ -20,7 +20,6 @@ class UtilityServiceRequest(Document):
         self.validate_contract_dates()
         self.validate_child_items()
 
-
     def before_update_after_submit(self):
         # Re-run validation logic when updating after submission
         self.validate_contract_dates()
@@ -29,7 +28,6 @@ class UtilityServiceRequest(Document):
     def set_customer_if_needed(self):
         if self.service_request_from == "Customer":
             self.customer = self.party_name
-
         
     def before_submit(self):
         self.status = "To Bill"
@@ -470,100 +468,126 @@ def get_utility_bill_structure_details(name):
         "dimensions": dimensions
     }
 
-
-
 @frappe.whitelist()
-def create_sales_order_doc(docname, items, customer=None, customer_name=None, transaction_date=None, company=None):
+def create_sales_order_doc(
+    docname: str,
+    items: list | str,
+    customer: str = None,
+    customer_name: str = None,
+    transaction_date: str = None,
+    company: str = None,
+    property: str = None,
+    enable_auto_repeat: str = None,
+    adjustment_rule: str = None,
+    start_date: str = None,
+    end_date: str = None
+):
     """
-    Create a Sales Order from Utility Service Request
-    
-    :param docname: Utility Service Request name
-    :param items: List of item dictionaries containing:
-        - item_code
-        - qty
-        - rate
-        - amount
-        - warehouse
-        - item_name (optional)
-    :param customer: Customer ID
-    :param transaction_date: Order date
-    :param company: Company 
+    Creates a Sales Order from a Utility Service Request and optionally creates an Auto Repeat document
+    with contract details stored in the Auto Repeat document.
+
+    :param docname: Utility Service Request name (str)
+    :param items: List of item dictionaries (list or JSON string)
+                  Each item dictionary must contain 'item_code', 'qty', and 'rate'.
+    :param customer: Customer ID (str, optional)
+    :param customer_name: Customer Name (str, optional)
+    :param transaction_date: Sales Order date (str, optional). If not provided,
+                             will attempt to use 'start_date' from utility property line.
+    :param company: Company (str, optional)
+    :param property: Utility Property name (str, optional)
+    :param enable_auto_repeat: Flag to enable auto repeat ('1' for true, others for false) (str, optional)
+    :param adjustment_rule: Name of the Billing Adjustment Rule to use (str, optional).
+                            If not provided, will attempt to use from utility property line.
+    :param start_date: Auto Repeat start date (str, optional). If not provided,
+                       will attempt to use 'start_date' from utility property line.
+    :param end_date: Auto Repeat end date (str, optional). If not provided,
+                     will attempt to use 'end_date' from utility property line.
+    :return: The name of the created Sales Order (str)
+    :raises frappe.ValidationError: If items are not valid or required fields are missing.
     """
     if isinstance(items, str):
         try:
             items = json.loads(items)
-        except Exception as e:
-            frappe.throw(f"Failed to parse items JSON: {e}")
+        except json.JSONDecodeError:
+            frappe.throw("Items must be a valid JSON string or a list of item dictionaries.")
 
     if not isinstance(items, list):
         frappe.throw("Items must be a list of item dictionaries.")
 
     for item in items:
+        if not isinstance(item, dict):
+            frappe.throw("Each item in the 'items' list must be a dictionary.")
         if not item.get("item_code"):
-            frappe.throw("Item Code is required for all items")
-        if not item.get("qty"):
-            frappe.throw("Quantity is required for all items")
-        if item.get("rate") is None:  
-            frappe.throw("Rate is required for all items")
+            frappe.throw("Item Code is required for all items.")
+        if item.get("qty") is None: 
+            frappe.throw("Quantity is required for all items.")
+        if item.get("rate") is None: 
+            frappe.throw("Rate is required for all items.")
 
     usr = frappe.get_doc("Utility Service Request", docname)
 
-    so = frappe.new_doc("Sales Order")
-    so.update({
-        "customer": customer or usr.customer,
-        "customer_name": customer_name,
-        "payment_terms_template": usr.payment_terms_template,
-        "tc_name": usr.tc_name,
-        "terms": usr.terms,
-        "company": company or usr.company or frappe.defaults.get_user_default("company"),
-        "transaction_date": transaction_date or nowdate(),
-        "delivery_date": add_days(transaction_date or nowdate(), 7),
+    property_line = None
+    if property:
+        property_line = next(
+            (prop for prop in usr.requested_properties
+             if prop.utility_property == property),
+            None
+        )
+
+    final_transaction_date = transaction_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
+    final_start_date = start_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
+    final_end_date = end_date or (property_line.end_date if property_line else None)
+
+    so = frappe.get_doc({
+        "doctype": "Sales Order",
         "utility_service_request": docname,
-        "territory": usr.territory,
-        "price_list": usr.price_list,
-        "currency": usr.currency or frappe.defaults.get_user_default("currency"),
-        "conversion_rate": 1.0,
-        "selling_price_list": usr.price_list,
-        "ignore_pricing_rule": 1,
+        "customer": customer or usr.customer,
+        "customer_name": customer_name or usr.customer_name, 
+        "transaction_date": final_transaction_date,
+        "delivery_date": add_days(final_transaction_date, 7),
+        "company": company or usr.company, 
+        "items": []
     })
-    
-    for item in items:
-        item_code = item.get("item_code")
 
-        item_line = {
-            "item_code": item_code,
-            "item_name": item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name"),
-            "description": item.get("description") or frappe.db.get_value("Item", item_code, "description"),
-            "uom": item.get("uom") or frappe.db.get_value("Item", item_code, "stock_uom"),
-            "qty": float(item.get("qty", 0)),
-            "rate": float(item.get("rate", 0)),
-            "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
-            "conversion_factor": 1.0,
-        }
+    for item_data in items:
+        so.append("items", {
+            "item_code": item_data.get("item_code"),
+            "qty": item_data.get("qty"),
+            "rate": item_data.get("rate"),
+            "uom": item_data.get("uom"), 
+            "amount": item_data.get("amount") 
+        })
+    so.insert()
 
-        item_line["amount"] = float(item.get("amount", item_line["qty"] * item_line["rate"]))
+    if enable_auto_repeat == "1":
+        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
 
-        for key, value in item.items():
-            if key not in item_line:
-                item_line[key] = value
+        if actual_adjustment_rule_name:
+            adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
 
-        so.append("items", item_line)
+            auto_repeat_settings = {
+                "frequency": adjustment_rule_doc.frequency,
+                "start_date": final_start_date,
+                "end_date": final_end_date,
+                "utility_property": property,
+                "submit_on_creation": adjustment_rule_doc.submit_on_creation,
+                "repeat_on_day": adjustment_rule_doc.repeat_on_day,
+                "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
+                "repeat_on_days": adjustment_rule_doc.repeat_on_days,
+            }
 
-    so.insert(ignore_permissions=True)
-    
-    if frappe.db.get_single_value("Utility Billing Settings", "sales_order_creation_state") == "Submitted":
-        so.submit()
+            create_single_auto_repeat_with_contract_details(
+                so,
+                usr,
+                adjustment_rule_doc,
+                auto_repeat_settings
+            )
 
-    frappe.get_doc({
-        "doctype": "Comment",
-        "comment_type": "Info",
-        "reference_doctype": "Utility Service Request",
-        "reference_name": docname,
-        "content": f"Created Sales Order <a href='/app/sales-order/{so.name}'>{so.name}</a>"
-    }).insert(ignore_permissions=True)
+            add_transaction_comments(so, docname, auto_repeat_settings)
+        else:
+            frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
 
     return so.name
-
 
 @frappe.whitelist()
 def create_sales_invoice_doc(
@@ -660,7 +684,7 @@ def create_sales_invoice_doc(
     si.insert()
 
     if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or property_line.adjustment_rule
+        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
 
         if actual_adjustment_rule_name:
             adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
@@ -689,30 +713,37 @@ def create_sales_invoice_doc(
 
     return si.name
 
-
-def add_transaction_comments(sales_invoice, usr_name, auto_repeat=None):
+def add_transaction_comments(transaction, usr_name, auto_repeat=None):
     """
     Add comprehensive comments to Utility Service Request and associated Utility Property
-    documenting the sales invoice creation and auto-repeat setup.
+    documenting the transaction creation and auto-repeat setup.
     
     Args:
-        sales_invoice (Sales Invoice): The created sales invoice document
+        transaction (Document): The created transaction document (Sales Order or Sales Invoice)
         usr_name (str): Name of the Utility Service Request
         auto_repeat (dict): Auto repeat configuration if applicable
     """
-    def create_comment_content(title, si, show_property=True, show_request_link=False):
+    def create_comment_content(title, doc, show_property=True, show_request_link=False):
         """Helper function to generate standardized comment content"""
+        doc_type = doc.doctype
+        doc_name = doc.name
+        customer = doc.customer
+        customer_name = doc.customer_name
+        amount = doc.grand_total if hasattr(doc, 'grand_total') else doc.base_grand_total
+        date_field = 'posting_date' if doc_type == 'Sales Invoice' else 'transaction_date'
+        date_value = doc.get_formatted(date_field)
+        
         content = f"""
         <div class='small'>
             <strong>{title}:</strong> 
-            <a href='/app/sales-invoice/{si.name}'>{si.name}</a>
+            <a href='/app/{doc_type.lower().replace(" ", "-")}/{doc_name}'>{doc_name}</a>
             <br>
             <strong>Customer:</strong> 
-            <a href='/app/customer/{si.customer}'>{si.customer_name}</a>
+            <a href='/app/customer/{customer}'>{customer_name}</a>
             <br>
-            <strong>Amount:</strong> {si.get_formatted("grand_total")}
+            <strong>Amount:</strong> {amount}
             <br>
-            <strong>Posting Date:</strong> {si.get_formatted("posting_date")}
+            <strong>{date_field.title()}:</strong> {date_value}
         """
         
         if show_request_link:
@@ -734,12 +765,12 @@ def add_transaction_comments(sales_invoice, usr_name, auto_repeat=None):
             </a>
             """
         
-        if si.get("auto_repeat"):
-            auto_repeat_name = frappe.db.get_value("Auto Repeat", si.auto_repeat, "name")
+        if doc.get("auto_repeat"):
+            auto_repeat_name = frappe.db.get_value("Auto Repeat", doc.auto_repeat, "name")
             content += f"""
             <br>
-            <strong>Recurring Invoice:</strong> 
-            <a href='/app/auto-repeat/{si.auto_repeat}'>{auto_repeat_name}</a>
+            <strong>Recurring {doc_type}:</strong> 
+            <a href='/app/auto-repeat/{doc.auto_repeat}'>{auto_repeat_name}</a>
             <br>
             <strong>Frequency:</strong> {auto_repeat.get("frequency") if auto_repeat else ""}
             """
@@ -748,93 +779,26 @@ def add_transaction_comments(sales_invoice, usr_name, auto_repeat=None):
         return content
 
     # Add comment to Utility Service Request
-    usr_comment = create_comment_content("Created Sales Invoice", sales_invoice)
+    usr_comment = create_comment_content(f"Created {transaction.doctype}", transaction)
     add_comment("Utility Service Request", usr_name, usr_comment)
 
     # Add comment to Utility Property if associated
     if auto_repeat and auto_repeat.get("utility_property"):
         property_comment = create_comment_content(
-            "Sales Invoice Created", 
-            sales_invoice, 
+            f"{transaction.doctype} Created", 
+            transaction, 
             show_property=False,
             show_request_link=True
         )
         add_comment("Utility Property", auto_repeat.get("utility_property"), property_comment)
 
-def add_comment(doctype, docname, content):
-    """Helper function to add a comment to a document"""
-    frappe.get_doc({
-        "doctype": "Comment",
-        "comment_type": "Info",
-        "reference_doctype": doctype,
-        "reference_name": docname,
-        "content": content
-    }).insert(ignore_permissions=True)
-    
-
-def create_base_sales_invoice(usr, items, customer, customer_name, posting_date, due_date, company):
-    """Create the base sales invoice document."""
-    si = frappe.new_doc("Sales Invoice")
-    si.update({
-        "customer": customer or usr.customer,
-        "customer_name": customer_name,
-        "ignore_default_payment_terms_template": usr.ignore_default_payment_terms_template,
-        "payment_terms_template": usr.payment_terms_template,
-        "tc_name": usr.tc_name,
-        "terms": usr.terms,
-        "company": company or usr.company or frappe.defaults.get_user_default("company"),
-        "posting_date": posting_date or nowdate(),
-        "due_date": due_date or add_days(nowdate(), 30),
-        "utility_service_request": usr.name,
-        "currency": usr.currency or frappe.defaults.get_user_default("currency"),
-        "price_list": usr.price_list,
-        "selling_price_list": usr.price_list,
-        "conversion_rate": 1.0,
-        "ignore_pricing_rule": 1,
-    })
-
-    for item in items:
-        item_code = item.get("item_code")
-        item_line = {
-            "item_code": item_code,
-            "item_name": item.get("item_name") or frappe.db.get_value("Item", item_code, "item_name"),
-            "description": item.get("description") or frappe.db.get_value("Item", item_code, "description"),
-            "uom": item.get("uom") or frappe.db.get_value("Item", item_code, "stock_uom"),
-            "qty": float(item.get("qty", 0)),
-            "rate": float(item.get("rate", 0)),
-            "warehouse": item.get("warehouse") or frappe.defaults.get_user_default("warehouse"),
-            "conversion_factor": 1.0,
-            "amount": float(item.get("amount", float(item.get("qty", 0)) * float(item.get("rate", 0))))
-        }
-
-        # Add any additional fields
-        for key, value in item.items():
-            if key not in item_line:
-                item_line[key] = value
-
-        si.append("items", item_line)
-
-    si.insert(ignore_permissions=True)
-
-    if frappe.db.get_single_value("Utility Billing Settings", "sales_invoice_creation_state") == "Submitted":
-        si.submit()
-
-    return si
-
-
-def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, auto_repeat):
+def create_single_auto_repeat_with_contract_details(doc, usr, adjustment_rule, auto_repeat):
     """
-    Creates an Auto Repeat document for a Sales Invoice with comprehensive contract details,
-    including rent increment settings from the associated property.
-    
-    This function:
-    1. Retrieves increment settings from the property linked to the Utility Service Request
-    2. Calculates the appropriate end date for the first billing interval
-    3. Creates an Auto Repeat document with all contract metadata
-    4. Links the Auto Repeat to the Sales Invoice
+    Creates an Auto Repeat document for a transaction (Sales Order or Sales Invoice) with comprehensive contract details,
+    including increment settings from the associated property.
     
     Args:
-        si (Sales Invoice): The Sales Invoice document to be auto-repeated
+        doc (Document): The document to be auto-repeated (Sales Order or Sales Invoice)
         usr (Utility Service Request): The parent request containing property details
         auto_repeat (dict): Configuration for the auto-repeat including:
             - frequency: Daily/Weekly/Monthly/Yearly
@@ -846,11 +810,9 @@ def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, au
     Returns:
         None: Creates the Auto Repeat document directly
     """
-    from frappe.utils import getdate, add_months, nowdate
+    from frappe.utils import getdate, add_months
     
     # Get the specific property configuration from Utility Service Request
-    # This looks for the property matching the one specified in auto_repeat settings
-    # Property doc contains critical billing parameters like increment intervals and percentages
     property_doc = next(
         (prop for prop in usr.requested_properties 
          if prop.utility_property == auto_repeat.get("utility_property")),
@@ -867,27 +829,23 @@ def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, au
     contract_end_date = getdate(auto_repeat.get("end_date")) if auto_repeat.get("end_date") else None
     
     # Determine Auto Repeat end date:
-    # - With increments: End after first interval (but not beyond contract end)
-    # - Without increments: Use contract end date directly
     if has_increment:
-        # Calculate when the first billing interval should end
         interval_end_date = add_months(start_date, float(increment_interval))
         if adjustment_rule.effective_after_months and float(adjustment_rule.effective_after_months) > 0:
             interval_end_date = add_months(start_date, float(adjustment_rule.effective_after_months))
         
-        # Respect contract term limits if they exist
         if contract_end_date and interval_end_date > contract_end_date:
             end_date = contract_end_date
         else:
             end_date = interval_end_date
     else:
-        end_date = contract_end_date  # May be None for open-ended contracts
+        end_date = contract_end_date
     
-    # Create the Auto Repeat document with complete contract metadata
+    # Create the Auto Repeat document
     repeat_doc = frappe.get_doc({
         "doctype": "Auto Repeat",
-        "reference_doctype": "Sales Invoice",
-        "reference_document": si.name,  # Links to the specific invoice
+        "reference_doctype": doc.doctype,
+        "reference_document": doc.name,
         "frequency": auto_repeat.get("frequency"),
         "start_date": start_date,
         "end_date": end_date,
@@ -898,20 +856,20 @@ def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, au
         "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
         "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
         
-        # Contract metadata for reference and future processing
+        # Contract metadata
         "contract_start_date": start_date,
         "contract_end_date": contract_end_date,
         "adjustment_rule": adjustment_rule.name,
         "enable_increment": 1 if has_increment else 0, 
     })
     
-    # Save the Auto Repeat and link it to the invoice
+    # Save the Auto Repeat and link it to the document
     repeat_doc.insert(ignore_permissions=True)
-    si.db_set("auto_repeat", repeat_doc.name)
+    doc.db_set("auto_repeat", repeat_doc.name)
     
     # User feedback with actionable link
     msg = (f"Created Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> "
-           f"for {si.customer_name}'s invoice {si.name}")
+           f"for {doc.customer_name}'s {doc.doctype.lower()} {doc.name}")
     
     if has_increment:
         msg += (f"\n• First billing interval ends on {end_date} "
@@ -920,3 +878,13 @@ def create_single_auto_repeat_with_contract_details(si, usr, adjustment_rule, au
         msg += f"\n• Full contract term until {contract_end_date}"
     
     # frappe.msgprint(msg)
+
+def add_comment(doctype, docname, content):
+    """Helper function to add a comment to a document"""
+    frappe.get_doc({
+        "doctype": "Comment",
+        "comment_type": "Info",
+        "reference_doctype": doctype,
+        "reference_name": docname,
+        "content": content
+    }).insert(ignore_permissions=True)
