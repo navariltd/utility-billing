@@ -96,6 +96,12 @@ Get actionable insights from your utility and property data with our built-in re
 
 ## [![View Reports](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Reports.md)
 
+## ⚙️ Demo Data Management
+
+For testing and demonstration purposes, the Utility Billing & Property Management app provides a convenient way to generate and clear demo data. This allows you to quickly populate your system with sample records to explore functionalities without affecting your live data.
+
+[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Demo-Data.md)
+
 ## 🛠️ Installation (Self-Hosted)
 
 ```bash
