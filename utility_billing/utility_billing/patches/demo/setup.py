@@ -50,12 +50,12 @@ def delete_demo_data() -> None:
         company = "Utility and Rental (Demo)"
         
         create_transaction_deletion_record(company)
-        process_masters_deletion()
         delete_sales_orders()
         clear_meter_readings()
-        clear_bill_structures()
         clear_existing_contracts()
         clear_service_requests()
+        clear_bill_structures()
+        process_masters_deletion()
         delete_company(company)
         
         frappe.db.commit()

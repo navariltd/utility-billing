@@ -61,21 +61,40 @@ def delete_sales_orders() -> None:
             fields=["name", "docstatus", "customer"]
         )
     }
-    
+
     if not demo_sales_orders:
         return
-    
-    
+
     deleted_count = 0
     for so_name, so in demo_sales_orders.items():
         try:
-            if so.docstatus == 1:  
+            auto_repeats = frappe.get_all(
+                "Auto Repeat",
+                filters={"reference_doctype": "Sales Order", "reference_document": so_name},
+                fields=["name"]
+            )
+
+            for ar in auto_repeats:
+                try:
+                    ar_doc = frappe.get_doc("Auto Repeat", ar.name)
+                    if ar_doc.docstatus == 1:
+                        ar_doc.cancel()
+                    frappe.delete_doc("Auto Repeat", ar.name)
+                except Exception as e:
+                    frappe.db.rollback()
+                    frappe.log_error(f"Error handling Auto Repeat for Sales Order {so_name}: {e}")
+
+            if so.docstatus == 1:
                 frappe.get_doc("Sales Order", so_name).cancel()
+
             frappe.delete_doc("Sales Order", so_name)
             frappe.db.commit()
             deleted_count += 1
+
         except Exception as e:
             frappe.db.rollback()
+            frappe.log_error(f"Error deleting Sales Order {so_name}: {e}")
+
        
 def clear_meter_readings() -> None:
     readings = safe_load_json("data/meter_reading.json")
