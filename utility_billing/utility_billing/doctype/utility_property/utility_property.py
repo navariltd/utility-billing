@@ -53,6 +53,7 @@ class UtilityProperty(NestedSet):
                 asset_doc = frappe.get_doc({
                     "doctype": "Asset",
                     "item_code": self.item,
+                    "company": self.company,
                     "asset_name": self.property_name,
                     "asset_category": self.asset_category,
                     "naming_series": self.asset_naming_series or "ACC-ASS-.YYYY.-",
