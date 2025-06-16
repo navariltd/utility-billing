@@ -20,6 +20,7 @@
   "item",
   "column_break_sakg",
   "asset_category",
+  "purchase_date",
   "gross_purchase_amount",
   "other_info_section",
   "legal_description",
@@ -355,12 +356,20 @@
    "fieldname": "features_and_amenities_tab",
    "fieldtype": "Tab Break",
    "label": "Features and Amenities"
+  },
+  {
+   "depends_on": "eval: doc.is_fixed_asset == 1",
+   "fieldname": "purchase_date",
+   "fieldtype": "Date",
+   "label": "Purchase Date",
+   "mandatory_depends_on": "eval: (doc.is_fixed_asset == 1) && (!doc.item)",
+   "options": "Asset Category"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-05-23 17:55:39.595243",
+ "modified": "2025-06-16 06:35:19.983402",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",
