@@ -848,7 +848,7 @@ def create_single_auto_repeat_with_contract_details(doc, usr, adjustment_rule, a
         "reference_document": doc.name,
         "frequency": auto_repeat.get("frequency"),
         "start_date": start_date,
-        "end_date": end_date,
+        "end_date":  add_days(end_date, -1),
         "next_schedule_date": start_date,
         "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
         "notify_by_email": 0,
