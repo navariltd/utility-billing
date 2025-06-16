@@ -15,6 +15,7 @@ from .service_request import (
     clear_service_requests,
     clear_existing_contracts,
 )
+from .property_setup import delete_assets
 
 
 def run_demo_setup() -> None:
@@ -56,6 +57,7 @@ def delete_demo_data() -> None:
         clear_service_requests()
         clear_bill_structures()
         process_masters_deletion()
+        delete_assets()
         delete_company(company)
         
         frappe.db.commit()
@@ -104,6 +106,7 @@ def create_demo_record(item: Dict[str, Any]) -> None:
             
         filters: Dict[str, Union[str, int, float, bool]] = {}
         for field, value in item.items():
+            # Only add primitive types to filters, excluding lists and dictionaries
             if field != "doctype" and isinstance(value, (str, int, float, bool)) and not isinstance(value, list) and not isinstance(value, dict):
                 filters[field] = value
                 
@@ -112,7 +115,7 @@ def create_demo_record(item: Dict[str, Any]) -> None:
             return
             
         doc = frappe.get_doc(item)
-        doc.insert(ignore_permissions=True)
+        doc.insert(ignore_permissions=True, ignore_mandatory=True)
     except frappe.exceptions.DuplicateEntryError:
         frappe.logger().debug(f"Duplicate record for {item.get('doctype', 'Unknown')}, skipping")
     except Exception as e:
