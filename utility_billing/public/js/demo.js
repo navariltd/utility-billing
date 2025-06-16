@@ -1,6 +1,9 @@
 frappe.provide("utility_billing.demo");
 
 $(document).on("toolbar_setup", function () {
+	if (!frappe.user.has_role("System Manager")) {
+		return;
+	}
 	frappe.call({
 		method: "frappe.client.get_value",
 		args: {
