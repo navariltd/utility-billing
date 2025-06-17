@@ -185,6 +185,7 @@ def insert_service_requests() -> None:
                 "contract_length_months": contract_length,
                 "contract_template": request.get("contract_template"),
                 "utility_bill_structure": bill_structure,
+                "company": "Utility and Rental (Demo)"
             })
 
             assign_properties_to_request(doc, request.get("requested_properties", []), service_start, service_end, is_signed)
