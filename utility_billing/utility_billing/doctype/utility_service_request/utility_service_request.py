@@ -468,6 +468,7 @@ def get_utility_bill_structure_details(name):
         "dimensions": dimensions
     }
 
+
 @frappe.whitelist()
 def create_sales_order_doc(
     docname: str,
@@ -505,47 +506,18 @@ def create_sales_order_doc(
     :return: The name of the created Sales Order (str)
     :raises frappe.ValidationError: If items are not valid or required fields are missing.
     """
-    if isinstance(items, str):
-        try:
-            items = json.loads(items)
-        except json.JSONDecodeError:
-            frappe.throw("Items must be a valid JSON string or a list of item dictionaries.")
-
-    if not isinstance(items, list):
-        frappe.throw("Items must be a list of item dictionaries.")
-
-    for item in items:
-        if not isinstance(item, dict):
-            frappe.throw("Each item in the 'items' list must be a dictionary.")
-        if not item.get("item_code"):
-            frappe.throw("Item Code is required for all items.")
-        if item.get("qty") is None: 
-            frappe.throw("Quantity is required for all items.")
-        if item.get("rate") is None: 
-            frappe.throw("Rate is required for all items.")
-
-    usr = frappe.get_doc("Utility Service Request", docname)
-
-    property_line = None
-    if property:
-        property_line = next(
-            (prop for prop in usr.requested_properties
-             if prop.utility_property == property),
-            None
-        )
-
-    final_transaction_date = transaction_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_start_date = start_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_end_date = end_date or (property_line.end_date if property_line else None)
+    items = _validate_items(items)
+    usr, property_line, final_transaction_date, final_start_date, final_end_date = \
+        _get_common_doc_details(docname, property, transaction_date, start_date, end_date)
 
     so = frappe.get_doc({
         "doctype": "Sales Order",
         "utility_service_request": docname,
         "customer": customer or usr.customer,
-        "customer_name": customer_name or usr.customer_name, 
+        "customer_name": customer_name or usr.customer_name,
         "transaction_date": final_transaction_date,
         "delivery_date": add_days(final_transaction_date, 7),
-        "company": company or usr.company, 
+        "company": company or usr.company,
         "items": []
     })
 
@@ -554,38 +526,12 @@ def create_sales_order_doc(
             "item_code": item_data.get("item_code"),
             "qty": item_data.get("qty"),
             "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"), 
-            "amount": item_data.get("amount") 
+            "uom": item_data.get("uom"),
+            "amount": item_data.get("amount")
         })
     so.insert()
 
-    if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
-
-        if actual_adjustment_rule_name:
-            adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
-
-            auto_repeat_settings = {
-                "frequency": adjustment_rule_doc.frequency,
-                "start_date": final_start_date,
-                "end_date": final_end_date,
-                "utility_property": property,
-                "submit_on_creation": adjustment_rule_doc.submit_on_creation,
-                "repeat_on_day": adjustment_rule_doc.repeat_on_day,
-                "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
-                "repeat_on_days": adjustment_rule_doc.repeat_on_days,
-            }
-
-            create_single_auto_repeat_with_contract_details(
-                so,
-                usr,
-                adjustment_rule_doc,
-                auto_repeat_settings
-            )
-
-            add_transaction_comments(so, docname, auto_repeat_settings)
-        else:
-            frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
+    _handle_auto_repeat(so, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
 
     return so.name
 
@@ -628,6 +574,37 @@ def create_sales_invoice_doc(
     :return: The name of the created Sales Invoice (str)
     :raises frappe.ValidationError: If items are not valid or required fields are missing.
     """
+    items = _validate_items(items)
+    usr, property_line, final_posting_date, final_start_date, final_end_date = \
+        _get_common_doc_details(docname, property, posting_date, start_date, end_date) 
+
+    si = frappe.get_doc({
+        "doctype": "Sales Invoice",
+        "utility_service_request": docname,
+        "customer": customer or usr.customer,
+        "customer_name": customer_name or usr.customer_name,
+        "posting_date": final_posting_date,
+        "due_date": due_date,
+        "company": company or usr.company,
+        "set_draft_from_utility_service_request": 1,
+        "items": []
+    })
+
+    for item_data in items:
+        si.append("items", {
+            "item_code": item_data.get("item_code"),
+            "qty": item_data.get("qty"),
+            "rate": item_data.get("rate"),
+            "uom": item_data.get("uom"),
+            "amount": item_data.get("amount")
+        })
+    si.insert()
+
+    _handle_auto_repeat(si, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
+
+    return si.name
+
+def _validate_items(items):
     if isinstance(items, str):
         try:
             items = json.loads(items)
@@ -642,11 +619,13 @@ def create_sales_invoice_doc(
             frappe.throw("Each item in the 'items' list must be a dictionary.")
         if not item.get("item_code"):
             frappe.throw("Item Code is required for all items.")
-        if item.get("qty") is None: 
+        if item.get("qty") is None:
             frappe.throw("Quantity is required for all items.")
-        if item.get("rate") is None: 
+        if item.get("rate") is None:
             frappe.throw("Rate is required for all items.")
+    return items
 
+def _get_common_doc_details(docname, property, transaction_date, start_date, end_date):
     usr = frappe.get_doc("Utility Service Request", docname)
 
     property_line = None
@@ -657,43 +636,24 @@ def create_sales_invoice_doc(
             None
         )
 
-    final_posting_date = posting_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_start_date = start_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
+    primary_date = transaction_date or (property_line.start_date if property_line else None) or nowdate()
+    final_start_date = start_date or (property_line.start_date if property_line else None) or nowdate()
     final_end_date = end_date or (property_line.end_date if property_line else None)
 
-    si = frappe.get_doc({
-        "doctype": "Sales Invoice",
-        "utility_service_request": docname,
-        "customer": customer or usr.customer,
-        "customer_name": customer_name or usr.customer_name, 
-        "posting_date": final_posting_date,
-        "due_date": due_date, 
-        "company": company or usr.company, 
-        "set_draft_from_utility_service_request": 1, 
-        "items": []
-    })
+    return usr, property_line, primary_date, final_start_date, final_end_date
 
-    for item_data in items:
-        si.append("items", {
-            "item_code": item_data.get("item_code"),
-            "qty": item_data.get("qty"),
-            "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"), 
-            "amount": item_data.get("amount") 
-        })
-    si.insert()
-
+def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule, start_date, end_date):
     if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
+        actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
 
         if actual_adjustment_rule_name:
             adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
 
             auto_repeat_settings = {
                 "frequency": adjustment_rule_doc.frequency,
-                "start_date": final_start_date,
-                "end_date": final_end_date,
-                "utility_property": property,
+                "start_date": start_date,
+                "end_date": end_date,
+                "utility_property": property.utility_property if property else None, # Pass the utility_property name
                 "submit_on_creation": adjustment_rule_doc.submit_on_creation,
                 "repeat_on_day": adjustment_rule_doc.repeat_on_day,
                 "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
@@ -701,17 +661,16 @@ def create_sales_invoice_doc(
             }
 
             create_single_auto_repeat_with_contract_details(
-                si,
+                doc,
                 usr,
                 adjustment_rule_doc,
                 auto_repeat_settings
             )
 
-            add_transaction_comments(si, docname, auto_repeat_settings)
+            add_transaction_comments(doc, usr.name, auto_repeat_settings)
         else:
             frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
 
-    return si.name
 
 def add_transaction_comments(transaction, usr_name, auto_repeat=None):
     """
