@@ -523,13 +523,8 @@ def create_sales_order_doc(
     })
 
     for item_data in items:
-        so.append("items", {
-            "item_code": item_data.get("item_code"),
-            "qty": item_data.get("qty"),
-            "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"),
-            "amount": item_data.get("amount")
-        })
+        item_dict = item_data.copy()
+        so.append("items", item_dict)
     so.insert()
 
     _handle_auto_repeat(so, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
@@ -592,13 +587,8 @@ def create_sales_invoice_doc(
     })
 
     for item_data in items:
-        si.append("items", {
-            "item_code": item_data.get("item_code"),
-            "qty": item_data.get("qty"),
-            "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"),
-            "amount": item_data.get("amount")
-        })
+        item_dict = item_data.copy()
+        si.append("items", item_dict)
     si.insert()
 
     _handle_auto_repeat(si, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
