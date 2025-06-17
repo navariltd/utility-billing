@@ -915,7 +915,7 @@ def _calculate_end_date(start_date, increment_date, contract_end_date, frequency
     if contract_end_date:
         end_date = min(end_date, add_days(contract_end_date, -1))
     
-    return  add_days(end_date, -1)
+    return add_days(end_date, -1)
 
 def _calculate_next_schedule_date(start_date, frequency, repeat_on_day):
     """Calculate the next schedule date based on frequency"""
