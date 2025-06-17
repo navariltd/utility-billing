@@ -185,6 +185,7 @@ def insert_service_requests() -> None:
                 "contract_length_months": contract_length,
                 "contract_template": request.get("contract_template"),
                 "utility_bill_structure": bill_structure,
+                "company": "Utility and Rental (Demo)"
             })
 
             assign_properties_to_request(doc, request.get("requested_properties", []), service_start, service_end, is_signed)
@@ -203,7 +204,7 @@ def insert_service_requests() -> None:
  
 def clear_service_requests() -> None:
     """
-    Cancel and delete demo Utility Service Requests 
+    Cancel and delete demo Utility Service Requests and their linked Sales Invoices
     """
     service_requests_data = safe_load_json("data/utility_service_request.json")
     if not service_requests_data:
@@ -219,6 +220,42 @@ def clear_service_requests() -> None:
         filters={"party_name": ["in", demo_parties]},
         fields=["name", "docstatus"]
     )
+
+    for req in demo_requests:
+        invoices = frappe.get_all(
+            "Sales Invoice",
+            filters={"utility_service_request": req.name},
+            fields=["name", "docstatus"]
+        )
+        
+        for invoice in invoices:
+            try:
+                auto_repeats = frappe.get_all(
+                    "Auto Repeat",
+                    filters={"reference_doctype": "Sales Invoice", "reference_document": invoice.name},
+                    fields=["name"]
+                )
+
+                for ar in auto_repeats:
+                    try:
+                        ar_doc = frappe.get_doc("Auto Repeat", ar.name)
+                        if ar_doc.docstatus == 1:
+                            ar_doc.cancel()
+                        frappe.delete_doc("Auto Repeat", ar.name)
+                    except Exception as e:
+                        frappe.db.rollback()
+                        frappe.log_error(f"Error handling Auto Repeat for Sales Invoice {invoice.name}: {e}")                
+                
+                if invoice.docstatus == 1:
+                    inv_doc = frappe.get_doc("Sales Invoice", invoice.name)
+                    inv_doc.cancel()
+                
+                frappe.delete_doc("Sales Invoice", invoice.name)
+            except Exception as e:
+                frappe.log_error(
+                    title="Sales Invoice Deletion Failed",
+                    message=f"Invoice: {invoice.name}, Service Request: {req.name}\nError: {str(e)}"
+                )
 
     deleted_count = 0
     for req in demo_requests:

@@ -7,7 +7,8 @@ from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import add_months, nowdate, add_days, getdate
+from frappe.utils import add_months, nowdate, add_days, getdate, get_last_day
+from datetime import timedelta
 
 
 class UtilityServiceRequest(Document):
@@ -468,6 +469,7 @@ def get_utility_bill_structure_details(name):
         "dimensions": dimensions
     }
 
+
 @frappe.whitelist()
 def create_sales_order_doc(
     docname: str,
@@ -505,87 +507,27 @@ def create_sales_order_doc(
     :return: The name of the created Sales Order (str)
     :raises frappe.ValidationError: If items are not valid or required fields are missing.
     """
-    if isinstance(items, str):
-        try:
-            items = json.loads(items)
-        except json.JSONDecodeError:
-            frappe.throw("Items must be a valid JSON string or a list of item dictionaries.")
-
-    if not isinstance(items, list):
-        frappe.throw("Items must be a list of item dictionaries.")
-
-    for item in items:
-        if not isinstance(item, dict):
-            frappe.throw("Each item in the 'items' list must be a dictionary.")
-        if not item.get("item_code"):
-            frappe.throw("Item Code is required for all items.")
-        if item.get("qty") is None: 
-            frappe.throw("Quantity is required for all items.")
-        if item.get("rate") is None: 
-            frappe.throw("Rate is required for all items.")
-
-    usr = frappe.get_doc("Utility Service Request", docname)
-
-    property_line = None
-    if property:
-        property_line = next(
-            (prop for prop in usr.requested_properties
-             if prop.utility_property == property),
-            None
-        )
-
-    final_transaction_date = transaction_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_start_date = start_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_end_date = end_date or (property_line.end_date if property_line else None)
+    items = _validate_items(items)
+    usr, property_line, final_transaction_date, final_start_date, final_end_date = \
+        _get_common_doc_details(docname, property, transaction_date, start_date, end_date)
 
     so = frappe.get_doc({
         "doctype": "Sales Order",
         "utility_service_request": docname,
         "customer": customer or usr.customer,
-        "customer_name": customer_name or usr.customer_name, 
+        "customer_name": customer_name or usr.customer_name,
         "transaction_date": final_transaction_date,
         "delivery_date": add_days(final_transaction_date, 7),
-        "company": company or usr.company, 
+        "company": company or usr.company,
         "items": []
     })
 
     for item_data in items:
-        so.append("items", {
-            "item_code": item_data.get("item_code"),
-            "qty": item_data.get("qty"),
-            "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"), 
-            "amount": item_data.get("amount") 
-        })
+        item_dict = item_data.copy()
+        so.append("items", item_dict)
     so.insert()
 
-    if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
-
-        if actual_adjustment_rule_name:
-            adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
-
-            auto_repeat_settings = {
-                "frequency": adjustment_rule_doc.frequency,
-                "start_date": final_start_date,
-                "end_date": final_end_date,
-                "utility_property": property,
-                "submit_on_creation": adjustment_rule_doc.submit_on_creation,
-                "repeat_on_day": adjustment_rule_doc.repeat_on_day,
-                "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
-                "repeat_on_days": adjustment_rule_doc.repeat_on_days,
-            }
-
-            create_single_auto_repeat_with_contract_details(
-                so,
-                usr,
-                adjustment_rule_doc,
-                auto_repeat_settings
-            )
-
-            add_transaction_comments(so, docname, auto_repeat_settings)
-        else:
-            frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
+    _handle_auto_repeat(so, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
 
     return so.name
 
@@ -628,6 +570,32 @@ def create_sales_invoice_doc(
     :return: The name of the created Sales Invoice (str)
     :raises frappe.ValidationError: If items are not valid or required fields are missing.
     """
+    items = _validate_items(items)
+    usr, property_line, final_posting_date, final_start_date, final_end_date = \
+        _get_common_doc_details(docname, property, posting_date, start_date, end_date) 
+
+    si = frappe.get_doc({
+        "doctype": "Sales Invoice",
+        "utility_service_request": docname,
+        "customer": customer or usr.customer,
+        "customer_name": customer_name or usr.customer_name,
+        "posting_date": final_posting_date,
+        "due_date": due_date,
+        "company": company or usr.company,
+        "set_draft_from_utility_service_request": 1,
+        "items": []
+    })
+
+    for item_data in items:
+        item_dict = item_data.copy()
+        si.append("items", item_dict)
+    si.insert()
+
+    _handle_auto_repeat(si, usr, property_line, enable_auto_repeat, adjustment_rule, final_start_date, final_end_date)
+
+    return si.name
+
+def _validate_items(items):
     if isinstance(items, str):
         try:
             items = json.loads(items)
@@ -642,11 +610,13 @@ def create_sales_invoice_doc(
             frappe.throw("Each item in the 'items' list must be a dictionary.")
         if not item.get("item_code"):
             frappe.throw("Item Code is required for all items.")
-        if item.get("qty") is None: 
+        if item.get("qty") is None:
             frappe.throw("Quantity is required for all items.")
-        if item.get("rate") is None: 
+        if item.get("rate") is None:
             frappe.throw("Rate is required for all items.")
+    return items
 
+def _get_common_doc_details(docname, property, transaction_date, start_date, end_date):
     usr = frappe.get_doc("Utility Service Request", docname)
 
     property_line = None
@@ -657,43 +627,24 @@ def create_sales_invoice_doc(
             None
         )
 
-    final_posting_date = posting_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
-    final_start_date = start_date or (property_line.start_date if property_line else None) or frappe.utils.nowdate()
+    primary_date = transaction_date or (property_line.start_date if property_line else None) or nowdate()
+    final_start_date = start_date or (property_line.start_date if property_line else None) or nowdate()
     final_end_date = end_date or (property_line.end_date if property_line else None)
 
-    si = frappe.get_doc({
-        "doctype": "Sales Invoice",
-        "utility_service_request": docname,
-        "customer": customer or usr.customer,
-        "customer_name": customer_name or usr.customer_name, 
-        "posting_date": final_posting_date,
-        "due_date": due_date, 
-        "company": company or usr.company, 
-        "set_draft_from_utility_service_request": 1, 
-        "items": []
-    })
+    return usr, property_line, primary_date, final_start_date, final_end_date
 
-    for item_data in items:
-        si.append("items", {
-            "item_code": item_data.get("item_code"),
-            "qty": item_data.get("qty"),
-            "rate": item_data.get("rate"),
-            "uom": item_data.get("uom"), 
-            "amount": item_data.get("amount") 
-        })
-    si.insert()
-
+def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule, start_date, end_date):
     if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or (property_line.adjustment_rule if property_line else None)
+        actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
 
         if actual_adjustment_rule_name:
             adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
 
             auto_repeat_settings = {
                 "frequency": adjustment_rule_doc.frequency,
-                "start_date": final_start_date,
-                "end_date": final_end_date,
-                "utility_property": property,
+                "start_date": start_date,
+                "end_date": end_date,
+                "utility_property": property.utility_property if property else None, # Pass the utility_property name
                 "submit_on_creation": adjustment_rule_doc.submit_on_creation,
                 "repeat_on_day": adjustment_rule_doc.repeat_on_day,
                 "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
@@ -701,17 +652,16 @@ def create_sales_invoice_doc(
             }
 
             create_single_auto_repeat_with_contract_details(
-                si,
+                doc,
                 usr,
                 adjustment_rule_doc,
                 auto_repeat_settings
             )
 
-            add_transaction_comments(si, docname, auto_repeat_settings)
+            add_transaction_comments(doc, usr.name, auto_repeat_settings)
         else:
             frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
 
-    return si.name
 
 def add_transaction_comments(transaction, usr_name, auto_repeat=None):
     """
@@ -792,93 +742,183 @@ def add_transaction_comments(transaction, usr_name, auto_repeat=None):
         )
         add_comment("Utility Property", auto_repeat.get("utility_property"), property_comment)
 
+
+def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule, start_date, end_date):
+    """Main handler for auto-repeat creation"""
+    if enable_auto_repeat != "1":
+        return
+
+    actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
+    if not actual_adjustment_rule_name:
+        frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
+        return
+
+    adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
+    auto_repeat_settings = _prepare_auto_repeat_settings(property, adjustment_rule_doc, start_date, end_date)
+    
+    create_single_auto_repeat_with_contract_details(doc, usr, adjustment_rule_doc, auto_repeat_settings)
+    add_transaction_comments(doc, usr.name, auto_repeat_settings)
+
+def _prepare_auto_repeat_settings(property, adjustment_rule, start_date, end_date):
+    """Prepare the dictionary of auto-repeat settings"""
+    return {
+        "frequency": adjustment_rule.frequency,
+        "start_date": start_date,
+        "end_date": end_date,
+        "utility_property": property.utility_property if property else None,
+        "submit_on_creation": adjustment_rule.submit_on_creation,
+        "repeat_on_day": adjustment_rule.repeat_on_day,
+        "repeat_on_last_day": adjustment_rule.repeat_on_last_day,
+        "repeat_on_days": adjustment_rule.repeat_on_days,
+    }
+
 def create_single_auto_repeat_with_contract_details(doc, usr, adjustment_rule, auto_repeat):
-    """
-    Creates an Auto Repeat document for a transaction (Sales Order or Sales Invoice) with comprehensive contract details,
-    including increment settings from the associated property.
+    """Main function to create the auto-repeat document"""
+    property_doc = _get_property_doc(usr, auto_repeat.get("utility_property"))
+    increment_details = _get_increment_details(property_doc, adjustment_rule)
+    dates = _calculate_dates(auto_repeat, increment_details)
     
-    Args:
-        doc (Document): The document to be auto-repeated (Sales Order or Sales Invoice)
-        usr (Utility Service Request): The parent request containing property details
-        auto_repeat (dict): Configuration for the auto-repeat including:
-            - frequency: Daily/Weekly/Monthly/Yearly
-            - start_date: When billing should begin
-            - end_date: Contractual end date (optional)
-            - utility_property: Property ID for increment settings lookup
-            - other auto-repeat settings (submit_on_creation, repeat_on_day etc.)
-    
-    Returns:
-        None: Creates the Auto Repeat document directly
-    """
-    from frappe.utils import getdate, add_months
-    
-    # Get the specific property configuration from Utility Service Request
-    property_doc = next(
+    repeat_doc = _create_auto_repeat_doc(doc, auto_repeat, increment_details, dates)
+    repeat_doc.insert(ignore_permissions=True)
+    doc.db_set("auto_repeat", repeat_doc.name)
+
+def _get_property_doc(usr, utility_property):
+    """Get the specific property document"""
+    if not utility_property:
+        return None
+    return next(
         (prop for prop in usr.requested_properties 
-         if prop.utility_property == auto_repeat.get("utility_property")),
+         if prop.utility_property == utility_property),
         None
     )
-    
-    # Extract increment settings from property with fallback to 0 if not set
-    increment_interval = adjustment_rule.increment_interval_months if property_doc else 0
-    increment_percent = adjustment_rule.increment_percentage if property_doc else 0
-    has_increment = increment_interval > 0 and increment_percent > 0
-    
-    # Date calculations for billing intervals
-    start_date = getdate(auto_repeat.get("start_date"))  # First billing date
-    contract_end_date = getdate(auto_repeat.get("end_date")) if auto_repeat.get("end_date") else None
-    
-    # Determine Auto Repeat end date:
-    if has_increment:
-        interval_end_date = add_months(start_date, float(increment_interval))
-        if adjustment_rule.effective_after_months and float(adjustment_rule.effective_after_months) > 0:
-            interval_end_date = add_months(start_date, float(adjustment_rule.effective_after_months))
-        
-        if contract_end_date and interval_end_date > contract_end_date:
-            end_date = contract_end_date
-        else:
-            end_date = interval_end_date
-    else:
-        end_date = contract_end_date
-    
-    # Create the Auto Repeat document
-    repeat_doc = frappe.get_doc({
+
+def _create_auto_repeat_doc(doc, auto_repeat, increment_details, dates):
+    """Create the Auto Repeat document structure"""
+    return frappe.get_doc({
         "doctype": "Auto Repeat",
         "reference_doctype": doc.doctype,
         "reference_document": doc.name,
         "frequency": auto_repeat.get("frequency"),
-        "start_date": start_date,
-        "end_date": end_date,
-        "next_schedule_date": start_date,
+        "start_date": dates["start_date"],
+        "end_date": dates["end_date"],
+        "next_schedule_date": dates["next_schedule_date"],
         "submit_on_creation": auto_repeat.get("submit_on_creation", 1),
         "notify_by_email": 0,
         "repeat_on_day": auto_repeat.get("repeat_on_day"),
         "repeat_on_last_day": auto_repeat.get("repeat_on_last_day"),
         "auto_repeat_on_days": auto_repeat.get("repeat_on_days", []),
-        
-        # Contract metadata
-        "contract_start_date": start_date,
-        "contract_end_date": contract_end_date,
-        "adjustment_rule": adjustment_rule.name,
-        "enable_increment": 1 if has_increment else 0, 
+        "contract_start_date": dates["start_date"],
+        "contract_end_date": dates["contract_end_date"],
+        "adjustment_rule": increment_details["rule_name"],
+        "enable_increment": 1 if increment_details["has_increment"] else 0,
+        "increment_date": dates["increment_date"],
+        "increment_interval_months": increment_details["interval"] if increment_details["has_increment"] else 0,
+        "increment_percentage": increment_details["percent"] if increment_details["has_increment"] else 0,
     })
-    
-    # Save the Auto Repeat and link it to the document
-    repeat_doc.insert(ignore_permissions=True)
-    doc.db_set("auto_repeat", repeat_doc.name)
-    
-    # User feedback with actionable link
-    msg = (f"Created Auto Repeat <a href='/app/auto-repeat/{repeat_doc.name}'>{repeat_doc.name}</a> "
-           f"for {doc.customer_name}'s {doc.doctype.lower()} {doc.name}")
-    
-    if has_increment:
-        msg += (f"\n• First billing interval ends on {end_date} "
-                f"(after {increment_interval} months)")
-    if contract_end_date:
-        msg += f"\n• Full contract term until {contract_end_date}"
-    
-    # frappe.msgprint(msg)
 
+def _get_increment_details(property_doc, adjustment_rule):
+    """Extract and calculate increment-related details"""
+    increment_interval = float(adjustment_rule.increment_interval_months) if property_doc and adjustment_rule.increment_interval_months else 0
+    increment_percent = float(adjustment_rule.increment_percentage) if property_doc and adjustment_rule.increment_percentage else 0
+    has_increment = increment_interval > 0 and increment_percent > 0
+    effective_increment_start = float(adjustment_rule.effective_after_months or 0) if has_increment else 0
+
+    return {
+        "interval": increment_interval,
+        "percent": increment_percent,
+        "has_increment": has_increment,
+        "effective_start": effective_increment_start,
+        "rule_name": adjustment_rule.name,
+        "total_first_period": effective_increment_start + increment_interval if has_increment else 0
+    }
+
+def _calculate_dates(auto_repeat, increment_details):
+    """Calculate all important dates for the auto-repeat"""
+    start_date = getdate(auto_repeat.get("start_date"))
+    contract_end_date = getdate(auto_repeat.get("end_date")) if auto_repeat.get("end_date") else None
+    
+    # Calculate increment date (effective_after_months + increment_interval)
+    if increment_details["has_increment"]:
+        increment_date = add_months(start_date, increment_details["total_first_period"])
+    else:
+        increment_date = None
+
+    # Calculate end date (1 day before increment or contract end)
+    end_date = _calculate_end_date(
+        start_date=start_date,
+        increment_date=increment_date,
+        contract_end_date=contract_end_date,
+        frequency=auto_repeat.get("frequency"),
+        repeat_on_day=auto_repeat.get("repeat_on_day"),
+        repeat_on_last_day=auto_repeat.get("repeat_on_last_day"),
+        has_increment=increment_details["has_increment"],
+        increment_interval=increment_details["interval"],
+        effective_start=increment_details["effective_start"]
+    )
+
+    # Calculate next schedule date
+    next_schedule_date = _calculate_next_schedule_date(
+        start_date=start_date,
+        frequency=auto_repeat.get("frequency"),
+        repeat_on_day=auto_repeat.get("repeat_on_day")
+    )
+
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "next_schedule_date": next_schedule_date,
+        "increment_date": increment_date,
+        "contract_end_date": contract_end_date,
+        "first_increment_period": increment_details["total_first_period"] if increment_details["has_increment"] else None
+    }
+
+def _calculate_end_date(start_date, increment_date, contract_end_date, frequency, repeat_on_day, repeat_on_last_day, has_increment, increment_interval, effective_start):
+    """Calculate the appropriate end date for the auto-repeat"""
+    if not has_increment or not increment_date:
+        return add_days(contract_end_date, -1) if contract_end_date else None
+
+    # Calculate base end date before considering effective_start
+    if frequency == "Monthly":
+        if repeat_on_last_day:
+            last_safe_month = add_months(increment_date, -1)
+            base_end_date = get_last_day(last_safe_month)
+        elif repeat_on_day:
+            prev_month = increment_date.replace(day=1) - timedelta(days=1)
+            base_end_date = prev_month.replace(day=min(int(repeat_on_day), prev_month.day))
+        else:
+            base_end_date = add_days(increment_date, -1)
+    elif frequency == "Weekly":
+        base_end_date = add_days(increment_date, -7)
+    elif frequency == "Yearly":
+        total_months = effective_start + increment_interval
+        years_before = int(total_months / 12)
+        if years_before > 0:
+            base_end_date = add_months(start_date, (years_before * 12) - 1)
+            base_end_date = base_end_date.replace(day=min(int(repeat_on_day or start_date.day), get_last_day(base_end_date).day))
+        else:
+            base_end_date = add_days(increment_date, -1)
+    else:  # Daily or other frequencies
+        base_end_date = add_days(increment_date, -1)
+
+    # Apply -1 day rule and consider contract end date
+    end_date = base_end_date
+    if contract_end_date:
+        end_date = min(end_date, add_days(contract_end_date, -1))
+    
+    return add_days(end_date, -1)
+
+def _calculate_next_schedule_date(start_date, frequency, repeat_on_day):
+    """Calculate the next schedule date based on frequency"""
+    if frequency != "Monthly" or not repeat_on_day:
+        return start_date
+
+    if start_date.day != int(repeat_on_day):
+        next_date = start_date.replace(day=min(int(repeat_on_day), get_last_day(start_date).day))
+        if next_date < start_date:
+            return add_months(next_date, 1)
+        return next_date
+    return start_date
+    
 def add_comment(doctype, docname, content):
     """Helper function to add a comment to a document"""
     frappe.get_doc({

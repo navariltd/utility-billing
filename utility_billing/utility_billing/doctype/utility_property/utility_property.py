@@ -62,7 +62,7 @@ class UtilityProperty(NestedSet):
                     "purchase_date": self.purchase_date, 
                     "location": self.location
                 })
-                asset_doc.insert()
+                asset_doc.insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
 
     def _create_item(self):
         """Helper method to create a new item document."""
@@ -78,4 +78,4 @@ class UtilityProperty(NestedSet):
             "is_utility_item": 1,
             "stock_uom": "Nos",
             "disabled": 0,
-        }).insert(ignore_permissions=True)
+        }).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
