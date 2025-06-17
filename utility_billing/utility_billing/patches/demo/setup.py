@@ -56,8 +56,8 @@ def delete_demo_data() -> None:
         clear_existing_contracts()
         clear_service_requests()
         clear_bill_structures()
-        process_masters_deletion()
         delete_assets()
+        process_masters_deletion()
         delete_company(company)
         
         frappe.db.commit()
@@ -115,7 +115,7 @@ def create_demo_record(item: Dict[str, Any]) -> None:
             return
             
         doc = frappe.get_doc(item)
-        doc.insert(ignore_permissions=True, ignore_mandatory=True)
+        doc.insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
     except frappe.exceptions.DuplicateEntryError:
         frappe.logger().debug(f"Duplicate record for {item.get('doctype', 'Unknown')}, skipping")
     except Exception as e:

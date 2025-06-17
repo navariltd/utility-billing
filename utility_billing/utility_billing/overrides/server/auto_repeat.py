@@ -2,58 +2,62 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import (
+    add_days,
     add_months,
     getdate,
     formatdate,
     today,
     flt,
 )
+from typing import Optional, Dict, Any
 
 @frappe.whitelist()
 def on_update(doc: Document, method: str) -> None:
-   
-    if not is_status_changed_to_completed(doc):
+    """Main handler for Auto Repeat document updates"""
+    auto_repeat_doc = doc
+    if not is_status_changed_to_completed(auto_repeat_doc):
         return
 
-    if not should_process_increment(doc):
+    if not should_process_increment(auto_repeat_doc):
         return
 
-    adjustment_rule = frappe.get_doc("Billing Adjustment Rule", doc.adjustment_rule)
+    adjustment_rule = frappe.get_doc("Billing Adjustment Rule", auto_repeat_doc.adjustment_rule)
     if not adjustment_rule:
         return
 
-    if is_contract_ended(doc):
+    if is_contract_ended(auto_repeat_doc):
         return
 
-    new_invoice = create_renewal_invoice(doc, adjustment_rule)
-    new_invoice.save()
-    if not new_invoice:
+    new_reference_doc = create_renewal_document(auto_repeat_doc, adjustment_rule)
+    if not new_reference_doc:
         return
 
-    new_auto_repeat = create_auto_repeat(doc, new_invoice, adjustment_rule)
-    add_audit_comment(doc, new_invoice, new_auto_repeat, adjustment_rule)
+    new_auto_repeat = create_auto_repeat(auto_repeat_doc, new_reference_doc, adjustment_rule)
+    new_auto_repeat.start_date = add_days(auto_repeat_doc.end_date, 1)
+    new_auto_repeat.save(ignore_permissions=True)
+    add_audit_comment(auto_repeat_doc, new_reference_doc, new_auto_repeat, adjustment_rule)
 
-def is_status_changed_to_completed(doc: Document) -> bool:
+def is_status_changed_to_completed(auto_repeat_doc: Document) -> bool:
     """Check if status changed from Active to Completed"""
-    previous_doc = doc.get_doc_before_save()
+    previous_doc = auto_repeat_doc.get_doc_before_save()
     if not previous_doc:
         return False
     
-    status_changed = doc.has_value_changed("status")
-    current_status = doc.status
-
+    status_changed = auto_repeat_doc.has_value_changed("status")
+    current_status = auto_repeat_doc.status
     
     return status_changed and previous_doc.status == "Active" and current_status == "Completed"
 
-def should_process_increment(doc: Document) -> bool:
+def should_process_increment(auto_repeat_doc: Document) -> bool:
     """Check if increment should be processed"""
-    if not getattr(doc, 'enable_increment', 0):
-        frappe.msgprint(_("Increment not enabled for this invoice"))
+    if not getattr(auto_repeat_doc, 'enable_increment', 0):
+        frappe.msgprint(_("Increment not enabled for this Auto Repeat"))
         return False
     return True
-def is_contract_ended(doc: Document) -> bool:
+
+def is_contract_ended(auto_repeat_doc: Document) -> bool:
     """Check if contract has already ended"""
-    contract_end_date = getattr(doc, 'contract_end_date', None)
+    contract_end_date = getattr(auto_repeat_doc, 'contract_end_date', None)
     if contract_end_date and getdate(contract_end_date) < getdate(today()):
         frappe.msgprint(_("Contract ended on {0}. Cannot generate renewal.").format(
             formatdate(getdate(contract_end_date))
@@ -61,133 +65,175 @@ def is_contract_ended(doc: Document) -> bool:
         return True
     return False
 
-def create_renewal_invoice(doc: Document, adjustment_rule) -> Document:
-    """Create a new invoice with adjusted rates"""
-    new_invoice = get_invoice_copy(doc)
-    set_invoice_dates(new_invoice, adjustment_rule)
-    apply_rate_adjustments(new_invoice, adjustment_rule)
+def create_renewal_document(auto_repeat_doc: Document, adjustment_rule: Document) -> Optional[Document]:
+    """Create a new reference document with adjusted rates"""
+    new_reference_doc = get_document_copy(auto_repeat_doc)
+    set_document_dates(new_reference_doc, adjustment_rule, auto_repeat_doc.end_date)
+    apply_rate_adjustments(auto_repeat_doc, new_reference_doc, adjustment_rule)
     
     try:
-        new_invoice.calculate_taxes_and_totals()
-        new_invoice.insert(ignore_permissions=True)
-        return new_invoice
+        if hasattr(new_reference_doc, 'calculate_taxes_and_totals'):
+            new_reference_doc.calculate_taxes_and_totals()
+        new_reference_doc.insert(ignore_permissions=True)
+        return new_reference_doc
     except Exception as e:
-        frappe.log_error(_("Error creating renewal invoice"), e)
-        frappe.throw(_("Failed to create renewal invoice: {0}").format(str(e)))
+        frappe.log_error(_("Error creating renewal document"), e)
+        frappe.throw(_("Failed to create renewal document: {0}").format(str(e)))
         return None
 
-def get_invoice_copy(doc: Document) -> Document:
-    """Create a copy of the linked invoice from the Auto Repeat doc"""
-    if not doc.reference_document:
-        frappe.throw(_("No linked invoice found in Auto Repeat"))
-    original_invoice = frappe.get_doc("Sales Invoice", doc.reference_document)
-    print("Original Invoice: ", original_invoice)
-    return frappe.copy_doc(original_invoice)
+def get_document_copy(auto_repeat_doc: Document) -> Document:
+    """Create a copy of the linked reference document from the Auto Repeat doc"""
+    if not auto_repeat_doc.reference_document:
+        frappe.throw(_("No linked document found in Auto Repeat"))
     
-    
-def set_invoice_dates(invoice: Document, adjustment_rule) -> None:
-    """Set posting and due dates for the invoice based on today's date and adjustment rule."""
-    from frappe.utils import add_days, today, getdate
+    return frappe.copy_doc(frappe.get_doc(
+        auto_repeat_doc.reference_doctype, 
+        auto_repeat_doc.reference_document
+    ))
 
-    invoice.posting_date = getdate(today())
+def set_document_dates(reference_doc: Document, adjustment_rule: Document, date: str) -> None:
+    """Set posting and due dates for the reference document"""
+    if hasattr(reference_doc, 'posting_date'):
+        reference_doc.posting_date = getdate(date)
 
-    overdue_after_days = getattr(adjustment_rule, 'overdue_after_days', 10)
+    if hasattr(reference_doc, 'due_date'):
+        overdue_after_days = getattr(adjustment_rule, 'overdue_after_days', 10)
+        reference_doc.due_date = add_days(reference_doc.posting_date, overdue_after_days)
 
-    invoice.due_date = add_days(invoice.posting_date, overdue_after_days)
-
-
-def apply_rate_adjustments(invoice: Document, adjustment_rule) -> None:
-    """Apply rate adjustments to all items based on the adjustment rule"""
+def apply_rate_adjustments(
+    auto_repeat_doc: Document, 
+    reference_doc: Document, 
+    adjustment_rule: Document
+) -> None:
+    """Apply rate adjustments to all items in the reference document"""
     effective_increment = get_effective_increment(adjustment_rule)
     
-    for item in invoice.items:
-        original_rate = get_original_item_rate(invoice.name, item.item_code)
-        item.rate = calculate_new_rate(item.rate, original_rate, effective_increment, adjustment_rule)
-        item.amount = flt(item.qty) * flt(item.rate)
+    if hasattr(reference_doc, 'items'):
+        for item in reference_doc.items:
+            if not hasattr(item, 'rate'):
+                continue
+                
+            original_rate = get_original_item_rate(
+                auto_repeat_doc.reference_doctype, 
+                auto_repeat_doc.reference_document, 
+                item.item_code
+            )
+            item.rate = calculate_new_rate(
+                item.rate, 
+                original_rate, 
+                effective_increment, 
+                adjustment_rule
+            )
+            if hasattr(item, 'amount') and hasattr(item, 'qty'):
+                item.amount = flt(item.qty) * flt(item.rate)
 
-def get_effective_increment(adjustment_rule) -> float:
+def get_effective_increment(adjustment_rule: Document) -> float:
     """Get the effective increment percentage considering adjustment cap"""
-    increment_percent = adjustment_rule.increment_percentage
+    increment_percent = flt(adjustment_rule.increment_percentage)
     if getattr(adjustment_rule, 'adjustment_cap', 0) and increment_percent > adjustment_rule.adjustment_cap:
-        return adjustment_rule.adjustment_cap
+        return flt(adjustment_rule.adjustment_cap)
     return increment_percent
 
-def calculate_new_rate(current_rate: float, original_rate: float, 
-                     increment_percent: float, adjustment_rule) -> float:
+def calculate_new_rate(
+    current_rate: float, 
+    original_rate: Optional[float], 
+    increment_percent: float, 
+    adjustment_rule: Document
+) -> float:
     """Calculate new rate based on adjustment basis"""
     if adjustment_rule.adjustment_basis == "Original Amount" and original_rate is not None:
         return original_rate * (1 + (increment_percent / 100))
-    else:
-        return flt(current_rate) * (1 + (increment_percent / 100))
+    return flt(current_rate) * (1 + (increment_percent / 100))
 
-def get_original_item_rate(invoice_name: str, item_code: str) -> float:
-    """Trace back to the original invoice to get the original rate for an item"""
+def get_original_item_rate(
+    doctype: str, 
+    docname: str, 
+    item_code: str
+) -> Optional[float]:
+    """Trace back to the original document to get the original rate for an item"""
     original_rate = None
-    current_invoice = invoice_name
+    current_doc = docname
     
-    while current_invoice:
-        invoice = frappe.get_doc("Sales Invoice", current_invoice)
-        for item in invoice.items:
-            if item.item_code == item_code:
-                original_rate = flt(item.rate)
+    while current_doc:
+        doc = frappe.get_doc(doctype, current_doc)
+        if hasattr(doc, 'items'):
+            for item in doc.items:
+                if item.item_code == item_code and hasattr(item, 'rate'):
+                    original_rate = flt(item.rate)
+                    break
         
-        if invoice.auto_repeat:
-            auto_repeat = frappe.get_doc("Auto Repeat", invoice.auto_repeat)
-            if auto_repeat.reference_document != current_invoice:
-                current_invoice = auto_repeat.reference_document
+        if hasattr(doc, 'auto_repeat') and doc.auto_repeat:
+            auto_repeat = frappe.get_doc("Auto Repeat", doc.auto_repeat)
+            if auto_repeat.reference_document != current_doc:
+                current_doc = auto_repeat.reference_document
             else:
-                current_invoice = None
+                current_doc = None
         else:
-            current_invoice = None
+            current_doc = None
     
     return original_rate
 
-def create_auto_repeat(doc: Document, new_invoice: Document, adjustment_rule) -> Document:
+def create_auto_repeat(
+    original_auto_repeat: Document, 
+    new_reference_doc: Document, 
+    adjustment_rule: Document
+) -> Document:
     """Create new Auto Repeat record for the renewal"""
     new_auto_repeat = frappe.get_doc({
         "doctype": "Auto Repeat",
-        "reference_doctype": "Sales Invoice",
-        "reference_document": new_invoice.name,
+        "reference_doctype": new_reference_doc.doctype,
+        "reference_document": new_reference_doc.name,
         "frequency": adjustment_rule.frequency,
         "submit_on_creation": adjustment_rule.submit_on_creation,
         "repeat_on_day": adjustment_rule.repeat_on_day,
         "repeat_on_last_day": adjustment_rule.repeat_on_last_day,
-        "start_date": new_invoice.posting_date,
-        "end_date": get_auto_repeat_end_date(doc, new_invoice.posting_date, adjustment_rule),
-        "contract_start_date": getattr(doc, 'contract_start_date', None),
-        "contract_end_date": getattr(doc, 'contract_end_date', None),
+        "start_date": original_auto_repeat.end_date,
+        "end_date": get_auto_repeat_end_date(
+            original_auto_repeat, 
+            original_auto_repeat.end_date, 
+            adjustment_rule
+        ),
+        "contract_start_date": getattr(original_auto_repeat, 'contract_start_date', None),
+        "contract_end_date": getattr(original_auto_repeat, 'contract_end_date', None),
         "enable_increment": 1,
         "notify_by_email": 0,
         "adjustment_rule": adjustment_rule.name,
-        "utility_property": getattr(doc, 'utility_property', None)
+        "utility_property": getattr(original_auto_repeat, 'utility_property', None)
     })
     new_auto_repeat.insert(ignore_permissions=True)
     return new_auto_repeat
 
-def get_auto_repeat_end_date(doc: Document, start_date, adjustment_rule):
+def get_auto_repeat_end_date(
+    auto_repeat_doc: Document, 
+    start_date: str, 
+    adjustment_rule: Document
+) -> Optional[str]:
     """Calculate end date for auto repeat considering contract end date"""
-    contract_end_date = getattr(doc, 'contract_end_date', None)
+    contract_end_date = getattr(auto_repeat_doc, 'contract_end_date', None)
     if not contract_end_date:
         return None
 
     start_date_obj = getdate(start_date)
     contract_end_date_obj = getdate(contract_end_date)
-    proposed_end_date = add_months(start_date_obj, adjustment_rule.increment_interval_months) \
+    proposed_end_date = add_months(start_date_obj, flt(adjustment_rule.increment_interval_months)) \
         if adjustment_rule.increment_interval_months else None
 
     if proposed_end_date and proposed_end_date > contract_end_date_obj:
         return contract_end_date_obj
-    return proposed_end_date
+    return proposed_end_date if proposed_end_date else None
 
-
-def add_audit_comment(doc: Document, new_invoice: Document, 
-                        auto_repeat: Document, adjustment_rule) -> None:
+def add_audit_comment(
+    original_auto_repeat: Document, 
+    new_reference_doc: Document, 
+    new_auto_repeat: Document, 
+    adjustment_rule: Document
+) -> None:
     """Add audit comment documenting the renewal to multiple related documents"""
     comment_msg = _("""
         <div class='small'>
-            <b>Bill Increment Renewal Generated:</b><br>
-            • Original Invoice: <a href='/app/sales-invoice/{or_inv}'>{or_inv}</a><br>
-            • New Invoice: <a href='/app/sales-invoice/{new_inv}'>{new_inv}</a><br>
+            <b>Billing Increment Renewal Generated:</b><br>
+            • Original Document: <a href='/app/{or_doctype}/{or_doc}'>{or_doc}</a><br>
+            • New Document: <a href='/app/{new_doctype}/{new_doc}'>{new_doc}</a><br>
             • Period: {start} to {end}<br>
             • Rate Increase: {inc}%<br>
             • Adjustment Rule: <a href='/app/billing-adjustment-rule/{rule}'>{rule}</a><br>
@@ -195,27 +241,28 @@ def add_audit_comment(doc: Document, new_invoice: Document,
             • New Auto Repeat: <a href='/app/auto-repeat/{ar}'>{ar}</a>
         </div>
     """).format(
-        or_inv=doc.reference_document,
-        new_inv=new_invoice.name,
-        start=formatdate(new_invoice.posting_date),
-        end=formatdate(auto_repeat.end_date) if auto_repeat.end_date else _("No end date"),
+        or_doctype=original_auto_repeat.reference_doctype.lower().replace(' ', '-'),
+        or_doc=original_auto_repeat.reference_document,
+        new_doctype=new_reference_doc.doctype.lower().replace(' ', '-'),
+        new_doc=new_reference_doc.name,
+        start=formatdate(original_auto_repeat.end_date) if hasattr(original_auto_repeat, 'end_date') else _("N/A"),
+        end=formatdate(new_auto_repeat.end_date) if new_auto_repeat.end_date else _("No end date"),
         inc=get_effective_increment(adjustment_rule),
         rule=adjustment_rule.name,
-        old_ar_link=("<a href='/app/auto-repeat/{0}'>{0}</a>".format(doc.name) if doc else _("N/A")),
-        ar=auto_repeat.name
+        old_ar_link=("<a href='/app/auto-repeat/{0}'>{0}</a>".format(original_auto_repeat.name) if original_auto_repeat else _("N/A")),
+        ar=new_auto_repeat.name
     )
 
     # List of (doctype, name) pairs to add the comment to
     targets = [
-        ("Sales Invoice", doc.reference_document),
-        ("Sales Invoice", new_invoice.name),
-        ("Auto Repeat", doc.name) if doc else None,
-        ("Auto Repeat", auto_repeat.name),
+        (original_auto_repeat.reference_doctype, original_auto_repeat.reference_document),
+        (new_reference_doc.doctype, new_reference_doc.name),
+        ("Auto Repeat", original_auto_repeat.name) if original_auto_repeat else None,
+        ("Auto Repeat", new_auto_repeat.name),
     ]
 
-    utility_service_request = getattr(new_invoice, "utility_service_request", None)
-    if utility_service_request:
-        targets.append(("Utility Service Request", utility_service_request))
+    if hasattr(new_reference_doc, 'utility_service_request') and new_reference_doc.utility_service_request:
+        targets.append(("Utility Service Request", new_reference_doc.utility_service_request))
 
     for doctype, name in filter(None, targets):
         frappe.get_doc({
@@ -225,21 +272,3 @@ def add_audit_comment(doc: Document, new_invoice: Document,
             "reference_name": name,
             "content": comment_msg
         }).insert(ignore_permissions=True)
-    
-    # users = frappe.get_all(
-    #     "User",
-    #     filters={"enabled": 1},
-    #     fields=["name"]
-    # )
-
-    # for user in users:
-    #     if user.name != "Guest":
-    #         frappe.get_doc({
-    #             "doctype": "Notification Log",
-    #             "subject": "Billing Increment Renewal Applied",
-    #             "for_user": user.name,
-    #             "type": "Alert",
-    #             "document_type": "Sales Invoice",
-    #             "document_name": new_invoice.name,
-    #             "email_content": frappe.utils.strip_html(comment_msg)
-    #         }).insert(ignore_permissions=True)

@@ -151,6 +151,7 @@ utility_demo_master_doctypes = [
 	"supplier",
     "insurance",
     "issue_type",
+    "item_group",
 	"item",
     "price_list",
     "utility_tariff_block",
@@ -164,12 +165,6 @@ utility_demo_master_doctypes = [
     "warranty_claim",  
     "asset_category",
     "utility_property",
-]
-demo_transaction_doctypes = [
-    "utility_bill_structure", 
-    "utility_property",
-    "meter_reading",
-	"utility_service_request",
 ]
 
 
