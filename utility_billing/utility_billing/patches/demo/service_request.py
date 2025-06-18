@@ -118,15 +118,29 @@ def assign_properties_to_request(doc, requested_props: List[Dict[str, Any]], ser
 
     total_days = (service_end - service_start).days
     days_per_prop = total_days // total_props
+    
+    def get_random_insurance():
+        """Fetch a random insurance policy if available."""
+        insurances = frappe.get_list(
+            "Insurance",
+            filters={},
+            fields=["name"],
+            limit=1,
+            order_by="RAND()"
+        )
+        return insurances[0].name if insurances else None
 
     for i, prop in enumerate(requested_props):
         prop_start = service_start + timedelta(days=i * days_per_prop)
         prop_end = prop_start + timedelta(days=days_per_prop - 1)
         if prop_end > service_end:
             prop_end = service_end
+            
+        insurance = get_random_insurance() 
 
         doc.append("requested_properties", {
             "utility_property": prop.get("utility_property"),
+            "insurance": insurance,
             "start_date": prop_start,
             "end_date": prop_end,
             "adjustment_rule": prop.get("adjustment_rule"),
