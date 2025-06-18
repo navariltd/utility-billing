@@ -42,23 +42,33 @@ Enable the `is_fixed_asset` checkbox to treat the property as a fixed asset. Onc
 
 ## 📍 Location Details
 
+![Utility & Property Overview](./images/utility_property-location.png)
+
 - `location`: Geographical location or estate (linked DocType)
-- `plot_no`, `house_no`, `lot_size`: Land-related details
+- `territory`: Business territory for the property
+- `house_no`: House or building identifier
+- `plot_no`: Plot or parcel number
+- `lot_size`: Land area measurements
 
 ---
 
 ## 🏢 Unit Information
 
+![Utility & Property Overview](./images/utility_property-unit.png)
 Track information about the internal structure or units:
 
-- `unit_number`: Unique number for the unit
-- `unit_type`: Type (e.g., Studio, 2BHK, Office)
-- `bedrooms`, `bathrooms`
-- `floor_level`, `unit_size`
+- `unit_number`: Unique identifier for the specific unit
+- `unit_type`: Classification of the unit (Studio, 1BHK, 2BHK, Office, etc.)
+- `bedrooms`: Number of bedrooms in the property
+- `bathrooms`: Number of bathrooms available
+- `floor_level`: Which floor the unit is located on
+- `unit_size`: Size of the unit measured in square feet
 
 ---
 
 ## ✨ Features and Amenities
+
+![Utility & Property Overview](./images/utility_property-features.png)
 
 - `features`: A child table of `Utility Property Feature Item`
 - Allows listing multiple features like swimming pool, balcony, parking, etc.

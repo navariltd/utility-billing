@@ -29,6 +29,15 @@ The **Utility Billing Settings** Doctype centralizes critical configuration opti
 
 ---
 
+### 🧪 Demo Data
+
+| **Field**              | **Description**                                              |
+| ---------------------- | ------------------------------------------------------------ |
+| **Generate Demo Data** | Creates sample utility billing records for testing purposes. |
+| **Clear Demo Data**    | Removes all previously generated demo data from the system.  |
+
+---
+
 ## 🚀 Quick Navigation
 
 [![Home](https://img.shields.io/badge/Home-DEF4FF?style=for-the-badge&logo=github&logoColor=000)](https://github.com/navariltd/utility-billing)
