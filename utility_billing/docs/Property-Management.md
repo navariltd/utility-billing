@@ -14,6 +14,7 @@ It supports:
 - 📄 Contract generation
 - 🔁 Rent invoicing via Auto Repeat
 - ⚡ Utility billing
+- 👥 **Tenant**: Managed as a customer for seamless billing integration
 
 ![Utility & Property Overview](./images/uility_property.png)
 
@@ -31,7 +32,7 @@ Real Estate Project
  │    ├── Floor 2
  │    │    └── Unit 201
  └── Building B
-      └── Unit 301
+  └── Unit 301
 ```
 
 Each unit is independently managed for contracts, billing, and utilities.
@@ -104,7 +105,7 @@ From an approved Service Request:
   - Tenant (Customer)
   - Unit(s)
 
-This contract manages the tenency.
+This contract manages the tenancy.
 
 ---
 

@@ -2,7 +2,7 @@
 
 The **Utility Service Request (USR)** Doctype is the core intake and workflow document for managing both property leasing and utility connections. It handles everything from customer onboarding to contract creation and utility billing setup.
 
-## ![Details Tab](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_details_tab.png)
+## ![Details Tab](./images/service_request_details_tab.png)
 
 ---
 
@@ -78,7 +78,7 @@ The **Utility Bill Structure** provides a reusable billing configuration templat
 - **Pipe Distance / Type**: Record distance to water/sewer network.
 - **Water Network / Location**: Specify connection point.
 
-![Coordinates Tab](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_coord_tab.png)
+![Coordinates Tab](./images/service_request_coord_tab.png)
 service_request_coord_tab.png
 
 ---
@@ -86,9 +86,9 @@ service_request_coord_tab.png
 ### 🏠 Requested Properties
 
 This section allows you to assign and manage multiple utility or rental properties within a single service request. Each property item supports advanced billing and automation features designed to streamline lease and invoice generation processes.
-![Lease Tab](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_lease_tab.png)
+![Lease Tab](./images/service_request_lease_tab.png)
 
-![Property Item](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_property.png)
+![Property Item](./images/service_request_property.png)
 
 - #### 🏘️ **Utility Property**
 
@@ -105,6 +105,10 @@ This section allows you to assign and manage multiple utility or rental properti
 - #### 📐 **Contract Length (Months)**
 
   Automatically calculated or manually defined, this represents the total duration of the contract in months. Useful for internal reporting or rule application.
+
+- #### 🛡️ **Insurance**
+
+  Links to an Insurance document that provides coverage details for the property during the rental period.
 
 - #### ⚙️ **Adjustment Rule**
 
@@ -154,18 +158,19 @@ graph TD
 
 ### 4️⃣ Generate Sales Order
 
+![Sales Order Modal](./images/service_request_salesorder_modal.png)
+
 - Deposit or booking amount auto-fetched from USR
 - Sales Order submitted for payment processing
+- Auto repeat can be optionally configured for recurring orders
 
-![Sales Invoice Modal](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_salesinvoice_modal.png)
+### 5️⃣ Sales Invoice & Payment
 
-### 5️⃣ Sales Invoice & Auto Repeat
+![Sales Invoice Modal](./images/service_request_salesinvoice_modal.png)
 
 - Generates first invoice
-- Sets up automatic billing for rent or utility usage
+- Optional automatic billing setup for rent or utility usage
 - Escalation rules applied where needed
-
-![Sales Order Modal](https://raw.githubusercontent.com/navariltd/utility-billing/refs/heads/develop/utility_billing/docs/images/service_request_salesorder_modal.png)
 
 ## 🚀 Quick Navigation
 
