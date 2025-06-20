@@ -49,6 +49,7 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 - 🏘️ **Property Structure**: Organize by Project → Building → Floor → Unit
 - 📝 **Service Requests**: Capture tenant interest & unit selection
 - 📄 **Contracts**: Define rental terms, durations, and escalation rules
+- 👥 **Tenant**: Managed as a customer for seamless billing integration
 - 💰 **Deposits & Booking**: Generate sales orders for upfront payments
 - 📃 **Invoicing**: Automate rent billing via **Auto Repeat**
 - ⚡ **Utility Billing**: Bill utility usage per unit and contract
