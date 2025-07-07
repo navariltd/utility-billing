@@ -66,14 +66,7 @@ class TestUtilityServiceRequest(FrappeTestCase):
         doc.insert()
         self.created_docs.append(("Utility Service Request", doc.name))
         return doc
-     
-    def get_items_list(self):
-        """Return a valid item list dictionary"""
-        return [{
-            "item_code": self.item.item_code,
-            "qty": 1,
-            "rate": 100
-        }] 
+
 
     def test_validate_contract_dates_auto_sets_end_date(self):
         """Test that end_date is auto-calculated from start_date and duration"""
