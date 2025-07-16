@@ -43,4 +43,5 @@ def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
 def on_submit(doc: Document, method: str) -> None:
     """Intercepts submit event for document"""
     if doc.utility_service_request:
-        update_billing_status(doc.utility_service_request)
+        pass
+        # update_billing_status(doc.utility_service_request)

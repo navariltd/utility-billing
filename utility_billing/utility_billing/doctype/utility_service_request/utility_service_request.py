@@ -295,11 +295,17 @@ def create_bom(docname, item_code):
 @frappe.whitelist()
 def check_request_status(request_name):
     issues = frappe.get_list(
-        "Issue", filters={"utility_service_request": request_name}, pluck="status"
+        "Issue", 
+        filters={"utility_service_request": request_name}, 
+        pluck="docstatus",
+        ignore_permissions=1
     )
 
     submitted_boms = frappe.get_list(
-        "BOM", filters={"utility_service_request": request_name}, pluck="docstatus"
+        "BOM", 
+        filters={"utility_service_request": request_name}, 
+        pluck="docstatus",
+        ignore_permissions=1
     )
 
     status = frappe.get_doc("Utility Service Request", request_name).request_status
