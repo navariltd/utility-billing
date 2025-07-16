@@ -10,6 +10,8 @@ class UtilityProperty(NestedSet):
         load_address_and_contact(self)
 
     def validate(self):
+        if self.is_group:
+            self.status = ""
         if self.item:
             asset = frappe.db.get_value(
                 "Asset",
@@ -27,11 +29,12 @@ class UtilityProperty(NestedSet):
 
         if self.is_fixed_asset:
             if not frappe.db.exists("Item Group", "Fixed Asset"):
+                item_group = frappe.db.get_value("Item Group", {"is_group": 1})
                 frappe.get_doc({
                     "doctype": "Item Group",
                     "item_group_name": "Fixed Asset",
                     "is_group": 0,
-                    "parent_item_group": "All Item Groups"
+                    "parent_item_group": item_group,
                 }).insert()
 
             if not self.item:

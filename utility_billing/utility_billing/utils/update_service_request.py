@@ -19,12 +19,12 @@ def update_billing_status(utility_service_request):
     total_amount = sum(item.amount for item in doc.items)
 
     # Calculate billed percent
-    billed_percent = round((total_billed / total_amount) * 100, 2) if total_amount else 0
+    # billed_percent = round((total_billed / total_amount) * 100, 2) if total_amount else 0
 
     # Update fields
-    doc.billed_amount = total_billed
+    # doc.billed_amount = total_billed
     doc.total_amount = total_amount
-    doc.per_billed = billed_percent
+    # doc.per_billed = billed_percent
 
     # Determine billing status
     if doc.status == "Closed":
