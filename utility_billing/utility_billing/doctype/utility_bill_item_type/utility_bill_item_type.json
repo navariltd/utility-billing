@@ -6,18 +6,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_yafe"
+  "description"
  ],
  "fields": [
   {
-   "fieldname": "section_break_yafe",
-   "fieldtype": "Section Break"
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-06 18:25:03.211591",
+ "modified": "2025-08-08 07:42:16.433320",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Item Type",
