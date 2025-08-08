@@ -39,20 +39,48 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		};
+		frm.fields_dict["utility_bill_structure"].get_query = function () {
+			return {
+				filters: {
+					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+				},
+			};
+		};
 		frm.fields_dict["utility_property"].get_query = function () {
 			return {
 				filters: {
-					status: "Available",
+					is_group: 1,
+					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
 				},
 			};
 		};
 		frm.fields_dict["requested_properties"].grid.get_field("utility_property").get_query =
-			function () {
+			function (doc, cdt, cdn) {
+				const row = locals[cdt][cdn];
+
+				const selectedProperties = [];
+				(doc.requested_properties || []).forEach(function (d) {
+					if (d.name !== row.name && d.utility_property) {
+						selectedProperties.push(d.utility_property);
+					}
+				});
+
+				let filters = {
+					status: "Available",
+					is_group: 0,
+					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+				};
+
+				if (frm.doc.utility_property) {
+					filters.parent_utility_property = frm.doc.utility_property;
+				}
+
+				if (selectedProperties.length > 0) {
+					filters.name = ["not in", selectedProperties];
+				}
+
 				return {
-					filters: {
-						status: "Available",
-						is_group: 0,
-					},
+					filters: filters,
 				};
 			};
 
@@ -691,7 +719,6 @@ function configure_dialog(dialog, frm) {
 				overflowX: "hidden",
 				opacity: "1",
 				pointerEvents: "auto",
-				boxShadow: "0 0 5px rgba(0, 0, 0, 0.3)",
 				borderRadius: "8px",
 			};
 
@@ -756,7 +783,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Company"),
 			fieldtype: "Link",
 			options: "Company",
-			default: frappe.defaults.get_user_default("Company"),
+			default: frm.doc.company || frappe.defaults.get_user_default("Company"),
 			reqd: 1,
 		},
 	];
@@ -772,6 +799,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		});
 	}
 
+	const properties = (frm.doc.requested_properties || [])
+		.map((p) => p.utility_property)
+		.filter(Boolean);
 	// Add fields for Property and Auto Repeat settings
 	fields.push(
 		{
@@ -785,12 +815,10 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Property"),
 			fieldtype: "Link",
 			options: "Utility Property",
+			default: properties.length == 1 ? properties[0] : null,
+			mandatory_depends_on: properties.length ? "eval:1" : "eval:0",
 			// Custom query to filter properties based on `requested_properties` in the parent form
 			get_query: () => {
-				const properties = (frm.doc.requested_properties || [])
-					.map((p) => p.utility_property)
-					.filter(Boolean);
-
 				// If no properties in requested_properties, don't filter
 				if (!properties.length) {
 					return {};
@@ -823,9 +851,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 						if (property_line.adjustment_rule) {
 							dialog.set_value("adjustment_rule", property_line.adjustment_rule);
 						} // Set start_date if it exists in the property line
-						if (property_line.start_date) {
-							dialog.set_value("start_date", property_line.start_date);
-						} // Set end_date if it exists in the property line
+						// if (property_line.start_date) {
+						// 	dialog.set_value("start_date", property_line.start_date);
+						// } // Set end_date if it exists in the property line
 						if (property_line.end_date) {
 							dialog.set_value("end_date", property_line.end_date);
 						}
@@ -976,6 +1004,13 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			} else {
 				args.posting_date = values.posting_date;
 				args.due_date = values.due_date;
+			}
+
+			if (values.end_date && new Date(values.end_date) < new Date(values.start_date)) {
+				frappe.throw(
+					__("Recurring Billing End Date cannot be before Recurring Billing Start Date.")
+				);
+				return;
 			}
 
 			// Make the API call to create the document

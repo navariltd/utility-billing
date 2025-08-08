@@ -57,23 +57,6 @@ def get_columns():
             "width": 150
         },
         {
-            "label": _("Billing Status"),
-            "fieldname": "billing_status",
-            "width": 120
-        },
-        {
-            "label": _("Billed Amount"),
-            "fieldname": "billed_amount",
-            "fieldtype": "Currency",
-            "width": 120
-        },
-        {
-            "label": _("% Billed"),
-            "fieldname": "per_billed",
-            "fieldtype": "Percent",
-            "width": 150
-        },
-        {
             "label": _("Start Date"),
             "fieldname": "start_date",
             "fieldtype": "Date",
@@ -141,8 +124,7 @@ def get_data(filters):
         filters=conditions,
         fields=[
             "name", "date", "customer", "customer_name", "request_type",
-            "status", "request_status", "billing_status", "billed_amount",
-            "per_billed", "start_date", "end_date", "contract_length_months",
+            "status", "request_status", "start_date", "end_date", "contract_length_months",
             "company", "territory", "customer_group", "utility_bill_structure",
             "remarks"
         ],
@@ -187,8 +169,6 @@ def get_conditions(filters):
         conditions.append(["status", "=", filters.get("status")])
     if filters.get("request_status"):
         conditions.append(["request_status", "=", filters.get("request_status")])
-    if filters.get("billing_status"):
-        conditions.append(["billing_status", "=", filters.get("billing_status")])
     if filters.get("request_type"):
         conditions.append(["request_type", "=", filters.get("request_type")])
     if filters.get("utility_bill_structure"):
@@ -219,34 +199,25 @@ def get_report_summary(data, filters):
         "BOM Completed": _("BOM Completed")
     }
     
-    billing_status_labels = {
-        "Not Billed": _("Not Billed"),
-        "Fully Billed": _("Fully Billed"),
-        "Partly Billed": _("Partly Billed"),
-        "Closed": _("Billing Closed")
-    }
+
     
     summary = []
     total = 0
-    total_amount = 0
+    # total_amount = 0
     status_counts = {k: 0 for k in status_labels}
     request_status_counts = {k: 0 for k in request_status_labels}
-    billing_status_counts = {k: 0 for k in billing_status_labels}
     
     for d in data:
         status = d.get("status")
         request_status = d.get("request_status")
-        billing_status = d.get("billing_status")
         
         if status in status_labels:
             status_counts[status] += 1
         if request_status in request_status_labels:
             request_status_counts[request_status] += 1
-        if billing_status in billing_status_labels:
-            billing_status_counts[billing_status] += 1
         
         total += 1
-        total_amount += flt(d.billed_amount)
+        # total_amount += flt(d.billed_amount)
     
     for key, label in status_labels.items():
         if status_counts[key] > 0:
@@ -266,14 +237,6 @@ def get_report_summary(data, filters):
                 "datatype": "Int"
             })
     
-    for key, label in billing_status_labels.items():
-        if billing_status_counts[key] > 0:
-            summary.append({
-                "value": billing_status_counts[key],
-                "indicator": "Green" if key == "Fully Billed" else "Orange",
-                "label": label,
-                "datatype": "Int"
-            })
     
     summary.insert(0, {
         "value": total,
@@ -282,12 +245,12 @@ def get_report_summary(data, filters):
         "datatype": "Int"
     })
     
-    summary.insert(1, {
-        "value": total_amount,
-        "indicator": "Green",
-        "label": _("Total Billed Amount"),
-        "datatype": "Currency"
-    })
+    # summary.insert(1, {
+    #     "value": total_amount,
+    #     "indicator": "Green",
+    #     "label": _("Total Billed Amount"),
+    #     "datatype": "Currency"
+    # })
     
     return summary
 
@@ -332,9 +295,6 @@ def get_chart_data(data, filters):
         })
 
     billing_data = defaultdict(int)
-    for d in data:
-        billing_status = d.get("billing_status") or "Not Billed"
-        billing_data[billing_status] += 1
 
     if billing_data:
         charts.append({
@@ -371,7 +331,7 @@ def get_chart_data(data, filters):
             if from_date <= entry_date <= to_date:
                 month_key = entry_date.strftime("%Y-%m")
                 monthly_count[month_key] += 1
-                monthly_amount[month_key] += float(d.get("billed_amount") or 0)
+                # monthly_amount[month_key] += float(d.get("billed_amount") or 0)
 
         if monthly_count:
             months = sorted(monthly_count.keys())
@@ -458,13 +418,6 @@ def get_chart_data(data, filters):
             "fieldtype": "Select",
             "options": "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
             "width": "150"
-        },
-        {
-            "fieldname": "billing_status",
-            "label": _("Billing Status"),
-            "fieldtype": "Select",
-            "options": "\nNot Billed\nFully Billed\nPartly Billed\nClosed",
-            "width": "120"
         },
         {
             "fieldname": "request_type",

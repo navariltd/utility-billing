@@ -204,6 +204,7 @@
    "options": "Item"
   },
   {
+   "depends_on": "eval: doc.is_group == 0;",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_filter": 1,
@@ -211,8 +212,8 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Availability Status",
-   "options": "\nAvailable\nOccupied\nUnder Maintenance\nReserved",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.is_group == 0;",
+   "options": "\nAvailable\nOccupied\nUnder Maintenance\nReserved"
   },
   {
    "fieldname": "section_break_spsb",
@@ -369,7 +370,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-06-16 06:35:19.983402",
+ "modified": "2025-07-16 17:22:30.743196",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",

@@ -7,8 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
-  "amount",
+  "bill_type",
   "column_break_jqkh",
+  "amount",
   "discount",
   "total"
  ],
@@ -29,6 +30,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Discount to apply on the monthly rate (as a percentage).",
    "fieldname": "discount",
    "fieldtype": "Float",
    "in_filter": 1,
@@ -38,30 +40,45 @@
    "label": "Discount(%)"
   },
   {
+   "description": "Monthly charge for this item before any discounts.",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Amount"
+   "label": "Rate Per Month"
   },
   {
+   "description": "Final payable monthly amount for this item after discount",
    "fieldname": "total",
    "fieldtype": "Currency",
    "in_filter": 1,
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Total",
+   "label": "Total Monthly Amount",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Defines the category of an item within a utility bill (e.g., Rent, Water, Deposit, Service Fee). Helps in grouping and reporting charges accurately.",
+   "fieldname": "bill_type",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Bill Type",
+   "options": "Utility Bill Item Type",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-17 21:16:02.185026",
+ "modified": "2025-08-06 18:35:10.612274",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure Item",

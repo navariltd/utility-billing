@@ -57,13 +57,6 @@ frappe.query_reports["Service Request Summary"] = {
 			default: "",
 		},
 		{
-			fieldname: "billing_status",
-			label: __("Billing Status"),
-			fieldtype: "Select",
-			options: "\nNot Billed\nPartly Billed\nFully Billed\nClosed",
-			default: "",
-		},
-		{
 			fieldname: "request_type",
 			label: __("Request Type"),
 			fieldtype: "Link",
@@ -78,11 +71,7 @@ frappe.query_reports["Service Request Summary"] = {
 	],
 
 	formatter: function (value, row, column, data, default_formatter) {
-		if (
-			column.fieldname &&
-			(column.fieldname.toLowerCase().includes("percent") ||
-				column.fieldname === "per_billed")
-		) {
+		if (column.fieldname && column.fieldname.toLowerCase().includes("percent")) {
 			const percent = Math.min(Math.max(parseFloat(value) || 0, 0), 100);
 			let color;
 
@@ -132,17 +121,6 @@ frappe.query_reports["Service Request Summary"] = {
 				Closed: "#566573",
 			};
 			const color = status_colors[value] || "#212f3c";
-			value = `<span style="color:${color};font-weight:bold;font-size:12px;">${value}</span>`;
-		}
-
-		if (column.fieldname === "billing_status" && value) {
-			const billing_colors = {
-				"Not Billed": "#922b21",
-				"Partly Billed": "#b9770e",
-				"Fully Billed": "#196f3d",
-				Closed: "#196f3d",
-			};
-			const color = billing_colors[value] || "#212f3c";
 			value = `<span style="color:${color};font-weight:bold;font-size:12px;">${value}</span>`;
 		}
 
