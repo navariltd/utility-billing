@@ -30,9 +30,6 @@ class UtilityServiceRequest(Document):
         if self.service_request_from == "Customer":
             self.customer = self.party_name
         
-    def before_submit(self):
-        self.status = "To Bill"
-        
     def on_submit(self):
         settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
         if settings.create_customer_from_utility_service_request_on_submit:
