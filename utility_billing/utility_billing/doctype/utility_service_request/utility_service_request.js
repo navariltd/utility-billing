@@ -805,6 +805,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 	const properties = (frm.doc.requested_properties || [])
 		.map((p) => p.utility_property)
 		.filter(Boolean);
+
+	const defaultProperty = properties.length === 1 ? frm.doc.requested_properties[0] : null;
+
 	// Add fields for Property and Auto Repeat settings
 	fields.push(
 		{
@@ -846,20 +849,17 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 
 				// Update items with property and frequency if a matching property line is found
 				if (property_line) {
+					if (property_line.adjustment_rule) {
+						dialog.set_value("adjustment_rule", property_line.adjustment_rule);
+					}
+					if (property_line.end_date) {
+						dialog.set_value("end_date", property_line.end_date);
+					}
 					items.forEach((row) => {
 						row.utility_property = selected_value;
 						row.frequency = property_line.frequency; // Set frequency from property line
 
 						// Set adjustment_rule if it exists in the property line
-						if (property_line.adjustment_rule) {
-							dialog.set_value("adjustment_rule", property_line.adjustment_rule);
-						} // Set start_date if it exists in the property line
-						// if (property_line.start_date) {
-						// 	dialog.set_value("start_date", property_line.start_date);
-						// } // Set end_date if it exists in the property line
-						if (property_line.end_date) {
-							dialog.set_value("end_date", property_line.end_date);
-						}
 					});
 				} else {
 					// Clear property and frequency from items if no matching property line
@@ -881,6 +881,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldtype: "Link",
 			options: "Billing Adjustment Rule",
 			depends_on: "eval:doc.enable_auto_repeat==1",
+			default: defaultProperty?.adjustment_rule,
 			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
 			description: __("Rule defining how billing amounts will adjust over time"),
 		},
@@ -892,7 +893,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldname: "enable_auto_repeat",
 			label: __("Enable Auto Repeat"),
 			fieldtype: "Check",
-			default: 0,
+			default: docType === "Sales Order" ? 0 : 1,
 			description: __("Enable recurring billing for this document"),
 			change: function () {
 				// When enable_auto_repeat changes, update the visibility and mandatory status of date fields
@@ -934,6 +935,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Recurring Billing End Date"),
 			fieldtype: "Date",
 			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			default: defaultProperty?.end_date,
 			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
 			description: __("Date when recurring billing will stop"),
 		},
