@@ -522,6 +522,9 @@ def create_sales_order_doc(
         "transaction_date": final_transaction_date,
         "delivery_date": add_days(final_transaction_date, 7),
         "company": company or usr.company,
+        "payment_terms_template": usr.payment_terms_template if hasattr(usr, "payment_terms_template") else None,
+        "tc_name": usr.tc_name if hasattr(usr, "tc_name") else None,
+        "terms": usr.terms if hasattr(usr, "terms") else None,
         "items": []
     })
 
@@ -586,6 +589,10 @@ def create_sales_invoice_doc(
         "due_date": due_date,
         "company": company or usr.company,
         "set_draft_from_utility_service_request": 1,
+        "ignore_default_payment_terms_template": 1 if usr.payment_terms_template else 0,
+        "payment_terms_template": usr.payment_terms_template if hasattr(usr, "payment_terms_template") else None,
+        "tc_name": usr.tc_name if hasattr(usr, "tc_name") else None,
+        "terms": usr.terms if hasattr(usr, "terms") else None,
         "items": []
     })
 
