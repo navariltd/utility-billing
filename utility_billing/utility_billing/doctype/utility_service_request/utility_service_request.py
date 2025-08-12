@@ -517,6 +517,7 @@ def create_sales_order_doc(
     so = frappe.get_doc({
         "doctype": "Sales Order",
         "utility_service_request": docname,
+        "utility_property": property if property else None,
         "customer": customer or usr.customer,
         "customer_name": customer_name or usr.customer_name,
         "transaction_date": final_transaction_date,
@@ -583,6 +584,7 @@ def create_sales_invoice_doc(
     si = frappe.get_doc({
         "doctype": "Sales Invoice",
         "utility_service_request": docname,
+        "utility_property": property if property else None,
         "customer": customer or usr.customer,
         "customer_name": customer_name or usr.customer_name,
         "posting_date": final_posting_date,
@@ -642,35 +644,6 @@ def _get_common_doc_details(docname, property, transaction_date, start_date, end
     final_end_date = end_date or (property_line.end_date if property_line else None)
 
     return usr, property_line, primary_date, final_start_date, final_end_date
-
-def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule, start_date, end_date):
-    if enable_auto_repeat == "1":
-        actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
-
-        if actual_adjustment_rule_name:
-            adjustment_rule_doc = frappe.get_doc("Billing Adjustment Rule", actual_adjustment_rule_name)
-
-            auto_repeat_settings = {
-                "frequency": adjustment_rule_doc.frequency,
-                "start_date": start_date,
-                "end_date": end_date,
-                "utility_property": property.utility_property if property else None, # Pass the utility_property name
-                "submit_on_creation": adjustment_rule_doc.submit_on_creation,
-                "repeat_on_day": adjustment_rule_doc.repeat_on_day,
-                "repeat_on_last_day": adjustment_rule_doc.repeat_on_last_day,
-                "repeat_on_days": adjustment_rule_doc.repeat_on_days,
-            }
-
-            create_single_auto_repeat_with_contract_details(
-                doc,
-                usr,
-                adjustment_rule_doc,
-                auto_repeat_settings
-            )
-
-            add_transaction_comments(doc, usr.name, auto_repeat_settings)
-        else:
-            frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
 
 
 def add_transaction_comments(transaction, usr_name, auto_repeat=None):
