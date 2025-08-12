@@ -649,7 +649,9 @@ function prepare_items_data(frm) {
 	const child_table = frm.fields_dict["items"];
 	const child_fields = child_table.grid.docfields;
 	const allowedFields = child_fields.map((f) => f.fieldname);
-
+	const properties = (frm.doc.requested_properties || [])
+		.map((p) => p.utility_property)
+		.filter(Boolean);
 	return frm.doc.items.map((item) => {
 		const qty = item.qty || 1;
 		const rate = item.rate || 0;
@@ -662,6 +664,7 @@ function prepare_items_data(frm) {
 			amount: flt(rate * qty),
 			qty: qty,
 			warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
+			utility_property: properties.length == 1 ? properties[0] : null,
 			...item, // Include all other fields from the original item
 		};
 
@@ -894,7 +897,6 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			change: function () {
 				// When enable_auto_repeat changes, update the visibility and mandatory status of date fields
 				const isChecked = this.get_value();
-				dialog.toggle_display(["start_date", "end_date", "adjustment_rule"], isChecked);
 				dialog.set_df_property("start_date", "reqd", isChecked);
 				dialog.set_df_property("end_date", "reqd", isChecked);
 				dialog.set_df_property("adjustment_rule", "reqd", isChecked);
@@ -1034,12 +1036,6 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 
 	// Configure the dialog after initialization (e.g., initial field visibility)
 	configure_dialog(dialog, frm);
-
-	// Manually trigger initial visibility for auto-repeat fields based on default value
-	dialog.toggle_display(
-		["start_date", "end_date", "adjustment_rule"],
-		dialog.get_value("enable_auto_repeat")
-	);
 }
 
 // Update the action buttons to use the new common modal function
