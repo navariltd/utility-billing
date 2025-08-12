@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:property_name",
  "creation": "2024-11-06 15:58:52.896790",
@@ -370,7 +371,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-07-16 17:22:30.743196",
+ "modified": "2025-08-11 19:11:54.195303",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",
