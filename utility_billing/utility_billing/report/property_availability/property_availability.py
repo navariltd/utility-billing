@@ -29,7 +29,7 @@ def get_columns():
 
 def get_data(filters):
     filters = filters or {}
-    conditions = {}
+    conditions = {"is_group": 0}
 
    
     exact_filters = ["status", "utility_category", "company", "is_fixed_asset"]
@@ -80,14 +80,22 @@ def get_report_summary(data):
     ]
 
 def get_chart_data(data):
-   
     status_counts = {}
     for d in data:
-        status = d.get("status") or "Unknown"
+        status = d.get("status") or "No Status"
         status_counts[status] = status_counts.get(status, 0) + 1
 
     labels = list(status_counts.keys())
     values = list(status_counts.values())
+    
+    color_map = {
+        "Available": "green",
+        "Occupied": "blue",
+        "Under Maintenance": "orange",
+        "Reserved": "purple",
+    }
+    
+    colors = [color_map.get(label, "#808080") for label in labels]  
 
     return {
         "data": {
@@ -97,5 +105,6 @@ def get_chart_data(data):
                 "values": values
             }]
         },
-        "type": "pie"
+        "type": "pie",
+        "colors": colors
     }
