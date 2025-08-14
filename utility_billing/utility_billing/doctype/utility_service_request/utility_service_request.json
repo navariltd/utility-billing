@@ -150,8 +150,6 @@
   {
    "fieldname": "nrcpassport_no",
    "fieldtype": "Data",
-   "in_filter": 1,
-   "in_standard_filter": 1,
    "label": "NRC/Passport No"
   },
   {
@@ -238,8 +236,6 @@
   {
    "fieldname": "tax_id",
    "fieldtype": "Data",
-   "in_filter": 1,
-   "in_standard_filter": 1,
    "label": "Organisation Registration No"
   },
   {
@@ -346,6 +342,7 @@
   {
    "fieldname": "party_name",
    "fieldtype": "Dynamic Link",
+   "in_filter": 1,
    "label": "Party Name",
    "options": "service_request_from",
    "reqd": 1
@@ -492,7 +489,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-08 12:38:19.227374",
+ "modified": "2025-08-14 14:21:59.339486",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

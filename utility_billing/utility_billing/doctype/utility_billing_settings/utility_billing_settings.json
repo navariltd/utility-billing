@@ -10,6 +10,7 @@
   "individual_invoices_for_multiple_sales_orders",
   "column_break_moce",
   "sales_invoice_creation_state",
+  "months_in_advance_to_notify_of_tenancy_ending",
   "service_request_section",
   "enable_site_survey",
   "require_deposit_before_contract_creation",
@@ -111,12 +112,17 @@
    "fieldname": "clear_demo_data",
    "fieldtype": "Button",
    "label": "Clear Demo Data"
+  },
+  {
+   "fieldname": "months_in_advance_to_notify_of_tenancy_ending",
+   "fieldtype": "Int",
+   "label": "Months in Advance to Notify of Tenancy Ending"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-09 17:54:16.495777",
+ "modified": "2025-08-14 13:22:21.922776",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

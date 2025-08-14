@@ -11,11 +11,11 @@ from datetime import datetime
 def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
-    summary = get_report_summary(data, filters)
+    # summary = get_report_summary(data, filters)
     
-    chart = get_chart_data(data, filters)
+    # chart = get_chart_data(data, filters)
     
-    return columns, data, None, chart, summary
+    return columns, data, None, None, None
 
 def get_columns():
     return [
@@ -46,11 +46,11 @@ def get_columns():
             "options": "Issue Type",
             "width": 150
         },
-        {
-            "label": _("Status"),
-            "fieldname": "status",
-            "width": 120
-        },
+        # {
+        #     "label": _("Status"),
+        #     "fieldname": "status",
+        #     "width": 120
+        # },
         {
             "label": _("Request Status"),
             "fieldname": "request_status",
@@ -118,6 +118,7 @@ def get_columns():
 
 def get_data(filters):
     conditions = get_conditions(filters)
+    conditions.append(["docstatus", "=", 1])
 
     data = frappe.get_all(
         "Utility Service Request",
