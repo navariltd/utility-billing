@@ -7,33 +7,12 @@ app_license = "agpl-3.0"
 
 fixtures = [
     {
-        "doctype": "Custom Field",
-        "filters": [
-            [
-                "dt",
-                "in",
-                (
-                    "BOM",
-                    "Customer",
-                    "Issue",
-                    "Item",
-                    "Item Price",
-                    "Sales Order",
-                    "Sales Invoice",
-                    "Sales Order Item",
-                    "Sales Invoice Item",
-                ),
-            ],
-            ["is_system_generated", "=", 0],
-            ["module", "=", "Utility Billing"],
-        ],
-    },
-    {
-        "doctype": "Workspace",
-        "filters": [
-            ["name", "=", "Selling"],
-        ],
-    },
+        "doctype": "Item Group",
+        "or_filters": [
+            ["name", "in", ["Utility and Rental"]],
+            ["parent_item_group", "in", ["Utility and Rental"]]
+        ]
+    }
 ]
 
 accounting_dimension_doctypes = [

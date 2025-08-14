@@ -1,12 +1,24 @@
 frappe.ui.form.on("Utility Bill Structure", {
-	refresh(frm) {
+	async refresh(frm) {
 		calculate_overall_total(frm);
+
+		const group_names = await frappe.db.get_list("Item Group", {
+			filters: {
+				parent_item_group: "Utility and Rental",
+			},
+			fields: ["name"],
+			pluck: "name",
+		});
+
+		group_names.push("Utility and Rental");
+
 		frm.fields_dict["items"].grid.get_field("item").get_query = function () {
 			return {
 				filters: {
 					is_sales_item: 1,
 					is_utility_item: 1,
 					has_variants: 0,
+					item_group: ["in", group_names],
 				},
 			};
 		};

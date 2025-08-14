@@ -30,15 +30,27 @@ frappe.ui.form.on("Utility Service Request", {
 			frm.set_value("date", currentDate);
 		}
 
+		const group_names = await frappe.db.get_list("Item Group", {
+			filters: {
+				parent_item_group: "Utility and Rental",
+			},
+			fields: ["name"],
+			pluck: "name",
+		});
+
+		group_names.push("Utility and Rental");
+
 		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
 			return {
 				filters: {
 					is_sales_item: 1,
 					is_utility_item: 1,
 					has_variants: 0,
+					item_group: ["in", group_names],
 				},
 			};
 		};
+
 		frm.fields_dict["utility_bill_structure"].get_query = function () {
 			return {
 				filters: {
@@ -311,12 +323,6 @@ frappe.ui.form.on("Utility Service Request Item", {
 
 	qty: function (frm, cdt, cdn) {
 		calculate_amount(frm, cdt, cdn);
-	},
-
-	delivery_date: function (frm) {
-		if (!frm.doc.delivery_date) {
-			erpnext.utils.copy_value_in_all_rows(frm.doc, null, null, "items", "delivery_date");
-		}
 	},
 });
 
