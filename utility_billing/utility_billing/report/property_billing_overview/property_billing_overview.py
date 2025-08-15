@@ -53,7 +53,7 @@ class PropertyBillingOverview:
 
     def get_bill_types(self):
         self.bill_types = frappe.get_all("Item Group",
-            filters={"parent_item_group": "Utility and Rental"},
+            filters={"is_utility_item_group": 1},
             fields=["name"],
             order_by="name")
 
