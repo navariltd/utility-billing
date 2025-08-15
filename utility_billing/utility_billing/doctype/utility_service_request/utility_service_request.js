@@ -30,23 +30,12 @@ frappe.ui.form.on("Utility Service Request", {
 			frm.set_value("date", currentDate);
 		}
 
-		const group_names = await frappe.db.get_list("Item Group", {
-			filters: {
-				parent_item_group: "Utility and Rental",
-			},
-			fields: ["name"],
-			pluck: "name",
-		});
-
-		group_names.push("Utility and Rental");
-
 		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
 			return {
 				filters: {
 					is_sales_item: 1,
 					is_utility_item: 1,
 					has_variants: 0,
-					item_group: ["in", group_names],
 				},
 			};
 		};

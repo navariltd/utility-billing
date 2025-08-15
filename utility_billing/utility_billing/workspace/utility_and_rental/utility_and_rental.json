@@ -35,55 +35,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Tenancy Summary",
-   "link_count": 0,
-   "link_to": "Tenancy Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Service Request Summary",
-   "link_count": 0,
-   "link_to": "Service Request Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Property Availability",
-   "link_count": 0,
-   "link_to": "Property Availability",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Meter Reading Summary",
-   "link_count": 0,
-   "link_to": "Meter Reading Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Service Operations",
    "link_count": 5,
    "link_type": "DocType",
@@ -316,9 +267,68 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tenancy Summary",
+   "link_count": 0,
+   "link_to": "Tenancy Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Service Request Summary",
+   "link_count": 0,
+   "link_to": "Service Request Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Property Availability",
+   "link_count": 0,
+   "link_to": "Property Availability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Meter Reading Summary",
+   "link_count": 0,
+   "link_to": "Meter Reading Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Property Billing Overview",
+   "link_count": 0,
+   "link_to": "Property Billing Overview",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-05-20 20:01:45.637753",
+ "modified": "2025-08-15 15:01:12.378208",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility and Rental",
@@ -330,6 +340,9 @@
  "roles": [
   {
    "role": "All"
+  },
+  {
+   "role": "Accounts User"
   }
  ],
  "sequence_id": 29.0,
