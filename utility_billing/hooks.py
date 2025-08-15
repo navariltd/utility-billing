@@ -218,6 +218,11 @@ doc_events = {
         "on_update": [
             "utility_billing.utility_billing.overrides.server.auto_repeat.on_update"
         ],
+    },
+    "Item": {
+        "validate": [
+            "utility_billing.utility_billing.overrides.server.item.validate"
+        ],
     }
 }
 
