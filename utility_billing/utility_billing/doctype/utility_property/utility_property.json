@@ -17,9 +17,11 @@
   "is_fixed_asset",
   "is_group",
   "section_break_jcig",
+  "is_existing_asset",
   "asset_naming_series",
   "item",
   "column_break_sakg",
+  "existing_asset",
   "asset_category",
   "purchase_date",
   "gross_purchase_amount",
@@ -242,6 +244,21 @@
    "mandatory_depends_on": "eval: (doc.is_fixed_asset == 1) && (!doc.item)"
   },
   {
+   "default": "0",
+   "depends_on": "eval: doc.is_fixed_asset == 1",
+   "fieldname": "is_existing_asset",
+   "fieldtype": "Check",
+   "label": "Is Existing Asset"
+  },
+  {
+   "depends_on": "eval: doc.is_fixed_asset == 1 && doc.is_existing_asset == 1",
+   "description": "Select an existing asset to populate property details",
+   "fieldname": "existing_asset",
+   "fieldtype": "Link",
+   "label": "Existing Asset",
+   "options": "Asset"
+  },
+  {
    "fieldname": "dashboard_tab",
    "fieldtype": "Tab Break",
    "label": "Dashboard",
@@ -371,7 +388,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-08-11 19:11:54.195303",
+ "modified": "2025-09-03 17:35:04.863355",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",

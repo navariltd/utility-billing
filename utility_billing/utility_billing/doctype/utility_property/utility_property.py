@@ -28,6 +28,24 @@ class UtilityProperty(NestedSet):
                 self.gross_purchase_amount = asset.gross_purchase_amount
 
         if self.is_fixed_asset:
+            # If existing asset is selected, skip asset creation and use existing asset data
+            if self.is_existing_asset and self.existing_asset:
+                # Get existing asset data to populate fields
+                asset_doc = frappe.get_doc("Asset", self.existing_asset)
+                if asset_doc.item_code:
+                    self.item = asset_doc.item_code
+                if asset_doc.location:
+                    self.location = asset_doc.location
+                if asset_doc.asset_category:
+                    self.asset_category = asset_doc.asset_category
+                if asset_doc.gross_purchase_amount:
+                    self.gross_purchase_amount = asset_doc.gross_purchase_amount
+                if asset_doc.purchase_date:
+                    self.purchase_date = asset_doc.purchase_date
+                # Skip asset creation since we're using existing asset
+                return
+
+            # Only create new assets if no existing asset is selected
             if not frappe.db.exists("Item Group", "Fixed Asset"):
                 item_group = frappe.db.get_value("Item Group", {"is_group": 1})
                 frappe.get_doc({
@@ -53,7 +71,7 @@ class UtilityProperty(NestedSet):
                 "asset_name": self.property_name,
             }):
                 frappe.db.set_value("Item", self.item, "disabled", 0)
-                asset_doc = frappe.get_doc({
+                asset_data = {
                     "doctype": "Asset",
                     "item_code": self.item,
                     "company": self.company,
@@ -61,10 +79,16 @@ class UtilityProperty(NestedSet):
                     "asset_category": self.asset_category,
                     "naming_series": self.asset_naming_series or "ACC-ASS-.YYYY.-",
                     "is_existing_asset": 1,
-                    "gross_purchase_amount": self.gross_purchase_amount, 
-                    "purchase_date": self.purchase_date, 
-                    "location": self.location
-                })
+                    "purchase_date": self.purchase_date or frappe.utils.today(),  # Always set purchase_date
+                }
+                
+                # Only add optional fields if they have values
+                if self.gross_purchase_amount:
+                    asset_data["gross_purchase_amount"] = self.gross_purchase_amount
+                if self.location:
+                    asset_data["location"] = self.location
+                
+                asset_doc = frappe.get_doc(asset_data)
                 asset_doc.insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
 
     def _create_item(self):
@@ -82,3 +106,36 @@ class UtilityProperty(NestedSet):
             "stock_uom": "Nos",
             "disabled": 0,
         }).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
+
+    @frappe.whitelist()
+    def update_asset_from_property(self):
+        """Fetch information from the existing asset for display purposes only."""
+        if not self.existing_asset:
+            return {"error": "No existing asset selected"}
+
+        try:
+            # Get the asset document
+            asset_doc = frappe.get_doc("Asset", self.existing_asset)
+            
+            # Simply return the asset information without updating the property
+            return {
+                "message": "Asset information retrieved successfully",
+                "asset_status": "submitted" if asset_doc.docstatus == 1 else "draft",
+                "asset_data": {
+                    "location": asset_doc.location,
+                    "asset_category": asset_doc.asset_category,
+                    "gross_purchase_amount": asset_doc.gross_purchase_amount,
+                    "purchase_date": asset_doc.purchase_date,
+                    "asset_name": asset_doc.asset_name,
+                    "item_code": asset_doc.item_code,
+                    "company": asset_doc.company,
+                    "asset_owner": getattr(asset_doc, 'asset_owner', 'Not set'),
+                    "custodian": getattr(asset_doc, 'custodian', 'Not set'),
+                    "status": getattr(asset_doc, 'status', 'Not set')
+                },
+                "note": "Asset information is being used as-is. No updates made to utility property."
+            }
+            
+        except Exception as e:
+            frappe.log_error(f"Error fetching asset information: {str(e)}")
+            return {"error": f"Failed to fetch asset information: {str(e)}"}
