@@ -61,11 +61,15 @@ app_include_js = "/assets/utility_billing/js/demo.js"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Item Price": "utility_billing/overrides/client/item_price.js"}
-doctype_js = {"Contract": "utility_billing/overrides/client/contract.js"}
+doctype_js = {
+    "Item Price": "utility_billing/overrides/client/item_price.js",
+    "Contract": "utility_billing/overrides/client/contract.js",
+    "Auto Repeat": "utility_billing/overrides/client/auto_repeat.js"
+}
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
-    "Sales Order": "utility_billing/overrides/client/sales_order_list.js"
+    "Sales Order": "utility_billing/overrides/client/sales_order_list.js",
+    "Auto Repeat": "utility_billing/overrides/client/auto_repeat_list.js"
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
