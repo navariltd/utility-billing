@@ -272,3 +272,51 @@ def add_audit_comment(
             "reference_name": name,
             "content": comment_msg
         }).insert(ignore_permissions=True)
+
+
+@frappe.whitelist()
+def create_repeated_entries(data):
+    """Create Auto Repeat documents for given list of names"""
+    import json
+
+    if isinstance(data, str):
+        data = json.loads(data)
+
+    for d in data:
+        try:
+            doc = frappe.get_doc("Auto Repeat", d["name"])
+
+            schedule_date = doc.get_next_schedule_date(schedule_date=doc.next_schedule_date)
+            next_schedule_date = getdate(doc.next_schedule_date)
+            current_date = getdate(today())
+            
+            if next_schedule_date <= current_date and not doc.disabled:
+                doc.create_documents()
+                if schedule_date and not doc.disabled:
+                    frappe.db.set_value("Auto Repeat", doc.name, "next_schedule_date", schedule_date)
+
+            if doc.is_completed():
+                doc.status = "Completed"
+                doc.save()
+
+        except Exception as e:
+            frappe.log_error(frappe.get_traceback(), f"Auto Repeat Creation Failed for {d['name']}")
+            frappe.throw(f"Failed to process {d['name']}: {e}")
+
+@frappe.whitelist()
+def run_all_due_auto_repeats():
+    """Run all Auto Repeats with next_schedule_date <= today."""
+    today_date = getdate(today())
+    names = frappe.get_all(
+        "Auto Repeat",
+        filters={"disabled": 0, "next_schedule_date": ["<=", today_date]},
+        pluck="name"
+    )
+
+    if not names:
+        return "No due Auto Repeats found"
+
+    data = [{"name": name} for name in names]
+    create_repeated_entries(data)
+
+    return f"Processed {len(names)} Auto Repeats"
