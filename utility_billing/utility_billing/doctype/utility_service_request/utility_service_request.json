@@ -244,6 +244,7 @@
   },
   {
    "allow_bulk_edit": 1,
+   "allow_on_submit": 1,
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -354,6 +355,7 @@
    "options": "Payment Terms Template"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "utility_bill_structure",
    "fieldtype": "Link",
    "label": "Utility Bill Structure",
@@ -489,7 +491,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-14 14:21:59.339486",
+ "modified": "2025-09-09 15:33:49.336992",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",

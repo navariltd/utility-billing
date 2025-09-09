@@ -70,29 +70,5 @@
     "website_specifications": [],
     "website_title": null,
     "weightage": 0
-  },
-  {
-    "description": null,
-    "docstatus": 0,
-    "doctype": "Item Group",
-    "filter_attributes": [],
-    "filter_fields": [],
-    "image": null,
-    "include_descendants": 0,
-    "is_group": 0,
-    "is_utility_item_group": 1,
-    "item_group_defaults": [],
-    "item_group_name": "Other Utilities",
-    "modified": "2025-08-12 11:19:37.367327",
-    "name": "Other Utilities",
-    "old_parent": "Utility and Rental",
-    "parent_item_group": "Utility and Rental",
-    "route": "other-utilities",
-    "show_in_website": 0,
-    "slideshow": null,
-    "taxes": [],
-    "website_specifications": [],
-    "website_title": null,
-    "weightage": 0
   }
 ]
