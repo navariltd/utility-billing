@@ -48,6 +48,7 @@ class PropertyBillingOverview:
         self.get_monthly_rates()
         self.get_billing_data()
         self.process_data()
+        self.clean_columns()
         
         return self.columns, self.data
 
@@ -146,7 +147,11 @@ class PropertyBillingOverview:
             .where(ubsi.parent.isin(bill_structure_names))
             .run(as_dict=True))
             
-        self.monthly_rates = {(item.utility_bill_structure, item.item): item.monthly_rate for item in rate_items}
+        rate_totals = defaultdict(float)
+        for item in rate_items:
+            rate_totals[(item.utility_bill_structure, item.item)] += flt(item.monthly_rate, self.currency_precision)
+        self.monthly_rates = dict(rate_totals)
+
 
     def get_billing_data(self):
         property_list = [c.property for c in self.contracts]
@@ -218,7 +223,6 @@ class PropertyBillingOverview:
             if not bill_type:
                 continue
                 
-        # First calculate customer totals
             item_amount = flt(invoice.base_amount, self.currency_precision)
             
             self.update_billing_data(property_key, bill_type, item_amount)
@@ -244,7 +248,6 @@ class PropertyBillingOverview:
                 soi.item_code,
                 soi.base_amount,
                 soi.delivered_qty,
-        # First calculate customer totals
                 soi.qty
             )
             .where(so.docstatus == 1)
@@ -259,7 +262,6 @@ class PropertyBillingOverview:
         for order in orders:
             if order.name in invoiced_qty and invoiced_qty[order.name] >= order.qty:
                 continue
-        # First calculate customer totals
                 
             property_key = (order.utility_property, order.customer)
             bill_type = self.get_bill_type_for_item(order.utility_service_request, order.item_code)
@@ -459,7 +461,7 @@ class PropertyBillingOverview:
                     rate_value = self.monthly_rates.get(rate_key, 0)
             
             row.update({
-                f"{bill_type_name}_rate": rate_value if is_first_row_for_customer else "",
+                f"{bill_type_name}_rate": billing_info["bill_type_rate"].get(bt.name, rate_value),
                 f"{bill_type_name}_invoiced": billing_info["bill_type_invoiced"].get(bt.name, 0),
                 f"{bill_type_name}_ordered": billing_info["bill_type_ordered"].get(bt.name, 0)
             })
@@ -518,3 +520,25 @@ class PropertyBillingOverview:
         ])
         
         self.columns = base_columns
+        
+    def clean_columns(self):
+        cols_to_remove = set()
+
+        for col in self.columns:
+            fieldname = col.get("fieldname")
+            if not fieldname or not any(suffix in fieldname for suffix in ["_rate", "_ordered", "_invoiced"]):
+                continue
+
+            all_zero = all(
+                not row.get(fieldname) or flt(row.get(fieldname)) == 0
+                for row in self.data
+            )
+
+            if all_zero:
+                cols_to_remove.add(fieldname)
+
+        self.columns = [col for col in self.columns if col.get("fieldname") not in cols_to_remove]
+
+        for row in self.data:
+            for fieldname in cols_to_remove:
+                row.pop(fieldname, None)
