@@ -311,11 +311,13 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "terms",
    "fieldtype": "Text Editor",
    "label": "Terms and Conditions Details"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "tc_name",
    "fieldtype": "Link",
    "label": "Terms",
@@ -349,6 +351,7 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_terms_template",
    "fieldtype": "Link",
    "label": "Payment Terms Template",
@@ -373,6 +376,7 @@
    "label": "Terms & Conditions"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "ignore_default_payment_terms_template",
    "fieldtype": "Check",
@@ -491,7 +495,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-09 15:33:49.336992",
+ "modified": "2025-09-17 18:56:24.877794",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
