@@ -29,27 +29,28 @@ class PropertyBillingOverview:
             frappe.throw(_("Company is required"))
         if not self.filters.get("from_date") or not self.filters.get("to_date"):
             frappe.throw(_("Date range is required"))
-            
+                    
         self.filters.from_date = getdate(self.filters.from_date)
         self.filters.to_date = getdate(self.filters.to_date)
-        
+                
         if self.filters.from_date > self.filters.to_date:
             frappe.throw(_("From Date cannot be after To Date"))
 
     def run(self):
         self.get_bill_types()
-        self.get_columns() 
-        self.get_contract_data()
+        self.get_columns()
         
+        self.get_contract_data()
+                
         if not self.contracts:
             return self.columns, self.data
-            
+                    
         self.build_bill_item_mapping()
         self.get_monthly_rates()
         self.get_billing_data()
         self.process_data()
         self.clean_columns()
-        
+                
         return self.columns, self.data
 
     def get_bill_types(self):
@@ -105,7 +106,7 @@ class PropertyBillingOverview:
             query = query.where(contract.party_name == self.filters.customer)
 
         self.contracts = query.orderby(contract.party_name, property_doc.property_name, property_doc.unit_number).run(as_dict=True)
-        
+                
         for contract in self.contracts:
             self.property_contract_map[contract.property] = contract
 
@@ -113,10 +114,10 @@ class PropertyBillingOverview:
         bill_structure_names = list(set(c.utility_bill_structure for c in self.contracts if c.utility_bill_structure))
         if not bill_structure_names:
             return
-            
+                    
         ubsi = frappe.qb.DocType("Utility Bill Structure Item")
         item = frappe.qb.DocType("Item")
-        
+                
         bill_structure_items = (
             frappe.qb.from_(ubsi)
             .join(item).on(item.name == ubsi.item)
@@ -127,7 +128,7 @@ class PropertyBillingOverview:
             )
             .where(ubsi.parent.isin(bill_structure_names))
             .run(as_dict=True))
-            
+                    
         for item in bill_structure_items:
             self.bill_item_mapping.setdefault(item.utility_bill_structure, {})[item.item] = item.item_group
 
@@ -135,7 +136,7 @@ class PropertyBillingOverview:
         bill_structure_names = list(set(c.utility_bill_structure for c in self.contracts if c.utility_bill_structure))
         if not bill_structure_names:
             return
-            
+                    
         ubsi = frappe.qb.DocType("Utility Bill Structure Item")
         rate_items = (
             frappe.qb.from_(ubsi)
@@ -146,12 +147,11 @@ class PropertyBillingOverview:
             )
             .where(ubsi.parent.isin(bill_structure_names))
             .run(as_dict=True))
-            
+                    
         rate_totals = defaultdict(float)
         for item in rate_items:
             rate_totals[(item.utility_bill_structure, item.item)] += flt(item.monthly_rate, self.currency_precision)
         self.monthly_rates = dict(rate_totals)
-
 
     def get_billing_data(self):
         property_list = [c.property for c in self.contracts]
@@ -175,7 +175,7 @@ class PropertyBillingOverview:
             return
 
         self.get_opening_balances(customer_list)
-        self.get_paid_in_period(customer_list)
+        self.get_paid_in_period_by_property(property_list, customer_list)
         self.get_current_outstanding(customer_list)
         self.get_invoices(property_list, customer_list)
         self.get_sales_orders(property_list, customer_list)
@@ -188,14 +188,14 @@ class PropertyBillingOverview:
                 date=self.filters.from_date,
                 company=self.filters.company
             )
-            
+                        
             for contract in (c for c in self.contracts if c.customer == customer):
                 self.billing_data[(contract.property, contract.customer)]["opening_outstanding"] = opening_balance
 
     def get_invoices(self, property_list, customer_list):
         si = frappe.qb.DocType("Sales Invoice")
         sii = frappe.qb.DocType("Sales Invoice Item")
-        
+                
         invoices = (
             frappe.qb.from_(si)
             .join(sii).on(sii.parent == si.name)
@@ -216,15 +216,15 @@ class PropertyBillingOverview:
             .where(sii.utility_property.isin(property_list))
             .where(si.posting_date.between(self.filters.from_date, self.filters.to_date))
             .run(as_dict=True))
-            
+                    
         for invoice in invoices:
             property_key = (invoice.utility_property, invoice.customer)
             bill_type = self.get_bill_type_for_item(invoice.utility_service_request, invoice.item_code)
             if not bill_type:
                 continue
-                
+                            
             item_amount = flt(invoice.base_amount, self.currency_precision)
-            
+                        
             self.update_billing_data(property_key, bill_type, item_amount)
 
     def update_billing_data(self, property_key, bill_type, invoiced):
@@ -235,7 +235,7 @@ class PropertyBillingOverview:
     def get_sales_orders(self, property_list, customer_list):
         so = frappe.qb.DocType("Sales Order")
         soi = frappe.qb.DocType("Sales Order Item")
-        
+                
         orders = (
             frappe.qb.from_(soi)
             .join(so).on(soi.parent == so.name)
@@ -256,18 +256,18 @@ class PropertyBillingOverview:
             .where(so.transaction_date.between(self.filters.from_date, self.filters.to_date))
             .where(so.status.notin(['Cancelled', 'Closed']))
             .run(as_dict=True))
-            
+                    
         invoiced_qty = self.get_invoiced_qty_for_orders()
-            
+                    
         for order in orders:
             if order.name in invoiced_qty and invoiced_qty[order.name] >= order.qty:
                 continue
-                
+                            
             property_key = (order.utility_property, order.customer)
             bill_type = self.get_bill_type_for_item(order.utility_service_request, order.item_code)
             if not bill_type:
                 continue
-                
+                            
             item_amount = flt(order.base_amount, self.currency_precision)
             self.billing_data[property_key]["ordered"] += item_amount
             self.billing_data[property_key]["bill_type_ordered"][bill_type] += item_amount
@@ -286,17 +286,21 @@ class PropertyBillingOverview:
             .run(as_dict=True)
         )
         return {row.so_detail: row.qty for row in result}
-    
+
     def get_bill_type_for_item(self, service_request, item_code):
         if not service_request or not item_code:
             return None
-            
+                    
         bill_structure = frappe.db.get_value("Utility Service Request", service_request, "utility_bill_structure")
         return self.bill_item_mapping.get(bill_structure, {}).get(item_code)
-    
-    def get_total_paid_in_period(self, customer, company, from_date, to_date):
-        """Get total paid amount for a customer between from_date and to_date using Payment Ledger Entry."""
+
+    def get_paid_in_period_by_property(self, property_list, customer_list):
+        """Get paid amounts distributed by property using Payment Ledger Entry"""
         ple = frappe.qb.DocType("Payment Ledger Entry")
+        si = frappe.qb.DocType("Sales Invoice")
+        sii = frappe.qb.DocType("Sales Invoice Item")
+        so = frappe.qb.DocType("Sales Order")
+        soi = frappe.qb.DocType("Sales Order Item")
         acc = frappe.qb.DocType("Account")
 
         account_type = frappe.get_cached_value("Party Type", "Customer", "account_type")
@@ -304,35 +308,76 @@ class PropertyBillingOverview:
         query = (
             frappe.qb.from_(ple)
             .inner_join(acc).on(ple.account == acc.name)
-            .select(fn.Sum(ple.amount).as_("paid_amount"))
+            .select(
+                ple.party,
+                ple.against_voucher_no,
+                ple.against_voucher_type,
+                ple.amount
+            )
             .where(ple.party_type == "Customer")
-            .where(ple.party == customer)
-            .where(ple.company == company)
-            .where(ple.posting_date.between(from_date, to_date))
+            .where(ple.party.isin(customer_list))
+            .where(ple.company == self.filters.company)
+            .where(ple.posting_date.between(self.filters.from_date, self.filters.to_date))
             .where(acc.account_type == account_type)
-            .where(ple.delinked == 0)                 
-            .where(ple.amount < 0)                   
+            .where(ple.delinked == 0)
+            .where(ple.amount < 0)  
+            .where(ple.against_voucher_type.isin(["Sales Invoice", "Sales Order"]))
         )
 
-        if invoice_doctypes := frappe.get_hooks("invoice_doctypes"):
-            query = query.where(ple.voucher_type.notin(invoice_doctypes))
+        payment_entries = query.run(as_dict=True)
 
-        result = query.run()
-        paid_amount = abs(flt(result[0][0])) if result and result[0][0] else 0
+        property_payments = defaultdict(float)
 
-        return paid_amount
+        for payment in payment_entries:
+            voucher_no = payment.against_voucher_no
+            voucher_type = payment.against_voucher_type
+            customer = payment.party
+            payment_amount = abs(flt(payment.amount))
 
-    def get_paid_in_period(self, customer_list):
-        for customer in customer_list:
-            paid_amount = self.get_total_paid_in_period(
-                customer=customer,
-                company=self.filters.company,
-                from_date=self.filters.from_date,
-                to_date=self.filters.to_date
-            )
+            if voucher_type == "Sales Invoice":
+                invoice_items = (
+                    frappe.qb.from_(sii)
+                    .select(
+                        sii.utility_property,
+                        sii.base_amount,
+                        fn.Sum(sii.base_amount).as_("total_invoice_amount")
+                    )
+                    .where(sii.parent == voucher_no)
+                    .where(sii.docstatus == 1)
+                    .where(sii.utility_property.isnotnull())
+                    .run(as_dict=True)
+                )
 
-            for contract in (c for c in self.contracts if c.customer == customer):
-                self.billing_data[(contract.property, contract.customer)]["paid"] = paid_amount
+                for prop_data in invoice_items:
+                    if prop_data.utility_property in property_list:
+                        proportion = flt(prop_data.base_amount) / flt(prop_data.total_invoice_amount) if prop_data.total_invoice_amount else 1
+                        distributed_payment = payment_amount * proportion
+                        property_key = (prop_data.utility_property, customer)
+                        property_payments[property_key] += distributed_payment
+
+            elif voucher_type == "Sales Order":
+                order_items = (
+                    frappe.qb.from_(soi)
+                    .select(
+                        soi.utility_property,
+                        soi.base_amount,
+                        fn.Sum(soi.base_amount).over(partition_by=soi.parent).as_("total_order_amount")
+                    )
+                    .where(soi.parent == voucher_no)
+                    .where(soi.docstatus == 1)
+                    .where(soi.utility_property.isnotnull())
+                    .run(as_dict=True)
+                )
+
+                for prop_data in order_items:
+                    if prop_data.utility_property in property_list:
+                        proportion = flt(prop_data.base_amount) / flt(prop_data.total_order_amount) if prop_data.total_order_amount else 1
+                        distributed_payment = payment_amount * proportion
+                        property_key = (prop_data.utility_property, customer)
+                        property_payments[property_key] += distributed_payment
+
+        for property_key, paid_amount in property_payments.items():
+            self.billing_data[property_key]["paid"] = paid_amount
 
     def get_current_outstanding(self, customer_list):
         for customer in customer_list:
@@ -347,15 +392,15 @@ class PropertyBillingOverview:
 
     def process_data(self):
         self.calculate_customer_totals()
-        
+                
         current_customer = None
         for contract in self.contracts:
             property_key = (contract.property, contract.customer)
             billing_info = self.billing_data[property_key]
-            
+                        
             is_first_row_for_customer = (contract.customer != current_customer)
             current_customer = contract.customer
-            
+                        
             row = {
                 "property": contract.property,
                 "property_name": contract.property_name,
@@ -377,17 +422,16 @@ class PropertyBillingOverview:
                 "is_group": 0,
                 "parent_customer": contract.customer if not is_first_row_for_customer else "",
                 "opening_arrears": billing_info.get("opening_outstanding", 0) if is_first_row_for_customer else "",
-                "total_paid": billing_info.get("paid", 0) if is_first_row_for_customer else "",
+                "total_paid": billing_info.get("paid", 0),  # Show paid amount for each property/tenancy
                 "current_outstanding_arrears": billing_info.get("current_outstanding", 0) if is_first_row_for_customer else "",
                 "total_invoiced": billing_info.get("invoiced", 0),
                 "total_ordered": billing_info.get("ordered", 0),
                 "currency": frappe.get_cached_value('Company', self.filters.company, 'default_currency')
             }
-            
+                        
             self.add_bill_type_data(row, contract, billing_info, is_first_row_for_customer)
             self.data.append(row)
-          
-
+               
     def calculate_customer_totals(self):
         self.customer_totals = defaultdict(lambda: {
             "opening_arrears": 0,
@@ -402,25 +446,24 @@ class PropertyBillingOverview:
         for contract in self.contracts:
             property_key = (contract.property, contract.customer)
             billing_info = self.billing_data[property_key]
-            
+                        
             customer_data = self.customer_totals[contract.customer]
             customer_data["opening_arrears"] = billing_info.get("opening_outstanding", 0)
-            customer_data["total_paid"] = billing_info.get("paid", 0)
+            customer_data["total_paid"] += billing_info.get("paid", 0)  # Sum payments across properties
             customer_data["current_outstanding_arrears"] = billing_info.get("current_outstanding", 0)
             customer_data["total_invoiced"] += billing_info.get("invoiced", 0)
             customer_data["total_ordered"] += billing_info.get("ordered", 0)
-            
+                        
             for bt in self.bill_types:
                 if bt.name in billing_info["bill_type_invoiced"]:
                     customer_data["bill_type_invoiced"][bt.name] += billing_info["bill_type_invoiced"][bt.name]
                 if bt.name in billing_info["bill_type_ordered"]:
                     customer_data["bill_type_ordered"][bt.name] += billing_info["bill_type_ordered"][bt.name]
 
-
     def create_customer_total_row(self, customer):
         customer_data = self.customer_totals[customer]
         contract = next(c for c in self.contracts if c.customer == customer)
-        
+                
         row = {
             "customer": customer,
             "customer_name": contract.customer_name,
@@ -435,21 +478,21 @@ class PropertyBillingOverview:
             "is_group": 1,
             "currency": frappe.get_cached_value('Company', self.filters.company, 'default_currency')
         }
-        
+                
         for bt in self.bill_types:
             bill_type_name = scrub(bt.name)
             row.update({
                 f"{bill_type_name}_invoiced": customer_data["bill_type_invoiced"].get(bt.name, 0),
                 f"{bill_type_name}_ordered": customer_data["bill_type_ordered"].get(bt.name, 0)
             })
-        
+                
         return row
 
     def add_bill_type_data(self, row, contract, billing_info, is_first_row_for_customer):
         for bt in self.bill_types:
             bill_type_name = scrub(bt.name)
             rate_value = 0
-            
+                        
             if contract.utility_bill_structure in self.bill_item_mapping:
                 items_for_bill_type = [
                     item_code for item_code, item_group in 
@@ -459,7 +502,7 @@ class PropertyBillingOverview:
                 if items_for_bill_type:
                     rate_key = (contract.utility_bill_structure, items_for_bill_type[0])
                     rate_value = self.monthly_rates.get(rate_key, 0)
-            
+                        
             row.update({
                 f"{bill_type_name}_rate": billing_info["bill_type_rate"].get(bt.name, rate_value),
                 f"{bill_type_name}_invoiced": billing_info["bill_type_invoiced"].get(bt.name, 0),
@@ -478,7 +521,7 @@ class PropertyBillingOverview:
             {"label": _("Paid Amount"), "fieldname": "total_paid", "fieldtype": "Currency", "options": "currency", "width": 150},
             {"label": _("Outstanding Arrears"), "fieldname": "current_outstanding_arrears", "fieldtype": "Currency", "options": "currency", "width": 150},
         ]
-        
+                
         if self.filters.get("show_property_fields"):
             base_columns.extend([
                 {"label": _("Unit Type"), "fieldname": "unit_type", "fieldtype": "Data", "width": 150},
@@ -488,39 +531,39 @@ class PropertyBillingOverview:
                 {"label": _("Bathrooms"), "fieldname": "bathrooms", "fieldtype": "Int", "width": 80},
                 {"label": _("House No"), "fieldname": "house_no", "fieldtype": "Data", "width": 80},
             ])
-        
+                
         for bt in self.bill_types:
             bill_type_name = scrub(bt.name)
             base_columns.append(
                 {"label": _(f"{bt.name} Rate (Monthly)"), "fieldname": f"{bill_type_name}_rate", "fieldtype": "Currency", "options": "currency", "width": 150}
             )
-        
+                
         for bt in self.bill_types:
             bill_type_name = scrub(bt.name)
             base_columns.append(
                 {"label": _(f"{bt.name} Ordered Amount"), "fieldname": f"{bill_type_name}_ordered", "fieldtype": "Currency", "options": "currency", "width": 150}
             )
-            
+                    
         for bt in self.bill_types:
             bill_type_name = scrub(bt.name)
             base_columns.append(
                 {"label": _(f"{bt.name} Invoiced Amount"), "fieldname": f"{bill_type_name}_invoiced", "fieldtype": "Currency", "options": "currency", "width": 150}
             )
-        
+                
         if self.filters.get("show_totals"):
             base_columns.extend([
                 {"label": _("Total Invoiced Amount"), "fieldname": "total_invoiced", "fieldtype": "Currency", "options": "currency", "width": 150},
                 {"label": _("Total Ordered Amount"), "fieldname": "total_ordered", "fieldtype": "Currency", "options": "currency", "width": 150},
             ])
-        
+                
         base_columns.extend([
             {"label": _("Indent"), "fieldname": "indent", "fieldtype": "Int", "hidden": 1},
             {"label": _("Is Group"), "fieldname": "is_group", "fieldtype": "Int", "hidden": 1},
             {"label": _("Parent Customer"), "fieldname": "parent_customer", "fieldtype": "Data", "hidden": 1}
         ])
-        
+                
         self.columns = base_columns
-        
+            
     def clean_columns(self):
         cols_to_remove = set()
 
