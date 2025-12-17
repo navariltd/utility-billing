@@ -1,1 +1,7 @@
-[{ "item_group_name": "Utilities", "doctype": "Item Group" }]
+[
+  {
+    "item_group_name": "Utilities",
+    "is_utility_item_group": 1,
+    "doctype": "Item Group"
+  }
+]
