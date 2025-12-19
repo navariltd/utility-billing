@@ -1,0 +1,62 @@
+exclude: "node_modules|.git"
+default_stages: [pre-commit]
+fail_fast: false
+
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, vue]
+        # Ignore any files that might contain jinja / bundles
+        exclude: |
+          (?x)^(
+              csf_ke/public/dist/.*|
+              .*node_modules.*|
+              csf_ke/www/website_script.js|
+              csf_ke/templates/includes/.*|
+              csf_ke/public/js/.*min.js
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: debug-statements
+      - id: trailing-whitespace
+        files: "csf_ke.*"
+        exclude: ".*json$|.*txt$|.*csv|.*md|.*svg"
+      - id: check-merge-conflict
+      - id: check-ast
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: check commit message format
+        entry: npx commitlint --edit .git/COMMIT_EDITMSG
+        language: system
+        stages: [commit-msg]
+        always_run: true
+
+      - id: cspell-commit-msg
+        name: check commit message spelling
+        entry: npx cspell --config .cspell.json .git/COMMIT_EDITMSG
+        language: system
+        stages: [commit-msg]
+        always_run: true
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v8.17.1
+    hooks:
+      - id: cspell
+        name: check spelling of files
+        args: ["--config", ".cspell.json", "--no-must-find-files"]        
