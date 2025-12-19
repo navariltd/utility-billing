@@ -238,7 +238,7 @@ scheduler_events = {
 # Testing
 # -------
 
-# before_tests = "utility_billing.install.before_tests"
+before_tests = "utility_billing.setup.utils.before_tests"
 
 # Overriding Methods
 # ------------------------------
