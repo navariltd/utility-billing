@@ -37,7 +37,13 @@ def get_columns():
 			"options": "Utility Category",
 			"width": 150,
 		},
-		{"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
+		{
+			"label": _("Company"),
+			"fieldname": "company",
+			"fieldtype": "Link",
+			"options": "Company",
+			"width": 150,
+		},
 		{"label": _("Is Fixed Asset"), "fieldname": "is_fixed_asset", "fieldtype": "Check", "width": 100},
 		{
 			"label": _("Gross Purchase Amount"),
