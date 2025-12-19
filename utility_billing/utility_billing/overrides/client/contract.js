@@ -23,7 +23,7 @@ frappe.ui.form.on("Contract Utility Property Item", {
 		let row = locals[cdt][cdn];
 		if (frm.doc.docstatus === 1 && !row.__islocal && row.is_active) {
 			frappe.msgprint(
-				"You cannot activate a property once the contract is submitted.",
+				__("You cannot activate a property once the contract is submitted.")
 			);
 			frappe.model.set_value(cdt, cdn, "is_active", 0);
 		}

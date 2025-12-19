@@ -229,7 +229,7 @@ def add_audit_comment(
 	adjustment_rule: Document,
 ) -> None:
 	"""Add audit comment documenting the renewal to multiple related documents"""
-	comment_msg = _("""
+	comment_msg = _(""" # nosemgrep: frappe-translation-trailing-spaces
         <div class='small'>
             <b>Billing Increment Renewal Generated:</b><br>
             • Original Document: <a href='/app/{or_doctype}/{or_doc}'>{or_doc}</a><br>

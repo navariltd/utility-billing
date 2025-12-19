@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 
 
 def execute(filters=None):
@@ -15,41 +16,41 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{
-			"label": "Property",
+			"label": _("Property"),
 			"fieldname": "property_name",
 			"fieldtype": "Link",
 			"options": "Utility Property",
 			"width": 200,
 		},
-		{"label": "Status", "fieldname": "status", "fieldtype": "Data", "width": 120},
+		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 120},
 		{
-			"label": "Location",
+			"label": _("Location"),
 			"fieldname": "location",
 			"fieldtype": "Link",
 			"options": "Location",
 			"width": 180,
 		},
 		{
-			"label": "Utility Category",
+			"label": _("Utility Category"),
 			"fieldname": "utility_category",
 			"fieldtype": "Link",
 			"options": "Utility Category",
 			"width": 150,
 		},
-		{"label": "Company", "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
-		{"label": "Is Fixed Asset", "fieldname": "is_fixed_asset", "fieldtype": "Check", "width": 100},
+		{"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
+		{"label": _("Is Fixed Asset"), "fieldname": "is_fixed_asset", "fieldtype": "Check", "width": 100},
 		{
-			"label": "Gross Purchase Amount",
+			"label": _("Gross Purchase Amount"),
 			"fieldname": "gross_purchase_amount",
 			"fieldtype": "Currency",
 			"width": 140,
 		},
-		{"label": "Unit Number", "fieldname": "unit_number", "fieldtype": "Data", "width": 120},
-		{"label": "Bedrooms", "fieldname": "bedrooms", "fieldtype": "Int", "width": 100},
-		{"label": "Bathrooms", "fieldname": "bathrooms", "fieldtype": "Int", "width": 100},
-		{"label": "Unit Size (sqft)", "fieldname": "unit_size", "fieldtype": "Float", "width": 120},
+		{"label": _("Unit Number"), "fieldname": "unit_number", "fieldtype": "Data", "width": 120},
+		{"label": _("Bedrooms"), "fieldname": "bedrooms", "fieldtype": "Int", "width": 100},
+		{"label": _("Bathrooms"), "fieldname": "bathrooms", "fieldtype": "Int", "width": 100},
+		{"label": _("Unit Size (sqft)"), "fieldname": "unit_size", "fieldtype": "Float", "width": 120},
 		{
-			"label": "Floor Level",
+			"label": _("Floor Level"),
 			"fieldname": "floor_level",
 			"fieldtype": "Link",
 			"options": "Floor Level",

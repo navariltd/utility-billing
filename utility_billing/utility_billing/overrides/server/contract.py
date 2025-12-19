@@ -26,7 +26,7 @@ def on_submit(doc: Document, method: str) -> None:
 
 		if utility_property and entry.is_active:
 			status = frappe.db.get_value("Utility Property", utility_property, "status")
-			if doc.status == "Active" and status == ("Available" or "Reserved"):
+			if doc.status == "Active" and status in ("Available", "Reserved"):
 				frappe.db.set_value("Utility Property", utility_property, "status", "Occupied")
 			elif doc.status in ("Unsigned", "Inactive") and status in ("Available", "Reserved"):
 				frappe.db.set_value("Utility Property", utility_property, "status", "Reserved")

@@ -400,7 +400,7 @@ function update_child_contract_fields(frm, cdt, cdn, changed_field) {
 	if (start && parent_start && start < parent_start) {
 		frappe.model.set_value(cdt, cdn, "start_date", null);
 		frappe.msgprint(
-			"Property start date cannot be before contract start date.",
+			__("Property start date cannot be before contract start date.")
 		);
 		return;
 	}
@@ -431,7 +431,7 @@ function update_child_contract_fields(frm, cdt, cdn, changed_field) {
 		if (parent_end_date && new_end_date && new_end_date > parent_end_date) {
 			new_end = parent_end_date;
 			frappe.msgprint(
-				"Adjusted property end date to match contract end date.",
+				__("Adjusted property end date to match contract end date.")
 			);
 		}
 
@@ -1319,8 +1319,8 @@ async function addActionButtons(frm) {
 								frappe.msgprint({
 									title: __("Error"),
 									message:
-										__("Failed to save the BOM: ") +
-										err.message,
+										__("Failed to save the BOM: {0}")
+										.format(err.message),
 									indicator: "red",
 								});
 							}
