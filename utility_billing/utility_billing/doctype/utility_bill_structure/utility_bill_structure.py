@@ -3,6 +3,7 @@
 
 from frappe.model.document import Document
 
+
 class UtilityBillStructure(Document):
 	def validate(self):
 		self.calculate_total()

@@ -65,7 +65,11 @@ frappe.listview_settings["Sales Order"] = {
 				"per_delivered,=,100|per_billed,<,100|status,!=,Closed",
 			];
 		} else if (doc.skip_delivery_note && flt(doc.per_billed, 2) < 100) {
-			return [__("To Bill"), "orange", "per_billed,<,100|status,!=,Closed"];
+			return [
+				__("To Bill"),
+				"orange",
+				"per_billed,<,100|status,!=,Closed",
+			];
 		}
 	},
 	onload: function (listview) {
@@ -97,7 +101,7 @@ frappe.listview_settings["Sales Order"] = {
 						erpnext.bulk_transaction_processing.create(
 							listview,
 							"Sales Order",
-							"Sales Invoice"
+							"Sales Invoice",
 						);
 					}
 				},
@@ -117,29 +121,32 @@ frappe.listview_settings["Sales Order"] = {
 									fieldname: "delivery_date",
 									default: frappe.datetime.add_days(
 										frappe.datetime.nowdate(),
-										1
+										1,
 									),
 								},
 							],
 						});
-						dialog.set_primary_action(__("Select"), function (values) {
-							var until_delivery_date = values.delivery_date;
-							erpnext.bulk_transaction_processing.create(
-								listview,
-								"Sales Order",
-								"Delivery Note",
-								{
-									until_delivery_date,
-								}
-							);
-							dialog.hide();
-						});
+						dialog.set_primary_action(
+							__("Select"),
+							function (values) {
+								var until_delivery_date = values.delivery_date;
+								erpnext.bulk_transaction_processing.create(
+									listview,
+									"Sales Order",
+									"Delivery Note",
+									{
+										until_delivery_date,
+									},
+								);
+								dialog.hide();
+							},
+						);
 						dialog.show();
 					} else {
 						erpnext.bulk_transaction_processing.create(
 							listview,
 							"Sales Order",
-							"Delivery Note"
+							"Delivery Note",
 						);
 					}
 				},
@@ -147,7 +154,11 @@ frappe.listview_settings["Sales Order"] = {
 		});
 
 		listview.page.add_action_item(__("Advance Payment"), () => {
-			erpnext.bulk_transaction_processing.create(listview, "Sales Order", "Payment Entry");
+			erpnext.bulk_transaction_processing.create(
+				listview,
+				"Sales Order",
+				"Payment Entry",
+			);
 		});
 	},
 };
@@ -167,24 +178,29 @@ function createSalesInvoices(listview, args) {
 
 	if (draft_orders.length > 0) {
 		const draft_links = draft_orders
-			.map((order) => `<a href="/app/sales-order/${order}" target="_blank">${order}</a>`)
+			.map(
+				(order) =>
+					`<a href="/app/sales-order/${order}" target="_blank">${order}</a>`,
+			)
 			.join(", ");
 
 		frappe.confirm(
 			__(
 				"The following orders have not been submitted and will be ignored: {0}. <br>Proceed with creating invoices for submitted orders?",
-				[draft_links]
+				[draft_links],
 			),
 			() => {
 				confirmInvoiceCreation(doc_names);
-			}
+			},
 		);
 	} else {
 		frappe.confirm(
-			__("Create Sales Invoice(s) for {0} Sales Order(s)?", [doc_names.length]),
+			__("Create Sales Invoice(s) for {0} Sales Order(s)?", [
+				doc_names.length,
+			]),
 			() => {
 				confirmInvoiceCreation(doc_names);
-			}
+			},
 		);
 	}
 }

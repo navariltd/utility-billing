@@ -10,7 +10,7 @@ frappe.ui.form.on("Customer", {
 					customer: frm.doc.name,
 				});
 			},
-			__("Create")
+			__("Create"),
 		);
 	},
 });

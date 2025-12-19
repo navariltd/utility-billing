@@ -30,20 +30,23 @@ frappe.ui.form.on("Utility Service Request", {
 			frm.set_value("date", currentDate);
 		}
 
-		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
-			return {
-				filters: {
-					is_sales_item: 1,
-					is_utility_item: 1,
-					has_variants: 0,
-				},
+		frm.fields_dict["items"].grid.get_field("item_code").get_query =
+			function () {
+				return {
+					filters: {
+						is_sales_item: 1,
+						is_utility_item: 1,
+						has_variants: 0,
+					},
+				};
 			};
-		};
 
 		frm.fields_dict["utility_bill_structure"].get_query = function () {
 			return {
 				filters: {
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+					company:
+						frm.doc.company ||
+						frappe.defaults.get_user_default("Company"),
 				},
 			};
 		};
@@ -51,39 +54,44 @@ frappe.ui.form.on("Utility Service Request", {
 			return {
 				filters: {
 					is_group: 1,
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+					company:
+						frm.doc.company ||
+						frappe.defaults.get_user_default("Company"),
 				},
 			};
 		};
-		frm.fields_dict["requested_properties"].grid.get_field("utility_property").get_query =
-			function (doc, cdt, cdn) {
-				const row = locals[cdt][cdn];
+		frm.fields_dict["requested_properties"].grid.get_field(
+			"utility_property",
+		).get_query = function (doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
 
-				const selectedProperties = [];
-				(doc.requested_properties || []).forEach(function (d) {
-					if (d.name !== row.name && d.utility_property) {
-						selectedProperties.push(d.utility_property);
-					}
-				});
-
-				let filters = {
-					status: "Available",
-					is_group: 0,
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
-				};
-
-				if (frm.doc.utility_property) {
-					filters.parent_utility_property = frm.doc.utility_property;
+			const selectedProperties = [];
+			(doc.requested_properties || []).forEach(function (d) {
+				if (d.name !== row.name && d.utility_property) {
+					selectedProperties.push(d.utility_property);
 				}
+			});
 
-				if (selectedProperties.length > 0) {
-					filters.name = ["not in", selectedProperties];
-				}
-
-				return {
-					filters: filters,
-				};
+			let filters = {
+				status: "Available",
+				is_group: 0,
+				company:
+					frm.doc.company ||
+					frappe.defaults.get_user_default("Company"),
 			};
+
+			if (frm.doc.utility_property) {
+				filters.parent_utility_property = frm.doc.utility_property;
+			}
+
+			if (selectedProperties.length > 0) {
+				filters.name = ["not in", selectedProperties];
+			}
+
+			return {
+				filters: filters,
+			};
+		};
 
 		// Function to get selected utility_property values
 		frm.get_selected_utility_properties = function () {
@@ -102,15 +110,22 @@ frappe.ui.form.on("Utility Service Request", {
 			return [...new Set(selected)];
 		};
 
-		frm.fields_dict["items"].grid.get_field("utility_property").get_query = function () {
-			const selected_properties = frm.get_selected_utility_properties();
+		frm.fields_dict["items"].grid.get_field("utility_property").get_query =
+			function () {
+				const selected_properties =
+					frm.get_selected_utility_properties();
 
-			return {
-				filters: {
-					name: ["in", selected_properties.length ? selected_properties : ["__none"]],
-				},
+				return {
+					filters: {
+						name: [
+							"in",
+							selected_properties.length
+								? selected_properties
+								: ["__none"],
+						],
+					},
+				};
 			};
-		};
 
 		let closedWarrantySerials = [];
 
@@ -120,17 +135,20 @@ frappe.ui.form.on("Utility Service Request", {
 				fields: ["serial_no"],
 			})
 			.then((warrantyClaims) => {
-				closedWarrantySerials = warrantyClaims.map((claim) => claim.serial_no);
+				closedWarrantySerials = warrantyClaims.map(
+					(claim) => claim.serial_no,
+				);
 			});
 
-		frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
-			return {
-				filters: {
-					status: "Active",
-					name: ["not in", closedWarrantySerials],
-				},
+		frm.fields_dict["items"].grid.get_field("meter_number").get_query =
+			function () {
+				return {
+					filters: {
+						status: "Active",
+						name: ["not in", closedWarrantySerials],
+					},
+				};
 			};
-		};
 
 		frm.set_query("customer_group", function () {
 			return {
@@ -187,7 +205,10 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 				callback: function (r) {
 					if (r.message && r.message.default_price_list) {
-						frm.set_value("price_list", r.message.default_price_list);
+						frm.set_value(
+							"price_list",
+							r.message.default_price_list,
+						);
 					}
 				},
 			});
@@ -259,18 +280,23 @@ frappe.ui.form.on("Utility Service Request", {
 				callback: function (r) {
 					if (r && r.message) {
 						let contract_template = r.message.contract_template;
-						frm.set_value("contract_terms", r.message.contract_terms);
+						frm.set_value(
+							"contract_terms",
+							r.message.contract_terms,
+						);
 						frm.set_value(
 							"requires_fulfilment",
-							contract_template.requires_fulfilment
+							contract_template.requires_fulfilment,
 						);
 
 						if (frm.doc.requires_fulfilment) {
 							// Populate the fulfilment terms table from a contract template, if any
-							r.message.contract_template.fulfilment_terms.forEach((element) => {
-								let d = frm.add_child("fulfilment_terms");
-								d.requirement = element.requirement;
-							});
+							r.message.contract_template.fulfilment_terms.forEach(
+								(element) => {
+									let d = frm.add_child("fulfilment_terms");
+									d.requirement = element.requirement;
+								},
+							);
 							frm.refresh_field("fulfilment_terms");
 						}
 					}
@@ -328,12 +354,14 @@ frappe.ui.form.on("Contract Utility Property Item", {
 				cdt,
 				cdn,
 				"contract_length_months",
-				frm.doc.contract_length_months
+				frm.doc.contract_length_months,
 			);
 		}
 	},
-	start_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "start_date"),
-	end_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "end_date"),
+	start_date: (frm, cdt, cdn) =>
+		update_child_contract_fields(frm, cdt, cdn, "start_date"),
+	end_date: (frm, cdt, cdn) =>
+		update_child_contract_fields(frm, cdt, cdn, "end_date"),
 	contract_length_months: (frm, cdt, cdn) =>
 		update_child_contract_fields(frm, cdt, cdn, "contract_length_months"),
 });
@@ -359,15 +387,21 @@ function update_child_contract_fields(frm, cdt, cdn, changed_field) {
 	const parent_start = frm.doc.start_date
 		? frappe.datetime.str_to_obj(frm.doc.start_date)
 		: null;
-	const parent_end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
+	const parent_end = frm.doc.end_date
+		? frappe.datetime.str_to_obj(frm.doc.end_date)
+		: null;
 
-	const start = row.start_date ? frappe.datetime.str_to_obj(row.start_date) : null;
+	const start = row.start_date
+		? frappe.datetime.str_to_obj(row.start_date)
+		: null;
 	const end = row.end_date ? frappe.datetime.str_to_obj(row.end_date) : null;
 	const length = row.contract_length_months;
 
 	if (start && parent_start && start < parent_start) {
 		frappe.model.set_value(cdt, cdn, "start_date", null);
-		frappe.msgprint("Property start date cannot be before contract start date.");
+		frappe.msgprint(
+			"Property start date cannot be before contract start date.",
+		);
 		return;
 	}
 
@@ -383,17 +417,30 @@ function update_child_contract_fields(frm, cdt, cdn, changed_field) {
 	} else if (changed_field === "end_date" && start) {
 		const diff = get_month_diff(end, start);
 		frappe.model.set_value(cdt, cdn, "contract_length_months", diff);
-	} else if (changed_field === "contract_length_months" && start && length != null) {
+	} else if (
+		changed_field === "contract_length_months" &&
+		start &&
+		length != null
+	) {
 		let new_end = frappe.datetime.add_months(start, length);
-		const parent_end_date = parent_end ? frappe.datetime.str_to_obj(parent_end) : null;
+		const parent_end_date = parent_end
+			? frappe.datetime.str_to_obj(parent_end)
+			: null;
 		const new_end_date = new_end ? new_end : null;
 
 		if (parent_end_date && new_end_date && new_end_date > parent_end_date) {
 			new_end = parent_end_date;
-			frappe.msgprint("Adjusted property end date to match contract end date.");
+			frappe.msgprint(
+				"Adjusted property end date to match contract end date.",
+			);
 		}
 
-		frappe.model.set_value(cdt, cdn, "end_date", frappe.datetime.obj_to_str(new_end));
+		frappe.model.set_value(
+			cdt,
+			cdn,
+			"end_date",
+			frappe.datetime.obj_to_str(new_end),
+		);
 	}
 
 	if (row.start_date && row.end_date) {
@@ -419,8 +466,12 @@ function get_month_diff(start_date, end_date) {
 }
 
 function update_contract_fields(frm, changed_field) {
-	const start = frm.doc.start_date ? frappe.datetime.str_to_obj(frm.doc.start_date) : null;
-	const end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
+	const start = frm.doc.start_date
+		? frappe.datetime.str_to_obj(frm.doc.start_date)
+		: null;
+	const end = frm.doc.end_date
+		? frappe.datetime.str_to_obj(frm.doc.end_date)
+		: null;
 	const length = frm.doc.contract_length_months;
 
 	if (changed_field === "start_date" && end) {
@@ -429,7 +480,11 @@ function update_contract_fields(frm, changed_field) {
 	} else if (changed_field === "end_date" && start) {
 		const months = get_month_diff(start, end);
 		frm.set_value("contract_length_months", months);
-	} else if (changed_field === "contract_length_months" && start && length !== undefined) {
+	} else if (
+		changed_field === "contract_length_months" &&
+		start &&
+		length !== undefined
+	) {
 		const new_end = frappe.datetime.add_months(start, length);
 		frm.set_value("end_date", frappe.datetime.obj_to_str(new_end));
 	}
@@ -449,7 +504,12 @@ function handle_item_code(frm, cdt, cdn, item_code, update_fields = false) {
 					if (update_fields) {
 						update_item_fields(frm, cdt, cdn, item);
 					}
-					toggle_meter_number(frm, cdt, cdn, item.item_group === "Meter");
+					toggle_meter_number(
+						frm,
+						cdt,
+						cdn,
+						item.item_group === "Meter",
+					);
 				}
 			},
 		});
@@ -486,7 +546,12 @@ function update_item_fields(frm, cdt, cdn, item) {
 }
 
 function toggle_meter_number(frm, cdt, cdn, show) {
-	frm.fields_dict["items"].grid.toggle_display("meter_number", show, cdt, cdn);
+	frm.fields_dict["items"].grid.toggle_display(
+		"meter_number",
+		show,
+		cdt,
+		cdn,
+	);
 	if (!show) {
 		frappe.model.set_value(cdt, cdn, "meter_number", null);
 	}
@@ -510,7 +575,9 @@ function open_bom_creation_modal(frm) {
 				label: __("Select Item"),
 				reqd: 1,
 				get_query: function () {
-					let item_codes = frm.doc.items.map((item) => item.item_code);
+					let item_codes = frm.doc.items.map(
+						(item) => item.item_code,
+					);
 					return {
 						query: "erpnext.controllers.queries.item_query",
 						filters: {
@@ -533,7 +600,10 @@ function open_bom_creation_modal(frm) {
 					if (response.message) {
 						handle_response(response, "BOM", frm);
 						modal.hide();
-						const bomUrl = frappe.utils.get_form_link("BOM", response.message.bom);
+						const bomUrl = frappe.utils.get_form_link(
+							"BOM",
+							response.message.bom,
+						);
 						window.location.href = bomUrl;
 					}
 				},
@@ -658,14 +728,17 @@ function prepare_items_data(frm) {
 			rate: rate,
 			amount: flt(rate * qty),
 			qty: qty,
-			warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
+			warehouse:
+				item.warehouse || frappe.defaults.get_user_default("Warehouse"),
 			utility_property: properties.length == 1 ? properties[0] : null,
 			...item, // Include all other fields from the original item
 		};
 
 		// Filter out fields not in child table fields
 		return Object.fromEntries(
-			Object.entries(fullData).filter(([key]) => allowedFields.includes(key))
+			Object.entries(fullData).filter(([key]) =>
+				allowedFields.includes(key),
+			),
 		);
 	});
 }
@@ -680,12 +753,20 @@ function calculate_row_amount(row) {
 
 // Common function to configure dialog properties
 function configure_dialog(dialog, frm) {
-	dialog.fields_dict["items_table"].grid.get_field("utility_property").get_query = function () {
-		const selected_properties = frm.get_selected_utility_properties?.() || [];
+	dialog.fields_dict["items_table"].grid.get_field(
+		"utility_property",
+	).get_query = function () {
+		const selected_properties =
+			frm.get_selected_utility_properties?.() || [];
 
 		return {
 			filters: {
-				name: ["in", selected_properties.length ? selected_properties : ["__none"]],
+				name: [
+					"in",
+					selected_properties.length
+						? selected_properties
+						: ["__none"],
+				],
 			},
 		};
 	};
@@ -699,7 +780,10 @@ function configure_dialog(dialog, frm) {
 	const observer = new MutationObserver(() => {
 		const openGridRow = document.querySelector(".grid-row.grid-row-open");
 
-		if (openGridRow && !openGridRow.classList.contains("custom-grid-modal")) {
+		if (
+			openGridRow &&
+			!openGridRow.classList.contains("custom-grid-modal")
+		) {
 			openGridRow.classList.add("custom-grid-modal");
 
 			const customStyles = {
@@ -742,14 +826,22 @@ function configure_dialog(dialog, frm) {
 	observer.observe(document.body, { childList: true, subtree: true });
 }
 
-async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
+async function showSalesDocumentModal(
+	frm,
+	docType,
+	allowAdditionalRows = false,
+) {
 	// Fetch customer details to pre-fill the dialog
-	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
+	const customer = await frappe.db.get_value("Customer", frm.doc.customer, [
+		"customer_name",
+	]);
 	const today = frappe.datetime.get_today(); // Get today's date
 
 	// Determine the title of the dialog based on document type
 	const title =
-		docType === "Sales Order" ? __("Create Sales Order") : __("Create Sales Invoice");
+		docType === "Sales Order"
+			? __("Create Sales Order")
+			: __("Create Sales Invoice");
 	// Determine the primary action method to call on form submission
 	const primaryActionMethod =
 		docType === "Sales Order"
@@ -781,7 +873,8 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			label: __("Company"),
 			fieldtype: "Link",
 			options: "Company",
-			default: frm.doc.company || frappe.defaults.get_user_default("Company"),
+			default:
+				frm.doc.company || frappe.defaults.get_user_default("Company"),
 			reqd: 1,
 		},
 	];
@@ -801,7 +894,8 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		.map((p) => p.utility_property)
 		.filter(Boolean);
 
-	const defaultProperty = properties.length === 1 ? frm.doc.requested_properties[0] : null;
+	const defaultProperty =
+		properties.length === 1 ? frm.doc.requested_properties[0] : null;
 
 	// Add fields for Property and Auto Repeat settings
 	fields.push(
@@ -838,14 +932,17 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				if (selected_value) {
 					// Find the corresponding property line in the parent form's requested_properties
 					property_line = (frm.doc.requested_properties || []).find(
-						(prop) => prop.utility_property === selected_value
+						(prop) => prop.utility_property === selected_value,
 					);
 				}
 
 				// Update items with property and frequency if a matching property line is found
 				if (property_line) {
 					if (property_line.adjustment_rule) {
-						dialog.set_value("adjustment_rule", property_line.adjustment_rule);
+						dialog.set_value(
+							"adjustment_rule",
+							property_line.adjustment_rule,
+						);
 					}
 					if (property_line.end_date) {
 						dialog.set_value("end_date", property_line.end_date);
@@ -878,7 +975,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			depends_on: "eval:doc.enable_auto_repeat==1",
 			default: defaultProperty?.adjustment_rule,
 			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
-			description: __("Rule defining how billing amounts will adjust over time"),
+			description: __(
+				"Rule defining how billing amounts will adjust over time",
+			),
 		},
 		{
 			fieldname: "col_break_auto_repeat", // Column Break for 2 columns in this new section
@@ -899,9 +998,12 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 
 				// If enabled, and a property is selected, auto-set start date
 				if (isChecked && dialog.get_value("utility_property")) {
-					const selectedProperty = dialog.get_value("utility_property");
-					const property_line = (frm.doc.requested_properties || []).find(
-						(prop) => prop.utility_property === selectedProperty
+					const selectedProperty =
+						dialog.get_value("utility_property");
+					const property_line = (
+						frm.doc.requested_properties || []
+					).find(
+						(prop) => prop.utility_property === selectedProperty,
 					);
 
 					if (property_line) {
@@ -960,7 +1062,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 					dialog.$wrapper.removeClass("frappe-modal-hidden");
 				};
 			},
-		}
+		},
 	);
 
 	// Create a new Frappe UI Dialog instance
@@ -1005,9 +1107,14 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				args.due_date = values.due_date;
 			}
 
-			if (values.end_date && new Date(values.end_date) < new Date(values.start_date)) {
+			if (
+				values.end_date &&
+				new Date(values.end_date) < new Date(values.start_date)
+			) {
 				frappe.throw(
-					__("Recurring Billing End Date cannot be before Recurring Billing Start Date.")
+					__(
+						"Recurring Billing End Date cannot be before Recurring Billing Start Date.",
+					),
 				);
 				return;
 			}
@@ -1039,9 +1146,13 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
-	const settings = await frappe.db.get_doc(settingsDoctypeName, settingsDoctypeName);
+	const settings = await frappe.db.get_doc(
+		settingsDoctypeName,
+		settingsDoctypeName,
+	);
 
-	const enableExtraRows = settings?.enable_extra_rows_for_sosi_creation == 1 ? true : false;
+	const enableExtraRows =
+		settings?.enable_extra_rows_for_sosi_creation == 1 ? true : false;
 
 	if (frm.doc.docstatus === 1) {
 		// Customer creation button
@@ -1063,34 +1174,35 @@ async function addActionButtons(frm) {
 						},
 					});
 				},
-				__("Create")
+				__("Create"),
 			);
 		} else {
 			// Contract creation button
 			const contract = await frappe.db.get_value(
 				"Contract",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
-				"name"
+				"name",
 			);
 
 			const deposit = await frappe.db.get_value(
 				"Sales Order",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
-				"name"
+				"name",
 			);
 
 			const contractName = contract?.message?.name || null;
 			const depositName = deposit?.message?.name || null;
 			const canCreateContract =
 				!contractName &&
-				(!settings?.require_deposit_before_contract_creation || depositName);
+				(!settings?.require_deposit_before_contract_creation ||
+					depositName);
 
 			frm.add_custom_button(
 				__("Sales Order / Deposit"),
 				function () {
 					showSalesDocumentModal(frm, "Sales Order", enableExtraRows);
 				},
-				__("Create")
+				__("Create"),
 			);
 
 			if (canCreateContract) {
@@ -1105,24 +1217,33 @@ async function addActionButtons(frm) {
 							callback: function (response) {
 								handle_response(response, __("Contract"), frm);
 								if (response && response.message) {
-									frappe.set_route("Form", "Contract", response.message);
+									frappe.set_route(
+										"Form",
+										"Contract",
+										response.message,
+									);
 								}
 							},
 						});
 					},
-					__("Create")
+					__("Create"),
 				);
 			}
 			if (
-				(settings?.require_contract_before_sales_invoice_creation && contractName) ||
+				(settings?.require_contract_before_sales_invoice_creation &&
+					contractName) ||
 				!settings?.require_contract_before_sales_invoice_creation
 			) {
 				frm.add_custom_button(
 					__("Sales Invoice"),
 					function () {
-						showSalesDocumentModal(frm, "Sales Invoice", enableExtraRows);
+						showSalesDocumentModal(
+							frm,
+							"Sales Invoice",
+							enableExtraRows,
+						);
 					},
-					__("Create")
+					__("Create"),
 				);
 			}
 		}
@@ -1140,14 +1261,21 @@ async function addActionButtons(frm) {
 					callback: function (response) {
 						handle_response(response, __("Site Survey"), frm);
 						if (response && response.message) {
-							frappe.set_route("Form", "Issue", response.message.issue);
+							frappe.set_route(
+								"Form",
+								"Issue",
+								response.message.issue,
+							);
 						}
 					},
 				});
 			},
-			__("Create")
+			__("Create"),
 		);
-	} else if (currentStatus === "Site Survey Completed" && settings?.enable_site_survey == 1) {
+	} else if (
+		currentStatus === "Site Survey Completed" &&
+		settings?.enable_site_survey == 1
+	) {
 		frm.add_custom_button(
 			__("BOM"),
 			async function () {
@@ -1182,26 +1310,33 @@ async function addActionButtons(frm) {
 
 								if (response && response.message) {
 									const new_bom = response.message;
-									new_bom.utility_service_request = frm.doc.name;
+									new_bom.utility_service_request =
+										frm.doc.name;
 									const doc = await frappe.db.insert(new_bom);
 									frappe.set_route("Form", "BOM", doc.name);
 								}
 							} catch (err) {
 								frappe.msgprint({
 									title: __("Error"),
-									message: __("Failed to save the BOM: ") + err.message,
+									message:
+										__("Failed to save the BOM: ") +
+										err.message,
 									indicator: "red",
 								});
 							}
 						} else {
-							frappe.msgprint(__("Please select a BOM to create a new version."));
+							frappe.msgprint(
+								__(
+									"Please select a BOM to create a new version.",
+								),
+							);
 						}
 					},
 				});
 
 				dialog.show();
 			},
-			__("Create")
+			__("Create"),
 		);
 	}
 }
@@ -1209,9 +1344,15 @@ async function addActionButtons(frm) {
 // Handle the response from the server
 function handle_response(response, actionLabel, frm) {
 	if (response.message) {
-		frappe.show_alert({ message: `${actionLabel} created successfully!`, indicator: "green" });
+		frappe.show_alert({
+			message: `${actionLabel} created successfully!`,
+			indicator: "green",
+		});
 		frm.reload_doc();
 	} else {
-		frappe.show_alert({ message: `Error while creating ${actionLabel}!`, indicator: "red" });
+		frappe.show_alert({
+			message: `Error while creating ${actionLabel}!`,
+			indicator: "red",
+		});
 	}
 }
