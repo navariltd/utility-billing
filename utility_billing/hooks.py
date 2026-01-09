@@ -30,15 +30,15 @@ required_apps = ["erpnext", "crm"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
-# 	{
-# 		"name": "utility_billing",
-# 		"logo": "/assets/utility_billing/logo.png",
-# 		"title": "Utility Billing",
-# 		"route": "/utility_billing",
-# 		"has_permission": "utility_billing.api.permission.has_app_permission"
-# 	}
-# ]
-
+add_to_apps_screen = [
+    {
+        "name": "rental",
+        "logo": "/assets/utility_billing/logo.png",
+        "title": "Rental Billing",
+        "route": "/rental",
+        "has_permission": "utility_billing.permissions.check_app_permission",
+    }
+]
 # Includes in <head>
 # ------------------
 
@@ -324,3 +324,9 @@ scheduler_events = {
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+
+website_route_rules = [
+    {"from_route": "/rental", "to_route": "rental"},
+    {"from_route": "/rental/<path:app_path>", "to_route": "rental"},
+]

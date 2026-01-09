@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "name": "utility_billing",
+  "version": "2.6.2",
+  "description": "Utility Billing & Property Management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "cd rental && yarn install",
+    "dev": "cd rental && yarn dev",
+    "build": "cd rental && yarn build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  },
+  "dependencies": {}
+}
