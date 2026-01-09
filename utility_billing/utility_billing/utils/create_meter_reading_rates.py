@@ -5,133 +5,119 @@ import frappe
 
 @frappe.whitelist()
 def create_meter_reading_rates(meter_reading, price_list, reading_date):
-    """Create Meter Reading Tariff Rate documents based on the Meter Reading date and append to its rates child table."""
-    meter_reading.set("rates", [])
+	"""Create Meter Reading Tariff Rate documents based on the Meter Reading date and append to its rates child table."""
+	meter_reading.set("rates", [])
 
-    for item in meter_reading.items:
-        item_prices = get_item_prices(item.item_code, price_list, reading_date)
+	for item in meter_reading.items:
+		item_prices = get_item_prices(item.item_code, price_list, reading_date)
 
-        if not item_prices:
-            raise_no_pricing_error(item.item_code, price_list, reading_date)
+		if not item_prices:
+			raise_no_pricing_error(item.item_code, price_list, reading_date)
 
-        total_consumption = item.consumption
+		total_consumption = item.consumption
 
-        for item_price in item_prices:
-            item_price_doc = frappe.get_doc("Item Price", item_price.name)
+		for item_price in item_prices:
+			item_price_doc = frappe.get_doc("Item Price", item_price.name)
 
-            if is_fixed_meter_charge(item_price_doc):
-                process_fixed_meter_charge(
-                    meter_reading, item, item_price_doc, total_consumption
-                )
-            else:
-                process_tariff_charges(
-                    meter_reading, item, item_price_doc, total_consumption
-                )
+			if is_fixed_meter_charge(item_price_doc):
+				process_fixed_meter_charge(meter_reading, item, item_price_doc, total_consumption)
+			else:
+				process_tariff_charges(meter_reading, item, item_price_doc, total_consumption)
 
 
 def get_item_prices(item_code, price_list, reading_date):
-    """Fetch item prices for the given item code and reading date."""
-    reading_date = (
-        datetime.strptime(reading_date, "%Y-%m-%d").date()
-        if isinstance(reading_date, str)
-        else reading_date
-    )
-    item_prices = frappe.get_list(
-        "Item Price",
-        filters={
-            "item_code": item_code,
-            "price_list": price_list,
-            "valid_from": ("<=", reading_date),
-        },
-        fields=["name", "tariffs", "is_fixed_meter_charge", "valid_upto"],
-    )
-    return [
-        price
-        for price in item_prices
-        if price.get("valid_upto") is None
-        or (
-            datetime.strptime(price["valid_upto"], "%Y-%m-%d").date() >= reading_date
-            if isinstance(price["valid_upto"], str)
-            else price["valid_upto"] >= reading_date
-        )
-    ]
+	"""Fetch item prices for the given item code and reading date."""
+	reading_date = (
+		datetime.strptime(reading_date, "%Y-%m-%d").date() if isinstance(reading_date, str) else reading_date
+	)
+	item_prices = frappe.get_list(
+		"Item Price",
+		filters={
+			"item_code": item_code,
+			"price_list": price_list,
+			"valid_from": ("<=", reading_date),
+		},
+		fields=["name", "tariffs", "is_fixed_meter_charge", "valid_upto"],
+	)
+	return [
+		price
+		for price in item_prices
+		if price.get("valid_upto") is None
+		or (
+			datetime.strptime(price["valid_upto"], "%Y-%m-%d").date() >= reading_date
+			if isinstance(price["valid_upto"], str)
+			else price["valid_upto"] >= reading_date
+		)
+	]
 
 
 def raise_no_pricing_error(item_code, price_list, reading_date):
-    """Raise an error if no valid pricing is available."""
-    frappe.throw(
-        ("No valid pricing available for Item {0} on Price List {1} as of {2}").format(
-            item_code, price_list, reading_date
-        )
-    )
+	"""Raise an error if no valid pricing is available."""
+	frappe.throw(
+		f"No valid pricing available for Item {item_code} on Price List {price_list} as of {reading_date}"
+	)
 
 
 def is_fixed_meter_charge(item_price_doc):
-    """Check if the item price document has a fixed meter charge."""
-    return item_price_doc.is_fixed_meter_charge == 1
+	"""Check if the item price document has a fixed meter charge."""
+	return item_price_doc.is_fixed_meter_charge == 1
 
 
 def process_fixed_meter_charge(meter_reading, item, item_price_doc, total_consumption):
-    """Process fixed meter charges and append rates to meter reading."""
-    first_tariff = item_price_doc.tariffs[0]
+	"""Process fixed meter charges and append rates to meter reading."""
+	first_tariff = item_price_doc.tariffs[0]
 
-    if total_consumption > first_tariff.upper_limit:
-        raise_exceeds_upper_limit_error(item.item_code, first_tariff.upper_limit)
+	if total_consumption > first_tariff.upper_limit:
+		raise_exceeds_upper_limit_error(item.item_code, first_tariff.upper_limit)
 
-    slab_quantity = first_tariff.upper_limit
-    rate = first_tariff.rate
-    amount = slab_quantity * rate
+	slab_quantity = first_tariff.upper_limit
+	rate = first_tariff.rate
+	amount = slab_quantity * rate
 
-    append_meter_reading_rate(
-        meter_reading, item, first_tariff.block, slab_quantity, rate, amount
-    )
+	append_meter_reading_rate(meter_reading, item, first_tariff.block, slab_quantity, rate, amount)
 
 
 def raise_exceeds_upper_limit_error(item_code, upper_limit):
-    """Raise an error if the consumption exceeds the upper limit of a fixed charge slab."""
-    frappe.throw(
-        (
-            "Consumption for Item {0} exceeds the upper limit of the fixed charge slab ({1})."
-        ).format(item_code, upper_limit)
-    )
+	"""Raise an error if the consumption exceeds the upper limit of a fixed charge slab."""
+	frappe.throw(
+		f"Consumption for Item {item_code} exceeds the upper limit of the fixed charge slab ({upper_limit})."
+	)
 
 
 def process_tariff_charges(meter_reading, item, item_price_doc, total_consumption):
-    """Process non-fixed tariff charges based on consumption."""
-    for tariff in item_price_doc.tariffs:
-        if total_consumption <= 0:
-            break
+	"""Process non-fixed tariff charges based on consumption."""
+	for tariff in item_price_doc.tariffs:
+		if total_consumption <= 0:
+			break
 
-        slab_quantity = calculate_slab_quantity(total_consumption, tariff)
+		slab_quantity = calculate_slab_quantity(total_consumption, tariff)
 
-        if slab_quantity <= 0:
-            continue
+		if slab_quantity <= 0:
+			continue
 
-        rate = tariff.rate
-        amount = slab_quantity * rate
+		rate = tariff.rate
+		amount = slab_quantity * rate
 
-        append_meter_reading_rate(
-            meter_reading, item, tariff.block, slab_quantity, rate, amount
-        )
+		append_meter_reading_rate(meter_reading, item, tariff.block, slab_quantity, rate, amount)
 
-        total_consumption -= slab_quantity
+		total_consumption -= slab_quantity
 
 
 def calculate_slab_quantity(total_consumption, tariff):
-    """Calculate the quantity for a specific tariff slab."""
-    return min(total_consumption, tariff.upper_limit - tariff.lower_limit)
+	"""Calculate the quantity for a specific tariff slab."""
+	return min(total_consumption, tariff.upper_limit - tariff.lower_limit)
 
 
 def append_meter_reading_rate(meter_reading, item, block, slab_quantity, rate, amount):
-    """Append a rate entry to the meter reading."""
-    meter_reading.append(
-        "rates",
-        {
-            "meter_reading_item": item.name,
-            "item_code": item.item_code,
-            "block": block,
-            "qty": slab_quantity,
-            "amount": amount,
-            "rate": rate,
-        },
-    )
+	"""Append a rate entry to the meter reading."""
+	meter_reading.append(
+		"rates",
+		{
+			"meter_reading_item": item.name,
+			"item_code": item.item_code,
+			"block": block,
+			"qty": slab_quantity,
+			"amount": amount,
+			"rate": rate,
+		},
+	)

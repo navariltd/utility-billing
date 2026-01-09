@@ -7,7 +7,10 @@ frappe.query_reports["Service Request Summary"] = {
 			fieldname: "from_date",
 			label: __("From Date"),
 			fieldtype: "Date",
-			default: frappe.datetime.add_months(frappe.datetime.get_today(), -1),
+			default: frappe.datetime.add_months(
+				frappe.datetime.get_today(),
+				-1,
+			),
 			reqd: 1,
 		},
 		{
@@ -46,14 +49,16 @@ frappe.query_reports["Service Request Summary"] = {
 			fieldname: "status",
 			label: __("Status"),
 			fieldtype: "Select",
-			options: "\nDraft\nOn Hold\nTo Pay\nTo Bill\nTo Deliver\nCompleted\nCancelled\nClosed",
+			options:
+				"\nDraft\nOn Hold\nTo Pay\nTo Bill\nTo Deliver\nCompleted\nCancelled\nClosed",
 			default: "",
 		},
 		{
 			fieldname: "request_status",
 			label: __("Request Status"),
 			fieldtype: "Select",
-			options: "\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
+			options:
+				"\nSite Survey Created\nSite Survey Completed\nBOM Created\nBOM Completed",
 			default: "",
 		},
 		{
@@ -71,7 +76,10 @@ frappe.query_reports["Service Request Summary"] = {
 	],
 
 	formatter: function (value, row, column, data, default_formatter) {
-		if (column.fieldname && column.fieldname.toLowerCase().includes("percent")) {
+		if (
+			column.fieldname &&
+			column.fieldname.toLowerCase().includes("percent")
+		) {
 			const percent = Math.min(Math.max(parseFloat(value) || 0, 0), 100);
 			let color;
 

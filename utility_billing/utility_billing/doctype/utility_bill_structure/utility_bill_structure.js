@@ -10,7 +10,7 @@ frappe.ui.form.on("Utility Bill Structure", {
 					year_start_date: ["<=", today],
 					year_end_date: [">=", today],
 				},
-				["name", "year_start_date", "year_end_date"]
+				["name", "year_start_date", "year_end_date"],
 			)
 			.then((result) => {
 				if (result && result.message) {
@@ -21,24 +21,30 @@ frappe.ui.form.on("Utility Bill Structure", {
 			});
 
 		if (!frm.doc.fiscal_year) {
-			frm.set_value("fiscal_year", frappe.defaults.get_user_default("fiscal_year"));
+			frm.set_value(
+				"fiscal_year",
+				frappe.defaults.get_user_default("fiscal_year"),
+			);
 		}
 
-		frm.fields_dict["items"].grid.get_field("item").get_query = function () {
-			return {
-				filters: {
-					is_sales_item: 1,
-					is_utility_item: 1,
-					has_variants: 0,
-				},
+		frm.fields_dict["items"].grid.get_field("item").get_query =
+			function () {
+				return {
+					filters: {
+						is_sales_item: 1,
+						is_utility_item: 1,
+						has_variants: 0,
+					},
+				};
 			};
-		};
 
 		frm.fields_dict["utility_property"].get_query = function () {
 			return {
 				filters: {
 					is_group: 1,
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+					company:
+						frm.doc.company ||
+						frappe.defaults.get_user_default("Company"),
 				},
 			};
 		};

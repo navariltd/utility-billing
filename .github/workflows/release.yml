@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - 'version-*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GH APP Token
+        id: get_app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: navariltd
+          repositories: utility-billing
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.get_app_token.outputs.token }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Dependencies
+        run: npm install @semantic-release/git @semantic-release/exec --no-save
+      
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ steps.get_app_token.outputs.token }}
+        run: npx semantic-release

@@ -15,7 +15,9 @@ frappe.ui.form.on("Auto Repeat", {
 					},
 					callback: function (r) {
 						if (!r.exc) {
-							frappe.msgprint(__("Documents created successfully"));
+							frappe.msgprint(
+								__("Documents created successfully"),
+							);
 							frm.reload_doc();
 						}
 					},

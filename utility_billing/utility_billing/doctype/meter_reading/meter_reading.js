@@ -7,15 +7,16 @@ frappe.ui.form.on("Meter Reading", {
 			frm.set_value("date", frappe.datetime.now_date());
 		}
 
-		frm.fields_dict["items"].grid.get_field("item_code").get_query = function () {
-			return {
-				filters: {
-					is_sales_item: 1,
-					is_utility_item: 1,
-					has_variants: 0,
-				},
+		frm.fields_dict["items"].grid.get_field("item_code").get_query =
+			function () {
+				return {
+					filters: {
+						is_sales_item: 1,
+						is_utility_item: 1,
+						has_variants: 0,
+					},
+				};
 			};
-		};
 
 		update_meter_number_query(frm);
 	},
@@ -31,7 +32,10 @@ frappe.ui.form.on("Meter Reading", {
 					if (r.message) {
 						frm.set_value("customer_name", r.message.customer_name);
 						frm.set_value("territory", r.message.territory);
-						frm.set_value("price_list", r.message.default_price_list);
+						frm.set_value(
+							"price_list",
+							r.message.default_price_list,
+						);
 						frm.doc.items.forEach((item) => {
 							fetch_previous_reading(frm, item);
 						});
@@ -53,13 +57,15 @@ frappe.ui.form.on("Meter Reading", {
 	validate: function (frm) {
 		frm.doc.items.forEach((item) => {
 			if (item.current_reading >= 0 && item.previous_reading >= 0) {
-				const consumption = item.current_reading - item.previous_reading;
+				const consumption =
+					item.current_reading - item.previous_reading;
 
 				if (consumption < 0) {
 					frappe.msgprint(
-						__("Current reading cannot be lower than previous reading.for item: {0}", [
-							item.item_code,
-						])
+						__(
+							"Current reading cannot be lower than previous reading.for item: {0}",
+							[item.item_code],
+						),
 					);
 					frappe.validated = false;
 				}
@@ -67,8 +73,8 @@ frappe.ui.form.on("Meter Reading", {
 				frappe.msgprint(
 					__(
 						"Please ensure that both current and previous readings are provided for item: {0}",
-						[item.item_code]
-					)
+						[item.item_code],
+					),
 				);
 				frappe.validated = false;
 			}
@@ -102,10 +108,30 @@ frappe.ui.form.on("Meter Reading Item", {
 				},
 				callback: function (r) {
 					if (r.message) {
-						frappe.model.set_value(cdt, cdn, "item_name", r.message.item_name);
-						frappe.model.set_value(cdt, cdn, "uom", r.message.stock_uom);
-						frappe.model.set_value(cdt, cdn, "stock_uom", r.message.stock_uom);
-						frappe.model.set_value(cdt, cdn, "description", r.message.description);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"item_name",
+							r.message.item_name,
+						);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"uom",
+							r.message.stock_uom,
+						);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"stock_uom",
+							r.message.stock_uom,
+						);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"description",
+							r.message.description,
+						);
 
 						fetch_previous_reading(frm, row);
 					}
@@ -129,15 +155,18 @@ function update_meter_number_query(frm) {
 			fields: ["serial_no"],
 		})
 		.then((warrantyClaims) => {
-			const closedWarrantySerials = warrantyClaims.map((claim) => claim.serial_no);
+			const closedWarrantySerials = warrantyClaims.map(
+				(claim) => claim.serial_no,
+			);
 
-			frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
-				return {
-					filters: {
-						name: ["in", closedWarrantySerials],
-					},
+			frm.fields_dict["items"].grid.get_field("meter_number").get_query =
+				function () {
+					return {
+						filters: {
+							name: ["in", closedWarrantySerials],
+						},
+					};
 				};
-			};
 
 			frm.doc.items.forEach((row) => {
 				if (!row.meter_number && closedWarrantySerials.length === 1) {
@@ -145,7 +174,7 @@ function update_meter_number_query(frm) {
 						row.doctype,
 						row.name,
 						"meter_number",
-						closedWarrantySerials[0]
+						closedWarrantySerials[0],
 					);
 				}
 			});
@@ -173,7 +202,9 @@ function fetch_previous_reading(frm, row) {
 function calculate_consumption(frm, row) {
 	row.consumption = row.current_reading - row.previous_reading;
 	if (row.consumption < 0) {
-		frappe.msgprint(__("Current reading cannot be lower than previous reading."));
+		frappe.msgprint(
+			__("Current reading cannot be lower than previous reading."),
+		);
 		row.consumption = 0;
 		row.current_reading = 0;
 	}

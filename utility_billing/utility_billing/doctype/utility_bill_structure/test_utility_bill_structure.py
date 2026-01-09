@@ -2,8 +2,7 @@
 # See license.txt
 
 # import frappe
-from frappe.tests import IntegrationTestCase, UnitTestCase
-
+from frappe.tests.utils import FrappeTestCase
 
 # On IntegrationTestCase, the doctype test records and all
 # link-field test record dependencies are recursively loaded
@@ -12,7 +11,7 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class UnitTestUtilityBillStructure(UnitTestCase):
+class UnitTestUtilityBillStructure(FrappeTestCase):
 	"""
 	Unit tests for UtilityBillStructure.
 	Use this class for testing individual functions and methods.
@@ -21,7 +20,7 @@ class UnitTestUtilityBillStructure(UnitTestCase):
 	pass
 
 
-class IntegrationTestUtilityBillStructure(IntegrationTestCase):
+class IntegrationTestUtilityBillStructure(FrappeTestCase):
 	"""
 	Integration tests for UtilityBillStructure.
 	Use this class for testing interactions between multiple components.
