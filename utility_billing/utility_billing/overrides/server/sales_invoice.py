@@ -4,7 +4,13 @@ from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
 from frappe.model.document import Document
 from frappe.utils import add_days
 from ...utils.update_service_request import update_billing_status
+from ...utils.utils import (
+	sync_meter_readings,
+)
 
+
+def validate(doc: Document, method: str) -> None:
+	sync_meter_readings(doc)
 
 def before_validate(doc: Document, method: str) -> None:
     """Intercepts submit event for document"""
