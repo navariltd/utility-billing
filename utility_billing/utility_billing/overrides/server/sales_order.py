@@ -10,6 +10,14 @@ from frappe.contacts.doctype.address.address import get_company_address
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.utils import flt, today
+from frappe.model.document import Document
+from ...utils.utils import (
+	sync_meter_readings,
+)
+
+
+def validate(doc: Document, method: str) -> None:
+	sync_meter_readings(doc)
 
 
 def create_log(

@@ -96,6 +96,9 @@ class UtilityServiceRequest(Document):
                 else:
                     row.end_date = new_end
 
+            if length == 0:
+                row.end_date = None
+
     def get_month_diff(self, start, end):
         """Return month difference between two date objects"""
         if not start or not end:
@@ -252,27 +255,31 @@ def create_sales_order(doc, customer_doc):
 
 
 @frappe.whitelist()
-def create_site_survey(docname):
-    """Create a site survey as an issue for the utility service request."""
-    doc = frappe.get_doc("Utility Service Request", docname)
-    request_type_description = frappe.db.get_value(
-        "Issue Type", doc.request_type, "description"
-    )
+def get_site_survey_defaults(docname):
+	"""Return default values for creating a Site Survey Issue."""
+	doc = frappe.get_doc("Utility Service Request", docname)
 
-    issue_doc = frappe.new_doc("Issue")
-    issue_doc.subject = f"Site Survey for {docname} ({doc.customer_name})"
-    issue_doc.description = (
-        f"Site survey created for Utility Service Request: {docname}, Customer name: {doc.customer_name}.\n"
-        f"{' ' + request_type_description if request_type_description else ''}",
-    )
-    issue_doc.utility_service_request = docname
-    issue_doc.issue_type = doc.request_type
-    issue_doc.customer = doc.customer
-    issue_doc.utility_property = doc.utility_property
+	request_type_description = frappe.db.get_value(
+		"Issue Type", doc.request_type, "description"
+	)
 
-    issue_doc.insert()
+	description = (
+		f"Site survey for Utility Service Request: {docname}\n"
+		f"Customer: {doc.customer_name}\n"
+	)
 
-    return {"issue": issue_doc.name}
+	if request_type_description:
+		description += f"\n{request_type_description}"
+
+	return {
+		"subject": f"Site Survey for {docname} ({doc.customer_name})",
+		"description": description,
+		"utility_service_request": docname,
+		"issue_type": doc.request_type,
+		"customer": doc.customer,
+		"utility_property": doc.utility_property,
+	}
+
 
 
 @frappe.whitelist()
@@ -290,11 +297,11 @@ def create_bom(docname, item_code):
 
 
 @frappe.whitelist()
-def check_request_status(request_name):
+def update_request_status(request_name):
     issues = frappe.get_list(
         "Issue", 
         filters={"utility_service_request": request_name}, 
-        pluck="docstatus",
+        pluck="status",
         ignore_permissions=1
     )
 
@@ -305,7 +312,8 @@ def check_request_status(request_name):
         ignore_permissions=1
     )
 
-    status = frappe.get_doc("Utility Service Request", request_name).request_status
+    service_request = frappe.get_doc("Utility Service Request", request_name)
+    status = service_request.request_status
 
     if submitted_boms:
         if any(int(bom) == 1 for bom in submitted_boms):
@@ -320,6 +328,9 @@ def check_request_status(request_name):
             status = "Site Survey Created"
     else:
         status = ""
+
+    if service_request.request_status != status:
+        frappe.db.set_value("Utility Service Request", request_name, "request_status", status)
 
     return status
 

@@ -23,6 +23,7 @@
   "nrcpassport_no",
   "accounting_dimensions_section",
   "cost_center",
+  "utility_property",
   "dimension_col_break",
   "project",
   "currency_and_price_list_section",
@@ -490,12 +491,18 @@
    "fieldtype": "Table",
    "label": "Fulfilment Terms",
    "options": "Contract Fulfilment Checklist"
+  },
+  {
+   "fieldname": "utility_property",
+   "fieldtype": "Link",
+   "label": "Utility Property",
+   "options": "Utility Property"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-17 18:56:24.877794",
+ "modified": "2026-01-09 14:16:19.723545",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Service Request",
