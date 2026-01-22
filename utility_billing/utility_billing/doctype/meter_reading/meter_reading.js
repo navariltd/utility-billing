@@ -17,6 +17,7 @@ frappe.ui.form.on("Meter Reading", {
 			};
 		};
 
+		update_property_query(frm);
 		update_meter_number_query(frm);
 	},
 
@@ -39,6 +40,7 @@ frappe.ui.form.on("Meter Reading", {
 				},
 			});
 		}
+		update_property_query(frm);
 		update_meter_number_query(frm);
 	},
 
@@ -122,7 +124,7 @@ frappe.ui.form.on("Meter Reading Item", {
 	},
 });
 
-function update_meter_number_query(frm) {
+function update_property_query(frm) {
 	frappe.db
 		.get_list("Warranty Claim", {
 			filters: { status: "Closed", customer: frm.doc.customer },
@@ -151,6 +153,76 @@ function update_meter_number_query(frm) {
 			});
 			frm.refresh_field("items");
 		});
+}
+
+function update_meter_number_query(frm) {
+	if (!frm.doc.customer) return;
+
+	frappe.call({
+		method: "utility_billing.utility_billing.utils.utils.get_serial_numbers_from_warranty_claims",
+		args: {
+			customer: frm.doc.customer,
+			utility_property: frm.doc.property,
+		},
+		callback: function (r) {
+			const closedWarrantySerials = (r.message || []).filter(Boolean);
+
+			frm.fields_dict["items"].grid.get_field("meter_number").get_query = function () {
+				return {
+					filters: {
+						name: ["in", closedWarrantySerials],
+					},
+				};
+			};
+
+			frm.doc.items.forEach((row) => {
+				if (!row.meter_number && closedWarrantySerials.length === 1) {
+					frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"meter_number",
+						closedWarrantySerials[0]
+					);
+				}
+			});
+
+			frm.refresh_field("items");
+		},
+	});
+}
+
+function update_property_query(frm) {
+	if (!frm.doc.customer) return;
+
+	frappe.call({
+		method: "utility_billing.utility_billing.utils.utils.get_active_leases_for_customer",
+		args: {
+			customer: frm.doc.customer,
+		},
+		callback: function (r) {
+			const activeContracts = r.message || [];
+
+			frm.set_query("property", function () {
+				if (!activeContracts.length) {
+					return {
+						filters: {
+							name: ["in", []],
+						},
+					};
+				}
+
+				return {
+					filters: {
+						name: ["in", activeContracts],
+					},
+				};
+			});
+
+			if (activeContracts.length === 1 && !frm.doc.property) {
+				frm.set_value("property", activeContracts[0]);
+			}
+		},
+	});
 }
 
 function fetch_previous_reading(frm, row) {

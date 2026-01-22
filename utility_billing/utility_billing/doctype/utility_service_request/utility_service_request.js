@@ -11,17 +11,17 @@ frappe.ui.form.on("Utility Service Request", {
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
 			frappe.call({
-				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.check_request_status",
+				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.update_request_status",
 				args: {
 					request_name: frm.doc.name,
 				},
 				callback: function (response) {
-					if (response.message != frm.doc.request_status) {
-						frm.set_value("request_status", response.message);
-						frm.save();
-					}
+					// if (response.message != frm.doc.request_status) {
+					// 	frm.set_value("request_status", response.message);
+					// 	frm.save();
+					// }
 
-					addActionButtons(frm, frm.doc.request_status);
+					addActionButtons(frm, response.message);
 				},
 			});
 		}
@@ -47,14 +47,7 @@ frappe.ui.form.on("Utility Service Request", {
 				},
 			};
 		};
-		frm.fields_dict["utility_property"].get_query = function () {
-			return {
-				filters: {
-					is_group: 1,
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
-				},
-			};
-		};
+
 		frm.fields_dict["requested_properties"].grid.get_field("utility_property").get_query =
 			function (doc, cdt, cdn) {
 				const row = locals[cdt][cdn];
@@ -85,7 +78,6 @@ frappe.ui.form.on("Utility Service Request", {
 				};
 			};
 
-		// Function to get selected utility_property values
 		frm.get_selected_utility_properties = function () {
 			let selected = [];
 
@@ -266,7 +258,6 @@ frappe.ui.form.on("Utility Service Request", {
 						);
 
 						if (frm.doc.requires_fulfilment) {
-							// Populate the fulfilment terms table from a contract template, if any
 							r.message.contract_template.fulfilment_terms.forEach((element) => {
 								let d = frm.add_child("fulfilment_terms");
 								d.requirement = element.requirement;
@@ -514,7 +505,6 @@ function open_bom_creation_modal(frm) {
 					return {
 						query: "erpnext.controllers.queries.item_query",
 						filters: {
-							// has_bom: 1,
 							item_code: ["in", item_codes],
 						},
 					};
@@ -544,7 +534,6 @@ function open_bom_creation_modal(frm) {
 	modal.show();
 }
 
-// Common function to get customer section fields with 2 columns
 function get_customer_section_fields(frm, customerName) {
 	return [
 		{
@@ -562,7 +551,7 @@ function get_customer_section_fields(frm, customerName) {
 			read_only: 1,
 		},
 		{
-			fieldname: "col_break_customer", // Column Break for 2 columns
+			fieldname: "col_break_customer",
 			fieldtype: "Column Break",
 		},
 		{
@@ -575,12 +564,10 @@ function get_customer_section_fields(frm, customerName) {
 	];
 }
 
-// Common function to get item table fields configuration dynamically from the form
 function get_item_table_fields(frm) {
 	const child_table = frm.fields_dict["items"];
 	const child_fields = child_table.grid.docfields;
 
-	// Filter and map fields with custom logic
 	const dialog_item_fields = child_fields.map((field) => {
 		let config = {
 			label: field.label,
@@ -594,7 +581,6 @@ function get_item_table_fields(frm) {
 			default: field.default,
 		};
 
-		// Add onchange handlers
 		if (field.fieldname === "qty" || field.fieldname === "rate") {
 			config.onchange = function () {
 				calculate_row_amount(this.grid_row);
@@ -617,8 +603,7 @@ function get_item_table_fields(frm) {
 								row.doc.item_name = r.message.item_name;
 								row.doc.rate = r.message.standard_rate;
 								calculate_row_amount(row);
-								// Note: refresh_field("items_table") might not work directly on dialog table.
-								// You might need to refresh the grid if it's a custom table.
+
 								row.grid.refresh();
 							}
 						},
@@ -627,7 +612,6 @@ function get_item_table_fields(frm) {
 			};
 		}
 
-		// Ensure utility_property is visible in the list view
 		if (field.fieldname === "utility_property") {
 			config.in_list_view = 1;
 			config.reqd = 1;
@@ -639,7 +623,6 @@ function get_item_table_fields(frm) {
 	return dialog_item_fields;
 }
 
-// Common function to prepare items data dynamically based on allowed fields
 function prepare_items_data(frm) {
 	const child_table = frm.fields_dict["items"];
 	const child_fields = child_table.grid.docfields;
@@ -651,7 +634,6 @@ function prepare_items_data(frm) {
 		const qty = item.qty || 1;
 		const rate = item.rate || 0;
 
-		// Original data with only the necessary fields
 		const fullData = {
 			name: item.name,
 			item_code: item.item_code,
@@ -660,17 +642,15 @@ function prepare_items_data(frm) {
 			qty: qty,
 			warehouse: item.warehouse || frappe.defaults.get_user_default("Warehouse"),
 			utility_property: properties.length == 1 ? properties[0] : null,
-			...item, // Include all other fields from the original item
+			...item,
 		};
 
-		// Filter out fields not in child table fields
 		return Object.fromEntries(
 			Object.entries(fullData).filter(([key]) => allowedFields.includes(key))
 		);
 	});
 }
 
-// Common function to calculate row amount
 function calculate_row_amount(row) {
 	const qty = parseFloat(row.doc.qty) || 0;
 	const rate = parseFloat(row.doc.rate) || 0;
@@ -678,7 +658,6 @@ function calculate_row_amount(row) {
 	row.grid.refresh();
 }
 
-// Common function to configure dialog properties
 function configure_dialog(dialog, frm) {
 	dialog.fields_dict["items_table"].grid.get_field("utility_property").get_query = function () {
 		const selected_properties = frm.get_selected_utility_properties?.() || [];
@@ -743,22 +722,19 @@ function configure_dialog(dialog, frm) {
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
-	// Fetch customer details to pre-fill the dialog
 	const customer = await frappe.db.get_value("Customer", frm.doc.customer, ["customer_name"]);
-	const today = frappe.datetime.get_today(); // Get today's date
+	const today = frappe.datetime.get_today();
 
-	// Determine the title of the dialog based on document type
 	const title =
 		docType === "Sales Order" ? __("Create Sales Order") : __("Create Sales Invoice");
-	// Determine the primary action method to call on form submission
+
 	const primaryActionMethod =
 		docType === "Sales Order"
 			? "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_order_doc"
 			: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_sales_invoice_doc";
 
-	// Define the fields for the dialog
 	const fields = [
-		...get_customer_section_fields(frm, customer?.message?.customer_name), // Customer-related fields
+		...get_customer_section_fields(frm, customer?.message?.customer_name),
 		{
 			fieldname: "transaction_details_section",
 			fieldtype: "Section Break",
@@ -766,14 +742,14 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			collapsible: 0,
 		},
 		{
-			fieldname: "posting_date", // Use posting_date for both for consistency, label will change
+			fieldname: "posting_date",
 			label: docType === "Sales Order" ? __("Date") : __("Posting Date"),
 			fieldtype: "Date",
 			default: today,
 			reqd: 1,
 		},
 		{
-			fieldname: "col_break_transaction", // Column Break for 2 columns in transaction details
+			fieldname: "col_break_transaction",
 			fieldtype: "Column Break",
 		},
 		{
@@ -786,13 +762,12 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		},
 	];
 
-	// Add due_date field specifically for Sales Invoice
 	if (docType === "Sales Invoice") {
 		fields.push({
 			fieldname: "due_date",
 			label: __("Due Date"),
 			fieldtype: "Date",
-			default: frappe.datetime.add_days(today, 30), // Default due date to 30 days from today
+			default: frappe.datetime.add_days(today, 30),
 			reqd: 1,
 		});
 	}
@@ -803,10 +778,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 
 	const defaultProperty = properties.length === 1 ? frm.doc.requested_properties[0] : null;
 
-	// Add fields for Property and Auto Repeat settings
 	fields.push(
 		{
-			fieldname: "property_auto_repeat_section", // New section for Property and Auto Repeat
+			fieldname: "property_auto_repeat_section",
 			fieldtype: "Section Break",
 			label: __(""),
 			collapsible: 0,
@@ -818,9 +792,8 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			options: "Utility Property",
 			default: properties.length == 1 ? properties[0] : null,
 			mandatory_depends_on: properties.length ? "eval:1" : "eval:0",
-			// Custom query to filter properties based on `requested_properties` in the parent form
+
 			get_query: () => {
-				// If no properties in requested_properties, don't filter
 				if (!properties.length) {
 					return {};
 				}
@@ -829,20 +802,18 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 					filters: [["name", "in", properties]],
 				};
 			},
-			// Logic to execute when the utility_property field changes
+
 			change: function () {
-				let selected_value = this.get_value(); // Get the currently selected property
-				let items = dialog.get_value("items_table") || []; // Get current items in the table
+				let selected_value = this.get_value();
+				let items = dialog.get_value("items_table") || [];
 
 				let property_line = null;
 				if (selected_value) {
-					// Find the corresponding property line in the parent form's requested_properties
 					property_line = (frm.doc.requested_properties || []).find(
 						(prop) => prop.utility_property === selected_value
 					);
 				}
 
-				// Update items with property and frequency if a matching property line is found
 				if (property_line) {
 					if (property_line.adjustment_rule) {
 						dialog.set_value("adjustment_rule", property_line.adjustment_rule);
@@ -852,22 +823,19 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 					}
 					items.forEach((row) => {
 						row.utility_property = selected_value;
-						row.frequency = property_line.frequency; // Set frequency from property line
-
-						// Set adjustment_rule if it exists in the property line
+						row.frequency = property_line.frequency;
 					});
 				} else {
-					// Clear property and frequency from items if no matching property line
 					items.forEach((row) => {
 						row.utility_property = selected_value;
 						row.frequency = null;
 					});
-					// Clear auto-repeat dates if no property is selected or matched
+
 					dialog.set_value("start_date", null);
 					dialog.set_value("end_date", null);
 				}
 
-				dialog.set_value("items_table", items); // Update the items table in the dialog
+				dialog.set_value("items_table", items);
 			},
 		},
 		{
@@ -881,7 +849,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			description: __("Rule defining how billing amounts will adjust over time"),
 		},
 		{
-			fieldname: "col_break_auto_repeat", // Column Break for 2 columns in this new section
+			fieldname: "col_break_auto_repeat",
 			fieldtype: "Column Break",
 		},
 		{
@@ -891,13 +859,11 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			default: docType === "Sales Order" ? 0 : 1,
 			description: __("Enable recurring billing for this document"),
 			change: function () {
-				// When enable_auto_repeat changes, update the visibility and mandatory status of date fields
 				const isChecked = this.get_value();
 				dialog.set_df_property("start_date", "reqd", isChecked);
 				dialog.set_df_property("end_date", "reqd", isChecked);
 				dialog.set_df_property("adjustment_rule", "reqd", isChecked);
 
-				// If enabled, and a property is selected, auto-set start date
 				if (isChecked && dialog.get_value("utility_property")) {
 					const selectedProperty = dialog.get_value("utility_property");
 					const property_line = (frm.doc.requested_properties || []).find(
@@ -907,10 +873,8 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 					if (property_line) {
 						const startDate = today;
 						dialog.set_value("start_date", startDate);
-						// No automatic end date calculation without calculateEndDate
 					}
 				} else if (!isChecked) {
-					// If disabled, clear the dates
 					dialog.set_value("start_date", null);
 					dialog.set_value("end_date", null);
 				}
@@ -920,22 +884,21 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldname: "start_date",
 			label: __("Recurring Billing Start Date"),
 			fieldtype: "Date",
-			default: today, // Default start date to today
-			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
-			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
+			default: today,
+			depends_on: "eval:doc.enable_auto_repeat==1",
+			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
 			description: __("Date when recurring billing will begin"),
 		},
 		{
 			fieldname: "end_date",
 			label: __("Recurring Billing End Date"),
 			fieldtype: "Date",
-			depends_on: "eval:doc.enable_auto_repeat==1", // Only show if auto-repeat is enabled
+			depends_on: "eval:doc.enable_auto_repeat==1",
 			default: defaultProperty?.end_date,
-			mandatory_depends_on: "eval:doc.enable_auto_repeat==1", // Mandatory if auto-repeat is enabled
 			description: __("Date when recurring billing will stop"),
 		},
 		{
-			fieldname: "items_table_section", // New section for Items Table
+			fieldname: "items_table_section",
 			fieldtype: "Section Break",
 			label: __(""),
 			collapsible: 0,
@@ -944,18 +907,15 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldname: "items_table",
 			fieldtype: "Table",
 			label: __("Items"),
-			fields: get_item_table_fields(frm), // Get item table field definitions
-			data: prepare_items_data(frm), // Prepare initial data for the item table
-			cannot_add_rows: !allowAdditionalRows, // Prevent adding rows if not allowed
-			// Custom handler for when a row in the table is edited (opens a row modal)
+			fields: get_item_table_fields(frm),
+			data: prepare_items_data(frm),
+			cannot_add_rows: !allowAdditionalRows,
+
 			on_edit: function (row, row_modal) {
-				// Hide parent dialog temporarily to avoid overlap
 				dialog.$wrapper.addClass("frappe-modal-hidden");
 
-				// Ensure row modal has a higher z-index to be on top
 				row_modal.$wrapper.css("z-index", 1052);
 
-				// On close of the row modal, show the parent dialog again
 				row_modal.onhide = () => {
 					dialog.$wrapper.removeClass("frappe-modal-hidden");
 				};
@@ -963,41 +923,36 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		}
 	);
 
-	// Create a new Frappe UI Dialog instance
 	const dialog = new frappe.ui.Dialog({
 		title: title,
 		fields: fields,
 		primary_action_label: __("Create"),
-		// Primary action to be executed when the "Create" button is clicked
+
 		primary_action: function (values) {
-			// Map table data to the required format for the API call
 			const items = values.items_table.map((row) => ({
-				// Include all necessary fields from the dialog item rows
 				item_code: row.item_code,
 				qty: row.qty,
 				rate: row.rate,
 				amount: row.amount,
 				warehouse: row.warehouse,
 				utility_property: row.utility_property,
-				frequency: row.frequency, // Ensure frequency is passed if applicable
-				...row, // Include any other relevant fields from the item table
+				frequency: row.frequency,
+				...row,
 			}));
 
-			// Prepare arguments for the API call
 			const args = {
-				docname: frm.doc.name, // Parent document name
+				docname: frm.doc.name,
 				items: items,
 				customer: values.customer,
 				customer_name: values.customer_name,
 				company: values.company,
-				property: values.utility_property, // Pass the selected property
-				enable_auto_repeat: values.enable_auto_repeat, // Pass the checkbox value
-				adjustment_rule: values.adjustment_rule, // Pass the adjustment rule if auto repeat is enabled
-				start_date: values.start_date, // Pass the start date
-				end_date: values.end_date, // Pass the end date
+				property: values.utility_property,
+				enable_auto_repeat: values.enable_auto_repeat,
+				adjustment_rule: values.adjustment_rule,
+				start_date: values.start_date,
+				end_date: values.end_date,
 			};
 
-			// Add transaction-specific dates based on document type
 			if (docType === "Sales Order") {
 				args.transaction_date = values.posting_date;
 			} else {
@@ -1012,14 +967,12 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				return;
 			}
 
-			// Make the API call to create the document
 			frappe.call({
 				method: primaryActionMethod,
 				args: args,
 				callback: function (response) {
-					dialog.hide(); // Hide the dialog after the call
+					dialog.hide();
 					if (response.message) {
-						// Show success message and navigate to the newly created document
 						frappe.show_alert({
 							message: `${docType} created successfully!`,
 							indicator: "green",
@@ -1031,11 +984,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 		},
 	});
 
-	// Configure the dialog after initialization (e.g., initial field visibility)
 	configure_dialog(dialog, frm);
 }
 
-// Update the action buttons to use the new common modal function
 async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
@@ -1044,7 +995,6 @@ async function addActionButtons(frm) {
 	const enableExtraRows = settings?.enable_extra_rows_for_sosi_creation == 1 ? true : false;
 
 	if (frm.doc.docstatus === 1) {
-		// Customer creation button
 		if (!frm.doc.customer) {
 			frm.add_custom_button(
 				__("Customer"),
@@ -1066,7 +1016,6 @@ async function addActionButtons(frm) {
 				__("Create")
 			);
 		} else {
-			// Contract creation button
 			const contract = await frappe.db.get_value(
 				"Contract",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
@@ -1133,15 +1082,14 @@ async function addActionButtons(frm) {
 			__("Site Survey"),
 			function () {
 				frappe.call({
-					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.create_site_survey",
+					method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_site_survey_defaults",
 					args: {
 						docname: frm.doc.name,
 					},
-					callback: function (response) {
-						handle_response(response, __("Site Survey"), frm);
-						if (response && response.message) {
-							frappe.set_route("Form", "Issue", response.message.issue);
-						}
+					callback: function (r) {
+						if (!r.message) return;
+
+						frappe.new_doc("Issue", r.message);
 					},
 				});
 			},
@@ -1206,7 +1154,6 @@ async function addActionButtons(frm) {
 	}
 }
 
-// Handle the response from the server
 function handle_response(response, actionLabel, frm) {
 	if (response.message) {
 		frappe.show_alert({ message: `${actionLabel} created successfully!`, indicator: "green" });
