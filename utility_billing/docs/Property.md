@@ -34,9 +34,9 @@ Enable the `is_fixed_asset` checkbox to treat the property as a fixed asset. Onc
 - `asset_category`: Asset category of the property
 - `item`: Linked item (must be marked as a fixed asset)
 - `asset_naming_series`: Series used when creating the asset
-- `gross_purchase_amount`: Asset purchase value
+- `net_purchase_amount`: Asset purchase value
 
-> 💡 If `item` is selected, `asset_category` and `gross_purchase_amount` become read-only and auto-linked.
+> 💡 If `item` is selected, `asset_category` and `net_purchase_amount` become read-only and auto-linked.
 
 ---
 

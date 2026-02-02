@@ -26,7 +26,7 @@ frappe.ui.form.on("Utility Property", {
 					filters: {
 						item_code: frm.doc.item,
 					},
-					fields: ["location", "asset_category", "gross_purchase_amount"],
+					fields: ["location", "asset_category", "net_purchase_amount"],
 					limit_page_length: 1,
 				},
 				callback: function (r) {
@@ -34,7 +34,7 @@ frappe.ui.form.on("Utility Property", {
 						const asset = r.message[0];
 						frm.set_value("location", asset.location);
 						frm.set_value("asset_category", asset.asset_category);
-						frm.set_value("gross_purchase_amount", asset.gross_purchase_amount);
+						frm.set_value("net_purchase_amount", asset.net_purchase_amount);
 					}
 				},
 			});
