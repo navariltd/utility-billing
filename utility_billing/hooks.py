@@ -140,6 +140,7 @@ utility_demo_master_doctypes = [
     "item_price",
     "location",
     "serial_no",
+    "uom",
     "utility_property_feature_type",
     "utility_property_feature",
     "utility_property_unit_type",
