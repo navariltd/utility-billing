@@ -3,5 +3,15 @@
     "item_group_name": "Utilities",
     "is_utility_item_group": 1,
     "doctype": "Item Group"
+  },
+  {
+    "item_group_name": "Fixed Asset",
+    "is_utility_item_group": 0,
+    "doctype": "Item Group"
+  },
+  {
+    "item_group_name": "Meter",
+    "is_utility_item_group": 1,
+    "doctype": "Item Group"
   }
 ]
