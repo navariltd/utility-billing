@@ -1,4 +1,5 @@
 import frappe
+import random
 from typing import List, Dict, Any
 from .utils import safe_insert_doc, safe_load_json
 from datetime import timedelta
@@ -105,10 +106,12 @@ def get_random_bill_structure() -> str:
         "Utility Bill Structure",
         filters={"docstatus": 1},
         fields=["name"],
-        limit=1,
-        order_by="RAND()"
     )
-    return structures[0].name if structures else None
+
+    if not structures:
+        return
+
+    return random.choice(structures).name
 
 def assign_properties_to_request(doc, requested_props: List[Dict[str, Any]], service_start, service_end, is_signed: bool) -> None:
     """Assign utility properties with calculated dates and status."""
@@ -121,13 +124,20 @@ def assign_properties_to_request(doc, requested_props: List[Dict[str, Any]], ser
     
     def get_random_insurance():
         """Fetch a random insurance policy if available."""
+        total = frappe.db.count("Insurance")
+
+        if not total:
+            return None
+
+        offset = random.randint(0, total - 1)
+
         insurances = frappe.get_list(
             "Insurance",
-            filters={},
             fields=["name"],
-            limit=1,
-            order_by="RAND()"
+            start=offset,
+            limit=1
         )
+
         return insurances[0].name if insurances else None
 
     for i, prop in enumerate(requested_props):

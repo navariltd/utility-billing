@@ -1,4 +1,5 @@
 {
+ "app": "utility_billing",
  "charts": [],
  "content": "[{\"id\":\"RdhNZhI39s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Utility Billing &amp; Property Management</span>\",\"col\":12}},{\"id\":\"96Uspmh80R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sYe8H-efqi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"cfOQ27q3xM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Open Portal\",\"col\":12}},{\"id\":\"yjYKVDPGXJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Billing Settings\",\"col\":3}},{\"id\":\"eqpOxmo372\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Service Request\",\"col\":3}},{\"id\":\"FnxJmE8cHW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meter Reading\",\"col\":3}},{\"id\":\"_kaF7CGr06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Utility Property\",\"col\":3}},{\"id\":\"AfmnnngAoW\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-YDI6I1EU\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Operations\",\"col\":4}},{\"id\":\"7gy7uB2rhz\",\"type\":\"card\",\"data\":{\"card_name\":\"Property Management\",\"col\":4}},{\"id\":\"MTQmyxb7W8\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Transactions\",\"col\":4}},{\"id\":\"r7y6y33VM7\",\"type\":\"card\",\"data\":{\"card_name\":\"Rules and Structure\",\"col\":4}},{\"id\":\"_QwacqP-jP\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"uem37c79xh\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
  "creation": "2025-05-02 19:43:46.526258",
@@ -11,7 +12,7 @@
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "Utility and Rental",
+ "label": "Utility & Rental",
  "links": [
   {
    "hidden": 0,
@@ -328,10 +329,10 @@
    "type": "Link"
   }
  ],
- "modified": "2026-01-09 13:29:22.904333",
+ "modified": "2026-02-02 14:55:56.055524",
  "modified_by": "Administrator",
  "module": "Utility Billing",
- "name": "Utility and Rental",
+ "name": "Utility & Rental",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -386,5 +387,6 @@
    "type": "DocType"
   }
  ],
- "title": "Utility and Rental"
+ "title": "Utility & Rental",
+ "type": "Workspace"
 }

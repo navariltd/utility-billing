@@ -19,13 +19,13 @@ class UtilityProperty(NestedSet):
                     "item_code": self.item,
                     "asset_name": self.property_name
                 },
-                ["location", "asset_category", "gross_purchase_amount"],
+                ["location", "asset_category", "net_purchase_amount"],
                 as_dict=True
             )
             if asset:
                 self.location = asset.location
                 self.asset_category = asset.asset_category
-                self.gross_purchase_amount = asset.gross_purchase_amount
+                self.net_purchase_amount = asset.net_purchase_amount
 
         if self.is_fixed_asset:
             if not frappe.db.exists("Item Group", "Fixed Asset"):
@@ -61,7 +61,7 @@ class UtilityProperty(NestedSet):
                     "asset_category": self.asset_category,
                     "naming_series": self.asset_naming_series or "ACC-ASS-.YYYY.-",
                     "is_existing_asset": 1,
-                    "gross_purchase_amount": self.gross_purchase_amount, 
+                    "net_purchase_amount": self.net_purchase_amount, 
                     "purchase_date": self.purchase_date, 
                     "location": self.location
                 })

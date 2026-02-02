@@ -19,7 +19,7 @@ def get_columns():
 		{"label": "Utility Category", "fieldname": "utility_category", "fieldtype": "Link", "options": "Utility Category", "width": 150},
 		{"label": "Company", "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
 		{"label": "Is Fixed Asset", "fieldname": "is_fixed_asset", "fieldtype": "Check", "width": 100},
-		{"label": "Gross Purchase Amount", "fieldname": "gross_purchase_amount", "fieldtype": "Currency", "width": 140},
+		{"label": "Gross Purchase Amount", "fieldname": "net_purchase_amount", "fieldtype": "Currency", "width": 140},
 		{"label": "Unit Number", "fieldname": "unit_number", "fieldtype": "Data", "width": 120},
 		{"label": "Bedrooms", "fieldname": "bedrooms", "fieldtype": "Int", "width": 100},
 		{"label": "Bathrooms", "fieldname": "bathrooms", "fieldtype": "Int", "width": 100},
@@ -61,7 +61,7 @@ def get_data(filters):
         filters=conditions,
         fields=[
             "property_name", "status", "location", "utility_category", "company",
-            "is_fixed_asset", "gross_purchase_amount", "unit_number",
+            "is_fixed_asset", "net_purchase_amount", "unit_number",
             "bedrooms", "bathrooms", "unit_size", "floor_level", "modified"
         ]
     )
@@ -70,7 +70,7 @@ def get_data(filters):
 
 def get_report_summary(data):
     total_properties = len(data)
-    total_value = sum(d.get("gross_purchase_amount", 0) or 0 for d in data)
+    total_value = sum(d.get("net_purchase_amount", 0) or 0 for d in data)
     available_units = sum(1 for d in data if d.get("status") == "Available")
 
     return [
