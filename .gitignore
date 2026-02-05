@@ -9,3 +9,4 @@ package-lock.json
 yarn.lock
 
 utility_billing/www/rental.html
+utility_billing/public/rental
