@@ -50,7 +50,6 @@ ignore = [
 typing-modules = ["frappe.types.DF"]
 [tool.bench.frappe-dependencies]
 frappe = ">=15.0.0,<17.0.0"
-[tool.ruff]
 
 [tool.ruff.format]
 quote-style = "double"
