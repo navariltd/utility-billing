@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+		<title>Rental Portal | Utility Billing & Property Management</title>
+		<meta
+			name="description"
+			content="Streamline your utility billing, property leasing, and tenant management with our ERPNext-powered portal."
+		/>
+
+		<!-- Favicon and touch icons -->
+		<link rel="apple-touch-icon" sizes="180x180" href="{{ apple_touch_icon }}" />
+		<link rel="icon" type="image/png" href="{{ icon_96 }}" sizes="96x96" />
+		<link rel="icon" type="image/svg+xml" href="{{ favicon_svg }}" />
+		<link rel="shortcut icon" href="{{ favicon_ico }}" />
+		<link rel="mask-icon" href="{{ mask_icon }}" color="#000000" />
+
+		<!-- Theme colors -->
+		<meta name="msapplication-TileColor" content="#000000" />
+		<meta name="theme-color" content="#191919" />
+
+		<!-- iOS / PWA support -->
+		<meta name="apple-itunes-app" content="app-id=6741682327, app-argument={{sitename}}" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="{{ app_name }}" />
+		<meta name="apple-touch-fullscreen" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="screen-orientation" content="portrait" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<script type="module" crossorigin src="/assets/utility_billing/rental-portal/assets/index-i8TPPoFc.js"></script>
+		<link rel="modulepreload" crossorigin href="/assets/utility_billing/rental-portal/assets/utils-BjcezTh1.js">
+		<link rel="stylesheet" crossorigin href="/assets/utility_billing/rental-portal/assets/index-ByXU83HF.css">
+	</head>
+
+	<body>
+		<div id="root" vaul-drawer-wrapper="true"></div>
+
+		<script>
+			window.csrf_token = '{{ csrf_token }}';
+			if (!window.frappe) window.frappe = {};
+			window.app_name = "{{ app_name }}";
+
+			// Boot data from Frappe backend
+			frappe.boot = JSON.parse({{ boot }});
+		</script>
+
+		<!-- React entry point -->
+	</body>
+</html>

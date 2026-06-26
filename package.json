@@ -6,9 +6,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "cd rental && yarn install",
-    "dev": "cd rental && yarn dev",
-    "build": "cd rental && yarn build"
+    "postinstall": "cd rental-portal && yarn install",
+    "dev": "cd rental-portal && yarn dev",
+    "build": "cd rental-portal && yarn build"
   },
   "keywords": [],
   "author": "",
