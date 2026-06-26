@@ -6,20 +6,20 @@ app_email = "support@navari.co.ke"
 app_license = "agpl-3.0"
 
 fixtures = [
-    {
-        "doctype": "Item Group",
-        "or_filters": [
-            ["name", "in", ["Utility and Rental"]],
-            ["parent_item_group", "in", ["Utility and Rental"]],
-        ],
-    }
+	{
+		"doctype": "Item Group",
+		"or_filters": [
+			["name", "in", ["Utility and Rental"]],
+			["parent_item_group", "in", ["Utility and Rental"]],
+		],
+	}
 ]
 
 accounting_dimension_doctypes = [
-    "Utility Bill Structure",
-    "Utility Service Request",
-    "Utility Service Request Item",
-    "Meter Reading",
+	"Utility Bill Structure",
+	"Utility Service Request",
+	"Utility Service Request Item",
+	"Meter Reading",
 ]
 
 
@@ -31,13 +31,13 @@ required_apps = ["erpnext", "crm"]
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 add_to_apps_screen = [
-    {
-        "name": "rental",
-        "logo": "/assets/utility_billing/logo.png",
-        "title": "Rental Billing",
-        "route": "/rental",
-        "has_permission": "utility_billing.permissions.check_app_permission",
-    }
+	{
+		"name": "rental",
+		"logo": "/assets/utility_billing/logo.png",
+		"title": "Rental Billing",
+		"route": "/rental",
+		"has_permission": "utility_billing.permissions.check_app_permission",
+	}
 ]
 # Includes in <head>
 # ------------------
@@ -62,14 +62,14 @@ app_include_js = "/assets/utility_billing/js/demo.js"
 
 # include js in doctype views
 doctype_js = {
-    "Item Price": "utility_billing/overrides/client/item_price.js",
-    "Contract": "utility_billing/overrides/client/contract.js",
-    "Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
+	"Item Price": "utility_billing/overrides/client/item_price.js",
+	"Contract": "utility_billing/overrides/client/contract.js",
+	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
-    "Sales Order": "utility_billing/overrides/client/sales_order_list.js",
-    "Auto Repeat": "utility_billing/overrides/client/auto_repeat_list.js",
+	"Sales Order": "utility_billing/overrides/client/sales_order_list.js",
+	"Auto Repeat": "utility_billing/overrides/client/auto_repeat_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -125,29 +125,29 @@ doctype_list_js = {
 # before_app_install = "utility_billing.utils.before_app_install"
 
 utility_demo_master_doctypes = [
-    "billing_adjustment_rule",
-    "contract_template",
-    "customer_group",
-    "customer",
-    "insurance_type",
-    "supplier",
-    "insurance",
-    "issue_type",
-    "item_group",
-    "item",
-    "price_list",
-    "utility_tariff_block",
-    "item_price",
-    "location",
-    "serial_no",
-    "uom",
-    "utility_property_feature_type",
-    "utility_property_feature",
-    "utility_property_unit_type",
-    "utility_category",
-    "warranty_claim",
-    "asset_category",
-    "utility_property",
+	"billing_adjustment_rule",
+	"contract_template",
+	"customer_group",
+	"customer",
+	"insurance_type",
+	"supplier",
+	"insurance",
+	"issue_type",
+	"item_group",
+	"item",
+	"price_list",
+	"utility_tariff_block",
+	"item_price",
+	"location",
+	"serial_no",
+	"uom",
+	"utility_property_feature_type",
+	"utility_property_feature",
+	"utility_property_unit_type",
+	"utility_category",
+	"warranty_claim",
+	"asset_category",
+	"utility_property",
 ]
 
 
@@ -190,73 +190,57 @@ utility_demo_master_doctypes = [
 # Hook on document methods and events
 
 doc_events = {
-    # "*": {
-    # 	"on_update": "method",
-    # 	"on_cancel": "method",
-    # 	"on_trash": "method"
-    # }
-    "Sales Order": {
-        "validate": [
-            "utility_billing.utility_billing.overrides.server.sales_order.validate"
-        ],
-    },
-    "Sales Invoice": {
-        "before_validate": [
-            "utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"
-        ],
-        "validate": [
-            "utility_billing.utility_billing.overrides.server.sales_invoice.validate"
-        ],
-        "on_submit": [
-            "utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"
-        ],
-    },
-    "Contract": {
-        "before_submit": [
-            "utility_billing.utility_billing.overrides.server.contract.before_submit"
-        ],
-        "on_cancel": [
-            "utility_billing.utility_billing.overrides.server.contract.on_cancel"
-        ],
-        "on_update_after_submit": [
-            "utility_billing.utility_billing.overrides.server.contract.on_update_after_submit"
-        ],
-        "on_submit": [
-            "utility_billing.utility_billing.overrides.server.contract.on_submit"
-        ],
-    },
-    "Auto Repeat": {
-        "on_update": [
-            "utility_billing.utility_billing.overrides.server.auto_repeat.on_update"
-        ],
-    },
-    "Item": {
-        "validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
-    },
+	# "*": {
+	# 	"on_update": "method",
+	# 	"on_cancel": "method",
+	# 	"on_trash": "method"
+	# }
+	"Sales Order": {
+		"validate": ["utility_billing.utility_billing.overrides.server.sales_order.validate"],
+	},
+	"Sales Invoice": {
+		"before_validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"],
+		"validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.validate"],
+		"on_submit": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"],
+	},
+	"Contract": {
+		"before_submit": ["utility_billing.utility_billing.overrides.server.contract.before_submit"],
+		"on_cancel": ["utility_billing.utility_billing.overrides.server.contract.on_cancel"],
+		"on_update_after_submit": [
+			"utility_billing.utility_billing.overrides.server.contract.on_update_after_submit"
+		],
+		"on_submit": ["utility_billing.utility_billing.overrides.server.contract.on_submit"],
+	},
+	"Auto Repeat": {
+		"on_update": ["utility_billing.utility_billing.overrides.server.auto_repeat.on_update"],
+	},
+	"Item": {
+		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
+	},
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
-    # "cron": {
-    #     "*/1 * * * *": [
-    #         "utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
-    #     ]
-    # },
-    "daily": [
-        "utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices",
-        "utility_billing.utility_billing.overrides.server.auto_repeat.run_all_due_auto_repeats",
-    ],
-    # 	"hourly": [
-    # 		"utility_billing.tasks.hourly"
-    # 	],
-    # 	"weekly": [
-    # 		"utility_billing.tasks.weekly"
-    # 	],
-    # 	"monthly": [
-    # 		"utility_billing.tasks.monthly"
-    # 	],
+	# "cron": {
+	#     "*/1 * * * *": [
+	#         "utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices"
+	#     ]
+	# },
+	"daily": [
+		"utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices",
+		"utility_billing.utility_billing.overrides.server.auto_repeat.run_all_due_auto_repeats",
+	],
+	# 	"hourly": [
+	# 		"utility_billing.tasks.hourly"
+	# 	],
+	# 	"weekly": [
+	# 		"utility_billing.tasks.weekly"
+	# 	],
+	# 	"monthly": [
+	# 		"utility_billing.tasks.monthly"
+	# 	],
 }
 
 # Testing
@@ -337,6 +321,10 @@ scheduler_events = {
 
 
 website_route_rules = [
-    {"from_route": "/rental", "to_route": "rental"},
-    {"from_route": "/rental/<path:app_path>", "to_route": "rental"},
+	{"from_route": "/rental", "to_route": "rental"},
+	{"from_route": "/rental/<path:app_path>", "to_route": "rental"},
+]
+
+website_route_rules = [
+	{"from_route": "/rental-portal/<path:app_path>", "to_route": "rental-portal"},
 ]
