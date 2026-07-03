@@ -15,14 +15,17 @@ export const UserContext = React.createContext<UserContextValue | null>(null);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading: authLoading, logout } = useFrappeAuth();
 
+  const shouldFetch = !!currentUser && currentUser !== "Guest";
+
   const {
     data: userData,
     error: userError,
     isValidating: userLoading,
-  } = useFrappeGetDoc<any>("User", currentUser || "Guest");
+  } = useFrappeGetDoc<any>("User", shouldFetch ? currentUser : null);
 
   const user = React.useMemo(() => {
-    if (!currentUser && !authLoading) return null;
+    if (authLoading) return null;
+    if (!currentUser || currentUser === "Guest") return null;
     if (!userData) return null;
 
     return {
@@ -33,11 +36,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const value = React.useMemo(
     () => ({
       user,
-      isLoading: authLoading || userLoading,
-      error: userError,
+      isLoading: authLoading || (shouldFetch ? userLoading : false),
+      error: currentUser === "Guest" ? null : userError,
       logout,
     }),
-    [user, authLoading, userLoading, userError, logout],
+    [
+      user,
+      authLoading,
+      userLoading,
+      userError,
+      logout,
+      currentUser,
+      shouldFetch,
+    ],
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
