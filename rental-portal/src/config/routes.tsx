@@ -26,20 +26,21 @@ const PropertyBooking = lazy(
   () => import("@/app/properties/[property]/book/page"),
 );
 
+import { ProtectedRoute } from "@/app/auth/protected-route";
+import { RoleProtectedRoute } from "@/app/auth/role-protected-route";
+
 export interface RouteConfig {
   path: string;
   element: React.ReactNode;
   children?: RouteConfig[];
+  protected?: boolean;
+  roles?: string[];
 }
 
 export const routes: RouteConfig[] = [
   {
     path: "/",
-    element: <Navigate to="dashboard" replace />,
-  },
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: "/auth/sign-in",
@@ -53,6 +54,63 @@ export const routes: RouteConfig[] = [
     path: "/auth/forgot-password",
     element: <ForgotPassword />,
   },
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/properties",
+    element: <PropertyList />,
+  },
+  {
+    path: "/properties/:property",
+    element: <PropertyDetails />,
+  },
+  {
+    path: "/properties/:property/book",
+    element: (
+      <ProtectedRoute>
+        <PropertyBooking />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/users",
+    element: (
+      <RoleProtectedRoute roles={["System Manager", "Administrator"]}>
+        <UsersPage />
+      </RoleProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/user",
+    element: (
+      <ProtectedRoute>
+        <UserSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/account",
+    element: (
+      <ProtectedRoute>
+        <AccountSettings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings/notifications",
+    element: (
+      <ProtectedRoute>
+        <NotificationSettings />
+      </ProtectedRoute>
+    ),
+  },
+  // Error pages (public)
   {
     path: "/errors/unauthorized",
     element: <Unauthorized />,
@@ -68,34 +126,6 @@ export const routes: RouteConfig[] = [
   {
     path: "/errors/internal-server-error",
     element: <InternalServerError />,
-  },
-  {
-    path: "/settings/user",
-    element: <UserSettings />,
-  },
-  {
-    path: "/settings/account",
-    element: <AccountSettings />,
-  },
-  {
-    path: "/settings/notifications",
-    element: <NotificationSettings />,
-  },
-  {
-    path: "/properties",
-    element: <PropertyList />,
-  },
-  {
-    path: "/properties/:property",
-    element: <PropertyDetails />,
-  },
-  {
-    path: "/properties/:property/book",
-    element: <PropertyBooking />,
-  },
-  {
-    path: "/users",
-    element: <UsersPage />,
   },
   {
     path: "*",
