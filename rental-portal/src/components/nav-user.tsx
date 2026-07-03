@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  BellDot,
-  CircleUser,
-  CreditCard,
-  EllipsisVertical,
-  LogOut,
-} from "lucide-react";
+import { BellDot, CircleUser, EllipsisVertical, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Logo } from "@/components/logo";
@@ -100,12 +94,6 @@ export function NavUser({
                 <Link to="/settings/account">
                   <CircleUser />
                   Account
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/settings/billing">
-                  <CreditCard />
-                  Billing
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/logo";
-import { LayoutDashboard, User } from "lucide-react";
+import { Home, LayoutDashboard, LogIn, User } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
@@ -19,29 +19,49 @@ import {
 import { useUser } from "@/contexts/user-context";
 
 const data = {
-  navGroups: [
-    {
-      label: "Dashboards",
-      items: [
-        {
-          title: "Dashboard",
-          url: "/dashboard",
-          icon: LayoutDashboard,
-        },
-      ],
-    },
-    {
-      label: "User Management",
-      items: [
-        {
-          title: "Users",
-          url: "/users",
-          icon: User,
-        },
-      ],
-    },
-  ],
+  navGroups: [],
 };
+
+const publicNavGroups = [
+  {
+    label: "",
+    items: [
+      {
+        title: "Properties",
+        url: "/properties",
+        icon: Home,
+      },
+    ],
+  },
+];
+
+const privateNavGroups = [
+  {
+    label: "Main",
+    items: [
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Properties",
+        url: "/properties",
+        icon: Home,
+      },
+    ],
+  },
+  {
+    label: "User Management",
+    items: [
+      {
+        title: "Users",
+        url: "/users",
+        icon: User,
+      },
+    ],
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading, error, logout } = useUser();
@@ -84,19 +104,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     console.error("Error fetching user data:", error);
   }
 
+  const isAuthenticated = !!user;
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/dashboard">
+              <Link to={isAuthenticated ? "/dashboard" : "/auth/sign-in"}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Logo size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Rental Billing</span>
-                  <span className="truncate text-xs">Admin Dashboard</span>
+                  <span className="truncate text-xs">
+                    {isAuthenticated ? "Admin Dashboard" : "Welcome"}
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -107,9 +131,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {data.navGroups.map((group) => (
           <NavMain key={group.label} label={group.label} items={group.items} />
         ))}
+        {isAuthenticated ? (
+          <>
+            {privateNavGroups.map((group) => (
+              <NavMain
+                key={group.label}
+                label={group.label}
+                items={group.items}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            {publicNavGroups.map((group) => (
+              <NavMain
+                key={group.label}
+                label={group.label}
+                items={group.items}
+              />
+            ))}
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
-        {user && <NavUser user={user} onLogout={logout} />}
+        {isAuthenticated ? (
+          <NavUser user={user} onLogout={logout} />
+        ) : (
+          <div className="p-2">
+            <Link
+              to="/auth/sign-in"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </Link>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
