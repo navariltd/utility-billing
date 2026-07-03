@@ -1,3 +1,5 @@
+import PropertyList from "@/app/properties/page";
+import UsersPage from "@/app/users/page";
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
@@ -17,6 +19,11 @@ const UserSettings = lazy(() => import("@/app/settings/user/page"));
 const AccountSettings = lazy(() => import("@/app/settings/account/page"));
 const NotificationSettings = lazy(
   () => import("@/app/settings/notifications/page"),
+);
+
+const PropertyDetails = lazy(() => import("@/app/properties/[property]/page"));
+const PropertyBooking = lazy(
+  () => import("@/app/properties/[property]/book/page"),
 );
 
 export interface RouteConfig {
@@ -73,6 +80,22 @@ export const routes: RouteConfig[] = [
   {
     path: "/settings/notifications",
     element: <NotificationSettings />,
+  },
+  {
+    path: "/properties",
+    element: <PropertyList />,
+  },
+  {
+    path: "/properties/:property",
+    element: <PropertyDetails />,
+  },
+  {
+    path: "/properties/:property/book",
+    element: <PropertyBooking />,
+  },
+  {
+    path: "/users",
+    element: <UsersPage />,
   },
   {
     path: "*",
