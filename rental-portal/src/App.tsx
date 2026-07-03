@@ -1,6 +1,7 @@
 import { AppRouter } from "@/components/router/app-router";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarConfigProvider } from "@/contexts/sidebar-context";
+import { UserProvider } from "@/contexts/user-context";
 import { initGTM } from "@/utils/analytics";
 import { FrappeProvider } from "frappe-react-sdk";
 import { useEffect } from "react";
@@ -19,13 +20,15 @@ function App() {
       style={{ fontFamily: "var(--font-inter)" }}
     >
       <FrappeProvider enableSocket={false}>
-        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-          <SidebarConfigProvider>
-            <Router basename={basename}>
-              <AppRouter />
-            </Router>
-          </SidebarConfigProvider>
-        </ThemeProvider>
+        <UserProvider>
+          <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+            <SidebarConfigProvider>
+              <Router basename={basename}>
+                <AppRouter />
+              </Router>
+            </SidebarConfigProvider>
+          </ThemeProvider>
+        </UserProvider>
       </FrappeProvider>
     </div>
   );
