@@ -21,7 +21,7 @@ function App() {
     >
       <FrappeProvider enableSocket={false}>
         <UserProvider>
-          <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+          <ThemeProvider defaultTheme="system" storageKey="rental-portal-theme">
             <SidebarConfigProvider>
               <Router basename={basename}>
                 <AppRouter />
