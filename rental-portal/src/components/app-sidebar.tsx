@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/logo";
-import { AlertTriangle, LayoutDashboard, Settings, Shield } from "lucide-react";
+import { Home, LayoutDashboard, LogIn, User } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
@@ -16,108 +16,57 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useFrappeAuth, useFrappeGetDoc } from "frappe-react-sdk";
+import { useUser } from "@/contexts/user-context";
 
 const data = {
-  navGroups: [
-    {
-      label: "Dashboards",
-      items: [
-        {
-          title: "Dashboard",
-          url: "/dashboard",
-          icon: LayoutDashboard,
-        },
-      ],
-    },
-    {
-      label: "Pages",
-      items: [
-        {
-          title: "Auth Pages",
-          url: "#",
-          icon: Shield,
-          items: [
-            {
-              title: "Sign In",
-              url: "/auth/sign-in",
-            },
-            {
-              title: "Sign Up",
-              url: "/auth/sign-up",
-            },
-            {
-              title: "Forgot Password",
-              url: "/auth/forgot-password",
-            },
-          ],
-        },
-        {
-          title: "Errors",
-          url: "#",
-          icon: AlertTriangle,
-          items: [
-            {
-              title: "Unauthorized",
-              url: "/errors/unauthorized",
-            },
-            {
-              title: "Forbidden",
-              url: "/errors/forbidden",
-            },
-            {
-              title: "Not Found",
-              url: "/errors/not-found",
-            },
-            {
-              title: "Internal Server Error",
-              url: "/errors/internal-server-error",
-            },
-          ],
-        },
-        {
-          title: "Settings",
-          url: "#",
-          icon: Settings,
-          items: [
-            {
-              title: "User Settings",
-              url: "/settings/user",
-            },
-            {
-              title: "Account Settings",
-              url: "/settings/account",
-            },
-            {
-              title: "Notifications",
-              url: "/settings/notifications",
-            },
-          ],
-        },
-      ],
-    },
-  ],
+  navGroups: [],
 };
 
+const publicNavGroups = [
+  {
+    label: "",
+    items: [
+      {
+        title: "Properties",
+        url: "/properties",
+        icon: Home,
+      },
+    ],
+  },
+];
+
+const privateNavGroups = [
+  {
+    label: "Main",
+    items: [
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Properties",
+        url: "/properties",
+        icon: Home,
+      },
+    ],
+  },
+  {
+    label: "User Management",
+    items: [
+      {
+        title: "Users",
+        url: "/users",
+        icon: User,
+      },
+    ],
+  },
+];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { currentUser, isLoading: authLoading, logout } = useFrappeAuth();
+  const { user, isLoading, error, logout } = useUser();
 
-  const {
-    data: userData,
-    error: userError,
-    isValidating: userLoading,
-  } = useFrappeGetDoc<any>("User", currentUser || "", {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
-
-  const user = {
-    name: userData?.full_name || userData?.username || currentUser || "Guest",
-    email: userData?.email || "guest@example.com",
-    avatar: userData?.user_image || "",
-  };
-
-  if (authLoading || userLoading) {
+  if (isLoading) {
     return (
       <Sidebar {...props}>
         <SidebarHeader>
@@ -151,9 +100,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     );
   }
 
-  if (userError) {
-    console.error("Error fetching user data:", userError);
+  if (error) {
+    console.error("Error fetching user data:", error);
   }
+
+  const isAuthenticated = !!user;
 
   return (
     <Sidebar {...props}>
@@ -161,13 +112,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/dashboard">
+              <Link to={isAuthenticated ? "/dashboard" : "/auth/sign-in"}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Logo size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Rental Billing</span>
-                  <span className="truncate text-xs">Admin Dashboard</span>
+                  <span className="truncate text-xs">
+                    {isAuthenticated ? "Admin Dashboard" : "Welcome"}
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -178,9 +131,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {data.navGroups.map((group) => (
           <NavMain key={group.label} label={group.label} items={group.items} />
         ))}
+        {isAuthenticated ? (
+          <>
+            {privateNavGroups.map((group) => (
+              <NavMain
+                key={group.label}
+                label={group.label}
+                items={group.items}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            {publicNavGroups.map((group) => (
+              <NavMain
+                key={group.label}
+                label={group.label}
+                items={group.items}
+              />
+            ))}
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} onLogout={logout} />
+        {isAuthenticated ? (
+          <NavUser user={user} onLogout={logout} />
+        ) : (
+          <div className="p-2">
+            <Link
+              to="/auth/sign-in"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </Link>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
