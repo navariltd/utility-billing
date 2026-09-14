@@ -20,6 +20,32 @@ import { ImportModal } from "./import-modal";
 import { LayoutTab } from "./layout-tab";
 import { ThemeTab } from "./theme-tab";
 
+const STORAGE_KEY = "rental-portal:theme";
+
+interface SavedThemeState {
+  selectedTheme: string;
+  selectedTweakcnTheme: string;
+  selectedRadius: string;
+  importedTheme: ImportedTheme | null;
+}
+
+function loadSavedTheme(): SavedThemeState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveThemeState(state: SavedThemeState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore
+  }
+}
+
 interface ThemeCustomizerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,6 +71,41 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
   const [importModalOpen, setImportModalOpen] = React.useState(false);
   const [importedTheme, setImportedTheme] =
     React.useState<ImportedTheme | null>(null);
+  const [hydrated, setHydrated] = React.useState(false);
+
+  // Load saved state on mount and apply it
+  React.useEffect(() => {
+    const saved = loadSavedTheme();
+    if (saved) {
+      setSelectedTheme(saved.selectedTheme ?? "");
+      setSelectedTweakcnTheme(saved.selectedTweakcnTheme ?? "");
+      setSelectedRadius(saved.selectedRadius ?? "0.5rem");
+      if (saved.importedTheme) {
+        setImportedTheme(saved.importedTheme);
+      }
+    }
+    setHydrated(true);
+  }, []);
+
+  // Apply theme after hydration + whenever a selection or dark mode changes
+  React.useEffect(() => {
+    if (!hydrated) return;
+    if (importedTheme) {
+      applyImportedTheme(importedTheme, isDarkMode);
+      saveThemeState({ selectedTheme, selectedTweakcnTheme, selectedRadius, importedTheme });
+    } else if (selectedTheme) {
+      applyTheme(selectedTheme, isDarkMode);
+      saveThemeState({ selectedTheme, selectedTweakcnTheme, selectedRadius, importedTheme: null });
+    } else if (selectedTweakcnTheme) {
+      const selectedPreset = tweakcnThemes.find(
+        (t) => t.value === selectedTweakcnTheme,
+      )?.preset;
+      if (selectedPreset) {
+        applyTweakcnTheme(selectedPreset, isDarkMode);
+        saveThemeState({ selectedTheme, selectedTweakcnTheme, selectedRadius, importedTheme: null });
+      }
+    }
+  }, [hydrated, isDarkMode, importedTheme, selectedTheme, selectedTweakcnTheme, applyImportedTheme, applyTheme, applyTweakcnTheme]);
 
   const handleReset = () => {
     // Complete reset to application defaults
@@ -68,6 +129,9 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
       collapsible: "icon",
       side: "left",
     });
+
+    // 5. Clear saved state
+    saveThemeState({ selectedTheme: "", selectedTweakcnTheme: "", selectedRadius: "0.5rem", importedTheme: null });
   };
 
   const handleImport = (themeData: ImportedTheme) => {
@@ -75,50 +139,26 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
     // Clear other selections to indicate custom import is active
     setSelectedTheme("");
     setSelectedTweakcnTheme("");
-
-    // Apply the imported theme
-    applyImportedTheme(themeData, isDarkMode);
+    // Apply and persist via the effect
   };
 
   const handleImportClick = () => {
     setImportModalOpen(true);
   };
 
-  // Re-apply themes when theme mode changes
-  React.useEffect(() => {
-    if (importedTheme) {
-      applyImportedTheme(importedTheme, isDarkMode);
-    } else if (selectedTheme) {
-      applyTheme(selectedTheme, isDarkMode);
-    } else if (selectedTweakcnTheme) {
-      const selectedPreset = tweakcnThemes.find(
-        (t) => t.value === selectedTweakcnTheme,
-      )?.preset;
-      if (selectedPreset) {
-        applyTweakcnTheme(selectedPreset, isDarkMode);
-      }
-    }
-  }, [
-    isDarkMode,
-    importedTheme,
-    selectedTheme,
-    selectedTweakcnTheme,
-    applyImportedTheme,
-    applyTheme,
-    applyTweakcnTheme,
-  ]);
-
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side={sidebarConfig.side === "left" ? "right" : "left"}
-          className="w-[400px] p-0 gap-0 pointer-events-auto [&>button]:hidden overflow-hidden flex flex-col"
+          className="w-[400px] p-0 gap-0 [&>button]:hidden overflow-hidden flex flex-col"
           onInteractOutside={(e) => {
-            // Prevent the sheet from closing when dialog is open
-            if (importModalOpen) {
-              e.preventDefault();
-            }
+            // Prevent outside clicks from closing the Customizer.
+            // Only close via the X button or toggling the menu item.
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={() => {
+            // Allow Escape to close
           }}
         >
           <SheetHeader className="space-y-0 p-4 pb-2">
@@ -127,7 +167,7 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
                 <Settings className="h-4 w-4" />
               </div>
               <SheetTitle className="text-lg font-semibold">
-                Customizer
+                Customize Theme
               </SheetTitle>
               <div className="ml-auto flex items-center gap-2">
                 <Button
