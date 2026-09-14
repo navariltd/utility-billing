@@ -15,7 +15,7 @@ import type { PropertyView } from "./types";
 
 export function PropertyRow({ property }: { property: PropertyView }) {
   const body = (
-    <Card className="group gap-0 overflow-hidden py-0 transition-shadow hover:shadow-md">
+    <Card className="group gap-0 overflow-hidden py-0">
       <CardContent className="flex items-center gap-4 p-3 sm:p-4">
         <div className="h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:h-24 sm:w-32">
           <PropertyMedia src={property.image} name={property.title} variant="cover" />

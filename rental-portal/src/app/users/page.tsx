@@ -222,7 +222,7 @@ export default function UsersPage() {
         description="Manage your users and their permissions"
       >
         <div className="flex flex-col items-center justify-center h-[400px]">
-          <p className="text-red-500">
+          <p className="text-destructive">
             Error loading users: {(usersError as any)?.message}
           </p>
         </div>

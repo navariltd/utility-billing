@@ -138,7 +138,7 @@ export default function NotificationSettings() {
                           )}
                         />
                         {!notification.read && (
-                          <span className="absolute -top-1 -right-1.5 block h-2 w-2 rounded-full bg-blue-500 ring-2 ring-background" />
+                          <span className="absolute -top-1 -right-1.5 block h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">

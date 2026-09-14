@@ -1,5 +1,9 @@
 /**
  * Status badge for a property (availability or tenancy state).
+ *
+ * Tones are expressed with theme tokens so the badge follows the active theme
+ * preset: `primary` for occupied units, `success`/`warning`/`info` for the
+ * remaining states and `muted` for historical entries.
  */
 
 "use client";
@@ -11,10 +15,10 @@ import { AlertCircle, CheckCircle2, Clock, History, Home } from "lucide-react";
 import type { PropertyStatusTone } from "./types";
 
 const TONE_STYLES: Record<PropertyStatusTone, string> = {
-  available: "border-green-200 bg-green-100 text-green-800",
-  occupied: "border-blue-200 bg-blue-100 text-blue-800",
-  reserved: "border-amber-200 bg-amber-100 text-amber-800",
-  maintenance: "border-orange-200 bg-orange-100 text-orange-800",
+  available: "border-success/30 bg-success/15 text-success",
+  occupied: "border-primary/30 bg-primary/10 text-primary",
+  reserved: "border-info/30 bg-info/15 text-info",
+  maintenance: "border-warning/30 bg-warning/15 text-warning",
   history: "border-border bg-muted text-muted-foreground",
   neutral: "border-border bg-muted text-muted-foreground",
 };

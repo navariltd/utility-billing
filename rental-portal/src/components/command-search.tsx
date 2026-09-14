@@ -470,7 +470,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
         className={`flex items-center justify-between gap-x-4 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 text-left ${
           isFocused
             ? "bg-primary text-primary-foreground"
-            : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            : "hover:bg-accent hover:text-accent-foreground"
         }`}
         onClick={() => handleSelectOption(option)}
         onMouseEnter={() => setFocusedIndex(currentIndex)}
@@ -479,13 +479,13 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
           {option.url ? (
             <FileSearch
               className={`w-4 h-4 shrink-0 transition-colors ${
-                isFocused ? "text-primary-foreground" : "text-zinc-400"
+                isFocused ? "text-primary-foreground" : "text-muted-foreground"
               }`}
             />
           ) : (
             <FolderOpen
               className={`w-4 h-4 shrink-0 transition-colors ${
-                isFocused ? "text-primary-foreground" : "text-zinc-400"
+                isFocused ? "text-primary-foreground" : "text-muted-foreground"
               }`}
             />
           )}
@@ -494,7 +494,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
               className={`text-sm font-semibold truncate ${
                 isFocused
                   ? "text-primary-foreground"
-                  : "text-zinc-900 dark:text-zinc-100"
+                  : "text-foreground"
               }`}
             >
               {option.title}
@@ -504,7 +504,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                 className={`text-xs truncate mt-0.5 max-w-xl ${
                   isFocused
                     ? "text-primary-foreground/80"
-                    : "text-zinc-400 dark:text-zinc-500"
+                    : "text-muted-foreground"
                 }`}
               >
                 {option.description}
@@ -517,7 +517,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
             className={`text-[11px] font-mono px-2 py-0.5 rounded shrink-0 transition-colors ${
               isFocused
                 ? "bg-primary-foreground/20 text-primary-foreground"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                : "bg-muted text-muted-foreground"
             }`}
           >
             {option.name}
@@ -533,17 +533,17 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
       onClick={() => onOpenChange(false)}
     >
       <div
-        className="bg-white dark:bg-zinc-950 w-full max-w-7xl rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden mx-4 flex flex-col h-[85vh]"
+        className="bg-popover w-full max-w-7xl rounded-2xl shadow-2xl border border-border overflow-hidden mx-4 flex flex-col h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
-        <div className="flex items-center justify-between gap-x-3 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+        <div className="flex items-center justify-between gap-x-3 px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-x-3 grow">
             <Search className="text-primary w-5 h-5 shrink-0" />
             <input
               ref={inputRef}
               type="text"
-              className="w-full text-lg text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none bg-transparent"
+              className="w-full text-lg text-foreground placeholder:text-muted-foreground focus:outline-none bg-transparent"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => {
@@ -563,7 +563,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
             className={`flex items-center gap-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors shrink-0 ${
               advancedMode
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -571,7 +571,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
           </button>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 p-1 rounded-lg transition-colors shrink-0"
+            className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -579,10 +579,10 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
 
         {/* DocType Filter Pills (advanced mode only, collapsible) */}
         {advancedMode && reorderedDocTypes.length > 0 && (
-          <div className="border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+          <div className="border-b border-border shrink-0">
             <button
               onClick={() => setFiltersCollapsed((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-x-2">
                 <Tags className="w-3.5 h-3.5 opacity-70" />
@@ -594,19 +594,19 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                 </span>
               </span>
               {filtersCollapsed ? (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
+                <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </button>
             {!filtersCollapsed && (
-              <div className="flex flex-wrap items-center gap-2 px-3 pb-3 bg-zinc-50 dark:bg-zinc-900">
+              <div className="flex flex-wrap items-center gap-2 px-3 pb-3 bg-muted">
                 <button
                   onClick={() => setSelectedDocType("All")}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all shrink-0 ${
                     selectedDocType === "All"
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700"
+                      : "bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-border"
                   }`}
                 >
                   All Results
@@ -623,7 +623,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : hasMatches
                             ? "bg-primary/10 text-primary border border-primary/30 shadow-sm font-bold ring-2 ring-primary/20"
-                            : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700"
+                            : "bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-border"
                       }`}
                     >
                       {type}
@@ -641,7 +641,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
         {/* Results Area */}
         <div
           ref={listContainerRef}
-          className="overflow-y-auto px-4 py-3 bg-zinc-50/40 dark:bg-zinc-950/40 grow scroll-smooth"
+          className="overflow-y-auto px-4 py-3 bg-muted/40 grow scroll-smooth"
         >
           {advancedMode ? (
             shouldSearch ? (
@@ -676,7 +676,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                           >
                             {group}{" "}
                             {isTargetGroup && selectedDocType !== "All" && (
-                              <span className="text-xs font-normal normal-case text-zinc-500">
+                              <span className="text-xs font-normal normal-case text-muted-foreground">
                                 (Active Filter)
                               </span>
                             )}
@@ -686,14 +686,14 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                           </span>
                         </div>
                         {isCollapsed ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
+                          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         ) : (
-                          <ChevronUp className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
+                          <ChevronUp className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         )}
                       </div>
 
                       {!isCollapsed && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-1.5 shadow-sm w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 bg-card border border-border rounded-xl p-1.5 shadow-sm w-full">
                           {items.map((option) => {
                             const currentIndex = globalItemIndex++;
                             return renderItem(option, currentIndex);
@@ -705,14 +705,14 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                 })}
               </div>
             ) : isSearching ? (
-              <div className="flex items-center justify-center h-full text-sm text-zinc-400">
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-zinc-300 border-t-primary rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
                   Searching...
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-sm text-zinc-400">
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                 No matches found for "{searchTerm}" under the selected scope.
               </div>
             )
@@ -736,14 +736,14 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                         </span>
                       </div>
                       {isCollapsed ? (
-                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                       ) : (
-                        <ChevronUp className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary transition-colors" />
+                        <ChevronUp className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                       )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-1.5 shadow-sm w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 bg-card border border-border rounded-xl p-1.5 shadow-sm w-full">
                         {items.map((option) => {
                           const currentIndex = globalItemIndex++;
                           return renderItem(option, currentIndex);
@@ -765,14 +765,14 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                   )}
                 </div>
               ) : isSearching ? (
-                <div className="flex items-center justify-center h-full text-sm text-zinc-400">
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-zinc-300 border-t-primary rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-border border-t-primary rounded-full animate-spin" />
                     Searching...
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-sm text-zinc-400">
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                   No matches found for "{searchTerm}".
                 </div>
               )
@@ -787,9 +787,9 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
         </div>
 
         {/* Footer: Navigation tips, Per Page, Pagination */}
-        <div className="bg-zinc-50 dark:bg-zinc-900 px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+        <div className="bg-muted px-4 py-2 border-t border-border text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-center gap-x-2 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-x-2 text-[11px] text-muted-foreground">
               <span>↑↓ to navigate</span>
               <span>•</span>
               <span>↵ to select</span>
@@ -798,14 +798,14 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
             </div>
 
             {advancedMode && shouldSearch && (
-              <div className="flex items-center gap-x-2 border-l border-zinc-200 dark:border-zinc-700 pl-4">
-                <span className="text-[11px] font-medium text-zinc-500">
+              <div className="flex items-center gap-x-2 border-l border-border pl-4">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Per Page:
                 </span>
                 <select
                   value={limit}
                   onChange={(e) => setLimit(Number(e.target.value))}
-                  className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 focus:outline-none focus:border-primary font-medium shadow-sm"
+                  className="bg-card border border-border rounded px-1.5 py-0.5 text-xs text-muted-foreground focus:outline-none focus:border-primary font-medium shadow-sm"
                 >
                   <option value={20}>20</option>
                   <option value={50}>50</option>
@@ -826,12 +826,12 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                   onClick={() =>
                     setStart((prev) => Math.max(0, prev - limit))
                   }
-                  className="flex items-center gap-x-1 px-3 py-1 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:hover:bg-white dark:disabled:hover:bg-zinc-800 transition-all shadow-sm"
+                  className="flex items-center gap-x-1 px-3 py-1 text-xs font-medium rounded-lg border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:hover:bg-card transition-all shadow-sm"
                 >
                   <ChevronDown className="w-3 h-3 rotate-90" />
                   <span>Prev</span>
                 </button>
-                <span className="text-xs font-medium text-zinc-500">
+                <span className="text-xs font-medium text-muted-foreground">
                   Showing results {start + 1} –{" "}
                   {start + ((searchResponse?.message as any[])?.length || 0)}
                 </span>
@@ -841,7 +841,7 @@ export function CommandSearch({ open, onOpenChange }: CommandSearchProps) {
                     (searchResponse.message as any[]).length < limit
                   }
                   onClick={() => setStart((prev) => prev + limit)}
-                  className="flex items-center gap-x-1 px-3 py-1 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:hover:bg-white dark:disabled:hover:bg-zinc-800 transition-all shadow-sm"
+                  className="flex items-center gap-x-1 px-3 py-1 text-xs font-medium rounded-lg border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:hover:bg-card transition-all shadow-sm"
                 >
                   <span>Next</span>
                   <ChevronDown className="w-3 h-3 -rotate-90" />

@@ -15,7 +15,7 @@ import type { PropertyView } from "./types";
 
 export function PropertyCard({ property }: { property: PropertyView }) {
   const body = (
-    <Card className="group h-full gap-0 overflow-hidden pt-0 transition-shadow hover:shadow-md">
+    <Card className="group h-full gap-0 overflow-hidden pt-0">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         <PropertyMedia src={property.image} name={property.title} variant="cover" />
         {property.statusLabel ? (

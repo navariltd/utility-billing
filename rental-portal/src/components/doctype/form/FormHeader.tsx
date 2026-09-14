@@ -163,7 +163,7 @@ export function FormHeader({
         </div>
       </div>
 
-      {savedName && <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm flex items-center gap-2"><CheckCircle className="h-4 w-4" />Saved as {savedName}</div>}
+      {savedName && <div className="p-3 bg-success/15 border border-success/30 text-success rounded-md text-sm flex items-center gap-2"><CheckCircle className="h-4 w-4" />Saved as {savedName}</div>}
     </>
   );
 }

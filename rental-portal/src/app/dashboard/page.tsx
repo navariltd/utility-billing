@@ -20,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortal } from "@/contexts/portal-context";
 import { useUser } from "@/contexts/user-context";
+import { cn } from "@/lib/utils";
 import type { TenantProperties } from "@/types/portal";
 import { useFrappeGetCall } from "frappe-react-sdk";
 import { Building2, CheckCircle2, History } from "lucide-react";
@@ -47,18 +48,21 @@ export default function DashboardPage() {
       value: current.length - reserved.length,
       icon: CheckCircle2,
       description: "Signed tenancies",
+      toneClass: "bg-primary/10 text-primary",
     },
     {
       title: "Reserved",
       value: reserved.length,
       icon: Building2,
       description: "Awaiting signature",
+      toneClass: "bg-warning/15 text-warning",
     },
     {
       title: "History",
       value: history.length,
       icon: History,
       description: "Past tenancies",
+      toneClass: "bg-muted text-muted-foreground",
     },
   ];
 
@@ -93,7 +97,14 @@ export default function DashboardPage() {
                   <CardTitle className="text-sm font-medium">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className="text-muted-foreground h-4 w-4" />
+                  <div
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg",
+                      stat.toneClass,
+                    )}
+                  >
+                    <stat.icon className="h-4 w-4" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>

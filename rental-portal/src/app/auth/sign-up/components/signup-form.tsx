@@ -9,6 +9,7 @@
 
 "use client";
 
+import { AuthBrandPanel } from "@/components/auth-brand-panel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -164,13 +165,10 @@ export function SignupForm({
               </div>
             </div>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="https://ui.shadcn.com/placeholder.svg"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.95] dark:invert"
-            />
-          </div>
+          <AuthBrandPanel
+            title="Register to book and pay online"
+            description="Create your tenant account to reserve a unit and follow your billing."
+          />
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

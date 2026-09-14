@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthBrandPanel } from "@/components/auth-brand-panel";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -113,7 +114,7 @@ export function LoginForm({
             <div className="flex flex-col gap-6">
               <div className="flex justify-center mb-2">
                 <Link to="/" className="flex items-center gap-2 font-medium">
-                  <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
+                  <div className="bg-primary bg-brand-gradient text-primary-foreground flex size-8 items-center justify-center rounded-md">
                     <Logo size={24} />
                   </div>
                   <span className="text-xl">Rental Billing</span>
@@ -188,13 +189,10 @@ export function LoginForm({
               </div>
             </div>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="https://ui.shadcn.com/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.95] dark:invert"
-            />
-          </div>
+          <AuthBrandPanel
+            title="Rental billing for property managers"
+            description="Follow every unit, tenancy and utility bill from a single portal."
+          />
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

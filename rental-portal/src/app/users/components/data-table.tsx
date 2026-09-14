@@ -99,8 +99,8 @@ export function DataTable({
 
   const getStatusColor = (enabled: boolean) => {
     return enabled
-      ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
-      : "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20";
+      ? "text-success bg-success/15"
+      : "text-muted-foreground bg-muted";
   };
 
   const exactFilter = (

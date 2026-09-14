@@ -178,7 +178,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to={isAuthenticated ? "/dashboard" : "/properties"}>
-                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="bg-primary bg-brand-gradient text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Logo size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
