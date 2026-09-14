@@ -149,12 +149,93 @@ The portal ships the same theme customizer as the nppos dashboard
 (`src/components/theme-customizer/`):
 
 * mounted by `BaseLayout` and opened from the user menu ("Customize Theme");
-* **Theme** tab – preset themes, Tweakcn presets, brand colours, dark/light
-  handling and theme import;
+* **non modal** – the panel has no dimming overlay and does not lock scrolling,
+  so the page behind stays visible and usable as a live preview; clicking
+  outside the panel (or pressing Escape) closes it, and the X button is in the
+  header;
+* **Theme** tab – built-in property presets, the shadcn and Tweakcn preset
+  families, per-mode colour and gradient editing, radius, appearance
+  (light/dark) and theme import;
 * **Layout** tab – sidebar variant, collapsible mode and side (drives
   `useSidebarConfig` and `useSidebar`);
-* selections (theme, radius, imported theme) are persisted by the customizer
+* selections (preset, radius, imported theme) are persisted by the customizer
   itself in `localStorage` under `rental-portal:theme` and reapplied on load.
+
+### Property theme engine
+
+Theming lives in three layers:
+
+| Layer | Location | Responsibility |
+| --- | --- | --- |
+| Catalogue | `src/config/theme-token-groups.ts` | every token the editor exposes, grouped (Brand, Background & Surfaces, Sidebar, States, Charts) plus which gradient surfaces belong to each group |
+| Engine | `src/utils/theme-tokens.ts`, `theme-storage.ts`, `theme-gradients.ts` | merging preset tokens with overrides, `localStorage` persistence (with legacy migration) and the CSS gradient builders |
+| Runtime | `src/contexts/theme-editor-context.tsx` + `src/hooks/use-theme-manager.ts` | the React state, and the low level writer of inline CSS variables |
+
+`ThemeEditorProvider` is mounted in `App.tsx` above the router, so every page
+(portal shell, auth pages, error pages) is themed – not only pages that render
+`BaseLayout`.
+
+**Presets.** `src/utils/estate-presets/` holds one file per built-in theme plus
+`preset-factory.ts`, which fills in the tokens every theme shares. `index.ts`
+orders the sixteen presets for the customizer and names `DEFAULT_ESTATE_THEME`
+(`estate-navy`), applied to a visitor who has never chosen a theme. The picker
+renders them as miniature interfaces in a searchable two column grid.
+**Presets are flat**: no preset contains a gradient.
+
+| Preset | Palette |
+| --- | --- |
+| Estate Navy | navy + gold (portal default) |
+| Nairobi Slate | deep blue + earth gold |
+| Emerald Estate | forest green + brass |
+| Obsidian Gold | near-black + gold |
+| Azure Property | product blue + teal |
+| Indigo Estate | enterprise indigo + cyan |
+| Terracotta Estate | warm architectural orange |
+| Modern Graphite | neutral graphite + fresh green |
+| Steel Blueprint | industrial steel + safety orange |
+| Mocha Estate | mocha + clay earth tones |
+| Burgundy Reserve | deep wine + brass |
+| Arctic Mint | mint + cool slate |
+| Oceanic | deep cyan + sky |
+| Midnight Aurora | violet + cyan |
+| Rose Quartz | rose + violet |
+| Cyber Lime | acid lime on charcoal |
+
+Each preset defines a light **and** a dark variant of every token the editor
+exposes: background, card, popover, primary, secondary, muted, accent, border,
+input, ring, the five chart colours, all eight sidebar tokens and the radius.
+
+**Per-mode editing.** Colours are tuned per mode: the editor's Light/Dark switch
+follows the app appearance but can be flipped to tune the other mode, and shows
+the resolved value of the mode being edited. Edits are stored as *overrides*
+(`overrides.light`, `overrides.dark` in `localStorage`), layered on top of the
+selected preset, and are diffed against the preset so a value identical to the
+preset is not stored. Applying another preset clears the overrides, and
+"Portal default colours" drops the preset entirely to use `src/index.css`.
+
+**Gradients are opt-in.** A fresh install is completely flat; gradients are
+added from the editor and stored as overrides. `buildGradient(surface, variant)`
+generates the blends (sheen, diagonal, aurora, mesh) from the surface's own
+tokens via `color-mix()` and `var()`, so one gradient value blends correctly in
+both modes – which is why the editor writes a gradient to **both** modes at once
+instead of asking for it twice. A free text field accepts any custom CSS
+gradient. `src/index.css` consumes them: `--background-gradient` on `body` and
+the sidebar inset, `--sidebar-gradient` on the sidebar surfaces, and
+`--primary-gradient` through the `.bg-brand-gradient` class used by the brand
+panel, the sidebar mark and the customizer trigger.
+
+**Semantic state colours** (`--success`, `--warning`, `--info`, and their
+foregrounds) are editable like any other token but default to `src/index.css`,
+because they carry meaning rather than branding.
+
+**Surface polish.** `src/index.css` carries a small, theme aware depth layer so
+components need no per-element classes: cards get a soft shadow mixed from
+`--foreground`, clickable cards (property grid and list rows) lift on hover, the
+inset panel reads as a raised surface, sidebar rows transition colour and nudge
+towards the content, the active row grows an accent indicator bar (it uses
+`--sidebar-ring`, so it is gold on Estate Navy), and page content eases in on
+navigation. Every transform and animation is switched off under
+`prefers-reduced-motion: reduce`.
 
 Two small deviations from nppos: the storage key is portal-specific (nppos uses
 `nppos:theme`), and the customizer is mounted *inside* `SidebarProvider` because
