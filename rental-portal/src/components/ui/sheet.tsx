@@ -46,13 +46,20 @@ function SheetContent({
   className,
   children,
   side = "right",
+  /**
+   * Render the dimming overlay behind the sheet. Turn it off for non modal
+   * panels (e.g. the theme customizer) that should leave the page visible and
+   * clickable while they are open.
+   */
+  showOverlay = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
+  showOverlay?: boolean
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      {showOverlay ? <SheetOverlay /> : null}
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(

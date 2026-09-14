@@ -115,9 +115,10 @@ export function NavUser({
               {onOpenCustomizer && (
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    // Small delay so the dropdown closes before the sheet opens.
+                  onSelect={() => {
+                    // Let the menu close first: while it is open it owns the
+                    // focus, and restoring that focus to the trigger would
+                    // dismiss the non modal panel the moment it opens.
                     setTimeout(onOpenCustomizer, 50);
                   }}
                 >
@@ -135,7 +136,7 @@ export function NavUser({
                     <span>Notifications</span>
                   </span>
                   {unreadCount > 0 && (
-                    <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-white shadow-sm">
+                    <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive text-destructive-foreground px-1.5 text-[10px] font-bold leading-none shadow-sm ring-2 ring-background">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
