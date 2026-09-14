@@ -82,7 +82,7 @@ interface DataTableProps {
 export function DataTable({
   users,
   onDeleteUser,
-  onEditUser,
+  onEditUser: _onEditUser,
   onAddUser,
   onToggleStatus,
   isLoading,
@@ -101,17 +101,6 @@ export function DataTable({
     return enabled
       ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
       : "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20";
-  };
-
-  const getRoleColor = (userType: string) => {
-    switch (userType) {
-      case "System User":
-        return "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20";
-      case "Website User":
-        return "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20";
-      default:
-        return "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20";
-    }
   };
 
   const exactFilter = (

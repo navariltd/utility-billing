@@ -70,10 +70,8 @@ export function LoginForm({
         password: password,
       });
 
-      console.log("Login result:", result);
-
       if (!result.full_name) {
-        setAuthError(result.error || "Invalid login credentials");
+        setAuthError("Invalid login credentials");
         setLoading(false);
       } else {
         window.location.reload();

@@ -1,5 +1,8 @@
 import { AppRouter } from "@/components/router/app-router";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PermissionGuard } from "@/app/auth/permission-guard";
+import { NotificationProvider } from "@/contexts/notification-context";
+import { PortalProvider } from "@/contexts/portal-context";
 import { SidebarConfigProvider } from "@/contexts/sidebar-context";
 import { UserProvider } from "@/contexts/user-context";
 import { initGTM } from "@/utils/analytics";
@@ -19,16 +22,25 @@ function App() {
       className="font-sans antialiased"
       style={{ fontFamily: "var(--font-inter)" }}
     >
-      <FrappeProvider enableSocket={false}>
-        <UserProvider>
-          <ThemeProvider defaultTheme="system" storageKey="rental-portal-theme">
-            <SidebarConfigProvider>
-              <Router basename={basename}>
-                <AppRouter />
-              </Router>
-            </SidebarConfigProvider>
-          </ThemeProvider>
-        </UserProvider>
+      <FrappeProvider
+        enableSocket={false}
+        swrConfig={{ revalidateOnFocus: false, revalidateOnReconnect: false }}
+      >
+        <PortalProvider>
+          <UserProvider>
+            <NotificationProvider>
+              <ThemeProvider defaultTheme="system" storageKey="rental-portal-theme">
+                <SidebarConfigProvider>
+                  <Router basename={basename}>
+                    <PermissionGuard>
+                      <AppRouter />
+                    </PermissionGuard>
+                  </Router>
+                </SidebarConfigProvider>
+              </ThemeProvider>
+            </NotificationProvider>
+          </UserProvider>
+        </PortalProvider>
       </FrappeProvider>
     </div>
   );
