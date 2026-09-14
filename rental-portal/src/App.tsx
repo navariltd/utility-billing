@@ -4,6 +4,7 @@ import { PermissionGuard } from "@/app/auth/permission-guard";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { PortalProvider } from "@/contexts/portal-context";
 import { SidebarConfigProvider } from "@/contexts/sidebar-context";
+import { ThemeEditorProvider } from "@/contexts/theme-editor-context";
 import { UserProvider } from "@/contexts/user-context";
 import { initGTM } from "@/utils/analytics";
 import { FrappeProvider } from "frappe-react-sdk";
@@ -30,13 +31,15 @@ function App() {
           <UserProvider>
             <NotificationProvider>
               <ThemeProvider defaultTheme="system" storageKey="rental-portal-theme">
-                <SidebarConfigProvider>
-                  <Router basename={basename}>
-                    <PermissionGuard>
-                      <AppRouter />
-                    </PermissionGuard>
-                  </Router>
-                </SidebarConfigProvider>
+                <ThemeEditorProvider>
+                  <SidebarConfigProvider>
+                    <Router basename={basename}>
+                      <PermissionGuard>
+                        <AppRouter />
+                      </PermissionGuard>
+                    </Router>
+                  </SidebarConfigProvider>
+                </ThemeEditorProvider>
               </ThemeProvider>
             </NotificationProvider>
           </UserProvider>
