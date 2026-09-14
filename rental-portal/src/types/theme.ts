@@ -35,6 +35,12 @@ export type ThemeStyleProps = {
   "font-serif": string;
   "font-mono": string;
   radius: string;
+  /** Page background image (any CSS gradient); `none` when unset. */
+  "background-gradient"?: string;
+  /** Sidebar background image (any CSS gradient); `none` when unset. */
+  "sidebar-gradient"?: string;
+  /** Brand surface background image, used by `.bg-brand-gradient`. */
+  "primary-gradient"?: string;
   "shadow-color"?: string;
   "shadow-opacity"?: string;
   "shadow-blur"?: string;
@@ -54,5 +60,9 @@ export type ThemePreset = {
   source?: "SAVED" | "BUILT_IN";
   createdAt?: string;
   label?: string;
+  /** One line describing the mood of a built-in preset. */
+  description?: string;
+  /** Marks the preset the application ships with by default. */
+  recommended?: boolean;
   styles: ThemeStyles;
 };

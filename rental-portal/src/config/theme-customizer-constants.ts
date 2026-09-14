@@ -2,8 +2,7 @@ import type {
   SidebarVariant, 
   SidebarCollapsibleOption, 
   SidebarSideOption, 
-  RadiusOption, 
-  BrandColor 
+  RadiusOption 
 } from '@/types/theme-customizer'
 
 // Radius options
@@ -33,16 +32,4 @@ export const sidebarCollapsibleOptions: SidebarCollapsibleOption[] = [
 export const sidebarSideOptions: SidebarSideOption[] = [
   { name: "Left", value: "left" },
   { name: "Right", value: "right" },
-]
-
-// Define brand colors for custom color inputs
-export const baseColors: BrandColor[] = [
-  { name: "Primary", cssVar: "--primary" },
-  { name: "Primary Foreground", cssVar: "--primary-foreground" },
-  { name: "Secondary", cssVar: "--secondary" },
-  { name: "Secondary Foreground", cssVar: "--secondary-foreground" },
-  { name: "Accent", cssVar: "--accent" },
-  { name: "Accent Foreground", cssVar: "--accent-foreground" },
-  { name: "Muted", cssVar: "--muted" },
-  { name: "Muted Foreground", cssVar: "--muted-foreground" },
 ]
