@@ -6,16 +6,24 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "is_active",
   "utility_property",
-  "adjustment_rule",
-  "insurance",
-  "column_break_cqbg",
+  "item_code",
   "start_date",
   "end_date",
-  "contract_length_months"
+  "is_active",
+  "adjustment_rule",
+  "column_break_cqbg",
+  "contract_length_months",
+  "insurance"
  ],
  "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
   {
    "columns": 2,
    "fieldname": "utility_property",
