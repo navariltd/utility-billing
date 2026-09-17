@@ -1,12 +1,14 @@
 """Item Price schedule actions of the Utility Service Request.
 
 Exposes the ``Define Item Prices`` action: a preview of the rates generated
-from a lease period and an increment rule, and the creation of the matching
-``Item Price`` records for the property service item and the tenant customer.
+from a lease period and an increment rule, the creation of the matching
+``Item Price`` records for the property service item and the tenant customer,
+and the manual correction of rates on already created records.
 """
 
 import frappe
-from frappe.utils import cint
+from frappe import _
+from frappe.utils import cint, flt
 
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils import item_price_schedule_helpers as helpers
@@ -31,13 +33,17 @@ def get_item_price_summary(docname: str) -> dict:
         for row in service_request.requested_properties
         if row.utility_property
     ]
-    service_items = helpers.resolve_service_items(properties) if properties else {}
-    html = item_price_summary.build_schedule_html(
-        properties, service_request.price_list, service_items
-    )
+    html = item_price_summary.build_schedule_html(properties, service_request.price_list)
+
+    item_by_property = {
+        property_name: item_code
+        for item_code, property_name in item_price_summary.get_property_item_codes(
+            properties
+        ).items()
+    }
     has_prices = any(
-        item_price_summary.get_created_prices(property_name, service_request.price_list)
-        for property_name in properties
+        item_price_summary.get_created_prices(item_code, service_request.price_list)
+        for item_code in item_by_property.values()
     )
 
     return {"html": html, "has_prices": has_prices}
@@ -87,6 +93,7 @@ def preview_item_price_schedule(
         service_items=service_items,
         frequency=frequency,
         increment=helpers.parse_increment(increment),
+        customer=customer or service_request.customer,
     )
     options.overrides = helpers.parse_overrides(overrides)
 
@@ -154,6 +161,7 @@ def create_item_price_schedule(
         frequency=frequency,
         increment=helpers.parse_increment(increment),
         require_price_list=True,
+        customer=resolved_customer,
     )
     options.overrides = helpers.parse_overrides(overrides)
 
@@ -174,6 +182,111 @@ def create_item_price_schedule(
         "skipped": result["skipped"],
         "schedule": schedule_rows,
     }
+
+
+@frappe.whitelist()
+def update_item_price_rates(docname: str, rates: list | str) -> dict:
+    """Apply manual rate corrections to the Item Prices of a request.
+
+    Only ``price_list_rate`` is updated - dates and scope are left alone, so an
+    edit can never move a period or re-point a price at another item. Each
+    submitted name is re-validated against the request's own properties before
+    it is written, so a name from elsewhere cannot be edited through this call.
+
+    Args:
+        docname: ``Utility Service Request`` name.
+        rates: Rows of ``{"name": <Item Price>, "price_list_rate": <number>}``.
+
+    Returns:
+        Counts of updated rows, values skipped as unchanged, and rows rejected
+        because they do not belong to the request.
+
+    Raises:
+        frappe.ValidationError: If a rate is not a non-negative number.
+    """
+    service_request = frappe.get_doc("Utility Service Request", docname)
+    service_request.check_permission("write")
+
+    allowed_items = _request_service_items(service_request)
+    updated = 0
+    unchanged = 0
+    rejected = 0
+
+    for row in _parse_rate_rows(rates):
+        rate = flt(row.get("price_list_rate"))
+        if rate < 0:
+            frappe.throw(_("Item Price rates cannot be negative."))
+
+        price = _get_allowed_price(row.get("name"), allowed_items)
+        if not price:
+            rejected += 1
+            continue
+
+        if flt(price.price_list_rate) == rate:
+            unchanged += 1
+            continue
+
+        frappe.db.set_value(
+            "Item Price", price.name, "price_list_rate", rate, update_modified=False
+        )
+        updated += 1
+
+    return {"updated": updated, "unchanged": unchanged, "rejected": rejected}
+
+
+def _request_service_items(service_request) -> set[str]:
+    """Return the service items of the request's properties.
+
+    Args:
+        service_request: ``Utility Service Request`` document.
+
+    Returns:
+        Item codes whose prices belong to this request.
+    """
+    properties = [
+        row.utility_property
+        for row in service_request.requested_properties
+        if row.utility_property
+    ]
+
+    return set(item_price_summary.get_property_item_codes(properties))
+
+
+def _parse_rate_rows(rates: list | str) -> list[dict]:
+    """Coerce the submitted rate rows into a list of dicts.
+
+    Args:
+        rates: JSON string or list of rate rows.
+
+    Returns:
+        The rate rows as a list.
+    """
+    parsed = helpers.as_list(rates)
+
+    return [row for row in parsed if isinstance(row, dict) and row.get("name")]
+
+
+def _get_allowed_price(name: str, allowed_items: set[str]):
+    """Return an Item Price only if it belongs to one of the allowed items.
+
+    Args:
+        name: ``Item Price`` name submitted by the client.
+        allowed_items: Item codes this request is allowed to edit.
+
+    Returns:
+        The ``Item Price`` document, or ``None`` when it is out of scope.
+    """
+    if not name or not allowed_items:
+        return None
+
+    price = frappe.db.get_value(
+        "Item Price",
+        {"name": name, "item_code": ("in", list(allowed_items))},
+        ["name", "item_code", "price_list_rate"],
+        as_dict=True,
+    )
+
+    return price
 
 
 def _annotate_schedule(

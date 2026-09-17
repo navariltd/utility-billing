@@ -59,6 +59,17 @@ open the schedule modal.
 | **Replace Existing Prices** | Deletes prices previously generated for the same item and customer before creating new ones. |
 | **Rates** | Periods generated for the selected property. This is the only schedule table: **Rate** is editable so any period can be corrected by hand. |
 
+### Price list resolution
+
+The modal uses the document's **Price List** when one is set. If the request has
+none, the price list is resolved in this order:
+
+1. the customer's `default_price_list`;
+2. the **Default Price List** configured in Utility Billing Settings.
+
+A price list you choose yourself is never overwritten. The schedule can be
+previewed without a price list; one is only required when creating prices.
+
 Selecting a **Billing Adjustment Rule** copies its frequency, interval, percentage,
 effective-after and basis into the modal. Every field then stays editable, so a
 single lease can be tuned without changing the shared rule.
@@ -124,26 +135,46 @@ If no increment is configured, a single rate covers the whole lease and **one**
 
 ### Generated records
 
-- One **`Item Price`** per stretch of unchanged rate, per property and
-  customer, carrying `valid_from` and `valid_upto` for that stretch.
+- One **`Item Price`** per stretch of unchanged rate, per property and customer,
+  carrying `valid_from` and `valid_upto` for that stretch.
+- These are **ordinary Item Prices** — no custom fields are added to the
+  DocType. The property is expressed by the item itself, because each property
+  owns a service item named after it.
 - Each record is linked to:
   - **Item Code** — the property's service item
   - **Customer** — the tenant, when one is selected
-  - **Utility Property** (`custom_utility_property`) — the property it belongs to
-  - **Is Rent Schedule** (`custom_is_rent_schedule`) — marks app-generated prices
-- Only records marked *Is Rent Schedule* are removed by *Replace Existing*;
-  manually maintained prices are never deleted.
 - Re-running the action is safe: periods that already have an overlapping
   `Item Price` are skipped and reported as `skipped`.
+- **Replace Existing Prices** deletes by item, price list and customer. Because
+  a property's prices are always scoped to its own service item, prices of
+  other properties and items are never affected.
 
-### Viewing what was created
+### Viewing and correcting what was created
 
 The **Item Price Schedule** section of the Utility Service Request shows an
-**Item Price Summary** HTML field. It reads the real `Item Price` records back
-and groups them by property, showing each period's dates, item, customer and
-rate. Properties with no prices yet are listed as such. This is a view of the
-actual `Item Price` records, not a separate copy, so it can never drift from
-what billing will use.
+**Item Price Summary** HTML field. It looks up each property's service item,
+reads the Item Prices for those items, and renders them grouped by property
+showing each period's dates, customer and rate. Properties with no prices yet
+are listed as such. This is a view of the actual `Item Price` records, not a
+separate copy, so it can never drift from what billing will use.
+
+Rates in the summary are **editable**. Change one or more rates and the row is
+highlighted, a count of changed rows appears, and the **Update Prices** button
+becomes enabled. Clicking it asks for confirmation and writes the new rates to
+the matching `Item Price` records.
+
+What the update does and does not do:
+
+- Only `price_list_rate` is written. Dates, item, price list and customer are
+  never changed, so a correction cannot move a period or re-point a price.
+- Values that still match what is stored are skipped, so re-clicking is
+  harmless.
+- Every submitted row is re-checked on the server against the request's own
+  properties; a record belonging to another item is ignored and reported rather
+  than written. This means an edit can never reach an unrelated `Item Price`,
+  even if its name is submitted deliberately.
+- Rows are reported back as updated, unchanged, or skipped, so a partial
+  result is always visible rather than silent.
 
 ### Generated records
 
