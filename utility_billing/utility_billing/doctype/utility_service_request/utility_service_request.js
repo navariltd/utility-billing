@@ -314,7 +314,7 @@ function refresh_property_item_rates(frm) {
 			let changed = false;
 			response.message.forEach((details) => {
 				const row = (frm.doc.items || []).find(
-					(item) => item.utility_property === details.utility_property
+					(item) => item.utility_property === details.utility_property,
 				);
 				if (!row || !details.rate || flt(row.rate) === flt(details.rate)) return;
 
@@ -323,7 +323,7 @@ function refresh_property_item_rates(frm) {
 					row.doctype,
 					row.name,
 					"amount",
-					flt(details.rate) * flt(row.qty || 1)
+					flt(details.rate) * flt(row.qty || 1),
 				);
 				changed = true;
 			});
@@ -381,12 +381,17 @@ frappe.ui.form.on("Contract Utility Property Item", {
 			);
 		}
 	},
-	utility_property: function (frm) {
+
+	utility_property: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		set_property_row_item(frm, row);
 		sync_items_from_properties(frm);
 	},
+
 	requested_properties_remove: function (frm) {
 		sync_items_from_properties(frm);
 	},
+
 	start_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "start_date"),
 	end_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "end_date"),
 	contract_length_months: (frm, cdt, cdn) =>
@@ -394,19 +399,67 @@ frappe.ui.form.on("Contract Utility Property Item", {
 });
 
 /**
- * Default the price list from the customer when the document has none.
+ * Fill the read-only item of a requested property row.
  *
- * An explicitly chosen price list is never overwritten, so a user edit sticks.
+ * The item is the property's rent service item, fetched from the server so it
+ * is created on demand when auto creation is enabled.
+ */
+function set_property_row_item(frm, row) {
+	if (!row.utility_property) {
+		frappe.model.set_value(row.doctype, row.name, "item_code", null);
+		return;
+	}
+
+	frappe.call({
+		method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_service_items_for_properties",
+		args: { properties: [row.utility_property] },
+		callback: function (response) {
+			const item_code = response.message?.[0]?.item_code;
+			if (item_code) {
+				frappe.model.set_value(row.doctype, row.name, "item_code", item_code);
+			}
+		},
+	});
+}
+
+/**
+ * Default the price list when the document has none.
+ *
+ * Resolution order matches the server: the customer's default price list, then
+ * the Default Price List in Utility Billing Settings. An explicitly chosen
+ * price list is never overwritten.
  */
 function default_price_list_from_customer(frm) {
 	if (frm.doc.price_list) return;
 
 	const customer = frm.doc.customer || frm.doc.party_name;
-	if (!customer || !frappe.db.exists("Customer", customer)) return;
 
-	frappe.db.get_value("Customer", customer, "default_price_list").then((response) => {
-		const price_list = response?.message?.default_price_list;
-		if (price_list) frm.set_value("price_list", price_list);
+	if (customer && frappe.db.exists("Customer", customer)) {
+		frappe.db.get_value("Customer", customer, "default_price_list").then((response) => {
+			const price_list = response?.message?.default_price_list;
+			if (price_list) {
+				frm.set_value("price_list", price_list);
+				return;
+			}
+
+			set_price_list_from_settings(frm);
+		});
+		return;
+	}
+
+	set_price_list_from_settings(frm);
+}
+
+/**
+ * Fall back to the Default Price List configured in Utility Billing Settings.
+ */
+function set_price_list_from_settings(frm) {
+	if (frm.doc.price_list) return;
+
+	frappe.db.get_doc(settingsDoctypeName, settingsDoctypeName).then((settings) => {
+		if (settings?.default_price_list) {
+			frm.set_value("price_list", settings.default_price_list);
+		}
 	});
 }
 
@@ -449,7 +502,7 @@ function sync_items_from_properties(frm) {
  */
 function add_property_item_row(frm, details) {
 	const exists = (frm.doc.items || []).some(
-		(row) => row.utility_property === details.utility_property
+		(row) => row.utility_property === details.utility_property,
 	);
 	if (exists) return false;
 
@@ -475,7 +528,7 @@ function add_property_item_row(frm, details) {
  */
 function drop_orphan_property_items(frm, properties) {
 	const orphans = (frm.doc.items || []).filter(
-		(row) => row.utility_property && !properties.includes(row.utility_property)
+		(row) => row.utility_property && !properties.includes(row.utility_property),
 	);
 
 	if (!orphans.length) return;
@@ -1715,7 +1768,8 @@ function report_progress(dialog, properties) {
  * Load the Item Prices created for this request into the HTML summary field.
  *
  * The Item Prices are the source of truth for the schedule, so the field is
- * rendered from them rather than from a stored copy.
+ * rendered from them rather than from a stored copy. Rates are editable; the
+ * edits are pushed back only when the Update Prices button is clicked.
  */
 function load_item_price_summary(frm) {
 	const field = frm.get_field("item_price_summary");
@@ -1730,8 +1784,133 @@ function load_item_price_summary(frm) {
 			if (!response.message) return;
 
 			field.$wrapper.html(response.message.html);
+			bind_item_price_summary_editor(frm, field);
 		},
 	});
+}
+
+/**
+ * Enable editing of the rates in the loaded summary.
+ *
+ * The summary is server-rendered HTML, so the handlers are bound to the wrapper
+ * rather than to the markup itself. The Update Prices button stays disabled
+ * until a rate actually differs from its stored value.
+ *
+ * @param {object} frm - The Utility Service Request form.
+ * @param {object} field - Control holding the rendered summary HTML.
+ */
+function bind_item_price_summary_editor(frm, field) {
+	const $wrapper = field.$wrapper;
+	const $button = $wrapper.find(".uips-update-btn");
+	if (!$button.length) return;
+
+	const refresh_dirty_state = () => refresh_summary_dirty_state($wrapper);
+
+	$wrapper.on("input", ".uips-rate", function () {
+		$(this).toggleClass(
+			"changed",
+			flt($(this).val()) !== flt($(this).attr("data-original")),
+		);
+		refresh_dirty_state();
+	});
+
+	$button.on("click", () => apply_item_price_rate_edits(frm, $wrapper, $button));
+}
+
+/**
+ * Update the enabled state and hint text of the Update Prices button.
+ *
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ */
+function refresh_summary_dirty_state($wrapper) {
+	const edits = collect_item_price_rate_edits($wrapper);
+	const $button = $wrapper.find(".uips-update-btn");
+	const $dirty = $wrapper.find(".uips-dirty");
+
+	$button.prop("disabled", !edits.length);
+	$dirty.text(edits.length ? __("{0} rate(s) changed", [edits.length]) : "");
+}
+
+/**
+ * Collect the rates that differ from their stored value.
+ *
+ * Rows the server would reject are still sent so the outcome is reported once,
+ * rather than silently dropped in the browser.
+ *
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ * @returns {Array} Rows of `{ name, price_list_rate }`.
+ */
+function collect_item_price_rate_edits($wrapper) {
+	const edits = [];
+
+	$wrapper.find(".uips-rate").each(function () {
+		const $input = $(this);
+		const value = flt($input.val());
+
+		if (value !== flt($input.attr("data-original"))) {
+			edits.push({
+				name: $input.attr("data-item-price"),
+				price_list_rate: value,
+			});
+		}
+	});
+
+	return edits;
+}
+
+/**
+ * Push the edited rates to the Item Price records.
+ *
+ * @param {object} frm - The Utility Service Request form.
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ * @param {jQuery} $button - The Update Prices button.
+ */
+function apply_item_price_rate_edits(frm, $wrapper, $button) {
+	const edits = collect_item_price_rate_edits($wrapper);
+	if (!edits.length) return;
+
+	frappe.confirm(
+		__("Update {0} Item Price rate(s)?", [edits.length]),
+		function () {
+			$button.prop("disabled", true);
+
+			frappe.call({
+				method: "utility_billing.utility_billing.utils.item_price_actions.update_item_price_rates",
+				args: { docname: frm.doc.name, rates: edits },
+				freeze: true,
+				callback: function (response) {
+					const result = response.message;
+					if (!result) return;
+
+					show_item_price_update_result(result);
+					load_item_price_summary(frm);
+				},
+			});
+		},
+		refresh_summary_dirty_state($wrapper),
+	);
+}
+
+/**
+ * Report the outcome of a rate update, including rows that were skipped.
+ *
+ * @param {object} result - Counts returned by `update_item_price_rates`.
+ */
+function show_item_price_update_result(result) {
+	const messages = [__("{0} rate(s) updated.", [result.updated])];
+
+	if (result.unchanged) {
+		messages.push(__("{0} unchanged.", [result.unchanged]));
+	}
+	if (result.rejected) {
+		messages.push(
+			__("{0} row(s) skipped as they no longer belong to this request.", [
+				result.rejected,
+			])
+		);
+	}
+
+	frappe.show_alert({ message: messages.join(" "), indicator: "green" });
 }
 
 /**
@@ -1755,7 +1934,7 @@ function showItemPriceScheduleModal(frm) {
 
 	const dialog = new frappe.ui.Dialog({
 		title: __("Define Item Prices"),
-		size: "large",
+		size: "extra-large",
 		fields: [
 			{
 				fieldname: "utility_property",
@@ -1782,12 +1961,25 @@ function showItemPriceScheduleModal(frm) {
 				},
 			},
 			{
+				fieldname: "column_break_property",
+				fieldtype: "Column Break",
+			},
+			{
 				fieldname: "customer",
 				fieldtype: "Link",
 				options: "Customer",
 				label: __("Customer"),
 				default: frm.doc.customer,
 				description: __("Blank prices for all customers."),
+			},
+			{
+				fieldname: "price_list",
+				fieldtype: "Link",
+				options: "Price List",
+				label: __("Price List"),
+				default: frm.doc.price_list,
+				reqd: 1,
+				change: () => schedule_auto_preview(dialog, frm),
 			},
 			{
 				fieldname: "column_break_period",
@@ -1806,15 +1998,6 @@ function showItemPriceScheduleModal(frm) {
 				fieldtype: "Date",
 				label: __("Lease End"),
 				default: frm.doc.end_date,
-				change: () => schedule_auto_preview(dialog, frm),
-			},
-			{
-				fieldname: "price_list",
-				fieldtype: "Link",
-				options: "Price List",
-				label: __("Price List"),
-				default: frm.doc.price_list,
-				reqd: 1,
 				change: () => schedule_auto_preview(dialog, frm),
 			},
 			{
@@ -1843,6 +2026,10 @@ function showItemPriceScheduleModal(frm) {
 				default: "Monthly",
 				description: __("How often rent is billed."),
 				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "column_break_frequency",
+				fieldtype: "Column Break",
 			},
 			{
 				fieldname: "increment_interval_months",
@@ -1884,7 +2071,7 @@ function showItemPriceScheduleModal(frm) {
 				fieldname: "replace_existing",
 				fieldtype: "Check",
 				label: __("Replace Existing Prices"),
-				default: 0,
+				default: 1,
 				description: __("Delete prices previously generated for this item first."),
 			},
 			{
