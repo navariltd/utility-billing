@@ -111,13 +111,13 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		prices = frappe.get_all(
 			"Item Price",
 			filters={"item_code": TEST_ITEM, "price_list": TEST_PRICE_LIST},
-			fields=["valid_from", "valid_upto", "price_list_rate", "custom_utility_property"],
+			fields=["valid_from", "valid_upto", "price_list_rate", "item_code", "customer"],
 		)
 
 		self.assertEqual(len(prices), 1)
 		self.assertEqual(str(prices[0]["valid_from"]), "2026-01-01")
 		self.assertEqual(str(prices[0]["valid_upto"]), "2026-12-31")
-		self.assertEqual(prices[0]["custom_utility_property"], TEST_PROPERTY)
+		self.assertEqual(prices[0]["item_code"], TEST_ITEM)
 
 	def test_rerunning_the_action_skips_existing_periods(self):
 		item_price_actions.create_item_price_schedule(**self._action_args())
@@ -482,7 +482,6 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 				"price_list_rate",
 				"customer",
 				"item_code",
-				"custom_utility_property",
 			],
 			order_by="valid_from asc",
 		)
@@ -501,9 +500,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			],
 		)
 
-		# Every price is tagged with the property and linked to item + customer.
+		# Each price is an ordinary Item Price for the property's service item.
 		for price in prices:
-			self.assertEqual(price["custom_utility_property"], TEST_PROPERTY)
 			self.assertEqual(price["item_code"], TEST_ITEM)
 			self.assertEqual(price["customer"], TEST_CUSTOMER)
 
@@ -584,11 +582,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 		remaining = frappe.get_all(
 			"Item Price",
-			filters={
-				"item_code": TEST_ITEM,
-				"price_list": TEST_PRICE_LIST,
-				"custom_is_rent_schedule": 1,
-			},
+			filters={"item_code": TEST_ITEM, "price_list": TEST_PRICE_LIST},
 			pluck="name",
 		)
 		self.assertEqual(len(remaining), 1)

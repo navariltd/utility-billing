@@ -10,6 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import add_months, nowdate, add_days, getdate, get_last_day
 from datetime import timedelta
 
+from utility_billing.utility_billing.utils.price_list import apply_default_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -20,6 +21,7 @@ class UtilityServiceRequest(Document):
     def validate(self):
         self.validate_items()
         self.set_customer_if_needed()
+        apply_default_price_list(self)
         self.validate_contract_dates()
         self.validate_child_items()
         ensure_service_items_for_properties(self)

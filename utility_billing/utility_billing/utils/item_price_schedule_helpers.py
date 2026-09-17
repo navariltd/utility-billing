@@ -15,6 +15,7 @@ from frappe.utils import cstr, flt, getdate
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils import item_price_uom
 from utility_billing.utility_billing.utils.item_price_schedule import RateOverride
+from utility_billing.utility_billing.utils.price_list import resolve_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -57,6 +58,7 @@ def build_options(
     frequency: str | None = None,
     increment: dict | None = None,
     require_price_list: bool = False,
+    customer: str | None = None,
 ) -> item_price_utils.ScheduleOptions:
     """Build the shared schedule options of a request.
 
@@ -74,6 +76,8 @@ def build_options(
         increment: Manual increment values, see ``parse_increment``.
         require_price_list: Whether a price list must be set. Previewing a
             schedule does not need one, creating Item Prices does.
+        customer: Customer the prices are scoped to, used to fall back to the
+            customer's default price list when none is supplied.
 
     Returns:
         Options shared by every line of the schedule.
@@ -81,6 +85,8 @@ def build_options(
     Raises:
         frappe.ValidationError: If a required value is missing.
     """
+    price_list = price_list or resolve_price_list(customer)
+
     if require_price_list and not price_list:
         frappe.throw(_("Please set a Price List before creating Item Prices."))
 
