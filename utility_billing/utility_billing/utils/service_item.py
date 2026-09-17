@@ -45,6 +45,52 @@ def ensure_service_item(property_name: str, save: bool = True) -> str | None:
     return item_code
 
 
+def get_service_item_of_property(property_name: str) -> str | None:
+    """Return the rent billing item of a property.
+
+    The service item is created on demand when auto creation is enabled, so a
+    property always has something to bill when the feature is configured.
+
+    Args:
+        property_name: ``Utility Property`` name.
+
+    Returns:
+        The service item code, or ``None`` when the property does not exist or
+        has no service item and auto creation is disabled.
+    """
+    if not frappe.db.exists("Utility Property", property_name):
+        return None
+
+    return ensure_service_item(property_name)
+
+
+def get_property_of_service_item(item_code: str) -> str | None:
+    """Return the property billed through an item.
+
+    Service items are created for billable properties only and are named after
+    their property, so the item identifies the property it belongs to.
+
+    Args:
+        item_code: Item to resolve.
+
+    Returns:
+        The ``Utility Property`` name, or ``None`` when the item is not the
+        service item of a property.
+    """
+    if not item_code:
+        return None
+
+    properties = frappe.db.get_all(
+        "Utility Property",
+        filters={"service_item": item_code},
+        pluck="name",
+        order_by="name asc",
+        limit=1,
+    )
+
+    return properties[0] if properties else None
+
+
 def create_service_item_for_property(property_doc) -> str | None:
     """Create (or link) the rental service item of a property.
 
