@@ -7,8 +7,15 @@ named after the property, and that repeated calls stay idempotent.
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from utility_billing.api.sales_invoice import (
+	get_line_item,
+	get_line_utility_property,
+)
+from utility_billing.utility_billing.tests import factories
 from utility_billing.utility_billing.utils.service_item import (
 	create_service_item_for_property,
+	get_property_of_service_item,
+	get_service_item_of_property,
 )
 
 
@@ -104,3 +111,31 @@ class TestPropertyServiceItem(FrappeTestCase):
 			self.assertFalse(frappe.db.exists("Item", f"{self.property_name} Group"))
 		finally:
 			frappe.db.delete("Utility Property", {"name": group_doc.name})
+
+	def test_property_of_a_service_item_is_resolved(self):
+		self._enable_auto_creation(True)
+		self._make_property()
+
+		self.assertEqual(get_property_of_service_item(self.property_name), self.property_name)
+
+	def test_property_of_a_plain_item_is_none(self):
+		plain_item = factories.ensure_item("_Test Plain Service Lookup Item")
+
+		try:
+			self.assertIsNone(get_property_of_service_item(plain_item))
+		finally:
+			frappe.db.delete("Item", {"item_code": plain_item})
+
+	def test_service_item_of_a_property_is_resolved(self):
+		self._enable_auto_creation(True)
+		self._make_property()
+
+		self.assertEqual(get_service_item_of_property(self.property_name), self.property_name)
+		self.assertIsNone(get_service_item_of_property("_Test Missing Property"))
+
+	def test_line_api_resolves_the_property_and_its_item(self):
+		self._enable_auto_creation(True)
+		self._make_property()
+
+		self.assertEqual(get_line_utility_property(self.property_name), self.property_name)
+		self.assertEqual(get_line_item(self.property_name), self.property_name)
