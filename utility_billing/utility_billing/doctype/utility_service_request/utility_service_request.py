@@ -10,6 +10,8 @@ from frappe.model.document import Document
 from frappe.utils import add_months, nowdate, add_days, getdate, get_last_day
 from datetime import timedelta
 
+from utility_billing.utility_billing.utils.service_item import ensure_service_item
+
 
 class UtilityServiceRequest(Document):
     def onload(self):
@@ -20,6 +22,7 @@ class UtilityServiceRequest(Document):
         self.set_customer_if_needed()
         self.validate_contract_dates()
         self.validate_child_items()
+        ensure_service_items_for_properties(self)
 
     def before_update_after_submit(self):
         # Re-run validation logic when updating after submission
@@ -112,6 +115,29 @@ class UtilityServiceRequest(Document):
 
         
   
+def ensure_service_items_for_properties(doc) -> None:
+    """Ensure every requested property owns its rent billing service item.
+
+    Missing service items are created when auto creation is enabled in
+    Utility Billing Settings. Failures are logged so that a misconfigured
+    item group never blocks saving the request.
+
+    Args:
+        doc: ``Utility Service Request`` document.
+    """
+    properties = [
+        row.utility_property for row in doc.requested_properties if row.utility_property
+    ]
+    for property_name in properties:
+        try:
+            ensure_service_item(property_name)
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                f"Could not prepare service item for property {property_name}",
+            )
+
+
 @frappe.whitelist()
 def create_customer_and_sales_order(docname):
     doc = frappe.get_doc("Utility Service Request", docname)
@@ -336,6 +362,39 @@ def update_request_status(request_name):
 
 
 @frappe.whitelist()
+@frappe.whitelist()
+def get_service_items_for_properties(properties, price_list=None):
+    """Return the rent billing item of each property, ready for the items table.
+
+    The property service item is created on demand when auto creation is
+    enabled, so a property added to a request always has something to bill.
+
+    Args:
+        properties: JSON list or list of ``Utility Property`` names.
+        price_list: Optional price list used to resolve each item's rate.
+
+    Returns:
+        One entry per resolvable property, holding the item details plus the
+        ``utility_property`` it belongs to.
+    """
+    property_names = frappe.parse_json(properties) if isinstance(properties, str) else properties
+    details = []
+
+    for property_name in property_names or []:
+        if not frappe.db.exists("Utility Property", property_name):
+            continue
+
+        item_code = ensure_service_item(property_name)
+        if not item_code:
+            continue
+
+        item_details = get_item_details(item_code, price_list)
+        item_details["utility_property"] = property_name
+        details.append(item_details)
+
+    return details
+
+
 def get_item_details(item_code, price_list=None):
     item = frappe.get_doc("Item", item_code)
 
@@ -742,6 +801,15 @@ def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule,
     if enable_auto_repeat != "1":
         return
 
+    if _uses_item_price_billing():
+        frappe.msgprint(
+            _(
+                "Auto Repeat not created: Utility Billing Settings use the Item Price "
+                "billing approach. Define item prices on the Utility Service Request instead."
+            )
+        )
+        return
+
     actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
     if not actual_adjustment_rule_name:
         frappe.msgprint("Auto Repeat not created: No adjustment rule specified for property.")
@@ -752,6 +820,18 @@ def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule,
     
     create_single_auto_repeat_with_contract_details(doc, usr, adjustment_rule_doc, auto_repeat_settings)
     add_transaction_comments(doc, usr.name, auto_repeat_settings)
+
+
+def _uses_item_price_billing() -> bool:
+    """Return whether recurring billing uses generated Item Prices.
+
+    Returns:
+        ``True`` when the configured rent billing approach is ``Item Price``.
+    """
+    approach = frappe.db.get_single_value("Utility Billing Settings", "rent_billing_approach")
+
+    return approach == "Item Price"
+
 
 def _prepare_auto_repeat_settings(property, adjustment_rule, start_date, end_date):
     """Prepare the dictionary of auto-repeat settings"""
