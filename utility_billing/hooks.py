@@ -65,6 +65,7 @@ doctype_js = {
 	"Item Price": "utility_billing/overrides/client/item_price.js",
 	"Contract": "utility_billing/overrides/client/contract.js",
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
+	"Sales Invoice": "utility_billing/overrides/client/sales_invoice.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
