@@ -1,16 +1,39 @@
 import frappe
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from erpnext.controllers.accounts_controller import AccountsController
 from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
 from frappe.model.document import Document
-from frappe.utils import add_days
-from ...utils.update_service_request import update_billing_status
+from ...utils.deferred_posting import (
+	cancel_deferred_journal_entries,
+	create_deferred_journal_entries,
+	deferred_income_accounts,
+	fill_posting_dates,
+	validate_deferred_lines,
+)
 from ...utils.utils import (
 	sync_meter_readings,
 )
 
 
+class UtilityBillingSalesInvoice(SalesInvoice):
+	"""Sales Invoice applying the deferred posting of Utility Billing.
+
+	Deferred lines credit the deferred account of their company instead of their
+	income account when the invoice is posted. The revenue reaches the income
+	account through a Journal Entry dated the Deferred Posting Date of the line.
+	"""
+
+	def get_gl_entries(self, inventory_account_map=None):
+		"""Build the GL entries, crediting deferred accounts for deferred lines."""
+		with deferred_income_accounts(self):
+			return super().get_gl_entries(inventory_account_map)
+
+
 def validate(doc: Document, method: str) -> None:
+	"""Validate the meter readings and the deferred posting of the invoice."""
 	sync_meter_readings(doc)
+	fill_posting_dates(doc)
+	validate_deferred_lines(doc)
 
 def before_validate(doc: Document, method: str) -> None:
     """Intercepts submit event for document"""
@@ -47,7 +70,10 @@ def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
         new_reading.parent = target_doc.name
 
 def on_submit(doc: Document, method: str) -> None:
-    """Intercepts submit event for document"""
-    if doc.utility_service_request:
-        pass
-        # update_billing_status(doc.utility_service_request)
+	"""Recognise the deferred revenue of the invoice on its deferred dates."""
+	create_deferred_journal_entries(doc)
+
+
+def on_cancel(doc: Document, method: str) -> None:
+	"""Cancel the journal entries that recognised the deferred revenue."""
+	cancel_deferred_journal_entries(doc)
