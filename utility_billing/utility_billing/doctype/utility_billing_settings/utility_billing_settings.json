@@ -21,7 +21,13 @@
   "demo_section",
   "generate_demo_data",
   "column_break_agjn",
-  "clear_demo_data"
+  "clear_demo_data",
+  "billing_approach_section",
+  "rent_billing_approach",
+  "column_break_billing_approach",
+  "auto_create_service_item",
+  "default_service_item_group",
+  "default_item_price_uom"
  ],
  "fields": [
   {
@@ -117,6 +123,48 @@
    "fieldname": "months_in_advance_to_notify_of_tenancy_ending",
    "fieldtype": "Int",
    "label": "Months in Advance to Notify of Tenancy Ending"
+  },
+  {
+   "fieldname": "billing_approach_section",
+   "fieldtype": "Section Break",
+   "label": "Recurring Billing Approach"
+  },
+  {
+   "default": "Auto Repeat",
+   "description": "How recurring rental billing is generated. <b>Auto Repeat</b> copies the reference document on schedule. <b>Item Price</b> bills the same document at the rate valid on the billing date, using the Item Price schedule defined on the Utility Service Request.",
+   "fieldname": "rent_billing_approach",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Rent Billing Approach",
+   "options": "Auto Repeat\nItem Price"
+  },
+  {
+   "fieldname": "column_break_billing_approach",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "Create and link a service item named after the property, used as the rent billing item.",
+   "fieldname": "auto_create_service_item",
+   "fieldtype": "Check",
+   "label": "Auto Create Property Service Item"
+  },
+  {
+   "depends_on": "eval:doc.auto_create_service_item==1",
+   "description": "Item Group used when creating the service item of a property.",
+   "fieldname": "default_service_item_group",
+   "fieldtype": "Link",
+   "label": "Service Item Group",
+   "options": "Item Group"
+  },
+  {
+   "depends_on": "eval:doc.rent_billing_approach=='Item Price'",
+   "description": "UOM used when generating Item Prices from an item price schedule.",
+   "fieldname": "default_item_price_uom",
+   "fieldtype": "Link",
+   "label": "Item Price UOM",
+   "options": "UOM"
   }
  ],
  "index_web_pages_for_search": 1,
