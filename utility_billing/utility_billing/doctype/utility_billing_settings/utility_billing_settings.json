@@ -28,7 +28,10 @@
   "auto_create_service_item",
   "default_service_item_group",
   "default_item_price_uom",
-  "default_price_list"
+  "default_price_list",
+  "deferred_posting_section",
+  "enable_deferred_posting",
+  "deferred_accounts"
  ],
  "fields": [
   {
@@ -173,12 +176,32 @@
    "fieldtype": "Link",
    "label": "Default Price List",
    "options": "Price List"
+  },
+  {
+   "fieldname": "deferred_posting_section",
+   "fieldtype": "Section Break",
+   "label": "Deferred Posting"
+  },
+  {
+   "default": "0",
+   "description": "Credit the deferred account of the company instead of the income account of the line, and post the revenue to the income account on the Deferred Posting Date of the line.",
+   "fieldname": "enable_deferred_posting",
+   "fieldtype": "Check",
+   "label": "Enable Deferred Posting"
+  },
+  {
+   "depends_on": "eval:doc.enable_deferred_posting==1",
+   "description": "Deferred account used for each company. Revenue parked in this account is moved to the income account of the line by a journal entry dated the Deferred Posting Date.",
+   "fieldname": "deferred_accounts",
+   "fieldtype": "Table",
+   "label": "Deferred Accounts",
+   "options": "Utility Deferred Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-14 13:22:21.922776",
+ "modified": "2026-09-17 23:22:04.203697",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",
