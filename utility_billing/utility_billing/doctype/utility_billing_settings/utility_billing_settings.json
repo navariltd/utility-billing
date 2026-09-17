@@ -27,7 +27,8 @@
   "column_break_billing_approach",
   "auto_create_service_item",
   "default_service_item_group",
-  "default_item_price_uom"
+  "default_item_price_uom",
+  "default_price_list"
  ],
  "fields": [
   {
@@ -165,6 +166,13 @@
    "fieldtype": "Link",
    "label": "Item Price UOM",
    "options": "UOM"
+  },
+  {
+   "description": "Fallback price list used on a Utility Service Request when neither the request nor the customer provides one.",
+   "fieldname": "default_price_list",
+   "fieldtype": "Link",
+   "label": "Default Price List",
+   "options": "Price List"
   }
  ],
  "index_web_pages_for_search": 1,

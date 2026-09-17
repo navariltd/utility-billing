@@ -37,6 +37,7 @@ The **Utility Billing Settings** Doctype centralizes critical configuration opti
 | **Auto Create Property Service Item** | Creates and links a service item named after the property, used as its rent billing item.                            |
 | **Service Item Group**           | Item group used when creating the service item of a property.                                                            |
 | **Item Price UOM**               | UOM used when generating Item Prices from an item price schedule.                                                        |
+| **Default Price List**           | Fallback price list used on a Utility Service Request when neither the request nor the customer provides one.            |
 
 > See [Rent Billing by Item Price](./Rent-Billing-by-Item-Price.md) for the full workflow.
 
