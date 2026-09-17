@@ -11,6 +11,7 @@ from frappe.utils import flt, getdate
 
 from utility_billing.utility_billing.tests import factories
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
+from utility_billing.utility_billing.utils import item_price_summary
 from utility_billing.utility_billing.utils.item_price_schedule import IncrementRule
 from utility_billing.utility_billing.utils.item_price_uom import (
 	FALLBACK_UOM,
@@ -94,43 +95,24 @@ class TestItemPriceCreation(FrappeTestCase):
 		self.assertEqual(getdate(prices[1]["valid_upto"]), getdate("2027-03-31"))
 		self.assertEqual(flt(prices[1]["price_list_rate"]), 1100)
 
-	def test_every_created_price_is_tagged_with_the_property(self):
-		property_name = "_Test Tagged Property"
-		if not frappe.db.exists("Utility Property", property_name):
-			property_doc = frappe.new_doc("Utility Property")
-			property_doc.name = property_name
-			property_doc.property_name = property_name
-			property_doc.status = "Occupied"
-			property_doc.company = frappe.db.get_value("Company", {}, "name")
-			property_doc.is_group = 0
-			property_doc.is_fixed_asset = 0
-			property_doc.flags.ignore_mandatory = True
-			property_doc.flags.ignore_links = True
-			property_doc.insert(ignore_permissions=True)
+	def test_prices_are_grouped_back_to_the_property_by_item(self):
+		"""The summary attributes prices to a property via its service item."""
+		property_name = "_Test Grouped Property"
+		factories.ensure_property(property_name, service_item=TEST_ITEM)
 
-		lines = [
-			item_price_utils.ScheduleLine(
-				item_code=TEST_ITEM,
-				customer=None,
-				base_rate=1000,
-				utility_property=property_name,
-			)
-		]
+		item_price_utils.create_item_prices(self._options(), self._lines())
 
-		item_price_utils.create_item_prices(self._options(), lines)
+		item_by_property = {
+			name: item
+			for item, name in item_price_summary.get_property_item_codes(
+				[property_name]
+			).items()
+		}
 
-		tagged = frappe.get_all(
-			"Item Price",
-			filters={
-				"item_code": TEST_ITEM,
-				"price_list": TEST_PRICE_LIST,
-				"custom_utility_property": property_name,
-			},
-			fields=["custom_utility_property", "item_code", "price_list_rate"],
+		self.assertEqual(item_by_property.get(property_name), TEST_ITEM)
+		self.assertEqual(
+			len(item_price_summary.get_created_prices(TEST_ITEM, TEST_PRICE_LIST)), 1
 		)
-		self.assertEqual(len(tagged), 1)
-		self.assertEqual(tagged[0]["custom_utility_property"], property_name)
-		self.assertEqual(tagged[0]["item_code"], TEST_ITEM)
 
 	def test_rerunning_the_same_schedule_creates_no_duplicates(self):
 		item_price_utils.create_item_prices(self._options(), self._lines())
@@ -162,21 +144,21 @@ class TestItemPriceCreation(FrappeTestCase):
 		self.assertEqual(flt(prices[0]["price_list_rate"]), 1000)
 		self.assertEqual(flt(prices[-1]["price_list_rate"]), 1100)
 
-	def test_generated_prices_are_marked_as_schedule_prices(self):
+	def test_created_prices_are_plain_item_prices(self):
 		item_price_utils.create_item_prices(self._options(), self._lines())
 
-		marked = frappe.get_all(
+		prices = frappe.get_all(
 			"Item Price",
-			filters={
-				"item_code": TEST_ITEM,
-				"price_list": TEST_PRICE_LIST,
-				"custom_is_rent_schedule": 1,
-			},
-			pluck="name",
+			filters={"item_code": TEST_ITEM, "price_list": TEST_PRICE_LIST},
+			fields=["item_code", "customer", "price_list_rate", "valid_from", "valid_upto"],
 		)
-		self.assertEqual(len(marked), 1)
 
-	def test_delete_existing_schedule_removes_only_generated_prices(self):
+		self.assertEqual(len(prices), 1)
+		self.assertEqual(prices[0]["item_code"], TEST_ITEM)
+		self.assertEqual(prices[0]["customer"], None)
+
+	def test_delete_existing_schedule_removes_all_prices_of_the_item(self):
+		"""Deletion scopes to one item, price list and customer."""
 		item_price_utils.create_item_prices(self._options(), self._lines())
 
 		manual = frappe.new_doc("Item Price")
@@ -189,10 +171,29 @@ class TestItemPriceCreation(FrappeTestCase):
 
 		deleted = item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST)
 
-		self.assertEqual(deleted, 1)
-		remaining = self._fetch_prices()
-		self.assertEqual(len(remaining), 1)
-		self.assertEqual(remaining[0]["name"], manual.name)
+		self.assertEqual(deleted, 2)
+		self.assertEqual(len(self._fetch_prices()), 0)
+
+	def test_delete_existing_schedule_leaves_other_items_alone(self):
+		other_item = "_Test Other Rent Item"
+		factories.ensure_item(other_item)
+
+		try:
+			item_price_utils.create_item_prices(self._options(), self._lines())
+
+			other = frappe.new_doc("Item Price")
+			other.item_code = other_item
+			other.price_list = TEST_PRICE_LIST
+			other.uom = "Nos"
+			other.price_list_rate = 7000
+			other.valid_from = "2030-01-01"
+			other.insert(ignore_permissions=True)
+
+			item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST)
+
+			self.assertTrue(frappe.db.exists("Item Price", other.name))
+		finally:
+			factories.delete_prices(other_item, TEST_PRICE_LIST)
 
 	def test_creating_prices_for_an_adjacent_period_is_allowed(self):
 		item_price_utils.create_item_prices(self._options(), self._lines())

@@ -250,6 +250,10 @@ def insert_item_price(
 ) -> str:
     """Insert a single Item Price record and return its name.
 
+    These are ordinary Item Price records: the property is expressed by the
+    item itself (each property owns a service item named after it), so no extra
+    tagging is needed.
+
     Args:
         options: Shared schedule options.
         line: Item and customer combination being scheduled.
@@ -268,8 +272,6 @@ def insert_item_price(
             "price_list_rate": flt(period.rate),
             "valid_from": period.valid_from,
             "valid_upto": period.valid_upto,
-            "custom_is_rent_schedule": 1,
-            "custom_utility_property": line.utility_property,
         }
     )
     doc.insert(ignore_permissions=True)
@@ -282,8 +284,9 @@ def delete_existing_schedule(
 ) -> int:
     """Delete the Item Prices previously generated for an item.
 
-    Only rows marked by ``Item Price.custom_is_rent_schedule`` are removed, so
-    manually maintained prices are never deleted.
+    The scope is deliberately narrow - one item, one price list and one
+    customer - which is exactly what a rent schedule creates. Prices belonging
+    to any other item, price list or customer are never touched.
 
     Args:
         item_code: Item the schedule belongs to.
@@ -293,14 +296,7 @@ def delete_existing_schedule(
     Returns:
         Number of Item Price records deleted.
     """
-    if not frappe.db.has_column("Item Price", "custom_is_rent_schedule"):
-        return 0
-
-    filters = {
-        "item_code": item_code,
-        "price_list": price_list,
-        "custom_is_rent_schedule": 1,
-    }
+    filters = {"item_code": item_code, "price_list": price_list}
 
     if customer:
         filters["customer"] = customer
