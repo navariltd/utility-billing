@@ -2,9 +2,22 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 class UtilityBillingSettings(Document):
+    def validate(self):
+        self.validate_deferred_accounts()
+
+    def validate_deferred_accounts(self):
+        """Ensure each company is mapped to a single deferred account."""
+        companies = [
+            row.company for row in self.get("deferred_accounts") or [] if row.company
+        ]
+
+        if len(companies) != len(set(companies)):
+            frappe.throw(_("Each company can only be mapped to one deferred account."))
+
     def on_change(self):
         self.update_tenancy_end_notification()
 

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build --base=/assets/utility_billing/rental-portal/ && yarn copy-html-entry",
     "lint": "oxlint",
+    "check:theme": "node scripts/check-theme.mjs",
     "preview": "vite preview",
     "copy-html-entry": "cp ../utility_billing/public/rental-portal/index.html ../utility_billing/www/rental-portal.html"
   },

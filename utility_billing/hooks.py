@@ -65,6 +65,7 @@ doctype_js = {
 	"Item Price": "utility_billing/overrides/client/item_price.js",
 	"Contract": "utility_billing/overrides/client/contract.js",
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
+	"Sales Invoice": "utility_billing/overrides/client/sales_invoice.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
@@ -181,9 +182,9 @@ utility_demo_master_doctypes = [
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Sales Invoice": "utility_billing.utility_billing.overrides.server.sales_invoice.UtilityBillingSalesInvoice",
+}
 
 # Document Events
 # ---------------
@@ -202,6 +203,7 @@ doc_events = {
 		"before_validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"],
 		"validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.validate"],
 		"on_submit": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"],
+		"on_cancel": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_cancel"],
 	},
 	"Contract": {
 		"before_submit": ["utility_billing.utility_billing.overrides.server.contract.before_submit"],

@@ -2,6 +2,7 @@
 
 import { BaseLayout } from "@/components/layouts/base-layout";
 import { useUser } from "@/contexts/user-context";
+import { hasAnyRole } from "@/lib/portal";
 import {
   useFrappeCreateDoc,
   useFrappeGetCall,
@@ -30,11 +31,10 @@ export default function UsersPage() {
   );
   const { user } = useUser();
 
-  const isSystemAdmin =
-    user?.roles?.some(
-      (role: any) =>
-        role.role === "System Manager" || role.role === "Administrator",
-    ) || false;
+  const isSystemAdmin = hasAnyRole(user?.roles, [
+    "System Manager",
+    "Administrator",
+  ]);
 
   const { data: doctypeData } = useFrappeGetCall(
     "frappe.desk.form.load.getdoctype",
@@ -90,8 +90,6 @@ export default function UsersPage() {
 
   const allFields = [...listFields, ...filterFields, ...standardFilterFields];
   const uniqueFields = [...new Set(allFields)];
-
-  console.log("Unique fields for User doctype:", uniqueFields);
 
   const {
     data: frappeUsers,
@@ -224,7 +222,7 @@ export default function UsersPage() {
         description="Manage your users and their permissions"
       >
         <div className="flex flex-col items-center justify-center h-[400px]">
-          <p className="text-red-500">
+          <p className="text-destructive">
             Error loading users: {(usersError as any)?.message}
           </p>
         </div>

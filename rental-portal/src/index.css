@@ -24,6 +24,13 @@
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-info: var(--info);
+	--color-info-foreground: var(--info-foreground);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
@@ -45,24 +52,34 @@
 :root {
 	--font-inter: "Inter", system-ui, sans-serif;
 	--radius: 0.625rem;
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
+	/* Fallback palette used when no preset is applied ("Portal default
+	   colours"); a hint of blue keeps the neutral surfaces from reading grey. */
+	--background: oklch(0.985 0.002 247.839);
+	--foreground: oklch(0.208 0.042 265.755);
 	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
+	--card-foreground: oklch(0.208 0.042 265.755);
 	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
+	--popover-foreground: oklch(0.208 0.042 265.755);
+	--primary: oklch(0.208 0.042 265.755);
 	--primary-foreground: oklch(0.985 0 0);
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
 	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
+	--muted-foreground: oklch(0.551 0.027 264.364);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
+	/* Semantic states are theme independent: they carry meaning, not branding. */
+	--destructive-foreground: oklch(0.98 0 0);
+	--success: oklch(0.627 0.194 149.214);
+	--success-foreground: oklch(0.982 0.018 155.826);
+	--warning: oklch(0.705 0.155 71.249);
+	--warning-foreground: oklch(0.987 0.022 95.277);
+	--info: oklch(0.546 0.245 262.881);
+	--info-foreground: oklch(0.97 0.014 254.604);
+	--border: oklch(0.929 0.013 255.508);
+	--input: oklch(0.929 0.013 255.508);
+	--ring: oklch(0.704 0.04 256.788);
 	--chart-1: oklch(0.646 0.222 41.116);
 	--chart-2: oklch(0.6 0.118 184.704);
 	--chart-3: oklch(0.398 0.07 227.392);
@@ -79,9 +96,9 @@
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
+	--background: oklch(0.16 0.008 264);
 	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
+	--card: oklch(0.21 0.01 264);
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
@@ -94,6 +111,13 @@
 	--accent: oklch(0.269 0 0);
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.98 0 0);
+	--success: oklch(0.792 0.209 151.711);
+	--success-foreground: oklch(0.266 0.065 152.934);
+	--warning: oklch(0.828 0.189 84.429);
+	--warning-foreground: oklch(0.279 0.077 45.635);
+	--info: oklch(0.707 0.165 254.624);
+	--info-foreground: oklch(0.282 0.091 267.935);
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.556 0 0);
@@ -121,6 +145,10 @@
 		font-family: var(--font-inter);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+		/* Theme gradient written by the theme editor; `fixed` keeps the page and
+		   the sidebar inset aligned on the same gradient. */
+		background-image: var(--background-gradient, none);
+		background-attachment: fixed;
 	}
 }
 
@@ -135,6 +163,179 @@
 .sidebar-none-mode [data-slot="sidebar"] {
 	height: 100vh !important;
 	min-height: 100vh !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme gradients
+   The theme editor writes --sidebar-gradient / --background-gradient /
+   --primary-gradient; these rules consume them. Absent tokens fall back to the
+   flat surface colour, so nothing changes for themes without gradients.
+--------------------------------------------------------------------------- */
+
+[data-slot="sidebar-inner"],
+[data-slot="sidebar"] {
+	background-image: var(--sidebar-gradient, none);
+}
+
+[data-slot="sidebar-inset"] {
+	background-image: var(--background-gradient, none);
+	background-attachment: fixed;
+}
+
+/* Adds the brand gradient over an element that already has a primary
+   background; falls back to the flat primary colour. */
+.bg-brand-gradient {
+	background-image: var(--primary-gradient, none);
+}
+
+/* ---------------------------------------------------------------------------
+   Depth, hover and motion
+   Theme aware touches: shadows are mixed from --foreground so they read
+   correctly in light and dark, and every animation is switched off for
+   visitors who prefer reduced motion.
+--------------------------------------------------------------------------- */
+
+/* Cards sit above the page with a soft elevation instead of a bare border. */
+[data-slot="card"] {
+	box-shadow:
+		0 1px 2px -1px color-mix(in oklab, var(--foreground) 12%, transparent),
+		0 1px 3px color-mix(in oklab, var(--foreground) 7%, transparent);
+}
+
+/* On dark themes a black shadow reads as elevation; a light one would glow. */
+.dark [data-slot="card"] {
+	box-shadow:
+		0 1px 2px -1px rgb(0 0 0 / 0.45),
+		0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+/* Clickable cards (property grid and list) lift towards the pointer. */
+a > [data-slot="card"] {
+	transition:
+		box-shadow 0.22s ease,
+		transform 0.22s ease,
+		border-color 0.22s ease;
+}
+
+a:hover > [data-slot="card"] {
+	transform: translateY(-2px);
+	border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+	box-shadow: 0 14px 34px -20px
+		color-mix(in oklab, var(--foreground) 65%, transparent);
+}
+
+.dark a:hover > [data-slot="card"] {
+	box-shadow: 0 14px 34px -18px rgb(0 0 0 / 0.75);
+}
+
+/* The main panel reads as a raised surface in the inset layout. */
+[data-slot="sidebar-wrapper"]:has([data-variant="inset"]) [data-slot="sidebar-inset"] {
+	box-shadow:
+		0 1px 2px -1px color-mix(in oklab, var(--foreground) 10%, transparent),
+		0 18px 44px -34px color-mix(in oklab, var(--foreground) 70%, transparent);
+}
+
+.dark
+	[data-slot="sidebar-wrapper"]:has([data-variant="inset"])
+	[data-slot="sidebar-inset"] {
+	box-shadow:
+		0 1px 2px -1px rgb(0 0 0 / 0.4),
+		0 18px 44px -30px rgb(0 0 0 / 0.7);
+}
+
+/* Sidebar: hairline edge plus smooth navigation feedback. */
+[data-slot="sidebar-inner"] {
+	box-shadow: 0 0 0 1px
+		color-mix(in oklab, var(--sidebar-border) 70%, transparent);
+}
+
+[data-slot="sidebar-menu-button"],
+[data-slot="sidebar-menu-sub-button"] {
+	position: relative;
+	transition:
+		background-color 0.18s ease,
+		color 0.18s ease,
+		transform 0.18s ease,
+		box-shadow 0.18s ease;
+}
+
+[data-slot="sidebar"][data-side="left"] [data-slot="sidebar-menu-button"]:hover,
+[data-slot="sidebar"][data-side="left"] [data-slot="sidebar-menu-sub-button"]:hover {
+	transform: translateX(2px);
+}
+
+[data-slot="sidebar"][data-side="right"] [data-slot="sidebar-menu-button"]:hover,
+[data-slot="sidebar"][data-side="right"] [data-slot="sidebar-menu-sub-button"]:hover {
+	transform: translateX(-2px);
+}
+
+/* The active navigation row gets an accent indicator that grows in. The
+   indicator uses --sidebar-ring, so it follows the theme (gold on Estate
+   Navy) without turning every hover into a gold row. */
+[data-slot="sidebar-menu-button"][data-active="true"]::before,
+[data-slot="sidebar-menu-sub-button"][data-active="true"]::before {
+	content: "";
+	position: absolute;
+	top: 22%;
+	bottom: 22%;
+	left: 0;
+	width: 3px;
+	border-radius: 999px;
+	background-color: var(--sidebar-ring);
+	animation: nav-indicator 0.22s ease-out both;
+}
+
+[data-slot="sidebar"][data-side="right"] [data-slot="sidebar-menu-button"][data-active="true"]::before,
+[data-slot="sidebar"][data-side="right"] [data-slot="sidebar-menu-sub-button"][data-active="true"]::before {
+	left: auto;
+	right: 0;
+}
+
+/* No room for the indicator when the sidebar is collapsed to icons. */
+[data-slot="sidebar"][data-collapsible="icon"] [data-slot="sidebar-menu-button"]::before,
+[data-slot="sidebar"][data-collapsible="icon"] [data-slot="sidebar-menu-sub-button"]::before {
+	display: none;
+}
+
+@keyframes nav-indicator {
+	from {
+		transform: scaleY(0.2);
+		opacity: 0;
+	}
+	to {
+		transform: scaleY(1);
+		opacity: 1;
+	}
+}
+
+/* Page content eases in on navigation. */
+.page-enter {
+	animation: page-enter 0.3s ease-out both;
+}
+
+@keyframes page-enter {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.page-enter,
+	[data-slot="sidebar-menu-button"][data-active="true"]::before,
+	[data-slot="sidebar-menu-sub-button"][data-active="true"]::before {
+		animation: none;
+	}
+
+	a:hover > [data-slot="card"],
+	[data-slot="sidebar-menu-button"]:hover,
+	[data-slot="sidebar-menu-sub-button"]:hover {
+		transform: none;
+	}
 }
 
 /* Fix for right-side inset variant support */

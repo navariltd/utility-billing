@@ -19,6 +19,7 @@
   "section_break_jcig",
   "asset_naming_series",
   "item",
+  "service_item",
   "column_break_sakg",
   "asset_category",
   "purchase_date",
@@ -206,6 +207,15 @@
    "fieldtype": "Link",
    "label": "Item",
    "link_filters": "[[\"Item\",\"is_fixed_asset\",\"=\",1]]",
+   "options": "Item"
+  },
+  {
+   "depends_on": "eval: doc.is_group == 0",
+   "description": "Service item used for rent billing. Created automatically when auto creation is enabled in Utility Billing Settings.",
+   "fieldname": "service_item",
+   "fieldtype": "Link",
+   "label": "Service Item",
+   "link_filters": "[[\"Item\",\"is_sales_item\",\"=\",1]]",
    "options": "Item"
   },
   {

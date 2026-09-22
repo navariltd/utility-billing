@@ -172,6 +172,44 @@ graph TD
 - Optional automatic billing setup for rent or utility usage
 - Escalation rules applied where needed
 
+### 5️⃣ Property Items Are Added Automatically
+
+Adding a row to **Requested Properties** brings in that property's rent item
+for you — there is no need to add it by hand:
+
+- Every requested property's **service item** (named after the property) is
+  fetched and appended to the **Items** table.
+- Removing a property removes its item row, so the two tables stay in step.
+- Re-adding a property does not create a duplicate row.
+- Items you add by hand are left untouched; only property rows are managed.
+- The item carries its name, UOM, rate and description. The rate comes from
+  the document's **Price List** when one is set, otherwise the item's standard
+  rate.
+- Changing the **Price List** re-resolves the property item rates.
+
+The **Price List** defaults from the customer (or the customer group) when the
+document does not already have one, so rates resolve without extra steps.
+
+### 6️⃣ Define Item Prices (Item Price Billing)
+
+When **Utility Billing Settings → Rent Billing Approach** is set to **Item
+Price**, use **Define → Item Prices** on the service request to generate the
+rent rates for the whole lease instead of an Auto Repeat.
+
+- Select the property and enter the **Base Rate** per property.
+- Pick the lease period and a **Billing Adjustment Rule** (for example 5% per
+  year) to auto-calculate the rates for every period.
+- Add **Manual Rates** to override a generated rate from a specific date.
+- **Preview** expands the periods, and **Create Item Prices** writes one
+  **Item Price** per property, period and customer using the property's
+  service item.
+- Re-running the action skips periods that are already priced, so it never
+  duplicates rates.
+
+The generated schedule is stored on the read-only **Item Price Schedule**
+table of the request. See
+[Rent Billing by Item Price](./Rent-Billing-by-Item-Price.md) for details.
+
 ## 🚀 Quick Navigation
 
 [![Home](https://img.shields.io/badge/Home-DEF4FF?style=for-the-badge&logo=github&logoColor=000)](https://github.com/navariltd/utility-billing)

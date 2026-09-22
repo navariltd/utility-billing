@@ -10,6 +10,7 @@ frappe.ui.form.on("Utility Service Request", {
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
+			load_item_price_summary(frm);
 			frappe.call({
 				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.update_request_status",
 				args: {
@@ -186,6 +187,16 @@ frappe.ui.form.on("Utility Service Request", {
 		}
 	},
 
+	customer: function (frm) {
+		default_price_list_from_customer(frm);
+	},
+
+	party_name: function (frm) {
+		if (frm.doc.service_request_from === "Customer") {
+			default_price_list_from_customer(frm);
+		}
+	},
+
 	property: function (frm) {
 		if (frm.doc.property) {
 			frappe.call({
@@ -254,7 +265,7 @@ frappe.ui.form.on("Utility Service Request", {
 						frm.set_value("contract_terms", r.message.contract_terms);
 						frm.set_value(
 							"requires_fulfilment",
-							contract_template.requires_fulfilment
+							contract_template.requires_fulfilment,
 						);
 
 						if (frm.doc.requires_fulfilment) {
@@ -273,7 +284,54 @@ frappe.ui.form.on("Utility Service Request", {
 	onload: function (frm) {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 	},
+
+	price_list: function (frm) {
+		refresh_property_item_rates(frm);
+	},
 });
+
+/**
+ * Re-resolve the property item rates when the price list changes.
+ *
+ * Without a price list the items keep their standard rate, so this only runs
+ * once a price list is set.
+ */
+function refresh_property_item_rates(frm) {
+	if (!frm.doc.price_list) return;
+
+	const properties = (frm.doc.requested_properties || [])
+		.map((row) => row.utility_property)
+		.filter(Boolean);
+
+	if (!properties.length) return;
+
+	frappe.call({
+		method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_service_items_for_properties",
+		args: { properties, price_list: frm.doc.price_list },
+		callback: function (response) {
+			if (!response.message) return;
+
+			let changed = false;
+			response.message.forEach((details) => {
+				const row = (frm.doc.items || []).find(
+					(item) => item.utility_property === details.utility_property,
+				);
+				if (!row || !details.rate || flt(row.rate) === flt(details.rate)) return;
+
+				frappe.model.set_value(row.doctype, row.name, "rate", details.rate);
+				frappe.model.set_value(
+					row.doctype,
+					row.name,
+					"amount",
+					flt(details.rate) * flt(row.qty || 1),
+				);
+				changed = true;
+			});
+
+			if (changed) frm.refresh_field("items");
+		},
+	});
+}
 
 frappe.ui.form.on("Utility Service Request Item", {
 	form_render: function (frm, cdt, cdn) {
@@ -319,15 +377,165 @@ frappe.ui.form.on("Contract Utility Property Item", {
 				cdt,
 				cdn,
 				"contract_length_months",
-				frm.doc.contract_length_months
+				frm.doc.contract_length_months,
 			);
 		}
 	},
+
+	utility_property: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		set_property_row_item(frm, row);
+		sync_items_from_properties(frm);
+	},
+
+	requested_properties_remove: function (frm) {
+		sync_items_from_properties(frm);
+	},
+
 	start_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "start_date"),
 	end_date: (frm, cdt, cdn) => update_child_contract_fields(frm, cdt, cdn, "end_date"),
 	contract_length_months: (frm, cdt, cdn) =>
 		update_child_contract_fields(frm, cdt, cdn, "contract_length_months"),
 });
+
+/**
+ * Fill the read-only item of a requested property row.
+ *
+ * The item is the property's rent service item, fetched from the server so it
+ * is created on demand when auto creation is enabled.
+ */
+function set_property_row_item(frm, row) {
+	if (!row.utility_property) {
+		frappe.model.set_value(row.doctype, row.name, "item_code", null);
+		return;
+	}
+
+	frappe.call({
+		method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_service_items_for_properties",
+		args: { properties: [row.utility_property] },
+		callback: function (response) {
+			const item_code = response.message?.[0]?.item_code;
+			if (item_code) {
+				frappe.model.set_value(row.doctype, row.name, "item_code", item_code);
+			}
+		},
+	});
+}
+
+/**
+ * Default the price list when the document has none.
+ *
+ * Resolution order matches the server: the customer's default price list, then
+ * the Default Price List in Utility Billing Settings. An explicitly chosen
+ * price list is never overwritten.
+ */
+function default_price_list_from_customer(frm) {
+	if (frm.doc.price_list) return;
+
+	const customer = frm.doc.customer || frm.doc.party_name;
+
+	if (customer && frappe.db.exists("Customer", customer)) {
+		frappe.db.get_value("Customer", customer, "default_price_list").then((response) => {
+			const price_list = response?.message?.default_price_list;
+			if (price_list) {
+				frm.set_value("price_list", price_list);
+				return;
+			}
+
+			set_price_list_from_settings(frm);
+		});
+		return;
+	}
+
+	set_price_list_from_settings(frm);
+}
+
+/**
+ * Fall back to the Default Price List configured in Utility Billing Settings.
+ */
+function set_price_list_from_settings(frm) {
+	if (frm.doc.price_list) return;
+
+	frappe.db.get_doc(settingsDoctypeName, settingsDoctypeName).then((settings) => {
+		if (settings?.default_price_list) {
+			frm.set_value("price_list", settings.default_price_list);
+		}
+	});
+}
+
+/**
+ * Ensure every requested property has its service item in the items table.
+ *
+ * The item rows are keyed by property, so removing a property drops its row
+ * and re-adding it does not duplicate. Rows are only ever added for
+ * properties, so hand-added items are left untouched.
+ */
+function sync_items_from_properties(frm) {
+	const properties = (frm.doc.requested_properties || [])
+		.map((row) => row.utility_property)
+		.filter(Boolean);
+
+	drop_orphan_property_items(frm, properties);
+
+	if (!properties.length) return;
+
+	frappe.call({
+		method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_service_items_for_properties",
+		args: { properties, price_list: frm.doc.price_list },
+		callback: function (response) {
+			if (!response.message) return;
+
+			let added = false;
+			response.message.forEach((details) => {
+				if (add_property_item_row(frm, details)) added = true;
+			});
+
+			if (added) frm.refresh_field("items");
+		},
+	});
+}
+
+/**
+ * Append an item row for a property unless it is already present.
+ *
+ * Returns whether a row was added.
+ */
+function add_property_item_row(frm, details) {
+	const exists = (frm.doc.items || []).some(
+		(row) => row.utility_property === details.utility_property,
+	);
+	if (exists) return false;
+
+	const row = frm.add_child("items");
+	const allowed = Object.keys(frm.fields_dict.items.grid.docfields).length
+		? frm.fields_dict.items.grid.docfields.map((field) => field.fieldname)
+		: null;
+
+	Object.entries(details).forEach(([field, value]) => {
+		// Only set fields the child table actually has.
+		if (allowed && !allowed.includes(field)) return;
+		row[field] = value;
+	});
+
+	if (!row.qty) row.qty = 1;
+	if (!row.delivery_date) row.delivery_date = frm.doc.delivery_date || frappe.datetime.nowdate();
+
+	return true;
+}
+
+/**
+ * Remove item rows whose property is no longer requested.
+ */
+function drop_orphan_property_items(frm, properties) {
+	const orphans = (frm.doc.items || []).filter(
+		(row) => row.utility_property && !properties.includes(row.utility_property),
+	);
+
+	if (!orphans.length) return;
+
+	orphans.forEach((row) => frappe.model.clear_doc(row.doctype, row.name));
+	frm.refresh_field("items");
+}
 
 function set_dynamic_field_label(frm) {
 	if (frm.doc.service_request_from == "Customer") {
@@ -646,7 +854,7 @@ function prepare_items_data(frm) {
 		};
 
 		return Object.fromEntries(
-			Object.entries(fullData).filter(([key]) => allowedFields.includes(key))
+			Object.entries(fullData).filter(([key]) => allowedFields.includes(key)),
 		);
 	});
 }
@@ -810,7 +1018,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				let property_line = null;
 				if (selected_value) {
 					property_line = (frm.doc.requested_properties || []).find(
-						(prop) => prop.utility_property === selected_value
+						(prop) => prop.utility_property === selected_value,
 					);
 				}
 
@@ -867,7 +1075,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 				if (isChecked && dialog.get_value("utility_property")) {
 					const selectedProperty = dialog.get_value("utility_property");
 					const property_line = (frm.doc.requested_properties || []).find(
-						(prop) => prop.utility_property === selectedProperty
+						(prop) => prop.utility_property === selectedProperty,
 					);
 
 					if (property_line) {
@@ -920,7 +1128,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 					dialog.$wrapper.removeClass("frappe-modal-hidden");
 				};
 			},
-		}
+		},
 	);
 
 	const dialog = new frappe.ui.Dialog({
@@ -962,7 +1170,9 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 
 			if (values.end_date && new Date(values.end_date) < new Date(values.start_date)) {
 				frappe.throw(
-					__("Recurring Billing End Date cannot be before Recurring Billing Start Date.")
+					__(
+						"Recurring Billing End Date cannot be before Recurring Billing Start Date.",
+					),
 				);
 				return;
 			}
@@ -1013,19 +1223,19 @@ async function addActionButtons(frm) {
 						},
 					});
 				},
-				__("Create")
+				__("Create"),
 			);
 		} else {
 			const contract = await frappe.db.get_value(
 				"Contract",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
-				"name"
+				"name",
 			);
 
 			const deposit = await frappe.db.get_value(
 				"Sales Order",
 				{ utility_service_request: frm.doc.name, docstatus: 1 },
-				"name"
+				"name",
 			);
 
 			const contractName = contract?.message?.name || null;
@@ -1034,12 +1244,22 @@ async function addActionButtons(frm) {
 				!contractName &&
 				(!settings?.require_deposit_before_contract_creation || depositName);
 
+			if (settings?.rent_billing_approach === "Item Price") {
+				frm.add_custom_button(
+					__("Item Prices"),
+					function () {
+						showItemPriceScheduleModal(frm);
+					},
+					__("Define"),
+				);
+			}
+
 			frm.add_custom_button(
 				__("Sales Order / Deposit"),
 				function () {
 					showSalesDocumentModal(frm, "Sales Order", enableExtraRows);
 				},
-				__("Create")
+				__("Create"),
 			);
 
 			if (canCreateContract) {
@@ -1059,7 +1279,7 @@ async function addActionButtons(frm) {
 							},
 						});
 					},
-					__("Create")
+					__("Create"),
 				);
 			}
 			if (
@@ -1071,7 +1291,7 @@ async function addActionButtons(frm) {
 					function () {
 						showSalesDocumentModal(frm, "Sales Invoice", enableExtraRows);
 					},
-					__("Create")
+					__("Create"),
 				);
 			}
 		}
@@ -1093,7 +1313,7 @@ async function addActionButtons(frm) {
 					},
 				});
 			},
-			__("Create")
+			__("Create"),
 		);
 	} else if (currentStatus === "Site Survey Completed" && settings?.enable_site_survey == 1) {
 		frm.add_custom_button(
@@ -1149,7 +1369,7 @@ async function addActionButtons(frm) {
 
 				dialog.show();
 			},
-			__("Create")
+			__("Create"),
 		);
 	}
 }
@@ -1161,4 +1381,952 @@ function handle_response(response, actionLabel, frm) {
 	} else {
 		frappe.show_alert({ message: `Error while creating ${actionLabel}!`, indicator: "red" });
 	}
+}
+
+/**
+ * Child table columns of the generated rate table.
+ *
+ * ``base_rate`` is the only editable column: it is the starting rate the user
+ * enters, while the remaining columns are filled in by the preview.
+ */
+/**
+ * Child table columns of the generated rate table.
+ *
+ * Only From, To and Rate are shown: the starting rate, increment count,
+ * property and item are constant for the selected property and already
+ * visible in the fields above. ``base_rate`` and ``rate`` stay editable so the
+ * generated schedule can be corrected by hand; dates stay read-only because
+ * they define the periods.
+ */
+function get_item_price_schedule_fields() {
+	return [
+		{
+			fieldname: "valid_from",
+			fieldtype: "Date",
+			label: __("From"),
+			in_list_view: 1,
+			read_only: 1,
+		},
+		{
+			fieldname: "valid_upto",
+			fieldtype: "Date",
+			label: __("To"),
+			in_list_view: 1,
+			read_only: 1,
+		},
+		{ fieldname: "rate", fieldtype: "Currency", label: __("Rate"), in_list_view: 1, reqd: 1 },
+		{
+			fieldname: "base_rate",
+			fieldtype: "Currency",
+			label: __("Starting Rate"),
+			read_only: 1,
+		},
+		{ fieldname: "increment_count", fieldtype: "Int", label: __("Increments"), read_only: 1 },
+		{
+			fieldname: "property",
+			fieldtype: "Link",
+			options: "Utility Property",
+			label: __("Property"),
+			read_only: 1,
+		},
+		{
+			fieldname: "item_code",
+			fieldtype: "Link",
+			options: "Item",
+			label: __("Item"),
+			read_only: 1,
+		},
+	];
+}
+
+/**
+ * Manual increment settings entered in the modal.
+ *
+ * Blank values are omitted so the Billing Adjustment Rule keeps providing them.
+ */
+function get_increment_values(dialog) {
+	const fields = [
+		"increment_interval_months",
+		"increment_percentage",
+		"effective_after_months",
+		"adjustment_basis",
+	];
+	const increment = {};
+
+	const mapped = {
+		increment_interval_months: "interval_months",
+		increment_percentage: "percentage",
+		effective_after_months: "effective_after_months",
+		adjustment_basis: "basis",
+	};
+
+	fields.forEach((field) => {
+		const value = dialog.get_value(field);
+		if (value !== undefined && value !== null && value !== "") {
+			increment[mapped[field]] = value;
+		}
+	});
+
+	return increment;
+}
+
+/**
+ * Copy the increment settings of a Billing Adjustment Rule into the modal.
+ *
+ * The rule acts as the starting point; every field stays editable afterwards
+ * and the schedule is recalculated once the values are applied.
+ */
+function apply_rule_defaults(dialog, rule_name) {
+	if (!rule_name) return;
+
+	frappe.db.get_doc("Billing Adjustment Rule", rule_name).then((rule) => {
+		dialog._suppress_auto_preview = true;
+
+		dialog.set_value("frequency", rule.frequency || "Monthly");
+		dialog.set_value("increment_interval_months", rule.increment_interval_months);
+		dialog.set_value("increment_percentage", rule.increment_percentage);
+		dialog.set_value("effective_after_months", rule.effective_after_months);
+		dialog.set_value("adjustment_basis", rule.adjustment_basis || "Original Amount");
+
+		dialog._suppress_auto_preview = false;
+		schedule_auto_preview(dialog, dialog._frm);
+	});
+}
+
+/**
+ * Requested properties of the service request that can be priced.
+ */
+function get_requested_properties(frm) {
+	return (frm.doc.requested_properties || [])
+		.map((property) => property.utility_property)
+		.filter(Boolean);
+}
+
+/**
+ * The rate row of the property currently selected in the modal.
+ *
+ * Used to read the service item the schedule belongs to.
+ */
+function get_property_row(dialog, property) {
+	return (dialog.get_value("rates_table") || []).find((row) => row.property === property);
+}
+
+/**
+ * Starting rates entered so far, keyed by property.
+ *
+ * Kept outside the schedule table because that table only holds generated
+ * periods; a synthetic "rate holder" row would be indistinguishable from a
+ * real period.
+ */
+function remember_base_rate(dialog, property, rate) {
+	dialog._base_rates = dialog._base_rates || {};
+	dialog._base_rates[property] = rate;
+}
+
+/**
+ * The starting rate recorded for a property, or ``null`` when unset.
+ */
+function get_base_rate(dialog, property) {
+	const rate = (dialog._base_rates || {})[property];
+
+	return rate === undefined ? null : rate;
+}
+
+/**
+ * Record the starting rate entered for the selected property.
+ */
+function set_property_rate(dialog, property, rate) {
+	remember_base_rate(dialog, property, rate);
+}
+
+/**
+ * Replace the rows of the schedule table.
+ *
+ * Frappe's grid reads its rows from ``df.data`` when the table lives in a
+ * dialog (``get_data()`` falls back to it because there is no ``frm``), so the
+ * rows are written there and the grid refreshed.
+ *
+ * Each row also needs the ``name`` and ``idx`` bookkeeping fields the grid
+ * uses to key its rows; without them the rows are filtered out and the table
+ * renders empty even though the data is present.
+ */
+function set_schedule_table_rows(dialog, rows) {
+	const field = dialog.get_field("rates_table");
+	if (!field) return;
+
+	const to_stored_date = (value) => {
+		if (!value) return value;
+		if (value instanceof Date) return frappe.datetime.obj_to_str(value).slice(0, 10);
+
+		return String(value).slice(0, 10);
+	};
+
+	const normalised = rows.map((row, index) => ({
+		...row,
+		name: row.name || frappe.utils.get_random(10),
+		idx: index + 1,
+		doctype: "Rates",
+		valid_from: to_stored_date(row.valid_from),
+		valid_upto: to_stored_date(row.valid_upto),
+	}));
+
+	field.df.data = normalised;
+	dialog.set_value("rates_table", normalised);
+	field.grid.refresh();
+}
+
+/**
+ * Drop the schedule rows of a property, keeping other properties' rows.
+ */
+function clear_property_schedule(dialog, property) {
+	const others = (dialog.get_value("rates_table") || []).filter(
+		(candidate) => candidate.property !== property,
+	);
+
+	dialog._suppress_auto_preview = true;
+	set_schedule_table_rows(dialog, others);
+	dialog._suppress_auto_preview = false;
+	delete (dialog._cached_rates || {})[property];
+}
+
+/**
+ * Show the rates generated for the selected property only.
+ *
+ * Only real generated periods are written to the table, so nothing in it can
+ * be mistaken for a schedule row. The periods are cached per property so
+ * switching back and forth restores the last edited schedule.
+ */
+function show_property_schedule(dialog, property, periods) {
+	const row = get_property_row(dialog, property);
+	const item_code = row?.item_code || null;
+	const base_rate = get_base_rate(dialog, property);
+
+	dialog._cached_rates = dialog._cached_rates || {};
+	dialog._cached_rates[property] = periods;
+	remember_generated_rates(dialog, property, periods);
+
+	// Keep only rows of earlier properties so a different property's schedule
+	// is never shown alongside this one.
+	const others = (dialog.get_value("rates_table") || []).filter(
+		(candidate) => candidate.property !== property && candidate.valid_from,
+	);
+
+	const rows = [
+		...others,
+		...periods.map((period) => ({
+			property,
+			item_code,
+			base_rate,
+			increment_count: period.increment_count,
+			valid_from: period.valid_from,
+			valid_upto: period.valid_upto,
+			rate: period.rate,
+		})),
+	];
+
+	dialog._suppress_auto_preview = true;
+	set_schedule_table_rows(dialog, rows);
+	dialog._suppress_auto_preview = false;
+}
+
+/**
+ * Switch the modal to a property and load its saved starting rate.
+ *
+ * Any rates previously generated for the property are restored so switching
+ * back and forth never loses work or manual edits.
+ */
+function select_property(dialog, frm, property) {
+	if (!property) return;
+
+	const previous = dialog.get_value("_selected_property");
+	if (previous && previous !== property) {
+		set_property_rate(dialog, previous, dialog.get_value("starting_rate"));
+	}
+
+	dialog._suppress_auto_preview = true;
+	dialog.set_value("starting_rate", get_base_rate(dialog, property));
+	set_schedule_table_rows(dialog, []);
+	dialog._suppress_auto_preview = false;
+
+	dialog._selected_property = property;
+
+	const cached = dialog._cached_rates?.[property];
+	if (cached) {
+		show_property_schedule(dialog, property, cached);
+		return;
+	}
+
+	schedule_auto_preview(dialog, frm);
+}
+
+/**
+ * Schedule an automatic preview of the selected property.
+ *
+ * Field changes fire in bursts (a rule fills six fields at once), so the call
+ * is debounced and any in-flight request is discarded when superseded.
+ */
+function schedule_auto_preview(dialog, frm) {
+	clearTimeout(dialog._preview_timer);
+	dialog._preview_timer = setTimeout(() => {
+		if (dialog._suppress_auto_preview) return;
+		preview_item_price_schedule(dialog, frm, { silent: true });
+	}, 350);
+}
+
+/**
+ * Keep the per-property starting rate in sync with the edited table.
+ *
+ * When a user retypes the first period's rate, that becomes the new starting
+ * rate for the property so the whole schedule can be regenerated from it.
+ */
+function sync_rates_from_table(dialog) {
+	const property = dialog.get_value("utility_property");
+	if (!property) return;
+
+	const first_period = (dialog.get_value("rates_table") || [])
+		.filter((entry) => entry.property === property && entry.valid_from)
+		.sort((a, b) => (a.valid_from < b.valid_from ? -1 : 1))[0];
+
+	if (first_period && first_period.rate !== undefined && first_period.rate !== null) {
+		dialog._suppress_auto_preview = true;
+		dialog.set_value("starting_rate", first_period.rate);
+		dialog._suppress_auto_preview = false;
+	}
+}
+
+/**
+ * Report the state of the preview above the schedule table.
+ *
+ * The message is rendered as plain text so formatted values such as
+ * "Sh 6,000.00" can never leak markup into the field.
+ */
+function set_preview_status(dialog, message, indicator = "muted") {
+	const field = dialog.get_field("preview_status");
+	if (!field) return;
+
+	const line = $(`<div class="small"></div>`)
+		.addClass(`text-${indicator}`)
+		.css("padding-top", "6px")
+		.text(message);
+
+	field.$wrapper.empty().append(line);
+}
+
+/**
+ * Rates the user changed in the schedule table.
+ *
+ * Every period whose rate differs from what the backend generated is sent
+ * back as an override, so edits survive a recalculation triggered by another
+ * field change. The table is the only place rates are edited.
+ */
+function get_edited_rate_rows(dialog, property) {
+	const generated = (dialog._generated_rates || {})[property] || {};
+	const edited = [];
+
+	(dialog.get_value("rates_table") || [])
+		.filter((row) => row.property === property && row.valid_from)
+		.forEach((row) => {
+			const original = generated[row.valid_from];
+			if (original === undefined || flt(row.rate) === flt(original)) return;
+
+			edited.push({ from_date: row.valid_from, rate: row.rate });
+		});
+
+	return edited;
+}
+
+/**
+ * Record the rates the backend generated so manual edits can be detected.
+ */
+function remember_generated_rates(dialog, property, periods) {
+	dialog._generated_rates = dialog._generated_rates || {};
+	dialog._generated_rates[property] = Object.fromEntries(
+		periods.map((period) => [period.valid_from, flt(period.rate)]),
+	);
+}
+
+/**
+ * Show how many properties still need prices.
+ */
+function report_progress(dialog, properties) {
+	const done = Object.keys(dialog._created_properties || {});
+	const pending = properties.filter((name) => !done.includes(name));
+
+	if (!done.length) return;
+
+	frappe.show_alert({
+		message: __("{0} of {1} properties priced. {2} remaining.", [
+			done.length,
+			properties.length,
+			pending.length,
+		]),
+		indicator: pending.length ? "blue" : "green",
+	});
+}
+
+/**
+ * Load the Item Prices created for this request into the HTML summary field.
+ *
+ * The Item Prices are the source of truth for the schedule, so the field is
+ * rendered from them rather than from a stored copy. Rates are editable; the
+ * edits are pushed back only when the Update Prices button is clicked.
+ */
+function load_item_price_summary(frm) {
+	const field = frm.get_field("item_price_summary");
+	if (!field || frm.is_new()) return;
+
+	field.$wrapper.html("<div class='text-muted'>Loading Item Prices...</div>");
+
+	frappe.call({
+		method: "utility_billing.utility_billing.utils.item_price_actions.get_item_price_summary",
+		args: { docname: frm.doc.name },
+		callback: function (response) {
+			if (!response.message) return;
+
+			field.$wrapper.html(response.message.html);
+			bind_item_price_summary_editor(frm, field);
+		},
+	});
+}
+
+/**
+ * Enable editing of the rates in the loaded summary.
+ *
+ * The summary is server-rendered HTML, so the handlers are bound to the wrapper
+ * rather than to the markup itself. The Update Prices button stays disabled
+ * until a rate actually differs from its stored value.
+ *
+ * @param {object} frm - The Utility Service Request form.
+ * @param {object} field - Control holding the rendered summary HTML.
+ */
+function bind_item_price_summary_editor(frm, field) {
+	const $wrapper = field.$wrapper;
+	const $button = $wrapper.find(".uips-update-btn");
+	if (!$button.length) return;
+
+	const refresh_dirty_state = () => refresh_summary_dirty_state($wrapper);
+
+	$wrapper.on("input", ".uips-rate", function () {
+		$(this).toggleClass(
+			"changed",
+			flt($(this).val()) !== flt($(this).attr("data-original")),
+		);
+		refresh_dirty_state();
+	});
+
+	$button.on("click", () => apply_item_price_rate_edits(frm, $wrapper, $button));
+}
+
+/**
+ * Update the enabled state and hint text of the Update Prices button.
+ *
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ */
+function refresh_summary_dirty_state($wrapper) {
+	const edits = collect_item_price_rate_edits($wrapper);
+	const $button = $wrapper.find(".uips-update-btn");
+	const $dirty = $wrapper.find(".uips-dirty");
+
+	$button.prop("disabled", !edits.length);
+	$dirty.text(edits.length ? __("{0} rate(s) changed", [edits.length]) : "");
+}
+
+/**
+ * Collect the rates that differ from their stored value.
+ *
+ * Rows the server would reject are still sent so the outcome is reported once,
+ * rather than silently dropped in the browser.
+ *
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ * @returns {Array} Rows of `{ name, price_list_rate }`.
+ */
+function collect_item_price_rate_edits($wrapper) {
+	const edits = [];
+
+	$wrapper.find(".uips-rate").each(function () {
+		const $input = $(this);
+		const value = flt($input.val());
+
+		if (value !== flt($input.attr("data-original"))) {
+			edits.push({
+				name: $input.attr("data-item-price"),
+				price_list_rate: value,
+			});
+		}
+	});
+
+	return edits;
+}
+
+/**
+ * Push the edited rates to the Item Price records.
+ *
+ * @param {object} frm - The Utility Service Request form.
+ * @param {jQuery} $wrapper - Wrapper holding the rendered summary.
+ * @param {jQuery} $button - The Update Prices button.
+ */
+function apply_item_price_rate_edits(frm, $wrapper, $button) {
+	const edits = collect_item_price_rate_edits($wrapper);
+	if (!edits.length) return;
+
+	frappe.confirm(
+		__("Update {0} Item Price rate(s)?", [edits.length]),
+		function () {
+			$button.prop("disabled", true);
+
+			frappe.call({
+				method: "utility_billing.utility_billing.utils.item_price_actions.update_item_price_rates",
+				args: { docname: frm.doc.name, rates: edits },
+				freeze: true,
+				callback: function (response) {
+					const result = response.message;
+					if (!result) return;
+
+					show_item_price_update_result(result);
+					load_item_price_summary(frm);
+				},
+			});
+		},
+		refresh_summary_dirty_state($wrapper),
+	);
+}
+
+/**
+ * Report the outcome of a rate update, including rows that were skipped.
+ *
+ * @param {object} result - Counts returned by `update_item_price_rates`.
+ */
+function show_item_price_update_result(result) {
+	const messages = [__("{0} rate(s) updated.", [result.updated])];
+
+	if (result.unchanged) {
+		messages.push(__("{0} unchanged.", [result.unchanged]));
+	}
+	if (result.rejected) {
+		messages.push(
+			__("{0} row(s) skipped as they no longer belong to this request.", [
+				result.rejected,
+			])
+		);
+	}
+
+	frappe.show_alert({ message: messages.join(" "), indicator: "green" });
+}
+
+/**
+ * Widen the dialog so the schedule tables can use several columns.
+ *
+ * A fixed width is used instead of the stock "large" size because the modal
+ * shows two tables and needs the extra horizontal room to keep the height
+ * down.
+ */
+function make_dialog_wide(dialog, width = "92vw") {
+	dialog.$wrapper.find(".modal-dialog").css({ "max-width": width, width: width });
+}
+
+function showItemPriceScheduleModal(frm) {
+	const properties = get_requested_properties(frm);
+
+	if (!properties.length) {
+		frappe.msgprint(__("Please add at least one property to define item prices."));
+		return;
+	}
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Define Item Prices"),
+		size: "extra-large",
+		fields: [
+			{
+				fieldname: "utility_property",
+				fieldtype: "Link",
+				options: "Utility Property",
+				label: __("Property"),
+				reqd: 1,
+				get_query: () => ({ filters: { name: ["in", properties] } }),
+				change: function () {
+					select_property(dialog, frm, this.get_value());
+				},
+			},
+			{
+				fieldname: "starting_rate",
+				fieldtype: "Currency",
+				label: __("Starting Rate"),
+				description: __("Rent for the first period."),
+				change: function () {
+					const property = dialog.get_value("utility_property");
+					if (property) {
+						set_property_rate(dialog, property, this.get_value());
+						schedule_auto_preview(dialog, frm);
+					}
+				},
+			},
+			{
+				fieldname: "column_break_property",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "customer",
+				fieldtype: "Link",
+				options: "Customer",
+				label: __("Customer"),
+				default: frm.doc.customer,
+				description: __("Blank prices for all customers."),
+			},
+			{
+				fieldname: "price_list",
+				fieldtype: "Link",
+				options: "Price List",
+				label: __("Price List"),
+				default: frm.doc.price_list,
+				reqd: 1,
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "column_break_period",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "start_date",
+				fieldtype: "Date",
+				label: __("Lease Start"),
+				default: frm.doc.start_date || frappe.datetime.get_today(),
+				reqd: 1,
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "end_date",
+				fieldtype: "Date",
+				label: __("Lease End"),
+				default: frm.doc.end_date,
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "increment_section",
+				fieldtype: "Section Break",
+				label: __("Increments"),
+				description: __(
+					"Pick a Billing Adjustment Rule to fill these in, or set them manually. Rates recalculate automatically.",
+				),
+			},
+			{
+				fieldname: "adjustment_rule",
+				fieldtype: "Link",
+				options: "Billing Adjustment Rule",
+				label: __("Billing Adjustment Rule"),
+				description: __("Optional. Fills the fields below."),
+				change: function () {
+					apply_rule_defaults(dialog, this.get_value());
+				},
+			},
+			{
+				fieldname: "frequency",
+				fieldtype: "Select",
+				options: "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
+				label: __("Frequency"),
+				default: "Monthly",
+				description: __("How often rent is billed."),
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "column_break_frequency",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "increment_interval_months",
+				fieldtype: "Float",
+				label: __("Every (Months)"),
+				default: 12,
+				description: __("Months between increments."),
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "increment_percentage",
+				fieldtype: "Percent",
+				label: __("Increase By (%)"),
+				default: 0,
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "column_break_increment",
+				fieldtype: "Column Break",
+			},
+			{
+				fieldname: "adjustment_basis",
+				fieldtype: "Select",
+				options: "Original Amount\nLast Adjusted Amount",
+				label: __("Based On"),
+				default: "Original Amount",
+				description: __("Original grows linearly; Last Adjusted compounds."),
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "effective_after_months",
+				fieldtype: "Float",
+				label: __("Start After (Months)"),
+				default: 0,
+				description: __("Months before the first increment."),
+				change: () => schedule_auto_preview(dialog, frm),
+			},
+			{
+				fieldname: "replace_existing",
+				fieldtype: "Check",
+				label: __("Replace Existing Prices"),
+				default: 1,
+				description: __("Delete prices previously generated for this item first."),
+			},
+			{
+				fieldname: "rates_section",
+				fieldtype: "Section Break",
+				label: __("Schedule"),
+			},
+			{
+				fieldname: "preview_status",
+				fieldtype: "HTML",
+				options: "<div class='text-muted small'></div>",
+			},
+			{
+				fieldname: "rates_table",
+				fieldtype: "Table",
+				label: __("Rates"),
+				data: [],
+				fields: get_item_price_schedule_fields(),
+				on_edit: function (row, row_modal) {
+					row_modal.onhide = () => {
+						sync_rates_from_table(dialog);
+						schedule_auto_preview(dialog, frm);
+					};
+				},
+			},
+		],
+		primary_action_label: __("Create Item Prices"),
+		primary_action: function (values) {
+			const property = values.utility_property || dialog.get_value("utility_property");
+
+			if (!property) {
+				frappe.msgprint(__("Please select a property."));
+				return;
+			}
+
+			if (get_selected_rate(dialog) === null) {
+				frappe.msgprint(__("Please enter the starting rate for {0}.", [property]));
+				return;
+			}
+
+			frappe.call({
+				method: "utility_billing.utility_billing.utils.item_price_actions.create_item_price_schedule",
+				args: {
+					...build_schedule_args(dialog, frm, values),
+					replace_existing: values.replace_existing ? 1 : 0,
+				},
+				freeze: true,
+				freeze_message: __("Creating Item Prices..."),
+				callback: function (response) {
+					if (!response.message) return;
+
+					dialog._created_properties = dialog._created_properties || {};
+					dialog._created_properties[property] = true;
+
+					frappe.show_alert({
+						message: __("{0}: {1} Item Prices created, {2} periods already priced.", [
+							property,
+							response.message.created_count,
+							response.message.skipped,
+						]),
+						indicator: "green",
+					});
+
+					load_item_price_summary(frm);
+					report_progress(dialog, properties);
+
+					const pending = properties.filter((name) => !dialog._created_properties[name]);
+
+					if (!pending.length) {
+						dialog.hide();
+						return;
+					}
+
+					dialog.set_value("utility_property", pending[0]);
+					select_property(dialog, frm, pending[0]);
+				},
+			});
+		},
+		secondary_action_label: __("Refresh Preview"),
+		secondary_action: function () {
+			preview_item_price_schedule(dialog, frm);
+		},
+	});
+
+	dialog._frm = frm;
+
+	const first_property = properties[0];
+	dialog.set_value("utility_property", first_property);
+	select_property(dialog, frm, first_property);
+
+	const default_property = (frm.doc.requested_properties || []).find(
+		(property) => property.utility_property && property.adjustment_rule,
+	);
+	if (default_property) {
+		dialog.set_value("adjustment_rule", default_property.adjustment_rule);
+		apply_rule_defaults(dialog, default_property.adjustment_rule);
+	}
+
+	dialog.show();
+	report_progress(dialog, properties);
+	dialog.$wrapper.on("shown.bs.modal", () => {
+		watch_schedule_table_edits(dialog, frm);
+		schedule_auto_preview(dialog, frm);
+	});
+}
+
+/**
+ * Recalculate the schedule when a rate is edited directly in the table.
+ *
+ * The grid is refreshed on every keystroke, so the handler is debounced to
+ * avoid a request per character.
+ */
+function watch_schedule_table_edits(dialog, frm) {
+	const grid = dialog.fields_dict.rates_table?.grid;
+	if (!grid) return;
+
+	const handler = () => {
+		clearTimeout(dialog._table_edit_timer);
+		dialog._table_edit_timer = setTimeout(() => {
+			sync_rates_from_table(dialog);
+			schedule_auto_preview(dialog, frm);
+		}, 600);
+	};
+
+	// Inline edits bubble up as `change` on the grid inputs; edits made in the
+	// row modal are handled by the table's `on_edit` callback.
+	grid.wrapper.on("change", "input", handler);
+}
+
+/**
+ * The starting rate currently selected in the modal, or ``null`` when unset.
+ */
+function get_selected_rate(dialog) {
+	const rate = dialog.get_value("starting_rate");
+
+	return rate === undefined || rate === null || rate === "" ? null : rate;
+}
+
+/**
+ * Build the request arguments shared by the preview and create actions.
+ *
+ * Only the selected property is sent, so each property is priced with its own
+ * starting rate. The increment fields are always sent, so whatever the modal
+ * currently shows is what the backend applies, even when a Billing Adjustment
+ * Rule supplied them.
+ */
+function build_schedule_args(dialog, frm, values) {
+	const property = dialog.get_value("utility_property");
+	const base_rates = {};
+
+	base_rates[property] = get_selected_rate(dialog);
+
+	return {
+		docname: frm.doc.name,
+		properties: [property],
+		base_rates,
+		start_date: values.start_date,
+		end_date: values.end_date || null,
+		price_list: values.price_list,
+		customer: values.customer || null,
+		adjustment_rule: values.adjustment_rule || null,
+		frequency: values.frequency || null,
+		increment: get_increment_values(dialog),
+		overrides: get_edited_rate_rows(dialog, property),
+	};
+}
+
+/**
+ * Recalculate the schedule of the selected property.
+ *
+ * Runs automatically whenever a relevant field changes, and on demand from the
+ * Preview button. Rates the user edited by hand are sent back as overrides so
+ * they survive the recalculation.
+ *
+ * Args:
+ *     silent: When true, missing inputs do not raise a message because the
+ *         user is still filling the form in.
+ */
+function preview_item_price_schedule(dialog, frm, { silent = false } = {}) {
+	const property = dialog.get_value("utility_property");
+
+	if (!dialog.get_value("start_date")) {
+		if (!silent) frappe.msgprint(__("Please set the lease start date before previewing."));
+		return;
+	}
+
+	if (!property) {
+		if (!silent) frappe.msgprint(__("Please select a property."));
+		return;
+	}
+
+	if (get_selected_rate(dialog) === null) {
+		set_preview_status(dialog, __("Enter a starting rate to see the schedule."), "muted");
+		return;
+	}
+
+	const request_id = (dialog._preview_request_id || 0) + 1;
+	dialog._preview_request_id = request_id;
+	set_preview_status(dialog, __("Calculating schedule..."), "muted");
+
+	frappe.call({
+		method: "utility_billing.utility_billing.utils.item_price_actions.preview_item_price_schedule",
+		args: build_schedule_args(dialog, frm, dialog.get_values()),
+		callback: function (response) {
+			// A newer preview was requested while this one was in flight.
+			if (dialog._preview_request_id !== request_id) return;
+
+			if (!response.message || !response.message.length) {
+				clear_property_schedule(dialog, property);
+				set_preview_status(dialog, __("No schedule could be generated."), "danger");
+				return;
+			}
+
+			const periods = response.message[0].periods;
+			show_property_schedule(dialog, property, periods);
+			report_schedule_summary(
+				dialog,
+				property,
+				periods,
+				get_edited_rate_rows(dialog, property).length,
+			);
+		},
+		error: function () {
+			if (dialog._preview_request_id !== request_id) return;
+
+			clear_property_schedule(dialog, property);
+			set_preview_status(dialog, __("Could not generate the schedule."), "danger");
+		},
+	});
+}
+
+/**
+ * Describe the generated schedule above the table.
+ */
+function report_schedule_summary(dialog, property, periods, edited_count) {
+	if (!periods.length) {
+		set_preview_status(dialog, __("No periods generated."), "muted");
+		return;
+	}
+
+	const first = periods[0];
+	const last = periods[periods.length - 1];
+	const format_rate = (rate) => flt(rate).toLocaleString();
+
+	const message = __("{0} periods from {1} to {2}. First rate {3}, last rate {4}.", [
+		periods.length,
+		frappe.datetime.str_to_user(first.valid_from),
+		frappe.datetime.str_to_user(last.valid_upto),
+		format_rate(first.rate),
+		format_rate(last.rate),
+	]);
+
+	set_preview_status(
+		dialog,
+		edited_count ? `${message} ${__("{0} rate(s) edited by hand.", [edited_count])}` : message,
+		"muted",
+	);
 }

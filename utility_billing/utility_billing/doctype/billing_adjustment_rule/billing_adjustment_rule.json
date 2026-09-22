@@ -24,7 +24,6 @@
   "increment_settings_section",
   "increment_interval_months",
   "increment_percentage",
-  "adjustment_cap",
   "column_break_ghug",
   "adjustment_basis",
   "effective_after_months",
@@ -131,12 +130,6 @@
    "fieldname": "effective_after_months",
    "fieldtype": "Int",
    "label": "Effective After (Months)"
-  },
-  {
-   "description": "Maximum percentage increase allowed for rent adjustments",
-   "fieldname": "adjustment_cap",
-   "fieldtype": "Percent",
-   "label": "Maximum Adjustment Cap (%)"
   },
   {
    "default": "Original Amount",

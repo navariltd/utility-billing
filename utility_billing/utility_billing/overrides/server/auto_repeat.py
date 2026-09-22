@@ -128,11 +128,8 @@ def apply_rate_adjustments(
                 item.amount = flt(item.qty) * flt(item.rate)
 
 def get_effective_increment(adjustment_rule: Document) -> float:
-    """Get the effective increment percentage considering adjustment cap"""
-    increment_percent = flt(adjustment_rule.increment_percentage)
-    if getattr(adjustment_rule, 'adjustment_cap', 0) and increment_percent > adjustment_rule.adjustment_cap:
-        return flt(adjustment_rule.adjustment_cap)
-    return increment_percent
+    """Return the increment percentage to apply from an adjustment rule."""
+    return flt(adjustment_rule.increment_percentage)
 
 def calculate_new_rate(
     current_rate: float, 

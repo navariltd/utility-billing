@@ -21,7 +21,17 @@
   "demo_section",
   "generate_demo_data",
   "column_break_agjn",
-  "clear_demo_data"
+  "clear_demo_data",
+  "billing_approach_section",
+  "rent_billing_approach",
+  "column_break_billing_approach",
+  "auto_create_service_item",
+  "default_service_item_group",
+  "default_item_price_uom",
+  "default_price_list",
+  "deferred_posting_section",
+  "enable_deferred_posting",
+  "deferred_accounts"
  ],
  "fields": [
   {
@@ -117,12 +127,81 @@
    "fieldname": "months_in_advance_to_notify_of_tenancy_ending",
    "fieldtype": "Int",
    "label": "Months in Advance to Notify of Tenancy Ending"
+  },
+  {
+   "fieldname": "billing_approach_section",
+   "fieldtype": "Section Break",
+   "label": "Recurring Billing Approach"
+  },
+  {
+   "default": "Auto Repeat",
+   "description": "How recurring rental billing is generated. <b>Auto Repeat</b> copies the reference document on schedule. <b>Item Price</b> bills the same document at the rate valid on the billing date, using the Item Price schedule defined on the Utility Service Request.",
+   "fieldname": "rent_billing_approach",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Rent Billing Approach",
+   "options": "Auto Repeat\nItem Price"
+  },
+  {
+   "fieldname": "column_break_billing_approach",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "Create and link a service item named after the property, used as the rent billing item.",
+   "fieldname": "auto_create_service_item",
+   "fieldtype": "Check",
+   "label": "Auto Create Property Service Item"
+  },
+  {
+   "depends_on": "eval:doc.auto_create_service_item==1",
+   "description": "Item Group used when creating the service item of a property.",
+   "fieldname": "default_service_item_group",
+   "fieldtype": "Link",
+   "label": "Service Item Group",
+   "options": "Item Group"
+  },
+  {
+   "depends_on": "eval:doc.rent_billing_approach=='Item Price'",
+   "description": "UOM used when generating Item Prices from an item price schedule.",
+   "fieldname": "default_item_price_uom",
+   "fieldtype": "Link",
+   "label": "Item Price UOM",
+   "options": "UOM"
+  },
+  {
+   "description": "Fallback price list used on a Utility Service Request when neither the request nor the customer provides one.",
+   "fieldname": "default_price_list",
+   "fieldtype": "Link",
+   "label": "Default Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "deferred_posting_section",
+   "fieldtype": "Section Break",
+   "label": "Deferred Posting"
+  },
+  {
+   "default": "0",
+   "description": "Credit the deferred account of the company instead of the income account of the line, and post the revenue to the income account on the Deferred Posting Date of the line.",
+   "fieldname": "enable_deferred_posting",
+   "fieldtype": "Check",
+   "label": "Enable Deferred Posting"
+  },
+  {
+   "depends_on": "eval:doc.enable_deferred_posting==1",
+   "description": "Deferred account used for each company. Revenue parked in this account is moved to the income account of the line by a journal entry dated the Deferred Posting Date.",
+   "fieldname": "deferred_accounts",
+   "fieldtype": "Table",
+   "label": "Deferred Accounts",
+   "options": "Utility Deferred Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-14 13:22:21.922776",
+ "modified": "2026-09-17 23:22:04.203697",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

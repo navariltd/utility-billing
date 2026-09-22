@@ -43,7 +43,7 @@ export function UserFormDialog({
   onAddUser,
   isLoading,
   isSystemAdmin = false,
-  userFields = [],
+  userFields: _userFields = [],
 }: UserFormDialogProps) {
   const [open, setOpen] = useState(false);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BellDot, CircleUser, EllipsisVertical, LogOut } from "lucide-react";
+import { BellDot, CircleUser, EllipsisVertical, LogOut, Palette } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Logo } from "@/components/logo";
@@ -19,30 +19,46 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useNotifications } from "@/contexts/notification-context";
+import { useUser } from "@/contexts/user-context";
 import { useFrappeAuth } from "frappe-react-sdk";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function NavUser({
   user,
+  onLogout,
+  onOpenCustomizer,
 }: {
   user: {
     name: string;
     email: string;
     avatar: string;
   };
+  /** Logout handler from the user context; falls back to `useFrappeAuth`. */
+  onLogout?: () => Promise<void>;
+  /** Opens the theme customizer mounted by the page layout. */
+  onOpenCustomizer?: () => void;
 }) {
   const { isMobile } = useSidebar();
-  const { logout } = useFrappeAuth();
+  const { logout: frappeLogout } = useFrappeAuth();
+  const { unreadCount } = useNotifications();
+  const { user: portalUser } = useUser();
+  const logout = onLogout ?? frappeLogout;
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // nppos approach: the account entry opens the generic User doctype form, where
+  // the profile and the password can be maintained through standard Frappe APIs.
+  const accountUrl = `/app/user/${encodeURIComponent(portalUser?.name || user.name)}`;
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
       await logout();
       navigate("/auth/sign-in");
-    } catch (error) {
-      console.error("Logout failed:", error);
+    } catch {
+      toast.error("Could not log out. Please try again.");
     } finally {
       setIsLoggingOut(false);
     }
@@ -91,15 +107,39 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/settings/account">
+                <Link to={accountUrl}>
                   <CircleUser />
                   Account
                 </Link>
               </DropdownMenuItem>
+              {onOpenCustomizer && (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={() => {
+                    // Let the menu close first: while it is open it owns the
+                    // focus, and restoring that focus to the trigger would
+                    // dismiss the non modal panel the moment it opens.
+                    setTimeout(onOpenCustomizer, 50);
+                  }}
+                >
+                  <Palette />
+                  Customize Theme
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/settings/notifications">
-                  <BellDot />
-                  Notifications
+                <Link
+                  to="/settings/notifications"
+                  className="flex w-full items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <BellDot />
+                    <span>Notifications</span>
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive text-destructive-foreground px-1.5 text-[10px] font-bold leading-none shadow-sm ring-2 ring-background">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

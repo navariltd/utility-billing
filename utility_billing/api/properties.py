@@ -5,6 +5,11 @@ from frappe.query_builder import DocType, Order
 
 @frappe.whitelist(allow_guest=True)
 def get_available_properties():
+	"""Return the publicly listable (available, non-group) properties.
+
+	Only descriptive fields are selected: asset and purchase information is
+	deliberately excluded because this endpoint is open to guests.
+	"""
 	try:
 		Property = DocType("Utility Property")
 		FeatureItem = DocType("Utility Property Feature item")
@@ -34,9 +39,6 @@ def get_available_properties():
 				Property.cover_image,
 				Property.unique_features,
 				Property.legal_description,
-				Property.asset_category,
-				Property.purchase_date,
-				Property.net_purchase_amount,
 				Property.parent_utility_property,
 			)
 			.where(Property.status == "Available")
