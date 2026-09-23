@@ -12,6 +12,7 @@ from frappe.utils import cint, flt
 
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils import item_price_schedule_helpers as helpers
+from utility_billing.utility_billing.utils import item_price_scope as scope
 from utility_billing.utility_billing.utils import item_price_summary
 
 
@@ -33,7 +34,19 @@ def get_item_price_summary(docname: str) -> dict:
         for row in service_request.requested_properties
         if row.utility_property
     ]
-    html = item_price_summary.build_schedule_html(properties, service_request.price_list)
+    property_periods = {
+        row.utility_property: (row.start_date, row.end_date)
+        for row in service_request.requested_properties
+        if row.utility_property
+    }
+
+    html = item_price_summary.build_schedule_html(
+        properties,
+        service_request.price_list,
+        property_periods=property_periods,
+        customer=service_request.customer,
+        editable=scope.is_item_price_approach(),
+    )
 
     item_by_property = {
         property_name: item_code
@@ -62,6 +75,7 @@ def preview_item_price_schedule(
     overrides: list | str = None,
     frequency: str = None,
     increment: dict | str = None,
+    manual_schedules: dict | str = None,
 ) -> list[dict]:
     """Return the rate periods that a schedule would create.
 
@@ -77,9 +91,15 @@ def preview_item_price_schedule(
         overrides: Optional manual rate periods.
         frequency: Optional manual billing frequency.
         increment: Optional manual increment settings.
+        manual_schedules: Optional hand edited periods per property, replacing
+            generation for those properties.
 
     Returns:
         One entry per property holding the generated rate periods.
+
+    Raises:
+        frappe.ValidationError: If the inputs are incomplete or a manual
+            schedule does not cover the property's contract period.
     """
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("read")
@@ -98,10 +118,17 @@ def preview_item_price_schedule(
     options.overrides = helpers.parse_overrides(overrides)
 
     lines = helpers.build_lines(
-        service_items, customer or service_request.customer, helpers.as_dict(base_rates)
+        service_items,
+        customer or service_request.customer,
+        helpers.as_dict(base_rates),
+        helpers.parse_manual_schedules(manual_schedules),
     )
 
-    preview = item_price_utils.preview_schedule(options, lines)
+    try:
+        preview = item_price_utils.preview_schedule(options, lines)
+    except ValueError as error:
+        frappe.throw(str(error))
+
     for entry, property_name in zip(preview, service_items.keys()):
         entry["property"] = property_name
         entry["periods"] = [helpers.serialize_period(period) for period in entry["periods"]]
@@ -123,6 +150,7 @@ def create_item_price_schedule(
     replace_existing: int = 0,
     frequency: str = None,
     increment: dict | str = None,
+    manual_schedules: dict | str = None,
 ) -> dict:
     """Create the Item Prices of a property rent schedule.
 
@@ -143,9 +171,15 @@ def create_item_price_schedule(
             the same item and customer are removed first.
         frequency: Optional manual billing frequency.
         increment: Optional manual increment settings.
+        manual_schedules: Optional hand edited periods per property, replacing
+            generation for those properties.
 
     Returns:
         Counts of created and skipped Item Prices plus the stored schedule.
+
+    Raises:
+        frappe.ValidationError: If the inputs are incomplete or a manual
+            schedule does not cover the property's contract period.
     """
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
@@ -165,16 +199,25 @@ def create_item_price_schedule(
     )
     options.overrides = helpers.parse_overrides(overrides)
 
-    if cint(replace_existing):
-        for item_code in service_items.values():
-            item_price_utils.delete_existing_schedule(
-                item_code, options.price_list, resolved_customer
-            )
+    lines = helpers.build_lines(
+        service_items,
+        resolved_customer,
+        helpers.as_dict(base_rates),
+        helpers.parse_manual_schedules(manual_schedules),
+    )
 
-    lines = helpers.build_lines(service_items, resolved_customer, helpers.as_dict(base_rates))
-    result = item_price_utils.create_item_prices(options, lines)
+    try:
+        if cint(replace_existing):
+            for item_code in service_items.values():
+                item_price_utils.delete_existing_schedule(
+                    item_code, options.price_list, resolved_customer
+                )
 
-    schedule_rows = item_price_utils.preview_schedule(options, lines)
+        result = item_price_utils.create_item_prices(options, lines)
+        schedule_rows = item_price_utils.preview_schedule(options, lines)
+    except ValueError as error:
+        frappe.throw(str(error))
+
     schedule_rows = _annotate_schedule(schedule_rows, service_items)
 
     return {
@@ -207,7 +250,7 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
 
-    allowed_items = _request_service_items(service_request)
+    allowed_items = scope.request_service_items(service_request)
     updated = 0
     unchanged = 0
     rejected = 0
@@ -217,7 +260,7 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
         if rate < 0:
             frappe.throw(_("Item Price rates cannot be negative."))
 
-        price = _get_allowed_price(row.get("name"), allowed_items)
+        price = scope.get_allowed_price(row.get("name"), allowed_items)
         if not price:
             rejected += 1
             continue
@@ -234,24 +277,6 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
     return {"updated": updated, "unchanged": unchanged, "rejected": rejected}
 
 
-def _request_service_items(service_request) -> set[str]:
-    """Return the service items of the request's properties.
-
-    Args:
-        service_request: ``Utility Service Request`` document.
-
-    Returns:
-        Item codes whose prices belong to this request.
-    """
-    properties = [
-        row.utility_property
-        for row in service_request.requested_properties
-        if row.utility_property
-    ]
-
-    return set(item_price_summary.get_property_item_codes(properties))
-
-
 def _parse_rate_rows(rates: list | str) -> list[dict]:
     """Coerce the submitted rate rows into a list of dicts.
 
@@ -264,29 +289,6 @@ def _parse_rate_rows(rates: list | str) -> list[dict]:
     parsed = helpers.as_list(rates)
 
     return [row for row in parsed if isinstance(row, dict) and row.get("name")]
-
-
-def _get_allowed_price(name: str, allowed_items: set[str]):
-    """Return an Item Price only if it belongs to one of the allowed items.
-
-    Args:
-        name: ``Item Price`` name submitted by the client.
-        allowed_items: Item codes this request is allowed to edit.
-
-    Returns:
-        The ``Item Price`` document, or ``None`` when it is out of scope.
-    """
-    if not name or not allowed_items:
-        return None
-
-    price = frappe.db.get_value(
-        "Item Price",
-        {"name": name, "item_code": ("in", list(allowed_items))},
-        ["name", "item_code", "price_list_rate"],
-        as_dict=True,
-    )
-
-    return price
 
 
 def _annotate_schedule(
