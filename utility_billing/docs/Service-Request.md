@@ -164,6 +164,11 @@ graph TD
 - Sales Order submitted for payment processing
 - Auto repeat can be optionally configured for recurring orders
 
+When **Rent Billing Approach** is **Item Price**, **Create → Sales Order /
+Deposit** skips the modal and opens the standard **new Sales Order form**
+instead, pre-filled with the customer, the service request, the company, the
+dates and the price list. The document is completed and saved on its own form.
+
 ### 5️⃣ Sales Invoice & Payment
 
 ![Sales Invoice Modal](./images/service_request_salesinvoice_modal.png)
@@ -171,6 +176,10 @@ graph TD
 - Generates first invoice
 - Optional automatic billing setup for rent or utility usage
 - Escalation rules applied where needed
+
+As with the Sales Order, when **Rent Billing Approach** is **Item Price**,
+**Create → Sales Invoice** opens the standard **new Sales Invoice form**
+pre-filled from the request.
 
 ### 5️⃣ Property Items Are Added Automatically
 
@@ -182,6 +191,10 @@ for you — there is no need to add it by hand:
 - Removing a property removes its item row, so the two tables stay in step.
 - Re-adding a property does not create a duplicate row.
 - Items you add by hand are left untouched; only property rows are managed.
+- The **Items** table is optional: a request can be saved without any items and
+  they can be added later, on the request or on the Sales Order / Sales Invoice
+  built from it. When a **Utility Bill Structure** is set, its items still
+  populate the table automatically.
 - The item carries its name, UOM, rate and description. The rate comes from
   the document's **Price List** when one is set, otherwise the item's standard
   rate.
