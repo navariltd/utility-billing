@@ -33,12 +33,15 @@ class ScheduleLine:
         base_rate: Rate of the first period.
         utility_property: Property the prices belong to, tagged onto every
             generated ``Item Price`` so prices can be grouped by property.
+        manual_periods: Hand edited periods that replace generation for this
+            line, validated against the contract period.
     """
 
     item_code: str
     customer: str | None
     base_rate: float
     utility_property: str | None = None
+    manual_periods: list[RatePeriod] | None = None
 
 
 @dataclass
@@ -69,6 +72,7 @@ class ScheduleOptions:
             frequency=self.frequency,
             rule=self.rule or IncrementRule(),
             overrides=list(self.overrides or []),
+            manual_periods=list(line.manual_periods) if line.manual_periods else None,
         )
 
 

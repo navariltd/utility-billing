@@ -57,7 +57,34 @@ open the schedule modal.
 | **Based On** | **Original Amount** grows linearly; **Last Adjusted Amount** compounds. |
 | **Start After (Months)** | Grace period before the first increment applies. |
 | **Replace Existing Prices** | Deletes prices previously generated for the same item and customer before creating new ones. |
-| **Rates** | Periods generated for the selected property. This is the only schedule table: **Rate** is editable so any period can be corrected by hand. |
+| **Rates** | The schedule of the selected property. **From**, **To** and **Rate** are all editable, rows can be added and deleted, and the values are kept as the final schedule. |
+
+### Editing the schedule by hand
+
+The **Rates** table is not just a preview: any value in it can be changed. A
+period can be re-dated, re-priced, split in two, extended or removed, and new
+periods can be added. As soon as the table is touched the schedule is treated as
+**manual**:
+
+- The hand edited rows are the final schedule: a preview never overwrites them,
+  and they are **not validated while you are still editing**.
+- Only a change to a **main** field (property, starting rate, lease dates,
+  frequency, adjustment rule, increment interval/percentage/basis) discards the
+  manual rows and generates a fresh schedule.
+- Switching properties keeps each property's manual rows, so nothing is lost
+  when moving between properties.
+- Coverage of the contract period is checked when you click **Create Item
+  Prices**; the prices are written only when the schedule covers it. Creating
+  prices writes the manual rows exactly as shown.
+
+Whatever the source, a schedule must **cover the whole contract period** of the
+property: it has to start with the contract, run without gaps or overlaps and
+reach the contract end. A manual schedule that falls short is rejected on
+**Create Item Prices** with a message naming the problem, and nothing is
+written. The contract period is taken from the property's row in **Requested
+Properties**, falling back to the document's **Contract Start/End Date**.
+
+Hand editing is only offered when **Rent Billing Approach** is **Item Price**.
 
 ### Price list resolution
 
@@ -86,9 +113,10 @@ The **Rent Schedule** section works on a single property at a time:
    starting rate change. A summary above the table shows the period count,
    date range and first/last rate. The **Price List** is only needed when
    creating prices, so the schedule previews without it.
-4. Any **Rate** can be typed over by hand. Edited rates are sent back as
-   overrides on the next recalculation, so they survive further changes, and
-   the summary reports how many rates were edited.
+4. Any value in the **Rates** table can be changed by hand: re-date a period,
+   re-price it, add a row or delete one. The rows become the final schedule and
+   are only regenerated when a main field changes. See
+   [Editing the schedule by hand](#editing-the-schedule-by-hand).
 5. Use **Create Item Prices** to write the Item Prices for that property.
 
 After a property is created, the modal automatically moves to the next
@@ -158,23 +186,34 @@ showing each period's dates, customer and rate. Properties with no prices yet
 are listed as such. This is a view of the actual `Item Price` records, not a
 separate copy, so it can never drift from what billing will use.
 
-Rates in the summary are **editable**. Change one or more rates and the row is
-highlighted, a count of changed rows appears, and the **Update Prices** button
-becomes enabled. Clicking it asks for confirmation and writes the new rates to
-the matching `Item Price` records.
+The summary is an **editor**. For each property you can:
 
-What the update does and does not do:
+- change a period's **From** and **To** dates;
+- change its **rate**;
+- **remove** a period with the ✕ button;
+- **add** a new period with **Add period**.
 
-- Only `price_list_rate` is written. Dates, item, price list and customer are
-  never changed, so a correction cannot move a period or re-point a price.
-- Values that still match what is stored are skipped, so re-clicking is
-  harmless.
-- Every submitted row is re-checked on the server against the request's own
-  properties; a record belonging to another item is ignored and reported rather
-  than written. This means an edit can never reach an unrelated `Item Price`,
-  even if its name is submitted deliberately.
-- Rows are reported back as updated, unchanged, or skipped, so a partial
-  result is always visible rather than silent.
+Changed rows are highlighted and a count of pending changes appears next to the
+**Save Schedule** button, which stays disabled until something actually differs.
+Clicking it asks for confirmation and writes the whole schedule of every edited
+property at once.
+
+What the save does and does not do:
+
+- Existing periods have their dates and rate updated, removed periods are
+  deleted, and added periods are inserted as new `Item Price` records.
+- Before anything is written, each property's schedule is validated as a whole:
+  it must start with the contract, run without gaps or overlaps and reach the
+  contract end. A schedule that does not cover the contract is rejected with a
+  message and **nothing is written**, so a partial edit cannot leave a stretch
+  of the contract unpriced.
+- Every submitted record is re-checked on the server against the request's own
+  properties; a record belonging to another item is skipped and reported rather
+  than written. An edit can never reach an unrelated `Item Price`, even if its
+  name is submitted deliberately.
+- The outcome is reported as periods added, updated, removed or skipped, so a
+  partial result is always visible rather than silent.
+- Saving is only available when **Rent Billing Approach** is **Item Price**.
 
 ### Generated records
 
@@ -197,8 +236,12 @@ What the update does and does not do:
 | `utils/item_price_schedule.py` | Pure schedule maths (no database access). |
 | `utils/item_price_periods.py` | Merging consecutive periods that share a rate. |
 | `utils/item_prices.py` | Rate period persistence, increment rule resolution and duplicate detection. |
+| `utils/item_price_validation.py` | Coverage rules of a hand edited schedule (no database access). |
 | `utils/item_price_schedule_helpers.py` | Payload parsing, options building and line construction. |
-| `utils/item_price_actions.py` | Whitelisted preview, create and summary actions. |
-| `utils/item_price_summary.py` | Reading created Item Prices back and rendering them by property. |
+| `utils/item_price_actions.py` | Whitelisted preview and create actions of the modal. |
+| `utils/item_price_scope.py` | Which records of a request may be written to. |
+| `utils/item_price_summary.py` | Reading created Item Prices back and grouping them by property. |
+| `utils/item_price_summary_html.py` | Rendering the editable Item Price Summary field. |
+| `utils/item_price_summary_actions.py` | Whitelisted save action of the Item Price Summary editor. |
 | `utils/item_price_uom.py` | UOM resolution validated against the items being priced. |
 | `utils/service_item.py` | Property service item creation and resolution. |

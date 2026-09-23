@@ -24,6 +24,7 @@ PRICE_LIST = "_Test Rate Edit Price List"
 
 class TestItemPriceRateUpdates(FrappeTestCase):
 	def setUp(self):
+		self._enable_item_price_approach()
 		factories.ensure_item(TEST_ITEM)
 		factories.ensure_item(OTHER_ITEM)
 		factories.ensure_price_list(PRICE_LIST)
@@ -40,6 +41,12 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 	def tearDown(self):
 		factories.delete_prices(TEST_ITEM, PRICE_LIST)
 		factories.delete_prices(OTHER_ITEM, PRICE_LIST)
+
+	def _enable_item_price_approach(self):
+		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+		settings.rent_billing_approach = "Item Price"
+		settings.save(ignore_permissions=True)
+		frappe.clear_cache(doctype="Utility Billing Settings")
 
 	def _create_request(self, properties):
 		request = frappe.new_doc("Utility Service Request")
@@ -175,8 +182,8 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		self.assertIn(f'data-item-price="{self.price}"', summary["html"])
 		self.assertIn('value="1000.00"', summary["html"])
 
-	def test_summary_has_no_update_button_without_prices(self):
-		"""A property with no service item has no prices, so no button."""
+	def test_summary_offers_the_editor_without_prices(self):
+		"""A property can be given periods even before any price exists."""
 		property_name = "_Test Rate Edit Bare Property"
 		factories.ensure_property(property_name)
 		frappe.db.set_value("Utility Property", property_name, "service_item", None)
@@ -186,4 +193,19 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		summary = item_price_actions.get_item_price_summary(bare.name)
 
 		self.assertFalse(summary["has_prices"])
-		self.assertNotIn("uips-update-btn", summary["html"])
+		self.assertIn("uips-update-btn", summary["html"])
+		self.assertIn("uips-add-row", summary["html"])
+
+	def test_summary_is_read_only_when_rent_is_not_billed_by_item_price(self):
+		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
+		settings.rent_billing_approach = "Auto Repeat"
+		settings.save(ignore_permissions=True)
+		frappe.clear_cache(doctype="Utility Billing Settings")
+
+		try:
+			summary = item_price_actions.get_item_price_summary(self.service_request.name)
+
+			self.assertNotIn("uips-update-btn", summary["html"])
+			self.assertNotIn("uips-add-row", summary["html"])
+		finally:
+			self._enable_item_price_approach()

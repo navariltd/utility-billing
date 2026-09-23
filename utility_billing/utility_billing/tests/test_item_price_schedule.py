@@ -265,6 +265,36 @@ class TestBuildSchedule(UnitTestCase):
 		self.assertEqual(len(periods), 4)
 		self.assertEqual([period.rate for period in periods], [1000, 1000, 1100, 1100])
 
+	def test_long_constant_rate_lease_reaches_the_end_date(self):
+		# A monthly lease longer than the default safety limit must still cover
+		# the whole contract before periods are merged into one.
+		request = ScheduleRequest(
+			start_date=date(2026, 9, 1),
+			end_date=date(2038, 11, 1),
+			base_rate=9000,
+			frequency=MONTHLY,
+		)
+
+		periods = build_schedule(request)
+
+		self.assertEqual(len(periods), 1)
+		self.assertEqual(periods[0].valid_from, date(2026, 9, 1))
+		self.assertEqual(periods[0].valid_upto, date(2038, 11, 1))
+
+	def test_long_lease_with_increments_reaches_the_end_date(self):
+		request = ScheduleRequest(
+			start_date=date(2026, 9, 1),
+			end_date=date(2038, 11, 1),
+			base_rate=9000,
+			frequency=MONTHLY,
+			rule=IncrementRule(interval_months=12, percentage=5, basis=ORIGINAL_AMOUNT),
+		)
+
+		periods = build_schedule(request)
+
+		self.assertEqual(periods[0].valid_from, date(2026, 9, 1))
+		self.assertEqual(periods[-1].valid_upto, date(2038, 11, 1))
+
 
 class TestMergeByRate(UnitTestCase):
 	"""Consecutive periods sharing a rate become one Item Price period."""

@@ -118,6 +118,8 @@ class ScheduleRequest:
         merge: Whether consecutive periods with the same rate are collapsed
             into a single period. Enabled by default so one ``Item Price``
             covers each stretch where the rate does not change.
+        manual_periods: Fully hand edited periods. When supplied they replace
+            generation entirely and are validated against the contract period.
     """
 
     start_date: date
@@ -128,6 +130,7 @@ class ScheduleRequest:
     max_periods: int = 120
     overrides: list[RateOverride] = field(default_factory=list)
     merge: bool = True
+    manual_periods: list[RatePeriod] | None = None
 
 
 def months_per_period(frequency: str) -> int:
@@ -216,7 +219,8 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
     Periods run from ``request.start_date`` until ``request.end_date`` is
     reached. A manual override starting on the first day of a period replaces
     the generated rate from that period onwards and becomes the base for
-    subsequent increments.
+    subsequent increments. When ``request.manual_periods`` is set the periods
+    are used as-is after being validated against the contract period.
 
     Args:
         request: Schedule definition.
@@ -225,7 +229,8 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
         Ordered list of ``RatePeriod`` rows covering the lease.
 
     Raises:
-        ValueError: If the end date is before the start date.
+        ValueError: If the end date is before the start date, or a manual
+            schedule does not cover the contract period.
     """
     start_date = getdate(request.start_date)
     end_date = getdate(request.end_date) if request.end_date else None
@@ -233,14 +238,22 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
     if end_date and end_date < start_date:
         raise ValueError("Schedule end date cannot be before the start date.")
 
+    if request.manual_periods is not None:
+        from utility_billing.utility_billing.utils.item_price_validation import (
+            build_manual_schedule,
+        )
+
+        return build_manual_schedule(request.manual_periods, start_date, end_date)
+
     overrides = _index_overrides(request.overrides)
     base_rate = float(request.base_rate or 0)
 
     periods: list[RatePeriod] = []
     current_start = start_date
     applied_override = None
+    limit = _period_limit(request, start_date, end_date)
 
-    while len(periods) < request.max_periods:
+    while len(periods) < limit:
         override = overrides.pop(current_start, None)
         if override is not None:
             applied_override = override
@@ -274,6 +287,29 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
         current_start = add_days(current_end, 1)
 
     return merge_by_rate(periods) if request.merge else periods
+
+
+def _period_limit(
+    request: ScheduleRequest, start_date: date, end_date: date | None
+) -> int:
+    """Return how many periods may be generated before generation gives up.
+
+    ``max_periods`` is only a safety net for open ended leases. When the lease
+    end is known the limit is raised to the number of periods the span can hold,
+    so a long lease is never truncated before its end date (and then merged).
+
+    Args:
+        request: Schedule definition.
+        start_date: First day of the lease.
+        end_date: Last day of the lease, or ``None`` when open ended.
+
+    Returns:
+        Maximum number of periods to generate.
+    """
+    if not end_date:
+        return request.max_periods
+
+    return max(request.max_periods, month_diff(start_date, end_date) + 2)
 
 
 def merge_by_rate(periods: list[RatePeriod]) -> list[RatePeriod]:
