@@ -79,8 +79,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Adjustment Rule",
-   "options": "Billing Adjustment Rule",
-   "reqd": 1
+   "options": "Billing Adjustment Rule"
   },
   {
    "fieldname": "column_break_cqbg",
@@ -112,7 +111,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-19 11:54:46.604438",
+ "modified": "2026-09-23 07:04:44.681397",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Contract Utility Property Item",
