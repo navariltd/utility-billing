@@ -1,20 +1,21 @@
-"""Read-only summary of the Item Prices generated for a service request.
+"""Read the Item Prices generated for a service request and render a summary.
 
 Item Prices are the source of truth for the rent schedule, so this module reads
-them back and renders them grouped by property. It is used by the HTML field on
+them back and hands them to ``item_price_summary_html``, which renders them
+grouped by property as an editable table. It is used by the HTML field on
 ``Utility Service Request`` instead of storing a duplicate schedule table.
 
 Grouping works off the property's **service item**: each property owns an item
 named after it, so an Item Price is attributed to a property by its
 ``item_code``. No extra tagging on ``Item Price`` is required.
 
-Rates are rendered as inputs so a period can be corrected by hand. Saving the
-edits is an explicit action - the surrounding page reads the inputs and calls
-``update_item_price_rates`` - so nothing is written while typing.
+Nothing is written while typing: the surrounding page reads the inputs and
+saves them through ``item_price_summary_actions.save_item_price_schedule``.
 """
 
 import frappe
-from frappe import _
+
+from utility_billing.utility_billing.utils import item_price_summary_html
 
 
 def get_property_item_codes(properties: list[str]) -> dict[str, str]:
@@ -76,12 +77,21 @@ def get_created_prices(item_code: str, price_list: str | None = None) -> list[di
 def build_schedule_html(
     properties: list[str],
     price_list: str | None = None,
+    property_periods: dict | None = None,
+    customer: str | None = None,
+    editable: bool = True,
 ) -> str:
     """Render the Item Prices of the given properties as HTML.
 
     Args:
         properties: Properties to render.
         price_list: Optional price list filter.
+        property_periods: Optional mapping of property name to its
+            ``(start_date, end_date)`` contract period, used by the editor to
+            validate that a manual schedule covers the whole contract.
+        customer: Customer used as the default for newly added periods.
+        editable: Whether the periods may be edited. ``False`` renders the
+            summary as a read-only view.
 
     Returns:
         HTML markup listing each property with its rent periods.
@@ -91,136 +101,23 @@ def build_schedule_html(
         property_name: item_code
         for item_code, property_name in get_property_item_codes(properties).items()
     }
+    periods = property_periods or {}
 
-    sections = [
-        _render_property_section(
-            property_name,
-            get_created_prices(item_by_property[property_name], price_list)
-            if property_name in item_by_property
-            else [],
-        )
-        for property_name in properties
-    ]
-
-    if not sections:
-        return "<div class='text-muted'>No properties to show.</div>"
-
-    has_prices = any("data-item-price=" in section for section in sections)
-
-    return (
-        "<div class='utility-item-price-summary'>"
-        + (_PRICE_SUMMARY_TOOLBAR if has_prices else "")
-        + "".join(sections)
-        + "</div>"
-        + _PRICE_SUMMARY_STYLES
-    )
-
-
-def _render_property_section(property_name: str, prices: list[dict]) -> str:
-    """Render one property block of the summary."""
-    item_code = prices[0]["item_code"] if prices else None
-    header = (
-        "<div class='uips-property'>"
-        f"<span class='uips-name'>{frappe.utils.escape_html(property_name)}</span>"
-    )
-    if item_code:
-        header += f"<span class='uips-item'>{frappe.utils.escape_html(item_code)}</span>"
-
-    header += f"<span class='uips-count'>{len(prices)} period(s)</span></div>"
-
-    if not prices:
-        return (
-            header
-            + "<div class='uips-empty text-muted'>No Item Prices created yet.</div>"
+    sections = []
+    for property_name in properties:
+        item_code = item_by_property.get(property_name)
+        start_date, end_date = periods.get(property_name, (None, None))
+        sections.append(
+            {
+                "property": property_name,
+                "item_code": item_code,
+                "price_list": price_list,
+                "customer": customer,
+                "start_date": start_date,
+                "end_date": end_date,
+                "prices": get_created_prices(item_code, price_list) if item_code else [],
+            }
         )
 
-    rows = "".join(_render_price_row(price) for price in prices)
+    return item_price_summary_html.render_schedule(sections, editable=editable)
 
-    return (
-        header
-        + "<table class='table table-bordered uips-table'><thead><tr>"
-        + "<th>From</th><th>To</th><th>Customer</th>"
-        + "<th class='text-right uips-rate-col'>Rate</th>"
-        + f"</tr></thead><tbody>{rows}</tbody></table>"
-    )
-
-
-def _render_price_row(price: dict) -> str:
-    """Render a single Item Price row with an editable rate.
-
-    The Item Price name is carried on the input so the caller knows exactly
-    which record to update; the server re-validates that the record belongs to
-    this request before writing.
-    """
-    valid_upto = (
-        frappe.utils.formatdate(price.valid_upto) if price.valid_upto else _("Open ended")
-    )
-    rate = flt_rate(price.price_list_rate)
-    name = frappe.utils.escape_html(price["name"])
-
-    return (
-        "<tr>"
-        f"<td>{frappe.utils.formatdate(price.valid_from)}</td>"
-        f"<td>{valid_upto}</td>"
-        f"<td>{frappe.utils.escape_html(price.customer or '')}</td>"
-        "<td class='text-right uips-rate-col'>"
-        f"<input type='number' step='0.01' min='0' class='form-control input-sm uips-rate'"
-        f" data-item-price=\"{name}\" data-original=\"{rate}\" value=\"{rate}\">"
-        "</td>"
-        "</tr>"
-    )
-
-
-def flt_rate(value) -> str:
-    """Format a stored rate for an ``input[type=number]`` value.
-
-    Args:
-        value: Stored ``price_list_rate``.
-
-    Returns:
-        The rate as a plain decimal string, so the browser can parse it.
-    """
-    return f"{frappe.utils.flt(value):.2f}"
-
-
-_PRICE_SUMMARY_TOOLBAR = """
-<div class="uips-toolbar">
-    <button type="button" class="btn btn-xs btn-primary uips-update-btn" disabled>
-        Update Prices
-    </button>
-    <span class="uips-dirty text-muted"></span>
-</div>
-"""
-
-_PRICE_SUMMARY_STYLES = """
-<style>
-.utility-item-price-summary .uips-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-.utility-item-price-summary .uips-property {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin: 12px 0 4px;
-    font-weight: 600;
-}
-.utility-item-price-summary .uips-item,
-.utility-item-price-summary .uips-count {
-    font-weight: 400;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-.utility-item-price-summary .uips-table { margin-bottom: 4px; }
-.utility-item-price-summary .uips-table td,
-.utility-item-price-summary .uips-table th { padding: 4px 8px; }
-.utility-item-price-summary .uips-empty { margin-bottom: 8px; }
-.utility-item-price-summary .uips-rate-col { width: 140px; }
-.utility-item-price-summary .uips-rate.changed {
-    border-color: var(--yellow-400, #f0ad4e);
-    background-color: rgba(240, 173, 78, 0.1);
-}
-</style>
-"""
