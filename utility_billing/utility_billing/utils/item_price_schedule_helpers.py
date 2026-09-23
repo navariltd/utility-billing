@@ -10,11 +10,14 @@ from typing import Any
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, flt, getdate
+from frappe.utils import cint, cstr, flt, getdate
 
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils import item_price_uom
-from utility_billing.utility_billing.utils.item_price_schedule import RateOverride
+from utility_billing.utility_billing.utils.item_price_schedule import (
+    RateOverride,
+    RatePeriod,
+)
 from utility_billing.utility_billing.utils.price_list import resolve_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
@@ -141,7 +144,10 @@ def parse_increment(increment: Any) -> dict:
 
 
 def build_lines(
-    service_items: dict[str, str], customer: str | None, base_rates: dict[str, float]
+    service_items: dict[str, str],
+    customer: str | None,
+    base_rates: dict[str, float],
+    manual_schedules: dict[str, list[RatePeriod]] | None = None,
 ) -> list[item_price_utils.ScheduleLine]:
     """Build one schedule line per property service item.
 
@@ -149,32 +155,99 @@ def build_lines(
         service_items: Mapping of property name to service item code.
         customer: Customer the Item Prices are scoped to, if any.
         base_rates: Mapping of property name to the first period rate.
+        manual_schedules: Hand edited periods of a property, replacing
+            generation for that line.
 
     Returns:
         Schedule lines for every property.
 
     Raises:
-        frappe.ValidationError: If a property has no base rate.
+        frappe.ValidationError: If a property has neither a base rate nor a
+            manual schedule.
     """
+    schedules = manual_schedules or {}
     lines = []
 
     for property_name, item_code in service_items.items():
-        base_rate = base_rates.get(property_name)
-        if base_rate is None:
-            frappe.throw(
-                _("Please enter the rent amount for property {0}.").format(property_name)
-            )
+        manual = schedules.get(property_name)
+        base_rate = _resolve_base_rate(property_name, base_rates, manual)
 
         lines.append(
             item_price_utils.ScheduleLine(
                 item_code=item_code,
                 customer=customer or None,
-                base_rate=flt(base_rate),
+                base_rate=base_rate,
                 utility_property=property_name,
+                manual_periods=manual,
             )
         )
 
     return lines
+
+
+def _resolve_base_rate(
+    property_name: str,
+    base_rates: dict[str, float],
+    manual: list[RatePeriod] | None,
+) -> float:
+    """Return the first period rate of a line.
+
+    A manual schedule already carries its own rates, so it only falls back to
+    the entered base rate when it has none.
+
+    Args:
+        property_name: Property the rate belongs to.
+        base_rates: Mapping of property name to the entered first period rate.
+        manual: Hand edited periods of the property, if any.
+
+    Returns:
+        Rate of the line's first period.
+
+    Raises:
+        frappe.ValidationError: If no rate can be determined.
+    """
+    base_rate = base_rates.get(property_name)
+    if base_rate is not None:
+        return flt(base_rate)
+
+    if manual:
+        return flt(min(manual, key=lambda period: period.valid_from).rate)
+
+    frappe.throw(
+        _("Please enter the rent amount for property {0}.").format(property_name)
+    )
+
+
+def parse_manual_schedules(value: Any) -> dict[str, list[RatePeriod]]:
+    """Return the hand edited schedules supplied by the client.
+
+    Args:
+        value: JSON object or mapping of property name to a list of
+            ``{valid_from, valid_upto, rate}`` entries.
+
+    Returns:
+        Mapping of property name to parsed ``RatePeriod`` rows, omitting
+        properties without any complete period.
+    """
+    schedules = {}
+
+    for property_name, periods in (parse_json(value) or {}).items():
+        rows = [
+            RatePeriod(
+                valid_from=getdate(period["valid_from"]),
+                valid_upto=getdate(period["valid_upto"]),
+                rate=flt(period.get("rate")),
+                increment_count=cint(period.get("increment_count")),
+            )
+            for period in periods or []
+            if isinstance(period, dict)
+            and period.get("valid_from")
+            and period.get("valid_upto")
+        ]
+        if rows:
+            schedules[property_name] = rows
+
+    return schedules
 
 
 def parse_overrides(overrides: Any) -> list[RateOverride]:
