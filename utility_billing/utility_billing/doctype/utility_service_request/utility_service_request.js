@@ -926,7 +926,58 @@ function configure_dialog(dialog, frm) {
 		});
 	});
 
-	observer.observe(document.body, { childList: true, subtree: true });
+	// observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/**
+ * Open a blank Sales Order or Sales Invoice form for the request.
+ *
+ * Used when rent is billed by ``Item Price``: the whole document is built on
+ * the standard form instead of a custom modal, so every field and the item
+ * table behave exactly as they do elsewhere. The request's details are passed
+ * as defaults.
+ *
+ * @param {object} frm - The Utility Service Request form.
+ * @param {string} docType - "Sales Order" or "Sales Invoice".
+ */
+function open_new_sales_document(frm, docType) {
+	const today = frappe.datetime.get_today();
+	const properties = (frm.doc.requested_properties || [])
+		.map((row) => row.utility_property)
+		.filter(Boolean);
+
+	const values = {
+		company: frm.doc.company || frappe.defaults.get_user_default("Company"),
+		customer: frm.doc.customer,
+		customer_name: frm.doc.customer_name,
+		utility_service_request: frm.doc.name,
+		utility_property: properties.length === 1 ? properties[0] : null,
+	};
+
+	if (docType === "Sales Order") {
+		values.transaction_date = today;
+		values.delivery_date = frappe.datetime.add_days(today, 7);
+	} else {
+		values.posting_date = today;
+		values.due_date = frappe.datetime.add_days(today, 30);
+		values.set_draft_from_utility_service_request = 1;
+		values.ignore_default_payment_terms_template = frm.doc.payment_terms_template ? 1 : 0;
+	}
+
+	if (frm.doc.price_list) {
+		values.selling_price_list = frm.doc.price_list;
+	}
+	if (frm.doc.payment_terms_template) {
+		values.payment_terms_template = frm.doc.payment_terms_template;
+	}
+	if (frm.doc.tc_name) {
+		values.tc_name = frm.doc.tc_name;
+	}
+	if (frm.doc.terms) {
+		values.terms = frm.doc.terms;
+	}
+
+	frappe.new_doc(docType, values);
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
@@ -1244,7 +1295,9 @@ async function addActionButtons(frm) {
 				!contractName &&
 				(!settings?.require_deposit_before_contract_creation || depositName);
 
-			if (settings?.rent_billing_approach === "Item Price") {
+			const isItemPriceApproach = settings?.rent_billing_approach === "Item Price";
+
+			if (isItemPriceApproach) {
 				frm.add_custom_button(
 					__("Item Prices"),
 					function () {
@@ -1257,6 +1310,11 @@ async function addActionButtons(frm) {
 			frm.add_custom_button(
 				__("Sales Order / Deposit"),
 				function () {
+					if (isItemPriceApproach) {
+						open_new_sales_document(frm, "Sales Order");
+						return;
+					}
+
 					showSalesDocumentModal(frm, "Sales Order", enableExtraRows);
 				},
 				__("Create"),
@@ -1289,6 +1347,11 @@ async function addActionButtons(frm) {
 				frm.add_custom_button(
 					__("Sales Invoice"),
 					function () {
+						if (isItemPriceApproach) {
+							open_new_sales_document(frm, "Sales Invoice");
+							return;
+						}
+
 						showSalesDocumentModal(frm, "Sales Invoice", enableExtraRows);
 					},
 					__("Create"),
@@ -2138,9 +2201,7 @@ function validate_summary_schedules($wrapper) {
 		}
 	});
 
-	return incomplete
-		? __("Every rent period needs a From date, a To date and a rate.")
-		: null;
+	return incomplete ? __("Every rent period needs a From date, a To date and a rate.") : null;
 }
 
 /**
