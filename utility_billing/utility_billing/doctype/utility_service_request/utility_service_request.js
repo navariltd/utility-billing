@@ -977,7 +977,37 @@ function open_new_sales_document(frm, docType) {
 		values.terms = frm.doc.terms;
 	}
 
-	frappe.new_doc(docType, values);
+	const usr_items = (frm.doc.items || []).filter((row) => row.item_code);
+
+    frappe.new_doc(docType, values).then(() => {
+        if (!usr_items.length) return;
+
+        const new_frm = cur_frm;
+
+        new_frm.clear_table("items");
+
+        usr_items.forEach((source_row) => {
+            const row = new_frm.add_child("items");
+            frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
+            if (source_row.uom) {
+                frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+            }
+            if (source_row.warehouse) {
+                frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
+            }
+            // item_code triggers ERPNext's own item-details/rate fetch — set it last,
+            // after qty/uom/warehouse, so the rate calculation uses their final values.
+            frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
+        });
+
+        new_frm.refresh_field("items");
+
+        if (docType === "Sales Invoice") {
+            new_frm.doc.items.forEach((row) => {
+                frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
+            });
+        }
+    });
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
