@@ -104,7 +104,7 @@ def create_sales_order(meter_reading):
                 "consumption": i.consumption,
             },
         )
-
+    sales_order.delivery_date = nowdate()
     sales_order.insert()
     AccountsController.append_taxes_from_item_tax_template(sales_order)
     sales_order.save()

@@ -1,14 +1,12 @@
+
+
 # Copyright (c) 2024, Navari and Contributors
 # See license.txt
 
 import frappe
-frappe.flags.ignore_link_validation = True
 import unittest
 from unittest.mock import patch, MagicMock
-from frappe.utils import nowdate, add_days
-import pytest
-import uuid
-from frappe.test_runner import make_test_records
+from frappe.test_runner import make_test_records # Not strictly needed if you create records manually, but good to know
 
 # Import the MeterReading DocType and helper functions from the file being tested
 from utility_billing.utility_billing.doctype.meter_reading.meter_reading import (
@@ -25,7 +23,7 @@ from erpnext.controllers.accounts_controller import AccountsController
 
 class TestMeterReading(unittest.TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(self):
         """
         Runs once before all test methods in this class.
         Used to set up essential Frappe records (like Company, Item Group, UOM, Territory,
@@ -45,14 +43,6 @@ class TestMeterReading(unittest.TestCase):
                 "default_currency": "INR", # Or your default currency, e.g., "USD"
             }).insert(ignore_permissions=True)
 
-      
-        # Ensure 'All Item Groups' exists (used internally by ERPNext)
-        if not frappe.db.exists("Item Group", "All Item Groups"):
-            frappe.get_doc({
-                "doctype": "Item Group",
-                "item_group_name": "All Item Groups",
-                "is_group": 1
-            }).insert(ignore_permissions=True)
         # 2. Create 'All Product Groups' Item Group if it doesn't exist (needed for Items)
         if not frappe.db.exists("Item Group", "All Product Groups"):
             frappe.get_doc({
@@ -68,13 +58,6 @@ class TestMeterReading(unittest.TestCase):
                 "uom_name": "Unit"
             }).insert(ignore_permissions=True)
 
-        # 4. Create 'Nos' UOM if it doesn't exist
-        if not frappe.db.exists("UOM", "Nos"):
-            frappe.get_doc({
-                "doctype": "UOM",
-                "uom_name": "Nos"
-            }).insert(ignore_permissions=True)
-        
         # 4. Create 'All' Territory if it doesn't exist (needed for Customer creation)
         if not frappe.db.exists("Territory", "All"):
             frappe.get_doc({
@@ -93,14 +76,7 @@ class TestMeterReading(unittest.TestCase):
 
         # --- App-Specific Data Setup ---
 
-        # Ensure 'Commercial' Customer Group exists
-        if not frappe.db.exists("Customer Group", "Commercial"):
-            frappe.get_doc({
-                "doctype": "Customer Group",
-                "customer_group_name": "Commercial",
-                "is_group": 0
-            }).insert(ignore_permissions=True)
-
+        # Create a dummy Customer if it doesn't exist
         if not frappe.db.exists("Customer", "Test Customer MR"):
             frappe.get_doc({
                 "doctype": "Customer",
@@ -127,7 +103,7 @@ class TestMeterReading(unittest.TestCase):
                 "item_code": "Test Item MR",
                 "item_name": "Test Meter Item",
                 "is_stock_item": 0, # Typically not a stock item for utility services
-                "stock_uom": "Unit",
+                "uom": "Unit",
                 "item_group": "All Product Groups", # <-- ADDED THIS MANDATORY FIELD
             }).insert(ignore_permissions=True)
 
@@ -156,53 +132,8 @@ class TestMeterReading(unittest.TestCase):
         frappe.db.delete("Sales Invoice")
         frappe.db.delete("Meter Reading")
         frappe.db.delete("Warranty Claim")
-    @classmethod
 
-    def tearDownClass(cls):
-        """
-        Runs once after all test methods.
-        Cleans up data created by setUpClass to prevent interference between test runs.
-        """
-        doctype_list = [
-            "Warranty Claim",
-            "Customer",
-            "Item",
-            "Item Group",
-            "UOM",
-            "Territory",
-            "Price List",
-            "Company",
-            "Customer Group"
-        ]
-
-        for doctype in doctype_list:
-            if frappe.db.has_table(f"tab{doctype}"):
-                frappe.db.delete(doctype)
-
-        # Special check for Utility Billing Settings since it's a Singleton
-        if frappe.db.has_table("tabUtility Billing Settings"):
-            frappe.db.delete("Utility Billing Settings")
-
-
-
-    def test_get_serial_numbers_filters_empty_and_none_values(self):
-        """
-        Tests that only valid serial numbers are returned from warranty claims,
-        and empty or None values are filtered out.
-        """
-        customer = "Test Customer WC Filter"
-    
-        # Ensure the customer exists
-        if not frappe.db.exists("Customer", customer):
-            frappe.get_doc({
-                "doctype": "Customer",
-                "customer_name": customer,
-                "customer_type": "Company",
-                "customer_group": "Commercial",
-                "territory": "All"
-            }).insert(ignore_permissions=True)
-
-       # --- Test methods for MeterReading DocType ---
+    # --- Test methods for MeterReading DocType ---
 
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.create_meter_reading_rates')
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.MeterReading.validate_item_readings')
@@ -426,7 +357,8 @@ class TestMeterReading(unittest.TestCase):
         item.meter_number = "METER-001"
         item.current_reading = 100
 
-        meter_reading.validate_item_readings(item)
+ test_create_sales_order_appends_meter_readings
+       meter_reading.validate_item_readings(item)
 
         # Assert that get_previous_invoice_reading was called with correct arguments
         mock_get_prev_reading.assert_called_once_with(
@@ -441,11 +373,10 @@ class TestMeterReading(unittest.TestCase):
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
     def test_validate_item_readings_with_no_previous_reading(self, mock_get_prev_reading):
         """
-]        Tests that `validate_item_readings` correctly handles the case where
+        Tests that `validate_item_readings` correctly handles the case where
         `get_previous_invoice_reading` returns 0 (no previous reading found).
         """
         meter_reading = frappe.new_doc("Meter Reading")
-        meter_reading.company = "Test Company" 
         meter_reading.customer = "Test Customer MR"
         item = frappe.new_doc("Meter Reading Item", parent_doc=meter_reading)
         item.item_code = "Test Item MR"
@@ -463,122 +394,7 @@ class TestMeterReading(unittest.TestCase):
 
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_doc')
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_all', return_value=[{"document_type": "Department"}])
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x['document_type'].lower())
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.AccountsController')
-    @patch("frappe.get_cached_value")
-    def test_get_previous_invoice_reading_without_meter_number(
-        self,
-        mock_get_cached_value,
-        mock_accounts_controller,
-        mock_get_prev_reading,
-        mock_scrub,
-        mock_get_all,
-        mock_get_doc
-    ):
-        customer = "_Test Customer MR" + frappe.generate_hash(length=4)
-        item_code = "_Test Item MR" + frappe.generate_hash(length=4)
-        warehouse = "Stores - UB" # Assuming this exists or is created in setUp
-
-        # Create customer and item
-        if not frappe.db.exists("Customer", customer):
-            frappe.get_doc({"doctype": "Customer", "customer_name": customer}).insert(ignore_permissions=True)
-        if not frappe.db.exists("Item", item_code):
-            frappe.get_doc({"doctype": "Item", "item_code": item_code, "is_stock_item": 0}).insert(ignore_permissions=True)
-
-        # Create a Utility Property to act as the "Meter" (since "Meter" DocType isn't found)
-        # Ensure 'property_name' is set because Autoname requires it
-        meter_property = frappe.get_doc({
-            "doctype": "Utility Property",
-            "property_name": "Test Property HAS-METER-123" + frappe.generate_hash(length=4),
-            "meter_number": "HAS-METER-123", # This field must exist on Utility Property
-            "customer": customer
-        })
-        meter_property.insert(ignore_permissions=True) # Insert the meter property
-
-        # Create a recent Sales Order and Sales Invoice for the latest reading
-        so3 = frappe.get_doc({
-            "doctype": "Sales Order",
-            "customer": customer,
-            "order_type": "Sales",
-            "selling_price_list": "Standard Selling",
-            "set_warehouse": warehouse, # Important for stock validation
-            "transaction_date": nowdate(),
-            "delivery_date": add_days(nowdate(), 7),
-            "items": [{"item_code": item_code, "qty": 1, "rate": 100, "warehouse": warehouse}] # Warehouse for item
-        })
-        so3.insert(ignore_permissions=True)
-        so3.submit()
-
-        si_no_meter_latest = frappe.get_doc({
-            "doctype": "Sales Invoice",
-            "customer": customer,
-            "posting_date": nowdate(),
-            "due_date": nowdate(), # Due date should be today
-            "selling_price_list": "Standard Selling",
-            "set_warehouse": warehouse, # Important for stock validation
-            "items": [{"item_code": item_code, "qty": 1, "rate": 100, "warehouse": warehouse}], # Warehouse for item
-            "is_return": 0,
-            "sales_order": so3.name
-        })
-        si_no_meter_latest.append("meter_readings", {
-            "item_code": item_code,
-            "meter_number": None, # No meter number on the reading itself
-            "current_reading": 300,
-            "previous_reading": 200,
-            "consumption": 100
-        })
-        si_no_meter_latest.insert(ignore_permissions=True)
-        si_no_meter_latest.submit()
-
-        # Create an older submitted Sales Invoice also with a NULL meter number
-        # Ensure all dates for 'old' documents are consistently in the past
-        fixed_old_date_str = "2025-05-20" # Example: May 20, 2025 (adjust as needed)
-
-        so4 = frappe.get_doc({
-            "doctype": "Sales Order",
-            "customer": customer,
-            "order_type": "Sales",
-            "selling_price_list": "Standard Selling",
-            "set_warehouse": warehouse, # Important for stock validation
-            "transaction_date": fixed_old_date_str, # Use a fixed past date
-            "delivery_date": add_days(fixed_old_date_str, 5), # Delivery after transaction date
-            "items": [{"item_code": item_code, "qty": 1, "rate": 100, "warehouse": warehouse}] # Warehouse for item
-        })
-        so4.insert(ignore_permissions=True)
-        so4.submit()
-
-        si_no_meter_old = frappe.get_doc({
-            "doctype": "Sales Invoice",
-            "customer": customer,
-            "posting_date": fixed_old_date_str, # <--- Both posting and due date are the old date
-            "due_date": fixed_old_date_str,     # <--- Both posting and due date are the old date
-            "selling_price_list": "Standard Selling",
-            "set_warehouse": warehouse, # Important for stock validation
-            "items": [{"item_code": item_code, "qty": 1, "rate": 100, "warehouse": warehouse}], # Warehouse for item
-            "is_return": 0,
-            "sales_order": so4.name
-        })
-        si_no_meter_old.append("meter_readings", {
-            "item_code": item_code,
-            "meter_number": None,
-            "current_reading": 250,
-            "previous_reading": 150,
-            "consumption": 100 # Ensure consumption is present for validation
-        })
-        si_no_meter_old.insert(ignore_permissions=True)
-        si_no_meter_old.submit() # Assuming it needs to be submitted for this test
-
-        mock_get_cached_value.return_value = 300
-        previous_reading = frappe.get_cached_value(
-            "Sales Invoice Meter Reading",
-            {"parent": si_no_meter_old.name, "item_code": item_code, "meter_number": None},
-            "current_reading"
-        )
-        self.assertEqual(previous_reading, 300) # Assert that you can fetch the data back
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_doc')
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_all', return_value=[{"document_type": "Department"}])
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x['document_type'].lower())
+    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x.lower())
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.AccountsController')
     def test_create_sales_order_basic_creation(self, mock_accounts_controller, mock_get_prev_reading, mock_scrub, mock_get_all, mock_get_doc):
@@ -622,7 +438,7 @@ class TestMeterReading(unittest.TestCase):
 
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_doc')
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_all', return_value=[{"document_type": "Department"}, {"document_type": "Project"}])
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x['document_type'].lower() if isinstance(x, dict) else x.lower())
+    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x.lower())
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.AccountsController')
     def test_create_sales_order_copies_accounting_dimensions_and_other_fields(self, mock_accounts_controller, mock_get_prev_reading, mock_scrub, mock_get_all, mock_get_doc):
@@ -657,7 +473,7 @@ class TestMeterReading(unittest.TestCase):
 
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_doc')
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.get_all', return_value=[]) # No dimensions for this test focus
-    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x['document_type'].lower() if isinstance(x, dict) else x.lower())
+    @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.frappe.scrub', side_effect=lambda x: x.lower())
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.AccountsController')
     def test_create_sales_order_appends_rates_as_items(self, mock_accounts_controller, mock_get_prev_reading, mock_scrub, mock_get_all, mock_get_doc):
@@ -709,18 +525,17 @@ class TestMeterReading(unittest.TestCase):
         mock_so_doc.items = []
         mock_so_doc.meter_readings = []
         mock_get_doc.return_value = mock_so_doc
-        
-        
-        meter_reading = MagicMock()
-        meter_reading.customer = "Test Customer MR"
-        meter_reading.price_list = "Standard Selling"
-        meter_reading.name = "MR-2024-0001"  #  real attribute, not mock meta
-        meter_reading.rates = []     
-        meter_reading.items = [
+
+        meter_reading = MagicMock(
+            customer="Test Customer MR",
+            price_list="Standard Selling",
+            name="MR-2024-0001", # Important for linking                                                                                                        _name="MR-2024-0001",
+            rates=[],
+            items=[ # Items from the Meter Reading itself
                 MagicMock(item_code="Test Item MR 1", uom="Unit", stock_uom="Unit", current_reading=100, consumption=100, meter_number="METER-001"),
                 MagicMock(item_code="Test Item MR 2", uom="Unit", stock_uom="Unit", current_reading=150, consumption=140, meter_number="METER-002")
             ]
-    
+        )
 
         create_sales_order(meter_reading)
 
@@ -742,7 +557,170 @@ class TestMeterReading(unittest.TestCase):
         self.assertEqual(mock_so_doc.meter_readings[1]["meter_number"], "METER-002")
 
 
-    
+    def test_get_previous_invoice_reading_with_meter_number(self):
+        """
+        Tests `get_previous_invoice_reading` to ensure it fetches the latest reading
+        for a specific item, customer, and meter number from submitted Sales Invoices.
+        """
+        customer = "Test Customer MR"
+        item_code = "Test Item MR"
+        meter_number = "METER-TEST-001"
+
+        # Create a submitted Sales Invoice with a specific meter reading
+        so1 = frappe.get_doc({
+            "doctype": "Sales Order",
+            "customer": customer,
+            "order_type": "Sales",
+            "selling_price_list": "Standard Selling",
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+        })
+        so1.insert(ignore_permissions=True)
+        so1.submit() # Important for docstatus to be 1
+
+        si1 = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.nowdate(),
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so1.name
+        })
+        si1.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": meter_number,
+            "current_reading": 200,
+            "previous_reading": 100,
+            "consumption": 100
+        })
+        si1.insert(ignore_permissions=True)
+        si1.submit() # docstatus = 1
+
+        # Create another older submitted Sales Invoice for the same meter/item/customer
+        # This one should be ignored due to newer creation date
+        so2 = frappe.get_doc({
+            "doctype": "Sales Order",
+            "customer": customer,
+            "order_type": "Sales",
+            "selling_price_list": "Standard Selling",
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+        })
+        so2.insert(ignore_permissions=True)
+        so2.submit()
+
+        si2 = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.add_days(frappe.utils.nowdate(), -10), # Older date
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so2.name
+        })
+        si2.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": meter_number,
+            "current_reading": 150, # Older reading
+            "previous_reading": 50,
+            "consumption": 100
+        })
+        si2.insert(ignore_permissions=True)
+        si2.submit() # docstatus = 1
+
+
+        reading = get_previous_invoice_reading(item_code, customer, meter_number)
+        self.assertEqual(reading, 200) # Should retrieve the latest (200)
+
+    def test_get_previous_invoice_reading_without_meter_number(self):
+        """
+        Tests `get_previous_invoice_reading` when `meter_number` is None,
+        ensuring it fetches the latest reading where meter_number is NULL.
+        """
+        customer = "Test Customer MR"
+        item_code = "Test Item MR"
+
+        # Create a submitted Sales Invoice with a NULL meter number
+        so3 = frappe.get_doc({
+            "doctype": "Sales Order",
+            "customer": customer,
+            "order_type": "Sales",
+            "selling_price_list": "Standard Selling",
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+        })
+        so3.insert(ignore_permissions=True)
+        so3.submit()
+
+        si_no_meter_latest = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.nowdate(),
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so3.name
+        })
+        si_no_meter_latest.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": None, # No meter number
+            "current_reading": 300,
+            "previous_reading": 200,
+            "consumption": 100
+        })
+        si_no_meter_latest.insert(ignore_permissions=True)
+        si_no_meter_latest.submit()
+
+        # Create an older submitted Sales Invoice also with a NULL meter number
+        so4 = frappe.get_doc({
+            "doctype": "Sales Order",
+            "customer": customer,
+            "order_type": "Sales",
+            "selling_price_list": "Standard Selling",
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+        })
+        so4.insert(ignore_permissions=True)
+        so4.submit()
+
+        si_no_meter_old = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.add_days(frappe.utils.nowdate(), -5), # Older date
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so4.name
+        })
+        si_no_meter_old.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": None,
+            "current_reading": 250,
+            "previous_reading": 150,
+            "consumption": 100
+        })
+        si_no_meter_old.insert(ignore_permissions=True)
+        si_no_meter_old.submit()
+
+
+        reading = get_previous_invoice_reading(item_code, customer, meter_number=None)
+        self.assertEqual(reading, 300) # Should retrieve the latest (300)
+
+        # Also ensure that if a meter number exists but we query for NULL, we still get the NULL one
+        si_with_meter_diff = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.add_days(frappe.utils.nowdate(), 1), # Even newer date
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so3.name
+        })
+        si_with_meter_diff.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": "HAS-METER-123", # Has a meter number
+            "current_reading": 500,
+            "previous_reading": 400,
+            "consumption": 100
+        })
+        si_with_meter_diff.insert(ignore_permissions=True)
+        si_with_meter_diff.submit()
+
+        reading_no_meter_again = get_previous_invoice_reading(item_code, customer, meter_number=None)
+        self.assertEqual(reading_no_meter_again, 300) # Should still pick the 300 reading where meter_number is NULL
+
     def test_get_previous_invoice_reading_no_result(self):
         """
         Tests that `get_previous_invoice_reading` returns 0 when no matching
@@ -751,6 +729,51 @@ class TestMeterReading(unittest.TestCase):
         # Ensure no existing Sales Invoices for this unique combo
         reading = get_previous_invoice_reading("NonExistentItemXYZ", "NonExistentCustomerXYZ", "NonExistentMeterXYZ")
         self.assertEqual(reading, 0)
+
+    def test_get_previous_invoice_reading_filters_by_docstatus(self):
+        """
+        Tests that `get_previous_invoice_reading` only considers Sales Invoices
+        that have been submitted (docstatus == 1).
+        """
+        customer = "Test Customer MR"
+        item_code = "Test Item MR"
+        meter_number = "METER-DRAFT-001"
+
+        # Create a DRAFT Sales Invoice with a meter reading (docstatus 0)
+        so5 = frappe.get_doc({
+            "doctype": "Sales Order",
+            "customer": customer,
+            "order_type": "Sales",
+            "selling_price_list": "Standard Selling",
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+        })
+        so5.insert(ignore_permissions=True)
+        so5.submit()
+
+        si_draft = frappe.get_doc({
+            "doctype": "Sales Invoice",
+            "customer": customer,
+            "due_date": frappe.utils.nowdate(),
+            "items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+            "is_return": 0,
+            "sales_order": so5.name
+        })
+        si_draft.append("meter_readings", {
+            "item_code": item_code,
+            "meter_number": meter_number,
+            "current_reading": 700,
+            "previous_reading": 600,
+            "consumption": 100
+        })
+        si_draft.insert(ignore_permissions=True) # Will be docstatus 0 (Draft)
+
+        reading_draft = get_previous_invoice_reading(item_code, customer, meter_number)
+        self.assertEqual(reading_draft, 0) # Should be 0 because the invoice is not submitted
+
+        # Now, submit the invoice and re-test
+        si_draft.submit() # docstatus becomes 1
+        reading_submitted = get_previous_invoice_reading(item_code, customer, meter_number)
+        self.assertEqual(reading_submitted, 700) # Now it should be found
 
     def test_get_customer_details_with_default_price_list(self):
         """
@@ -808,95 +831,39 @@ class TestMeterReading(unittest.TestCase):
         Tests that `get_serial_numbers_from_warranty_claims` correctly extracts
         and de-duplicates serial numbers from multiple closed warranty claims.
         """
-
-        # Create test company and warehouse if they don't exist
-        company = "Test Company"
-        warehouse = "Test Warehouse - TC"
-
-        if not frappe.db.exists("Company", company):
-            frappe.get_doc({
-                "doctype": "Company",
-                "company_name": company,
-                "default_currency": "KES"  # or your system's currency
-        }).insert(ignore_permissions=True)
-
-        if not frappe.db.exists("Warehouse", warehouse):
-            frappe.get_doc({
-                "doctype": "Warehouse",
-                "warehouse_name": "Test Warehouse",
-                "company": company
-            }).insert(ignore_permissions=True)
-
-        customer = "Test Customer WC"  # Use a new customer for isolation
+        customer = "Test Customer WC" # Use a new customer for isolation
         if not frappe.db.exists("Customer", customer):
+            frappe.get_doc({"doctype": "Customer", "customer_name": customer, "customer_type": "Company", "customer_group": "Commercial", "territory": "All"}).insert(ignore_permissions=True)
+
+
+        # Create a warranty claim with multiple serial numbers
+        if not frappe.db.exists("Warranty Claim", "WC-001-TEST-MULTIPLE"):
             frappe.get_doc({
-                "doctype": "Customer",
-                "customer_name": customer,
-                "customer_type": "Company",
-                "customer_group": "Commercial",
-                "territory": "All"
+                "doctype": "Warranty Claim",
+                "name": "WC-001-TEST-MULTIPLE",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "SN001\nSN002\nSN004",
+                "warranty_claim_type": "Repair"
             }).insert(ignore_permissions=True)
 
-        # Ensure the test Item exists for the Serial No child records
-        item_code = "Test Item"
-        if not frappe.db.exists("Item", item_code):
+        # Create another claim with a duplicate and a new one
+        if not frappe.db.exists("Warranty Claim", "WC-002-TEST-DUPLICATE"):
             frappe.get_doc({
-                "doctype": "Item",
-                "item_code": item_code,
-                "item_name": item_code,
-                "stock_uom": "Nos",
-                "item_group": "All Item Groups"
+                "doctype": "Warranty Claim",
+                "name": "WC-002-TEST-DUPLICATE",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "SN003\nSN001", # SN001 is duplicated
+                "warranty_claim_type": "Repair"
             }).insert(ignore_permissions=True)
 
-        # Create Serial No documents used in warranty claims
-        serial_numbers = ["SN001", "SN002", "SN003", "SN004"]
-        for sn in serial_numbers:
-            if not frappe.db.exists("Serial No", sn):
-                frappe.get_doc({
-                    "doctype": "Serial No",
-                    "serial_no": sn,
-                    "item_code": item_code,
-                    "warehouse": warehouse,  # Required field
-                    "company": company       # Required field
-                }).insert(ignore_permissions=True)
-         # First group of claims: SN001, SN002, SN004
-        serials_1 = ["SN001", "SN002", "SN004"]
-        for sn in serials_1:
-            claim_name = f"WC-001-{sn}"
-            if not frappe.db.exists("Warranty Claim", claim_name):
-                frappe.get_doc({
-                    "doctype": "Warranty Claim",
-                    "name": claim_name,
-                    "customer": customer,
-                    "status": "Closed",
-                    "serial_no": sn,
-                    "warranty_claim_type": "Repair",
-                    "complaint": f"Test complaint for serial {sn}",
-                    "company": company
-                }).insert(ignore_permissions=True)
-
-        # Second group of claims: SN003 and SN001 (duplicate)
-        serials_2 = ["SN003", "SN001"]
-        for sn in serials_2:
-            claim_name = f"WC-002-{sn}"
-            if not frappe.db.exists("Warranty Claim", claim_name):
-                frappe.get_doc({
-                    "doctype": "Warranty Claim",
-                    "name": claim_name,
-                    "customer": customer,
-                    "status": "Closed",
-                    "serial_no": sn,
-                    "warranty_claim_type": "Repair",
-                    "complaint": f"Duplicate test for serial {sn}",
-                    "company": company
-                }).insert(ignore_permissions=True)
-
-        serial_numbers_result = get_serial_numbers_from_warranty_claims(customer)
+        serial_numbers = get_serial_numbers_from_warranty_claims(customer)
         expected_serial_numbers = ["SN001", "SN002", "SN003", "SN004"]
-
         # `assertCountEqual` is used for lists where order doesn't matter, only elements and their counts
-        self.assertCountEqual(serial_numbers_result, expected_serial_numbers)
-        self.assertEqual(len(serial_numbers_result), len(set(expected_serial_numbers)))  # Ensure uniqueness
+        self.assertCountEqual(serial_numbers, expected_serial_numbers)
+        self.assertEqual(len(serial_numbers), len(set(expected_serial_numbers))) # Ensure uniqueness
+
     def test_get_serial_numbers_from_warranty_claims_no_claims(self):
         """
         Tests that `get_serial_numbers_from_warranty_claims` returns an empty list
@@ -904,106 +871,76 @@ class TestMeterReading(unittest.TestCase):
         """
         serial_numbers = get_serial_numbers_from_warranty_claims("NonExistentCustomerForWC")
         self.assertEqual(serial_numbers, [])
+
     def test_get_serial_numbers_from_warranty_claims_open_claims_ignored(self):
         """
         Tests that `get_serial_numbers_from_warranty_claims` only considers "Closed"
         warranty claims and ignores those with other statuses (e.g., "Open").
         """
         customer = "Test Customer WC Status"
-        item_code = "Test Item For Serial"
-        company = "Test Company"
-        warehouse = "Test Warehouse - TC"
-
-        if not frappe.db.exists("Company", company):
-            frappe.get_doc({
-                "doctype": "Company",
-                "company_name": company,
-                "default_currency": "KES"
-            }).insert(ignore_permissions=True)
-        # Ensure Item exists
-        if not frappe.db.exists("Item", item_code):
-            frappe.get_doc({
-                "doctype": "Item",
-                "item_code": item_code,
-                "item_name": item_code,
-                "item_group": "All Item Groups",
-                "stock_uom": "Nos",
-                "is_stock_item": 0
-            }).insert(ignore_permissions=True)
-
-        # Ensure Serial Nos exist
-        for serial in ["SN-OPEN-1", "SN-CLOSED-1"]:
-            if not frappe.db.exists("Serial No", serial):
-                frappe.get_doc({
-                    "doctype": "Serial No",
-                    "name": serial,
-                    "serial_no": serial,
-                    "item_code": item_code,
-                    "warehouse": warehouse,
-                    "company": company 
-                }).insert(ignore_permissions=True)
-
-        # Ensure Customer exists
         if not frappe.db.exists("Customer", customer):
-            frappe.get_doc({
-                "doctype": "Customer",
-                "customer_name": customer,
-                "customer_type": "Company",
-                "customer_group": "Commercial",
-                "territory": "All"
-            }).insert(ignore_permissions=True)
+            frappe.get_doc({"doctype": "Customer", "customer_name": customer, "customer_type": "Company", "customer_group": "Commercial", "territory": "All"}).insert(ignore_permissions=True)
 
-        # Insert Warranty Claims
         if not frappe.db.exists("Warranty Claim", "WC-003-TEST-OPEN"):
             frappe.get_doc({
                 "doctype": "Warranty Claim",
+                "name": "WC-003-TEST-OPEN",
                 "customer": customer,
-                "company": company,
-                "status": "Open",  # Not Closed
+                "status": "Open", # Not Closed
                 "serial_no": "SN-OPEN-1",
-                "warranty_claim_type": "Repair",
-                "complaint": "Test complaint for open claim"
+                "warranty_claim_type": "Repair"
             }).insert(ignore_permissions=True)
-
         if not frappe.db.exists("Warranty Claim", "WC-004-TEST-CLOSED"):
             frappe.get_doc({
                 "doctype": "Warranty Claim",
                 "name": "WC-004-TEST-CLOSED",
                 "customer": customer,
-                "company": company,
                 "status": "Closed",
                 "serial_no": "SN-CLOSED-1",
-                "warranty_claim_type": "Repair",
-                "complaint": "Test complaint for closed claim"
+                "warranty_claim_type": "Repair"
             }).insert(ignore_permissions=True)
 
-        # Actual test
         serial_numbers = get_serial_numbers_from_warranty_claims(customer)
-        self.assertIn("SN-CLOSED-1", serial_numbers)  # Should be included
-        self.assertNotIn("SN-OPEN-1", serial_numbers)  # Should be ignored
+        self.assertIn("SN-CLOSED-1", serial_numbers) # This one should be included
+        self.assertNotIn("SN-OPEN-1", serial_numbers) # This one should be ignored
         self.assertEqual(len(serial_numbers), 1)
 
-    
-    def create_warranty_claim(name, serial_no):
-        frappe.get_doc({
-            "doctype": "Warranty Claim",
-            "name": name,
-            "customer": customer,
-            "status": "Closed",
-            "serial_no": serial_no,
-            "complaint": "Test issue",
-            "warranty_claim_type": "Repair",
-            "company": "Test Company"
-        }).insert(ignore_permissions=True)
+    def test_get_serial_numbers_from_warranty_claims_with_empty_serial_no(self):
+        """
+        Tests that `get_serial_numbers_from_warranty_claims` handles claims with
+        empty or None serial numbers gracefully, not including them in the result.
+        """
+        customer = "Test Customer WC Empty"
+        if not frappe.db.exists("Customer", customer):
+            frappe.get_doc({"doctype": "Customer", "customer_name": customer, "customer_type": "Company", "customer_group": "Commercial", "territory": "All"}).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Warranty Claim", "WC-005-TEST-EMPTY-SN"):
-            create_warranty_claim("WC-005-TEST-EMPTY-SN", "")
-
+            frappe.get_doc({
+                "doctype": "Warranty Claim",
+                "name": "WC-005-TEST-EMPTY-SN",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "", # Empty string serial number
+                "warranty_claim_type": "Repair"
+            }).insert(ignore_permissions=True)
         if not frappe.db.exists("Warranty Claim", "WC-006-TEST-NONE-SN"):
-            create_warranty_claim("WC-006-TEST-NONE-SN", None)
-
+            frappe.get_doc({
+                "doctype": "Warranty Claim",
+                "name": "WC-006-TEST-NONE-SN",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": None, # None serial number
+                "warranty_claim_type": "Repair"
+            }).insert(ignore_permissions=True)
         if not frappe.db.exists("Warranty Claim", "WC-007-TEST-VALID-SN"):
-            create_warranty_claim("WC-007-TEST-VALID-SN", "SN-VALID-1")
+            frappe.get_doc({
+                "doctype": "Warranty Claim",
+                "name": "WC-007-TEST-VALID-SN",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "SN-VALID-1",
+                "warranty_claim_type": "Repair"
+            }).insert(ignore_permissions=True)
 
 
         serial_numbers = get_serial_numbers_from_warranty_claims(customer)
@@ -1015,57 +952,33 @@ class TestMeterReading(unittest.TestCase):
     def test_get_serial_numbers_from_warranty_claims_duplicate_serial_nos(self):
         """
         Tests that `get_serial_numbers_from_warranty_claims` returns only unique
-        serial numbers even if they appear in multiple claims or multiple times.
+        serial numbers even if they appear in multiple claims or multiple times
+        within the same claim.
         """
         customer = "Test Customer WC Duplicates"
-        company = "Test Company"
-        serials = ["A123", "B456", "C789"]
-    
-        # Ensure customer exists
         if not frappe.db.exists("Customer", customer):
+            frappe.get_doc({"doctype": "Customer", "customer_name": customer, "customer_type": "Company", "customer_group": "Commercial", "territory": "All"}).insert(ignore_permissions=True)
+
+        if not frappe.db.exists("Warranty Claim", "WC-DUP1-TEST"):
             frappe.get_doc({
-                "doctype": "Customer",
-                "customer_name": customer,
-                "customer_type": "Company",
-                "customer_group": "Commercial",
-                "territory": "All"
+                "doctype": "Warranty Claim",
+                "name": "WC-DUP1-TEST",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "A123\nB456",
+                "warranty_claim_type": "Repair"
             }).insert(ignore_permissions=True)
-
-        # Create individual warranty claims for each serial
-        claims = [
-            ("WC-DUP1-A123", "A123"),
-            ("WC-DUP1-B456", "B456"),
-            ("WC-DUP2-B456", "B456"),  
-            ("WC.-DUP2-C789", "C789"),
-            ("WC-DUP2-A123", "A123")   
-        ]
-        # Ensure Serial Nos exist
-        for sn in ["A123", "B456", "C789"]:
-            if not frappe.db.exists("Serial No", sn):
-                frappe.get_doc({
-                    "doctype": "Serial No",
-                    "serial_no": sn,
-                    "item_code": "Test Item MR",  
-                    "company": "Test Company"
-                }).insert(ignore_permissions=True)
-
-
-        for name, serial in claims:
-            if not frappe.db.exists("Warranty Claim", name):
-                frappe.get_doc({
-                    "doctype": "Warranty Claim",
-                    "name": name,
-                    "customer": customer,
-                    "status": "Closed",
-                    "serial_no": serial,
-                    "warranty_claim_type": "Repair",
-                    "complaint": f"Claim for {serial}",
-                    "company": company
-                }).insert(ignore_permissions=True)
-
+        if not frappe.db.exists("Warranty Claim", "WC-DUP2-TEST"):
+            frappe.get_doc({
+                "doctype": "Warranty Claim",
+                "name": "WC-DUP2-TEST",
+                "customer": customer,
+                "status": "Closed",
+                "serial_no": "B456\nC789\nA123", # B456 and A123 are duplicated
+                "warranty_claim_type": "Repair"
+            }).insert(ignore_permissions=True)
 
         serial_numbers = get_serial_numbers_from_warranty_claims(customer)
         expected_serial_numbers = ["A123", "B456", "C789"]
         self.assertCountEqual(serial_numbers, expected_serial_numbers) # Checks for same elements, regardless of order
         self.assertEqual(len(serial_numbers), len(set(expected_serial_numbers))) # Confirms uniqueness
- 
