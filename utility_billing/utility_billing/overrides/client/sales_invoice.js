@@ -16,8 +16,27 @@ frappe.ui.form.on("Sales Invoice", {
 		(frm.doc.items || []).forEach((row) => {
 			apply_rate_of_deferred_date(frm, row.doctype, row.name);
 		});
+
+		toggle_utility_rate_readonly(frm);
 	},
 });
+
+// Lock the rate fields when the invoice belongs to a Utility Service Request
+// billed under the Item Price approach. The Item Price schedule is the source
+// of truth for these rates, so they are resolved automatically and must not be
+// typed by hand. The server re-resolves and enforces the same rate on save
+// regardless of this - this is UX only.
+function toggle_utility_rate_readonly(frm) {
+	if (!frm.doc.utility_service_request) {
+		return;
+	}
+
+	frappe.db.get_single_value("Utility Billing Settings", "rent_billing_approach").then((approach) => {
+		if (approach !== "Item Price") return;
+		frm.fields_dict["items"].grid.toggle_enable("rate", false);
+		frm.fields_dict["items"].grid.toggle_enable("price_list_rate", false);
+	});
+}
 
 frappe.ui.form.on("Sales Invoice Item", {
 	item_code: function (frm, cdt, cdn) {
