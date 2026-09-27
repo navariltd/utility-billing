@@ -18,7 +18,24 @@ frappe.ui.form.on("Utility Property", {
 			};
 		});
 
+		set_cost_center_queries(frm);
+
 		render_gallery_preview(frm);
+	},
+
+	company(frm) {
+		set_cost_center_queries(frm);
+	},
+
+	cost_center(frm) {
+		if (!frm.doc.cost_center) return;
+
+		frappe.db.get_value("Cost Center", frm.doc.cost_center, "parent_cost_center").then((r) => {
+			const parent = r.message && r.message.parent_cost_center;
+			if (parent) {
+				frm.set_value("parent_cost_center", parent);
+			}
+		});
 	},
 
 	item(frm) {
@@ -46,6 +63,26 @@ frappe.ui.form.on("Utility Property", {
 	},
 });
 
+function set_cost_center_queries(frm) {
+	frm.set_query("cost_center", function () {
+		return {
+			filters: {
+				is_group: 0,
+				company: frm.doc.company || "__no_company__",
+			},
+		};
+	});
+
+	frm.set_query("parent_cost_center", function () {
+		return {
+			filters: {
+				is_group: 1,
+				company: frm.doc.company || "__no_company__",
+			},
+		};
+	});
+}
+
 frappe.ui.form.on("Property Gallery Image", {
 	image: render_gallery_preview,
 	title: render_gallery_preview,
@@ -66,52 +103,52 @@ function render_gallery_preview(frm) {
 
 	if (!images.length) {
 		wrapper.html(`
-			<div class="text-muted" style="padding:16px;text-align:center;">
-				No gallery images added.
-			</div>
-		`);
+            <div class="text-muted" style="padding:16px;text-align:center;">
+                No gallery images added.
+            </div>
+        `);
 		return;
 	}
 
 	wrapper.html(`
-		<div style="
-			display:grid;
-			grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-			gap:16px;
-			padding-bottom:16px;
-		">
-			${images
-				.map(
-					(row) => `
-					<div style="
-						border:1px solid var(--border-color);
-						border-radius:8px;
-						overflow:hidden;
-						background:#fff;
-					">
-						<img
-							src="${row.image}"
-							style="
-								width:100%;
-								height:160px;
-								object-fit:cover;
-								display:block;
-							"
-						/>
-						<div style="padding:10px;">
-							<div style="font-weight:600;">
-								${frappe.utils.escape_html(row.title || "Untitled")}
-							</div>
-							${
-								row.category
-									? `<div class="text-muted" style="margin-top:4px;">${frappe.utils.escape_html(row.category)}</div>`
-									: ""
-							}
-						</div>
-					</div>
-				`,
-				)
-				.join("")}
-		</div>
-	`);
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+            gap:16px;
+            padding-bottom:16px;
+        ">
+${images
+			.map(
+				(row) => `
+                    <div style="
+                        border:1px solid var(--border-color);
+                        border-radius:8px;
+                        overflow:hidden;
+                        background:#fff;
+                    ">
+                        <img
+                            src="${row.image}"
+                            style="
+                                width:100%;
+                                height:160px;
+                                object-fit:cover;
+                                display:block;
+                            "
+                        />
+                        <div style="padding:10px;">
+                            <div style="font-weight:600;">
+${frappe.utils.escape_html(row.title || "Untitled")}
+                            </div>
+${
+	row.category
+		? `<div class="text-muted" style="margin-top:4px;">${frappe.utils.escape_html(row.category)}</div>`
+		: ""
+}
+                        </div>
+                    </div>
+                `,
+			)
+			.join("")}
+        </div>
+    `);
 }

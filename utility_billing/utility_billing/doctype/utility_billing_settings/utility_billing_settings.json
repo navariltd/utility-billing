@@ -22,6 +22,7 @@
   "generate_demo_data",
   "column_break_agjn",
   "clear_demo_data",
+  "months_in_advance_to_notify_of_tenancy_ending",
   "billing_approach_section",
   "rent_billing_approach",
   "column_break_billing_approach",
@@ -29,6 +30,9 @@
   "default_service_item_group",
   "default_item_price_uom",
   "default_price_list",
+  "cost_center_section",
+  "auto_create_property_cost_center",
+  "default_parent_cost_centers",
   "deferred_posting_section",
   "enable_deferred_posting",
   "deferred_accounts"
@@ -178,6 +182,30 @@
    "options": "Price List"
   },
   {
+   "fieldname": "cost_center_section",
+   "fieldtype": "Section Break",
+   "label": "Cost Center"
+  },
+  {
+   "default": "0",
+   "description": "Create and link a Cost Center named after the property, nested under the parent chosen below for its company.",
+   "fieldname": "auto_create_property_cost_center",
+   "fieldtype": "Check",
+   "label": "Auto Create Property Cost Center"
+  },
+  {
+   "fieldname": "column_break_cost_center",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.auto_create_property_cost_center==1",
+   "description": "New property Cost Centers are created as leaves under the parent set here for their company, unless a property sets its own Parent Cost Center.",
+   "fieldname": "default_parent_cost_centers",
+   "fieldtype": "Table",
+   "label": "Default Parent Cost Centers",
+   "options": "Cost Center Default"
+  },
+  {
    "fieldname": "deferred_posting_section",
    "fieldtype": "Section Break",
    "label": "Deferred Posting"
@@ -201,7 +229,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-17 23:22:04.203697",
+ "modified": "2026-09-26 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",
