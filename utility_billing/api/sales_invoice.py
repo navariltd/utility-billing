@@ -6,10 +6,16 @@ Deferred Posting Date and with the utility property its item belongs to.
 
 import frappe
 
+from utility_billing.utility_billing.utils.item_price_scope import is_item_price_approach
 from utility_billing.utility_billing.utils.item_rate import get_rate_for_date
 from utility_billing.utility_billing.utils.service_item import (
 	get_property_of_service_item,
 	get_service_item_of_property,
+)
+from utility_billing.utility_billing.utils.utility_item_classifier import (
+	get_request_lines,
+	match_error_message,
+	match_requests,
 )
 
 
@@ -90,3 +96,58 @@ def get_line_item(utility_property: str) -> str | None:
 		return None
 
 	return get_service_item_of_property(utility_property)
+
+
+@frappe.whitelist()
+def match_utility_service_requests(
+	customer: str, item_codes: list | str, new_item_code: str | None = None
+) -> dict:
+	"""Return the Utility Service Requests able to govern an invoice's utility lines.
+
+	Args:
+		customer: Customer of the invoice.
+		item_codes: Item codes on the invoice; non utility items are ignored.
+		new_item_code: Item just added, named in a blocking message.
+
+	Returns:
+		``applies`` (False when the invoice has no utility item or rates are not
+		billed by Item Price) and, when it applies, ``status``, ``candidates``,
+		``missing`` and the blocking ``message`` if any.
+	"""
+	if not is_item_price_approach():
+		return {"applies": False}
+
+	frappe.has_permission("Utility Service Request", "read", throw=True)
+
+	codes = frappe.parse_json(item_codes) if isinstance(item_codes, str) else item_codes
+	match = match_requests(customer, codes)
+	if not match.status:
+		return {"applies": False}
+
+	return {
+		"applies": True,
+		"status": match.status,
+		"candidates": match.candidates,
+		"missing": match.missing,
+		"message": match_error_message(match, customer, new_item_code),
+	}
+
+
+@frappe.whitelist()
+def get_utility_service_request_lines(utility_service_request: str) -> list[dict]:
+	"""Return the governed utility lines of a Utility Service Request.
+
+	Args:
+		utility_service_request: ``Utility Service Request`` name.
+
+	Returns:
+		One entry per utility item with its ``role``, ``rate``, ``qty`` and ``uom``.
+	"""
+	if not is_item_price_approach():
+		return []
+
+	frappe.has_permission(
+		"Utility Service Request", "read", doc=utility_service_request, throw=True
+	)
+
+	return list(get_request_lines(utility_service_request).values())

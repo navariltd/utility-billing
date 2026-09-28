@@ -7,13 +7,18 @@ Properties are both physical units and, when ``is_fixed_asset`` is set,
 fixed assets. Every billable unit additionally owns a service item named
 after the property, created on demand by
 ``utility_billing.utility_billing.utils.service_item`` and used as the rent
-billing item.
+billing item, and may own a Cost Center for tracking its rent and expenses,
+created on demand by ``utility_billing.utility_billing.utils.cost_center``.
 """
 
 import frappe
+from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils.nestedset import NestedSet
 
+from utility_billing.utility_billing.utils.cost_center import (
+    ensure_property_cost_center,
+)
 from utility_billing.utility_billing.utils.service_item import (
     create_service_item_for_property,
 )
@@ -27,6 +32,8 @@ class UtilityProperty(NestedSet):
         if self.is_group:
             self.status = ""
         self.set_service_item()
+        self.validate_cost_center()
+        self.set_cost_center()
 
         if self.item:
             asset = frappe.db.get_value(
@@ -108,6 +115,98 @@ class UtilityProperty(NestedSet):
         if item_code:
             self.service_item = item_code
 
+    def validate_cost_center(self):
+        """Validate a manually chosen Cost Center and Parent Cost Center.
+
+        The client filters these fields to leaves and groups of the right
+        company, but that is UX only - this is the actual guarantee.
+        """
+        if self.is_group:
+            return
+
+        if self.cost_center:
+            self.validate_cost_center_is_leaf()
+            self.validate_cost_center_matches_parent()
+
+        if self.parent_cost_center:
+            self.validate_parent_cost_center_is_group()
+
+    def validate_cost_center_is_leaf(self):
+        is_group, company = frappe.db.get_value(
+            "Cost Center", self.cost_center, ["is_group", "company"]
+        )
+
+        if is_group:
+            frappe.throw(
+                _("{0} is a Group Cost Center and cannot be used as a leaf Cost Center.").format(
+                    frappe.bold(self.cost_center)
+                )
+            )
+
+        if self.company and company != self.company:
+            frappe.throw(
+                _("Cost Center {0} belongs to {1}, not {2}.").format(
+                    frappe.bold(self.cost_center), company, self.company
+                )
+            )
+
+    def validate_parent_cost_center_is_group(self):
+        is_group, company = frappe.db.get_value(
+            "Cost Center", self.parent_cost_center, ["is_group", "company"]
+        )
+
+        if not is_group:
+            frappe.throw(
+                _("{0} is not a Group Cost Center and cannot be used as a Parent Cost Center.").format(
+                    frappe.bold(self.parent_cost_center)
+                )
+            )
+
+        if self.company and company != self.company:
+            frappe.throw(
+                _("Parent Cost Center {0} belongs to {1}, not {2}.").format(
+                    frappe.bold(self.parent_cost_center), company, self.company
+                )
+            )
+
+    def validate_cost_center_matches_parent(self):
+        actual_parent = frappe.db.get_value("Cost Center", self.cost_center, "parent_cost_center")
+
+        if self.parent_cost_center and self.parent_cost_center != actual_parent:
+            frappe.throw(
+                _(
+                    "Cost Center {0}'s actual parent is {1}, not {2}. Clear Parent Cost Center to "
+                    "let it fill in automatically, or pick the correct one."
+                ).format(
+                    frappe.bold(self.cost_center), frappe.bold(actual_parent), frappe.bold(self.parent_cost_center)
+                )
+            )
+
+    def set_cost_center(self):
+        """Ensure the property has a Cost Center for tracking rent and expenses.
+
+        Only created for billable leaf properties. Failures are logged instead
+        of raised so that a missing settings configuration never blocks saving
+        a property.
+        """
+        if self.is_group:
+            return
+
+        if self.cost_center and frappe.db.exists("Cost Center", self.cost_center):
+            return
+
+        try:
+            cost_center = ensure_property_cost_center(self)
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                f"Could not create Cost Center for property {self.name}",
+            )
+            return
+
+        if cost_center:
+            self.cost_center = cost_center
+
     def _create_item(self):
         """Helper method to create a new item document."""
         return frappe.get_doc({
@@ -123,3 +222,4 @@ class UtilityProperty(NestedSet):
             "stock_uom": "Nos",
             "disabled": 0,
         }).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
+        
