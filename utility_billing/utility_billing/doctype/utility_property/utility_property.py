@@ -9,6 +9,8 @@ after the property, created on demand by
 ``utility_billing.utility_billing.utils.service_item`` and used as the rent
 billing item, and may own a Cost Center for tracking its rent and expenses,
 created on demand by ``utility_billing.utility_billing.utils.cost_center``.
+The Cost Center is synced onto the service item's own Item Defaults, so
+Sales Invoice lines billing that item pick it up automatically.
 """
 
 import frappe
@@ -18,6 +20,7 @@ from frappe.utils.nestedset import NestedSet
 
 from utility_billing.utility_billing.utils.cost_center import (
     ensure_property_cost_center,
+    sync_cost_center_to_service_item,
 )
 from utility_billing.utility_billing.utils.service_item import (
     create_service_item_for_property,
@@ -34,6 +37,7 @@ class UtilityProperty(NestedSet):
         self.set_service_item()
         self.validate_cost_center()
         self.set_cost_center()
+        self.sync_service_item_cost_center()
 
         if self.item:
             asset = frappe.db.get_value(
@@ -116,20 +120,16 @@ class UtilityProperty(NestedSet):
             self.service_item = item_code
 
     def validate_cost_center(self):
-        """Validate a manually chosen Cost Center and Parent Cost Center.
+        """Validate a manually chosen Cost Center.
 
-        The client filters these fields to leaves and groups of the right
-        company, but that is UX only - this is the actual guarantee.
+        The client filters this field to leaves of the right company, but
+        that is UX only - this is the actual guarantee.
         """
         if self.is_group:
             return
 
         if self.cost_center:
             self.validate_cost_center_is_leaf()
-            self.validate_cost_center_matches_parent()
-
-        if self.parent_cost_center:
-            self.validate_parent_cost_center_is_group()
 
     def validate_cost_center_is_leaf(self):
         is_group, company = frappe.db.get_value(
@@ -147,38 +147,6 @@ class UtilityProperty(NestedSet):
             frappe.throw(
                 _("Cost Center {0} belongs to {1}, not {2}.").format(
                     frappe.bold(self.cost_center), company, self.company
-                )
-            )
-
-    def validate_parent_cost_center_is_group(self):
-        is_group, company = frappe.db.get_value(
-            "Cost Center", self.parent_cost_center, ["is_group", "company"]
-        )
-
-        if not is_group:
-            frappe.throw(
-                _("{0} is not a Group Cost Center and cannot be used as a Parent Cost Center.").format(
-                    frappe.bold(self.parent_cost_center)
-                )
-            )
-
-        if self.company and company != self.company:
-            frappe.throw(
-                _("Parent Cost Center {0} belongs to {1}, not {2}.").format(
-                    frappe.bold(self.parent_cost_center), company, self.company
-                )
-            )
-
-    def validate_cost_center_matches_parent(self):
-        actual_parent = frappe.db.get_value("Cost Center", self.cost_center, "parent_cost_center")
-
-        if self.parent_cost_center and self.parent_cost_center != actual_parent:
-            frappe.throw(
-                _(
-                    "Cost Center {0}'s actual parent is {1}, not {2}. Clear Parent Cost Center to "
-                    "let it fill in automatically, or pick the correct one."
-                ).format(
-                    frappe.bold(self.cost_center), frappe.bold(actual_parent), frappe.bold(self.parent_cost_center)
                 )
             )
 
@@ -206,6 +174,24 @@ class UtilityProperty(NestedSet):
 
         if cost_center:
             self.cost_center = cost_center
+
+    def sync_service_item_cost_center(self):
+        """Sync this property's Cost Center onto its service item's Item Defaults.
+
+        Only fills a company's row when it has no Cost Center yet - an
+        existing value is left alone. Failures are logged instead of raised so
+        a missing service item or Item Defaults quirk never blocks saving.
+        """
+        if self.is_group:
+            return
+
+        try:
+            sync_cost_center_to_service_item(self)
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                f"Could not sync Cost Center to service item for property {self.name}",
+            )
 
     def _create_item(self):
         """Helper method to create a new item document."""

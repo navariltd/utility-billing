@@ -18,24 +18,13 @@ frappe.ui.form.on("Utility Property", {
 			};
 		});
 
-		set_cost_center_queries(frm);
+		set_cost_center_query(frm);
 
 		render_gallery_preview(frm);
 	},
 
 	company(frm) {
-		set_cost_center_queries(frm);
-	},
-
-	cost_center(frm) {
-		if (!frm.doc.cost_center) return;
-
-		frappe.db.get_value("Cost Center", frm.doc.cost_center, "parent_cost_center").then((r) => {
-			const parent = r.message && r.message.parent_cost_center;
-			if (parent) {
-				frm.set_value("parent_cost_center", parent);
-			}
-		});
+		set_cost_center_query(frm);
 	},
 
 	item(frm) {
@@ -63,20 +52,11 @@ frappe.ui.form.on("Utility Property", {
 	},
 });
 
-function set_cost_center_queries(frm) {
+function set_cost_center_query(frm) {
 	frm.set_query("cost_center", function () {
 		return {
 			filters: {
 				is_group: 0,
-				company: frm.doc.company || "__no_company__",
-			},
-		};
-	});
-
-	frm.set_query("parent_cost_center", function () {
-		return {
-			filters: {
-				is_group: 1,
 				company: frm.doc.company || "__no_company__",
 			},
 		};

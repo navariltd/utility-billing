@@ -2,9 +2,10 @@
 
 Every billable property may own a Cost Center for tracking its rent and
 expenses. When auto creation is enabled in Utility Billing Settings, a
-missing one is created on demand, nested under the property's own Parent
-Cost Center if it has one, otherwise under the default parent configured
-for the property's company.
+missing one is created on demand, nested under the default parent Cost
+Center configured for the property's company. Once resolved, it is synced
+onto the property's own service item as an Item Default, so Sales Invoice
+lines billing that item pick it up automatically.
 """
 
 import frappe
@@ -31,22 +32,17 @@ def create_cost_center_for_property(property_doc) -> str | None:
 	"""Create (or link) the Cost Center of a property.
 
 	The Cost Center is a leaf named after the property, nested under the
-	property's own Parent Cost Center if it has one, otherwise under the
-	default parent configured for the property's company. When a Cost Center
-	of that name already exists it is linked instead of being created, so
-	repeated calls stay idempotent.
+	default parent Cost Center configured for the property's company. When a
+	Cost Center of that name already exists it is linked instead of being
+	created, so repeated calls stay idempotent.
 
 	Args:
 		property_doc: ``Utility Property`` document.
 
 	Returns:
 		The Cost Center name, or ``None`` when auto creation is disabled, the
-		property has no name to derive it from, or no parent could be
-		resolved for its company.
-
-	Raises:
-		frappe.ValidationError: When the resolved parent belongs to a company
-			other than the property's own.
+		property has no name to derive it from, or no default parent is
+		configured for its company.
 	"""
 	settings = get_settings()
 	if not settings.auto_create_property_cost_center:
@@ -55,21 +51,11 @@ def create_cost_center_for_property(property_doc) -> str | None:
 	if not property_doc.property_name:
 		return None
 
-	parent_cost_center = property_doc.parent_cost_center or _default_parent_cost_center(
-		settings, property_doc.company
-	)
+	parent_cost_center = _default_parent_cost_center(settings, property_doc.company)
 	if not parent_cost_center:
 		return None
 
 	company = frappe.db.get_value("Cost Center", parent_cost_center, "company")
-
-	if property_doc.company and company != property_doc.company:
-		frappe.throw(
-			_("Parent Cost Center {0} belongs to {1}, not {2}, the property's own company.").format(
-				frappe.bold(parent_cost_center), company, property_doc.company
-			)
-		)
-
 	abbr = frappe.db.get_value("Company", company, "abbr")
 	cost_center_name = f"{property_doc.property_name} - {abbr}"
 
@@ -90,6 +76,42 @@ def create_cost_center_for_property(property_doc) -> str | None:
 
 	return cost_center_doc.name
 
+
+def sync_cost_center_to_service_item(property_doc) -> None:
+	"""Set the property's Cost Center as an Item Default of its service item.
+
+	Only fills a company's row when it has no Cost Center yet - an existing
+	value is left alone, since it may have been set deliberately. Only ever
+	touches the property's own service item, never a secondary utility item,
+	since those are not owned by a single property.
+
+	Args:
+		property_doc: ``Utility Property`` document.
+	"""
+	if not property_doc.service_item or not property_doc.cost_center or not property_doc.company:
+		return
+
+	item_doc = frappe.get_doc("Item", property_doc.service_item)
+
+	row = next(
+		(r for r in item_doc.get("item_defaults") or [] if r.company == property_doc.company),
+		None,
+	)
+
+	if row:
+		if row.selling_cost_center:
+			return
+		row.selling_cost_center = property_doc.cost_center
+	else:
+		item_doc.append(
+			"item_defaults",
+			{
+				"company": property_doc.company,
+				"selling_cost_center": property_doc.cost_center,
+			},
+		)
+
+	item_doc.save(ignore_permissions=True)
 
 def _default_parent_cost_center(settings, company: str | None) -> str | None:
 	"""Return the default Parent Cost Center configured for a company.

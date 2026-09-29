@@ -998,6 +998,7 @@ function open_new_sales_document(frm, docType) {
             // item_code triggers ERPNext's own item-details/rate fetch — set it last,
             // after qty/uom/warehouse, so the rate calculation uses their final values.
             frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
+            frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
         });
 
         new_frm.refresh_field("items");
