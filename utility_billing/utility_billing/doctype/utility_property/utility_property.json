@@ -21,7 +21,6 @@
   "item",
   "service_item",
   "cost_center",
-  "parent_cost_center",
   "column_break_sakg",
   "asset_category",
   "purchase_date",
@@ -229,14 +228,6 @@
    "options": "Cost Center"
   },
   {
-   "depends_on": "eval: doc.is_group == 0",
-   "description": "Where the new Cost Center is created, if left blank uses the Default Parent Cost Center from Utility Billing Settings. Filled in automatically if you pick an existing Cost Center above instead.",
-   "fieldname": "parent_cost_center",
-   "fieldtype": "Link",
-   "label": "Parent Cost Center",
-   "options": "Cost Center"
-  },
-  {
    "depends_on": "eval: doc.is_group == 0;",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -425,7 +416,7 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2026-09-27 09:00:00.000000",
+ "modified": "2026-09-28 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Property",
