@@ -1,5 +1,11 @@
 const settingsDoctypeName = "Utility Billing Settings";
 
+// Periods the Item Price generator stops at when a schedule has no end
+// (``ScheduleRequest.max_periods``), and the months each frequency spans on the
+// server - Daily and Weekly fall back to one month there.
+const ITEM_PRICE_MAX_PERIODS = 120;
+const MONTHS_PER_FREQUENCY = { Monthly: 1, Quarterly: 3, "Half-yearly": 6, Yearly: 12 };
+
 frappe.ui.form.on("Utility Service Request", {
 	refresh: async function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
@@ -1371,8 +1377,19 @@ async function addActionButtons(frm) {
 					__("Create"),
 				);
 			}
+			// With Require Signed Contract on, only a signed submitted Contract counts,
+			// matching the server check on the Sales Invoice.
+			const signedContractName = settings?.require_signed_contract
+				? (
+						await frappe.db.get_value(
+							"Contract",
+							{ utility_service_request: frm.doc.name, docstatus: 1, is_signed: 1 },
+							"name",
+						)
+					)?.message?.name || null
+				: contractName;
 			if (
-				(settings?.require_contract_before_sales_invoice_creation && contractName) ||
+				(settings?.require_contract_before_sales_invoice_creation && signedContractName) ||
 				!settings?.require_contract_before_sales_invoice_creation
 			) {
 				frm.add_custom_button(
@@ -1842,9 +1859,7 @@ function select_property(dialog, frm, property) {
  * switching properties never loses them.
  */
 function apply_property_dates(dialog, frm, property) {
-	const row = (frm.doc.requested_properties || []).find(
-		(candidate) => candidate.utility_property === property,
-	);
+	const { row } = get_property_lease(frm, property);
 	dialog._property_dates = dialog._property_dates || {};
 
 	const saved = dialog._property_dates[property];
@@ -1857,6 +1872,145 @@ function apply_property_dates(dialog, frm, property) {
 		start_date: dialog.get_value("start_date"),
 		end_date: dialog.get_value("end_date"),
 	};
+
+	set_lease_start_limit(dialog, frm, property);
+	show_lease_end_note(dialog, frm);
+}
+
+/**
+ * The effective lease of a property: its Requested Properties row, falling
+ * back to the request's Contract Details - the rule the server enforces.
+ */
+function get_property_lease(frm, property) {
+	const row = (frm.doc.requested_properties || []).find(
+		(candidate) => candidate.utility_property === property,
+	);
+	const row_end = row?.end_date || null;
+
+	return {
+		row,
+		start_date: row?.start_date || frm.doc.start_date || null,
+		end_date: row_end || frm.doc.end_date || null,
+		end_source: row_end
+			? __("End Date of {0} in Requested Properties (row {1})", [property, row.idx])
+			: frm.doc.end_date
+				? __("Contract End Date (Contract Details)")
+				: null,
+	};
+}
+
+/**
+ * Stop the date picker offering days before the property's contract start.
+ */
+function set_lease_start_limit(dialog, frm, property) {
+	const field = dialog.get_field("start_date");
+	const { start_date } = get_property_lease(frm, property);
+	const min_date = start_date ? frappe.datetime.str_to_obj(start_date) : null;
+
+	field.df.min_date = min_date;
+	field.datepicker?.update({ minDate: min_date || "" });
+}
+
+/**
+ * The error for a Lease Start before the property's contract start, if any.
+ */
+function get_lease_start_error(dialog, frm, property) {
+	const { start_date } = get_property_lease(frm, property);
+	const value = dialog.get_value("start_date");
+
+	if (!value || !start_date || value >= start_date) return null;
+
+	return __(
+		"Item Price start date '{0}' for property {1} cannot be before contract start date '{2}'.",
+		[value, property, start_date],
+	);
+}
+
+/**
+ * Reset a Lease Start typed before the contract start.
+ *
+ * A typed date bypasses the date picker's limit, so it is checked here too.
+ * Returns whether the Lease Start was acceptable.
+ */
+function enforce_lease_start(dialog, frm) {
+	const property = dialog.get_value("utility_property");
+	const error = get_lease_start_error(dialog, frm, property);
+
+	if (!error) return true;
+
+	show_lease_message(error);
+	// Reset only once the typed value has finished applying: setting the field
+	// from its own change handler, mid-change, makes the two values chase each
+	// other and freezes the page.
+	setTimeout(() => {
+		dialog.set_value("start_date", get_property_lease(frm, property).start_date);
+	}, 0);
+	return false;
+}
+
+/**
+ * The error for a Lease End differing from the property's lease end, if any.
+ *
+ * Only compared when both are set: a blank Lease End falls back to the lease
+ * end on the server, and an open ended lease accepts any Lease End.
+ */
+function get_end_date_conflict(dialog, frm, property) {
+	const { end_date, end_source } = get_property_lease(frm, property);
+	const value = dialog.get_value("end_date");
+
+	if (!value || !end_date || value === end_date) return null;
+
+	return __(
+		"End dates for property {0} do not match: Lease End (Define Item Prices) is '{1}' but {2} is '{3}'. Clear the Lease End to use the lease end, or set it to '{3}'.",
+		[property, value, end_source, end_date],
+	);
+}
+
+function report_end_date_conflict(dialog, frm) {
+	const error = get_end_date_conflict(dialog, frm, dialog.get_value("utility_property"));
+	if (error) show_lease_message(error);
+}
+
+/**
+ * Show a lease date error once.
+ *
+ * A dialog field fires its change handler more than once per edit, so the same
+ * message repeated within a second is skipped.
+ */
+function show_lease_message(message) {
+	const now = Date.now();
+	if (show_lease_message.last === message && now - show_lease_message.at < 1000) return;
+
+	show_lease_message.last = message;
+	show_lease_message.at = now;
+	frappe.msgprint({ message, indicator: "red" });
+}
+
+/**
+ * Explain what a blank Lease End will do. Informational only.
+ */
+function show_lease_end_note(dialog, frm) {
+	const field = dialog.get_field("lease_end_note");
+	if (!field) return;
+
+	field.$wrapper.empty();
+	if (dialog.get_value("end_date")) return;
+
+	const { end_date } = get_property_lease(frm, dialog.get_value("utility_property"));
+	let message;
+
+	if (end_date) {
+		message = __("No Lease End set: the property's lease end {0} will be used.", [end_date]);
+	} else {
+		const frequency = dialog.get_value("frequency") || "Monthly";
+		const months = ITEM_PRICE_MAX_PERIODS * (MONTHS_PER_FREQUENCY[frequency] || 1);
+		message = __(
+			"No Lease End set: up to {0} periods will be generated from the Lease Start (about {1} years). Consecutive periods with the same rate are saved as one Item Price.",
+			[ITEM_PRICE_MAX_PERIODS, flt(months / 12, 1)],
+		);
+	}
+
+	$(`<div class="small text-muted"></div>`).text(message).appendTo(field.$wrapper);
 }
 
 /**
@@ -2331,6 +2485,7 @@ function showItemPriceScheduleModal(frm) {
 				default: frm.doc.start_date || frappe.datetime.get_today(),
 				reqd: 1,
 				change: function () {
+					if (!enforce_lease_start(dialog, frm)) return;
 					remember_property_dates(dialog);
 					schedule_auto_preview(dialog, frm);
 				},
@@ -2342,8 +2497,14 @@ function showItemPriceScheduleModal(frm) {
 				default: frm.doc.end_date,
 				change: function () {
 					remember_property_dates(dialog);
+					show_lease_end_note(dialog, frm);
+					report_end_date_conflict(dialog, frm);
 					schedule_auto_preview(dialog, frm);
 				},
+			},
+			{
+				fieldname: "lease_end_note",
+				fieldtype: "HTML",
 			},
 			{
 				fieldname: "increment_section",
@@ -2370,7 +2531,10 @@ function showItemPriceScheduleModal(frm) {
 				label: __("Frequency"),
 				default: "Monthly",
 				description: __("How often rent is billed."),
-				change: () => schedule_auto_preview(dialog, frm),
+				change: () => {
+					show_lease_end_note(dialog, frm);
+					schedule_auto_preview(dialog, frm);
+				},
 			},
 			{
 				fieldname: "column_break_frequency",
@@ -2452,6 +2616,13 @@ function showItemPriceScheduleModal(frm) {
 			if (!is_schedule_manual(dialog, property) && get_selected_rate(dialog) === null) {
 				frappe.msgprint(__("Please enter the starting rate for {0}.", [property]));
 				return;
+			}
+
+			const lease_error =
+				get_lease_start_error(dialog, frm, property) ||
+				get_end_date_conflict(dialog, frm, property);
+			if (lease_error) {
+				frappe.throw(lease_error);
 			}
 
 			create_item_prices(dialog, frm, values, property, properties);

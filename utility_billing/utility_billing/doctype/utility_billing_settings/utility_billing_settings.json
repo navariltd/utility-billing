@@ -15,6 +15,7 @@
   "enable_site_survey",
   "require_deposit_before_contract_creation",
   "require_contract_before_sales_invoice_creation",
+  "require_signed_contract",
   "column_break_rmpo",
   "create_customer_from_utility_service_request_on_submit",
   "enable_extra_rows_for_sosi_creation",
@@ -92,9 +93,18 @@
   },
   {
    "default": "0",
+   "description": "Sales Invoices for a Utility Service Request need a submitted Contract linked to that request.",
    "fieldname": "require_contract_before_sales_invoice_creation",
    "fieldtype": "Check",
    "label": "Require Contract Before Sales Invoice Creation"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.require_contract_before_sales_invoice_creation",
+   "description": "When enabled, the Contract must also be marked as signed. When disabled, any submitted Contract is accepted, signed or not.",
+   "fieldname": "require_signed_contract",
+   "fieldtype": "Check",
+   "label": "Require Signed Contract"
   },
   {
    "default": "0",
@@ -229,7 +239,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-26 09:00:00.000000",
+ "modified": "2026-09-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",

@@ -176,7 +176,7 @@ def create_contract(name):
 	contract.start_date = doc.start_date
 	contract.end_date = doc.end_date
 	contract.contract_template = doc.contract_template
-	contract.contract_terms = doc.contract_terms
+	contract.contract_terms = get_default_contract_terms(doc)
 	contract.requires_fulfilment = doc.requires_fulfilment
 	contract.fulfilment_terms = doc.fulfilment_terms
 
@@ -203,7 +203,43 @@ def create_contract(name):
 	contract.flags.ignore_mandatory = True
 	contract.insert()
 
+	if not contract.contract_terms:
+		frappe.msgprint(
+			_(
+				"Contract {0} was created without Contract Terms. Fill in its Contract Terms, "
+				"or pick a Contract Template, before submitting it."
+			).format(frappe.bold(contract.name)),
+			title=_("Contract Terms needed"),
+			indicator="orange",
+		)
+
 	return contract.name
+
+
+def get_default_contract_terms(doc) -> str | None:
+	"""Return the Contract Terms a Contract made from the request starts with.
+
+	The request's own Contract Terms win; otherwise the terms of its Contract
+	Template are rendered for the request, as ERPNext does when a template is
+	picked on a form. No placeholder is ever made up: the terms are the legal
+	content of the lease, so without a source they stay blank for the user to
+	fill in - ERPNext then blocks submitting the Contract until they do.
+
+	Args:
+		doc: ``Utility Service Request`` document.
+
+	Returns:
+		The Contract Terms, or ``None`` when neither source has any.
+	"""
+	if doc.contract_terms:
+		return doc.contract_terms
+
+	if not doc.contract_template:
+		return None
+
+	from erpnext.crm.doctype.contract_template.contract_template import get_contract_template
+
+	return get_contract_template(doc.contract_template, doc.as_dict()).get("contract_terms")
 
 
 @frappe.whitelist()

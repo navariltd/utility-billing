@@ -3,6 +3,11 @@
 Creates a minimal Utility Service Request with one property and verifies that
 the action previews a schedule and creates the matching Item Prices, and that
 re-running it stays idempotent.
+
+A schedule's Lease End must match its property's lease end, so each test sets
+the property rows' end date to the end it generates up to (``_action_args``).
+The request itself carries no end date: its validation snaps a header end to
+whole months from the start, which would not hold a lease ending mid-month.
 """
 
 import frappe
@@ -19,6 +24,8 @@ TEST_PROPERTY = "_Test Action Rent Property"
 TEST_CUSTOMER = "_Test Rent Action Customer"
 SECOND_ITEM = "_Test Action Rent Item 2"
 SECOND_PROPERTY = "_Test Action Rent Property 2"
+LEASE_START = "2026-01-01"
+LEASE_END = "2026-12-31"
 
 
 class TestItemPriceScheduleActions(FrappeTestCase):
@@ -50,15 +57,13 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		service_request.customer = TEST_CUSTOMER
 		service_request.company = frappe.db.get_value("Company", {}, "name")
 		service_request.price_list = TEST_PRICE_LIST
-		service_request.start_date = "2026-01-01"
-		service_request.end_date = "2027-01-01"
-		service_request.contract_length_months = 12
+		service_request.start_date = LEASE_START
 		service_request.append(
 			"requested_properties",
 			{
 				"utility_property": TEST_PROPERTY,
-				"start_date": "2026-01-01",
-				"end_date": "2027-01-01",
+				"start_date": LEASE_START,
+				"end_date": LEASE_END,
 				"is_active": 1,
 			},
 		)
@@ -78,15 +83,29 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		return service_request
 
 
-	def _action_args(self):
+	def _action_args(self, end_date=LEASE_END):
+		"""Return the action arguments for a schedule ending on ``end_date``.
+
+		The requested properties' lease end is set to ``end_date`` too, since a
+		schedule's Lease End has to match its property's lease end.
+		"""
+		self._set_lease_end(end_date)
+
 		return {
 			"docname": self.service_request.name,
 			"properties": frappe.as_json([TEST_PROPERTY]),
 			"base_rates": frappe.as_json({TEST_PROPERTY: 1000}),
-			"start_date": "2026-01-01",
-			"end_date": "2026-12-31",
+			"start_date": LEASE_START,
+			"end_date": end_date,
 			"price_list": TEST_PRICE_LIST,
 		}
+
+	def _set_lease_end(self, end_date):
+		"""End every requested property's lease on ``end_date``."""
+		for row in self.service_request.requested_properties:
+			frappe.db.set_value("Contract Utility Property Item", row.name, "end_date", end_date)
+
+		self.service_request.reload()
 
 	def test_preview_merges_periods_that_share_a_rate(self):
 		# No increment is configured, so every month has the same rate and a
@@ -139,9 +158,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		rule.insert(ignore_permissions=True)
 
 		try:
-			args = self._action_args()
+			args = self._action_args(end_date="2027-12-31")
 			args["adjustment_rule"] = rule_name
-			args["end_date"] = "2027-12-31"
 			result = item_price_actions.create_item_price_schedule(**args)
 
 			periods = sorted(
@@ -183,8 +201,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		self.assertEqual(flt(periods[1]["rate"]), 5000)
 
 	def test_manual_increment_values_are_used_without_a_rule(self):
-		args = self._action_args()
-		args["end_date"] = "2027-12-31"
+		args = self._action_args(end_date="2027-12-31")
 		args["adjustment_rule"] = None
 		args["increment"] = frappe.as_json(
 			{
@@ -219,8 +236,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		rule.insert(ignore_permissions=True)
 
 		try:
-			args = self._action_args()
-			args["end_date"] = "2027-12-31"
+			args = self._action_args(end_date="2027-12-31")
 			args["adjustment_rule"] = rule_name
 			# The rule says 5%; the modal says 20%.
 			args["increment"] = frappe.as_json({"percentage": 20})
@@ -238,8 +254,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			frappe.db.delete("Billing Adjustment Rule", {"name": rule_name})
 
 	def test_five_year_lease_with_manual_five_percent_yearly_increment(self):
-		args = self._action_args()
-		args["end_date"] = "2031-01-01"
+		args = self._action_args(end_date="2031-01-01")
 		args["adjustment_rule"] = None
 		args["increment"] = frappe.as_json(
 			{
@@ -272,8 +287,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		)
 
 	def test_five_year_lease_with_compounding_basis(self):
-		args = self._action_args()
-		args["end_date"] = "2031-01-01"
+		args = self._action_args(end_date="2031-01-01")
 		args["adjustment_rule"] = None
 		args["increment"] = frappe.as_json(
 			{
@@ -297,8 +311,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		self.assertAlmostEqual(rates[4], 1215.50625, places=4)
 
 	def test_annual_increment_with_effective_after_delay(self):
-		args = self._action_args()
-		args["end_date"] = "2029-01-01"
+		args = self._action_args(end_date="2029-01-01")
 		args["adjustment_rule"] = None
 		args["increment"] = frappe.as_json(
 			{
@@ -340,8 +353,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		rule.insert(ignore_permissions=True)
 
 		try:
-			args = self._action_args()
-			args["end_date"] = "2028-12-31"
+			args = self._action_args(end_date="2028-12-31")
 			args["adjustment_rule"] = rule_name
 			result = item_price_actions.create_item_price_schedule(**args)
 
@@ -382,8 +394,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 	def test_preview_periods_match_the_table_columns(self):
 		"""The modal maps these keys straight onto the Rates table columns."""
-		args = self._action_args()
-		args["end_date"] = "2027-12-31"
+		args = self._action_args(end_date="2027-12-31")
 		args["adjustment_rule"] = None
 		args["increment"] = frappe.as_json(
 			{"interval_months": 12, "percentage": 10, "effective_after_months": 0}
@@ -456,8 +467,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 	def test_full_lease_creates_one_price_per_year_not_per_month(self):
 		"""A 5 year lease with a yearly increment yields one price per year."""
-		args = self._action_args()
-		args["end_date"] = "2031-01-01"
+		args = self._action_args(end_date="2031-01-01")
 		args["adjustment_rule"] = None
 		args["customer"] = TEST_CUSTOMER
 		args["increment"] = frappe.as_json(
@@ -506,8 +516,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			self.assertEqual(price["customer"], TEST_CUSTOMER)
 
 	def test_schedule_is_contiguous_across_created_prices(self):
-		args = self._action_args()
-		args["end_date"] = "2029-01-01"
+		args = self._action_args(end_date="2029-01-01")
 		args["adjustment_rule"] = None
 
 		item_price_actions.create_item_price_schedule(**args)
@@ -529,8 +538,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			)
 
 	def test_summary_lists_the_created_prices_for_the_property(self):
-		args = self._action_args()
-		args["end_date"] = "2027-12-31"
+		args = self._action_args(end_date="2027-12-31")
 		args["adjustment_rule"] = None
 
 		item_price_actions.create_item_price_schedule(**args)
@@ -563,15 +571,32 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		factories.ensure_item(SECOND_ITEM)
 		factories.ensure_property(SECOND_PROPERTY, service_item=SECOND_ITEM)
 
+		# Only a request's own properties can be priced through it.
+		if not any(
+			row.utility_property == SECOND_PROPERTY
+			for row in self.service_request.requested_properties
+		):
+			self.service_request.append(
+				"requested_properties",
+				{
+					"utility_property": SECOND_PROPERTY,
+					"start_date": LEASE_START,
+					"end_date": LEASE_END,
+					"is_active": 1,
+				},
+			)
+			self.service_request.flags.ignore_mandatory = True
+			self.service_request.flags.ignore_links = True
+			self.service_request.save(ignore_permissions=True)
+
 		return SECOND_PROPERTY
 
 
 	def test_replace_existing_removes_prior_generated_prices(self):
 		item_price_actions.create_item_price_schedule(**self._action_args())
 
-		args = self._action_args()
+		args = self._action_args(end_date="2026-06-30")
 		args["replace_existing"] = 1
-		args["end_date"] = "2026-06-30"
 		result = item_price_actions.create_item_price_schedule(**args)
 
 		self.assertEqual(result["created_count"], 1)
