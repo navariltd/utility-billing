@@ -1739,7 +1739,7 @@ function clear_schedule_manual(dialog, property) {
  * interrupted by a mid-flight error.
  */
 function note_schedule_manual_edit(dialog) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	clearTimeout(dialog._preview_timer);
 	mark_schedule_manual(dialog, property);
 
@@ -1835,13 +1835,15 @@ function select_property(dialog, frm, property) {
 		capture_schedule_rows(dialog, previous);
 	}
 
+	// Everything the dialog does from here on is for this property, even while
+	// the Property field itself is still catching up with the switch.
+	dialog._selected_property = property;
+
 	dialog._suppress_auto_preview = true;
 	dialog.set_value("starting_rate", get_base_rate(dialog, property));
 	apply_property_dates(dialog, frm, property);
 	set_schedule_table_rows(dialog, []);
 	dialog._suppress_auto_preview = false;
-
-	dialog._selected_property = property;
 
 	const stored = dialog._schedule_rows?.[property];
 	if (stored && stored.length) {
@@ -1868,13 +1870,24 @@ function apply_property_dates(dialog, frm, property) {
 
 	dialog.set_value("start_date", start_date || null);
 	dialog.set_value("end_date", end_date || null);
+	// The dates being applied, not a read-back: set_value finishes later.
 	dialog._property_dates[property] = {
-		start_date: dialog.get_value("start_date"),
-		end_date: dialog.get_value("end_date"),
+		start_date: start_date || null,
+		end_date: end_date || null,
 	};
 
 	set_lease_start_limit(dialog, frm, property);
 	show_lease_end_note(dialog, frm);
+}
+
+/**
+ * The property the dialog is working on.
+ *
+ * Set when a property is selected, so it is right even while the Property
+ * field is still being updated to it.
+ */
+function get_active_property(dialog) {
+	return dialog._selected_property || dialog.get_value("utility_property");
 }
 
 /**
@@ -1933,7 +1946,7 @@ function get_lease_start_error(dialog, frm, property) {
  * Returns whether the Lease Start was acceptable.
  */
 function enforce_lease_start(dialog, frm) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	const error = get_lease_start_error(dialog, frm, property);
 
 	if (!error) return true;
@@ -1967,7 +1980,7 @@ function get_end_date_conflict(dialog, frm, property) {
 }
 
 function report_end_date_conflict(dialog, frm) {
-	const error = get_end_date_conflict(dialog, frm, dialog.get_value("utility_property"));
+	const error = get_end_date_conflict(dialog, frm, get_active_property(dialog));
 	if (error) show_lease_message(error);
 }
 
@@ -1996,7 +2009,7 @@ function show_lease_end_note(dialog, frm) {
 	field.$wrapper.empty();
 	if (dialog.get_value("end_date")) return;
 
-	const { end_date } = get_property_lease(frm, dialog.get_value("utility_property"));
+	const { end_date } = get_property_lease(frm, get_active_property(dialog));
 	let message;
 
 	if (end_date) {
@@ -2017,7 +2030,7 @@ function show_lease_end_note(dialog, frm) {
  * Remember the lease dates entered for the selected property.
  */
 function remember_property_dates(dialog) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	if (!property) return;
 
 	dialog._property_dates = dialog._property_dates || {};
@@ -2040,7 +2053,7 @@ function schedule_auto_preview(dialog, frm, { reset_manual = true } = {}) {
 	dialog._preview_timer = setTimeout(() => {
 		if (dialog._suppress_auto_preview) return;
 		if (reset_manual) {
-			clear_schedule_manual(dialog, dialog.get_value("utility_property"));
+			clear_schedule_manual(dialog, get_active_property(dialog));
 		}
 		preview_item_price_schedule(dialog, frm, { silent: true });
 	}, 350);
@@ -2437,6 +2450,8 @@ function showItemPriceScheduleModal(frm) {
 				reqd: 1,
 				get_query: () => ({ filters: { name: ["in", properties] } }),
 				change: function () {
+					// Already selected in code (dialog open, next property after create).
+					if (this.get_value() === dialog._selected_property) return;
 					select_property(dialog, frm, this.get_value());
 				},
 			},
@@ -2446,7 +2461,7 @@ function showItemPriceScheduleModal(frm) {
 				label: __("Starting Rate"),
 				description: __("Rent for the first period."),
 				change: function () {
-					const property = dialog.get_value("utility_property");
+					const property = get_active_property(dialog);
 					if (property) {
 						set_property_rate(dialog, property, this.get_value());
 						schedule_auto_preview(dialog, frm);
@@ -2779,7 +2794,7 @@ function get_selected_rate(dialog) {
  * property's contract period.
  */
 function build_schedule_args(dialog, frm, values) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	const base_rates = {};
 	const manual_schedules = {};
 
@@ -2819,7 +2834,7 @@ function build_schedule_args(dialog, frm, values) {
  *         user is still filling the form in.
  */
 function preview_item_price_schedule(dialog, frm, { silent = false } = {}) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 
 	if (!property) {
 		if (!silent) frappe.msgprint(__("Please select a property."));
