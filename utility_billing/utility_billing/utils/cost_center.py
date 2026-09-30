@@ -85,6 +85,11 @@ def sync_cost_center_to_service_item(property_doc) -> None:
 	touches the property's own service item, never a secondary utility item,
 	since those are not owned by a single property.
 
+	The Item's document cache is cleared after saving, since ERPNext's own
+	item-detail resolution (``get_item_defaults``) reads a cached copy of the
+	Item and would otherwise keep returning the value from before this sync,
+	even though the database itself is already correct.
+
 	Args:
 		property_doc: ``Utility Property`` document.
 	"""
@@ -112,6 +117,7 @@ def sync_cost_center_to_service_item(property_doc) -> None:
 		)
 
 	item_doc.save(ignore_permissions=True)
+	frappe.clear_document_cache("Item", item_doc.name)
 
 def _default_parent_cost_center(settings, company: str | None) -> str | None:
 	"""Return the default Parent Cost Center configured for a company.
