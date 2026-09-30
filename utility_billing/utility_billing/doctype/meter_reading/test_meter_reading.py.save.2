@@ -1,3 +1,5 @@
+
+
 # Copyright (c) 2024, Navari and Contributors
 # See license.txt
 
@@ -441,7 +443,7 @@ class TestMeterReading(unittest.TestCase):
     @patch('utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading', return_value=0)
     def test_validate_item_readings_with_no_previous_reading(self, mock_get_prev_reading):
         """
-]        Tests that `validate_item_readings` correctly handles the case where
+        Tests that `validate_item_readings` correctly handles the case where
         `get_previous_invoice_reading` returns 0 (no previous reading found).
         """
         meter_reading = frappe.new_doc("Meter Reading")
@@ -957,6 +959,7 @@ class TestMeterReading(unittest.TestCase):
         if not frappe.db.exists("Warranty Claim", "WC-003-TEST-OPEN"):
             frappe.get_doc({
                 "doctype": "Warranty Claim",
+                "name": "WC-003-TEST-OPEN",
                 "customer": customer,
                 "company": company,
                 "status": "Open",  # Not Closed
