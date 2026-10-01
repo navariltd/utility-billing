@@ -985,36 +985,60 @@ function open_new_sales_document(frm, docType) {
 
 	const usr_items = (frm.doc.items || []).filter((row) => row.item_code);
 
-    frappe.new_doc(docType, values).then(() => {
-        if (!usr_items.length) return;
+    // This function owns the new document's rows until they are all in: the
+    // Sales Invoice's own utility handling (linking a request and pre-filling
+    // its items) would otherwise write into the same blank rows meanwhile.
+    frappe.flags.filling_rows_from_service_request = true;
 
-        const new_frm = cur_frm;
+    frappe.new_doc(docType, values)
+        .then(async () => {
+            const new_frm = cur_frm;
 
-        new_frm.clear_table("items");
+            try {
+                if (!usr_items.length) return;
 
-        usr_items.forEach((source_row) => {
-            const row = new_frm.add_child("items");
-            frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
-            if (source_row.uom) {
-                frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+                new_frm.clear_table("items");
+
+                // Rows are filled one at a time. Picking an item makes ERPNext send
+                // the whole document to the server and sync its copy back; a row
+                // filled while another is still being fetched has its fetched details
+                // (Income and Expense Account, Cost Center, ...) wiped by that copy.
+                for (const source_row of usr_items) {
+                    const row = new_frm.add_child("items");
+                    await frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
+                    if (source_row.uom) {
+                        await frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+                    }
+                    if (source_row.warehouse) {
+                        await frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
+                    }
+                    // item_code triggers ERPNext's own item-details/rate fetch — set it
+                    // last, after qty/uom/warehouse, so the rate calculation uses their
+                    // final values.
+                    await frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
+                    await frappe.after_ajax();
+                    await frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
+                }
+
+                new_frm.refresh_field("items");
+
+                if (docType === "Sales Invoice") {
+                    for (const row of new_frm.doc.items) {
+                        await frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
+                        await frappe.after_ajax();
+                    }
+                }
+            } finally {
+                frappe.flags.filling_rows_from_service_request = false;
+                // Let the invoice catch up on the request now that every row is in.
+                if (docType === "Sales Invoice") {
+                    new_frm.script_manager.trigger("utility_service_request");
+                }
             }
-            if (source_row.warehouse) {
-                frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
-            }
-            // item_code triggers ERPNext's own item-details/rate fetch — set it last,
-            // after qty/uom/warehouse, so the rate calculation uses their final values.
-            frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
-            frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
+        })
+        .catch(() => {
+            frappe.flags.filling_rows_from_service_request = false;
         });
-
-        new_frm.refresh_field("items");
-
-        if (docType === "Sales Invoice") {
-            new_frm.doc.items.forEach((row) => {
-                frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
-            });
-        }
-    });
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
