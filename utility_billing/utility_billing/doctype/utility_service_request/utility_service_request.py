@@ -11,6 +11,7 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
+from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
@@ -31,6 +32,10 @@ class UtilityServiceRequest(Document):
 		# Re-run validation logic when updating after submission
 		self.validate_contract_dates()
 		self.validate_child_items()
+		validate_no_overlapping_leases(self)
+
+	def before_submit(self):
+		validate_no_overlapping_leases(self)
 
 	def set_customer_if_needed(self):
 		if self.service_request_from == "Customer":
