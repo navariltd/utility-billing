@@ -2024,20 +2024,30 @@ function show_lease_message(message) {
 }
 
 /**
- * Explain what a blank Lease End will do. Informational only.
+ * Explain how the generated schedule will end. Informational only.
+ *
+ * When a lease end is known - typed in, or taken from the property's lease -
+ * the final period is clipped to it, so it can be shorter than a full period.
  */
 function show_lease_end_note(dialog, frm) {
 	const field = dialog.get_field("lease_end_note");
 	if (!field) return;
 
 	field.$wrapper.empty();
-	if (dialog.get_value("end_date")) return;
 
+	const final_period_note = __(
+		"The final period may be shortened to end exactly on the lease end.",
+	);
 	const { end_date } = get_property_lease(frm, get_active_property(dialog));
 	let message;
 
-	if (end_date) {
-		message = __("No Lease End set: the property's lease end {0} will be used.", [end_date]);
+	if (dialog.get_value("end_date")) {
+		message = final_period_note;
+	} else if (end_date) {
+		message =
+			__("No Lease End set: the property's lease end {0} will be used.", [end_date]) +
+			" " +
+			final_period_note;
 	} else {
 		const frequency = dialog.get_value("frequency") || "Monthly";
 		const months = ITEM_PRICE_MAX_PERIODS * (MONTHS_PER_FREQUENCY[frequency] || 1);
@@ -2569,7 +2579,9 @@ function showItemPriceScheduleModal(frm) {
 				options: "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
 				label: __("Frequency"),
 				default: "Monthly",
-				description: __("How often rent is billed."),
+				description: __(
+					"How often rent is billed. The final period is shortened to end exactly on the lease end, so it may be shorter than a full period.",
+				),
 				change: () => {
 					show_lease_end_note(dialog, frm);
 					schedule_auto_preview(dialog, frm);
