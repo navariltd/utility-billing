@@ -233,6 +233,7 @@ scheduler_events = {
 	"daily": [
 		"utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices",
 		"utility_billing.utility_billing.overrides.server.auto_repeat.run_all_due_auto_repeats",
+		"utility_billing.utility_billing.utils.property_status.release_ended_leases",
 	],
 	# 	"hourly": [
 	# 		"utility_billing.tasks.hourly"
