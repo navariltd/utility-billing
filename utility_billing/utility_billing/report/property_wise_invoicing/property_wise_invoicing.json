@@ -1,0 +1,42 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2026-10-03 12:00:00.000000",
+ "description": "Invoiced amount of each primary utility property per month, with billing gaps. Status is the property's current status, not its status in that month.",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "",
+ "letterhead": null,
+ "modified": "2026-10-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Property Wise Invoicing",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Invoice",
+ "report_name": "Property Wise Invoicing",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Property Manager"
+  },
+  {
+   "role": "Utility Manager"
+  },
+  {
+   "role": "Utility User"
+  },
+  {
+   "role": "Property User"
+  }
+ ],
+ "timeout": 0
+}
