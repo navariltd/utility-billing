@@ -46,6 +46,19 @@ class UtilityBillingSalesInvoice(SalesInvoice):
 		with deferred_income_accounts(self):
 			return super().get_gl_entries(inventory_account_map)
 
+	def on_recurring(self, reference_doc, auto_repeat_doc):
+		"""Clear the Deferred Posting Dates copied from the Auto Repeat reference.
+
+		Auto Repeat copies every line of the reference invoice, dates included,
+		and only moves the invoice Posting Date. Clearing the line dates lets
+		``fill_posting_dates`` derive them from the new Posting Date on validate,
+		instead of the copy billing the months of the reference again.
+		"""
+		super().on_recurring(reference_doc, auto_repeat_doc)
+
+		for row in self.get("items") or []:
+			row.set(POSTING_DATE_FIELD, None)
+
 
 def validate(doc: Document, method: str | None = None) -> None:
 	"""Validate the meter readings, the deferred posting and the utility rates of the invoice."""
