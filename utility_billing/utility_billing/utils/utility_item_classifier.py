@@ -15,7 +15,9 @@ A governed item on a request is either:
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate
+
+from utility_billing.utility_billing.utils import item_price_scope as scope
 
 USR_DOCTYPE = "Utility Service Request"
 USR_ITEM_DOCTYPE = "Utility Service Request Item"
@@ -224,3 +226,90 @@ def match_error_message(match: frappe._dict, customer: str, item_code: str | Non
 		).format(frappe.bold(customer), coverage)
 
 	return None
+
+
+def get_lease_periods(service_request: str, lines: dict) -> dict[str, frappe._dict]:
+	"""Return the lease period each governed line of a request is billed within.
+
+	A primary line bills the lease of the requested property it is the rent
+	item of. A secondary line belongs to no single property, so it bills within
+	the span of the request's properties: from the earliest lease start to the
+	latest lease end, open ended when any of them is. A request without
+	properties uses its own Contract Details.
+
+	Args:
+		service_request: ``Utility Service Request`` name.
+		lines: Result of ``get_request_lines``.
+
+	Returns:
+		Mapping of item code to ``label``, ``start`` and ``end`` of its lease,
+		and the ``utility_property`` it belongs to (``None`` for secondary lines).
+
+	Raises:
+		frappe.ValidationError: When several requested properties share the
+			service item of a primary line, so its lease cannot be told apart.
+	"""
+	request_doc = frappe.get_doc(USR_DOCTYPE, service_request)
+	properties = [
+		row.utility_property for row in request_doc.requested_properties if row.utility_property
+	]
+	periods = {name: scope.property_contract_period(request_doc, name) for name in properties}
+	service_items = (
+		dict(
+			frappe.get_all(
+				"Utility Property",
+				filters={"name": ("in", properties)},
+				fields=["name", "service_item"],
+				as_list=True,
+			)
+		)
+		if properties
+		else {}
+	)
+	span = (
+		_lease_span(periods.values())
+		if periods
+		else (request_doc.start_date, request_doc.end_date)
+	)
+
+	leases = {}
+	for item_code, line in lines.items():
+		if line.role == PRIMARY:
+			owners = sorted(name for name, item in service_items.items() if item == item_code)
+			if len(owners) > 1:
+				frappe.throw(
+					_(
+						"Properties {0} of Utility Service Request {1} share the service "
+						"item {2}, so its rent cannot be matched to one lease. Give each "
+						"property its own service item."
+					).format(", ".join(owners), service_request, frappe.bold(item_code))
+				)
+
+			start, end = periods[owners[0]]
+			leases[item_code] = frappe._dict(
+				label=_("property {0}").format(owners[0]),
+				utility_property=owners[0],
+				start=start,
+				end=end,
+			)
+		else:
+			leases[item_code] = frappe._dict(
+				label=_("Utility Service Request {0}").format(service_request),
+				utility_property=None,
+				start=span[0],
+				end=span[1],
+			)
+
+	return leases
+
+
+def _lease_span(periods) -> tuple:
+	"""Return the earliest start and latest end of ``periods``, open ended if any is."""
+	periods = list(periods)
+	starts = [getdate(start) for start, _end in periods if start]
+	ends = [end for _start, end in periods]
+
+	start = min(starts) if starts else None
+	end = None if any(not end for end in ends) else max(getdate(end) for end in ends)
+
+	return start, end

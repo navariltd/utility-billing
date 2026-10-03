@@ -106,6 +106,12 @@ function govern_utility_lines(frm, cdn) {
 		return;
 	}
 
+	// The request's own rows are still being added from the Utility Service
+	// Request, which catches the invoice up once they are all in.
+	if (frappe.flags.filling_rows_from_service_request) {
+		return;
+	}
+
 	const item_codes = [
 		...new Set(
 			(frm.doc.items || [])
@@ -234,6 +240,12 @@ function block_utility_line(frm, match, cdn) {
 // Load the governed lines of the linked request and bring every line in step.
 // When the request was just linked its utility items are pre-filled first.
 function load_service_request_lines(frm, prefill) {
+	// Rows are still being added from the Utility Service Request, which runs
+	// this again once they are all in.
+	if (frappe.flags.filling_rows_from_service_request) {
+		return;
+	}
+
 	frm.utility_lines = {};
 	frm.utility_expected_rates = {};
 

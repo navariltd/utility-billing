@@ -1,5 +1,11 @@
 const settingsDoctypeName = "Utility Billing Settings";
 
+// Periods the Item Price generator stops at when a schedule has no end
+// (``ScheduleRequest.max_periods``), and the months each frequency spans on the
+// server - Daily and Weekly fall back to one month there.
+const ITEM_PRICE_MAX_PERIODS = 120;
+const MONTHS_PER_FREQUENCY = { Monthly: 1, Quarterly: 3, "Half-yearly": 6, Yearly: 12 };
+
 frappe.ui.form.on("Utility Service Request", {
 	refresh: async function (frm) {
 		frm.toggle_display("address_html", !frm.is_new());
@@ -979,36 +985,60 @@ function open_new_sales_document(frm, docType) {
 
 	const usr_items = (frm.doc.items || []).filter((row) => row.item_code);
 
-    frappe.new_doc(docType, values).then(() => {
-        if (!usr_items.length) return;
+    // This function owns the new document's rows until they are all in: the
+    // Sales Invoice's own utility handling (linking a request and pre-filling
+    // its items) would otherwise write into the same blank rows meanwhile.
+    frappe.flags.filling_rows_from_service_request = true;
 
-        const new_frm = cur_frm;
+    frappe.new_doc(docType, values)
+        .then(async () => {
+            const new_frm = cur_frm;
 
-        new_frm.clear_table("items");
+            try {
+                if (!usr_items.length) return;
 
-        usr_items.forEach((source_row) => {
-            const row = new_frm.add_child("items");
-            frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
-            if (source_row.uom) {
-                frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+                new_frm.clear_table("items");
+
+                // Rows are filled one at a time. Picking an item makes ERPNext send
+                // the whole document to the server and sync its copy back; a row
+                // filled while another is still being fetched has its fetched details
+                // (Income and Expense Account, Cost Center, ...) wiped by that copy.
+                for (const source_row of usr_items) {
+                    const row = new_frm.add_child("items");
+                    await frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
+                    if (source_row.uom) {
+                        await frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+                    }
+                    if (source_row.warehouse) {
+                        await frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
+                    }
+                    // item_code triggers ERPNext's own item-details/rate fetch — set it
+                    // last, after qty/uom/warehouse, so the rate calculation uses their
+                    // final values.
+                    await frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
+                    await frappe.after_ajax();
+                    await frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
+                }
+
+                new_frm.refresh_field("items");
+
+                if (docType === "Sales Invoice") {
+                    for (const row of new_frm.doc.items) {
+                        await frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
+                        await frappe.after_ajax();
+                    }
+                }
+            } finally {
+                frappe.flags.filling_rows_from_service_request = false;
+                // Let the invoice catch up on the request now that every row is in.
+                if (docType === "Sales Invoice") {
+                    new_frm.script_manager.trigger("utility_service_request");
+                }
             }
-            if (source_row.warehouse) {
-                frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
-            }
-            // item_code triggers ERPNext's own item-details/rate fetch — set it last,
-            // after qty/uom/warehouse, so the rate calculation uses their final values.
-            frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
-            frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
+        })
+        .catch(() => {
+            frappe.flags.filling_rows_from_service_request = false;
         });
-
-        new_frm.refresh_field("items");
-
-        if (docType === "Sales Invoice") {
-            new_frm.doc.items.forEach((row) => {
-                frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
-            });
-        }
-    });
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
@@ -1371,8 +1401,19 @@ async function addActionButtons(frm) {
 					__("Create"),
 				);
 			}
+			// With Require Signed Contract on, only a signed submitted Contract counts,
+			// matching the server check on the Sales Invoice.
+			const signedContractName = settings?.require_signed_contract
+				? (
+						await frappe.db.get_value(
+							"Contract",
+							{ utility_service_request: frm.doc.name, docstatus: 1, is_signed: 1 },
+							"name",
+						)
+					)?.message?.name || null
+				: contractName;
 			if (
-				(settings?.require_contract_before_sales_invoice_creation && contractName) ||
+				(settings?.require_contract_before_sales_invoice_creation && signedContractName) ||
 				!settings?.require_contract_before_sales_invoice_creation
 			) {
 				frm.add_custom_button(
@@ -1722,7 +1763,7 @@ function clear_schedule_manual(dialog, property) {
  * interrupted by a mid-flight error.
  */
 function note_schedule_manual_edit(dialog) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	clearTimeout(dialog._preview_timer);
 	mark_schedule_manual(dialog, property);
 
@@ -1818,13 +1859,15 @@ function select_property(dialog, frm, property) {
 		capture_schedule_rows(dialog, previous);
 	}
 
+	// Everything the dialog does from here on is for this property, even while
+	// the Property field itself is still catching up with the switch.
+	dialog._selected_property = property;
+
 	dialog._suppress_auto_preview = true;
 	dialog.set_value("starting_rate", get_base_rate(dialog, property));
 	apply_property_dates(dialog, frm, property);
 	set_schedule_table_rows(dialog, []);
 	dialog._suppress_auto_preview = false;
-
-	dialog._selected_property = property;
 
 	const stored = dialog._schedule_rows?.[property];
 	if (stored && stored.length) {
@@ -1842,9 +1885,7 @@ function select_property(dialog, frm, property) {
  * switching properties never loses them.
  */
 function apply_property_dates(dialog, frm, property) {
-	const row = (frm.doc.requested_properties || []).find(
-		(candidate) => candidate.utility_property === property,
-	);
+	const { row } = get_property_lease(frm, property);
 	dialog._property_dates = dialog._property_dates || {};
 
 	const saved = dialog._property_dates[property];
@@ -1853,17 +1894,177 @@ function apply_property_dates(dialog, frm, property) {
 
 	dialog.set_value("start_date", start_date || null);
 	dialog.set_value("end_date", end_date || null);
+	// The dates being applied, not a read-back: set_value finishes later.
 	dialog._property_dates[property] = {
-		start_date: dialog.get_value("start_date"),
-		end_date: dialog.get_value("end_date"),
+		start_date: start_date || null,
+		end_date: end_date || null,
 	};
+
+	set_lease_start_limit(dialog, frm, property);
+	show_lease_end_note(dialog, frm);
+}
+
+/**
+ * The property the dialog is working on.
+ *
+ * Set when a property is selected, so it is right even while the Property
+ * field is still being updated to it.
+ */
+function get_active_property(dialog) {
+	return dialog._selected_property || dialog.get_value("utility_property");
+}
+
+/**
+ * The effective lease of a property: its Requested Properties row, falling
+ * back to the request's Contract Details - the rule the server enforces.
+ */
+function get_property_lease(frm, property) {
+	const row = (frm.doc.requested_properties || []).find(
+		(candidate) => candidate.utility_property === property,
+	);
+	const row_end = row?.end_date || null;
+
+	return {
+		row,
+		start_date: row?.start_date || frm.doc.start_date || null,
+		end_date: row_end || frm.doc.end_date || null,
+		end_source: row_end
+			? __("End Date of {0} in Requested Properties (row {1})", [property, row.idx])
+			: frm.doc.end_date
+				? __("Contract End Date (Contract Details)")
+				: null,
+	};
+}
+
+/**
+ * Stop the date picker offering days before the property's contract start.
+ */
+function set_lease_start_limit(dialog, frm, property) {
+	const field = dialog.get_field("start_date");
+	const { start_date } = get_property_lease(frm, property);
+	const min_date = start_date ? frappe.datetime.str_to_obj(start_date) : null;
+
+	field.df.min_date = min_date;
+	field.datepicker?.update({ minDate: min_date || "" });
+}
+
+/**
+ * The error for a Lease Start before the property's contract start, if any.
+ */
+function get_lease_start_error(dialog, frm, property) {
+	const { start_date } = get_property_lease(frm, property);
+	const value = dialog.get_value("start_date");
+
+	if (!value || !start_date || value >= start_date) return null;
+
+	return __(
+		"Item Price start date '{0}' for property {1} cannot be before contract start date '{2}'.",
+		[value, property, start_date],
+	);
+}
+
+/**
+ * Reset a Lease Start typed before the contract start.
+ *
+ * A typed date bypasses the date picker's limit, so it is checked here too.
+ * Returns whether the Lease Start was acceptable.
+ */
+function enforce_lease_start(dialog, frm) {
+	const property = get_active_property(dialog);
+	const error = get_lease_start_error(dialog, frm, property);
+
+	if (!error) return true;
+
+	show_lease_message(error);
+	// Reset only once the typed value has finished applying: setting the field
+	// from its own change handler, mid-change, makes the two values chase each
+	// other and freezes the page.
+	setTimeout(() => {
+		dialog.set_value("start_date", get_property_lease(frm, property).start_date);
+	}, 0);
+	return false;
+}
+
+/**
+ * The error for a Lease End differing from the property's lease end, if any.
+ *
+ * Only compared when both are set: a blank Lease End falls back to the lease
+ * end on the server, and an open ended lease accepts any Lease End.
+ */
+function get_end_date_conflict(dialog, frm, property) {
+	const { end_date, end_source } = get_property_lease(frm, property);
+	const value = dialog.get_value("end_date");
+
+	if (!value || !end_date || value === end_date) return null;
+
+	return __(
+		"End dates for property {0} do not match: Lease End (Define Item Prices) is '{1}' but {2} is '{3}'. Clear the Lease End to use the lease end, or set it to '{3}'.",
+		[property, value, end_source, end_date],
+	);
+}
+
+function report_end_date_conflict(dialog, frm) {
+	const error = get_end_date_conflict(dialog, frm, get_active_property(dialog));
+	if (error) show_lease_message(error);
+}
+
+/**
+ * Show a lease date error once.
+ *
+ * A dialog field fires its change handler more than once per edit, so the same
+ * message repeated within a second is skipped.
+ */
+function show_lease_message(message) {
+	const now = Date.now();
+	if (show_lease_message.last === message && now - show_lease_message.at < 1000) return;
+
+	show_lease_message.last = message;
+	show_lease_message.at = now;
+	frappe.msgprint({ message, indicator: "red" });
+}
+
+/**
+ * Explain how the generated schedule will end. Informational only.
+ *
+ * When a lease end is known - typed in, or taken from the property's lease -
+ * the final period is clipped to it, so it can be shorter than a full period.
+ */
+function show_lease_end_note(dialog, frm) {
+	const field = dialog.get_field("lease_end_note");
+	if (!field) return;
+
+	field.$wrapper.empty();
+
+	const final_period_note = __(
+		"The final period may be shortened to end exactly on the lease end.",
+	);
+	const { end_date } = get_property_lease(frm, get_active_property(dialog));
+	let message;
+
+	if (dialog.get_value("end_date")) {
+		message = final_period_note;
+	} else if (end_date) {
+		message =
+			__("No Lease End set: the property's lease end {0} will be used.", [end_date]) +
+			" " +
+			final_period_note;
+	} else {
+		const frequency = dialog.get_value("frequency") || "Monthly";
+		const months = ITEM_PRICE_MAX_PERIODS * (MONTHS_PER_FREQUENCY[frequency] || 1);
+		message = __(
+			"No Lease End set: up to {0} periods will be generated from the Lease Start (about {1} years). Consecutive periods with the same rate are saved as one Item Price.",
+			[ITEM_PRICE_MAX_PERIODS, flt(months / 12, 1)],
+		);
+	}
+
+	$(`<div class="small text-muted"></div>`).text(message).appendTo(field.$wrapper);
 }
 
 /**
  * Remember the lease dates entered for the selected property.
  */
 function remember_property_dates(dialog) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	if (!property) return;
 
 	dialog._property_dates = dialog._property_dates || {};
@@ -1886,7 +2087,7 @@ function schedule_auto_preview(dialog, frm, { reset_manual = true } = {}) {
 	dialog._preview_timer = setTimeout(() => {
 		if (dialog._suppress_auto_preview) return;
 		if (reset_manual) {
-			clear_schedule_manual(dialog, dialog.get_value("utility_property"));
+			clear_schedule_manual(dialog, get_active_property(dialog));
 		}
 		preview_item_price_schedule(dialog, frm, { silent: true });
 	}, 350);
@@ -2283,6 +2484,8 @@ function showItemPriceScheduleModal(frm) {
 				reqd: 1,
 				get_query: () => ({ filters: { name: ["in", properties] } }),
 				change: function () {
+					// Already selected in code (dialog open, next property after create).
+					if (this.get_value() === dialog._selected_property) return;
 					select_property(dialog, frm, this.get_value());
 				},
 			},
@@ -2292,7 +2495,7 @@ function showItemPriceScheduleModal(frm) {
 				label: __("Starting Rate"),
 				description: __("Rent for the first period."),
 				change: function () {
-					const property = dialog.get_value("utility_property");
+					const property = get_active_property(dialog);
 					if (property) {
 						set_property_rate(dialog, property, this.get_value());
 						schedule_auto_preview(dialog, frm);
@@ -2331,6 +2534,7 @@ function showItemPriceScheduleModal(frm) {
 				default: frm.doc.start_date || frappe.datetime.get_today(),
 				reqd: 1,
 				change: function () {
+					if (!enforce_lease_start(dialog, frm)) return;
 					remember_property_dates(dialog);
 					schedule_auto_preview(dialog, frm);
 				},
@@ -2342,8 +2546,14 @@ function showItemPriceScheduleModal(frm) {
 				default: frm.doc.end_date,
 				change: function () {
 					remember_property_dates(dialog);
+					show_lease_end_note(dialog, frm);
+					report_end_date_conflict(dialog, frm);
 					schedule_auto_preview(dialog, frm);
 				},
+			},
+			{
+				fieldname: "lease_end_note",
+				fieldtype: "HTML",
 			},
 			{
 				fieldname: "increment_section",
@@ -2369,8 +2579,13 @@ function showItemPriceScheduleModal(frm) {
 				options: "\nDaily\nWeekly\nMonthly\nQuarterly\nHalf-yearly\nYearly",
 				label: __("Frequency"),
 				default: "Monthly",
-				description: __("How often rent is billed."),
-				change: () => schedule_auto_preview(dialog, frm),
+				description: __(
+					"How often rent is billed. The final period is shortened to end exactly on the lease end, so it may be shorter than a full period.",
+				),
+				change: () => {
+					show_lease_end_note(dialog, frm);
+					schedule_auto_preview(dialog, frm);
+				},
 			},
 			{
 				fieldname: "column_break_frequency",
@@ -2452,6 +2667,13 @@ function showItemPriceScheduleModal(frm) {
 			if (!is_schedule_manual(dialog, property) && get_selected_rate(dialog) === null) {
 				frappe.msgprint(__("Please enter the starting rate for {0}.", [property]));
 				return;
+			}
+
+			const lease_error =
+				get_lease_start_error(dialog, frm, property) ||
+				get_end_date_conflict(dialog, frm, property);
+			if (lease_error) {
+				frappe.throw(lease_error);
 			}
 
 			create_item_prices(dialog, frm, values, property, properties);
@@ -2608,7 +2830,7 @@ function get_selected_rate(dialog) {
  * property's contract period.
  */
 function build_schedule_args(dialog, frm, values) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 	const base_rates = {};
 	const manual_schedules = {};
 
@@ -2648,7 +2870,7 @@ function build_schedule_args(dialog, frm, values) {
  *         user is still filling the form in.
  */
 function preview_item_price_schedule(dialog, frm, { silent = false } = {}) {
-	const property = dialog.get_value("utility_property");
+	const property = get_active_property(dialog);
 
 	if (!property) {
 		if (!silent) frappe.msgprint(__("Please select a property."));
