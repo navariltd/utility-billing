@@ -104,7 +104,10 @@ def preview_item_price_schedule(
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("read")
 
-    service_items = helpers.resolve_service_items(helpers.as_list(properties))
+    property_names = helpers.as_list(properties)
+    # The boundary the create action will use, so the preview shows the same schedule.
+    end_date = scope.resolve_schedule_end(service_request, property_names, end_date)
+    service_items = helpers.resolve_service_items(property_names)
     options = helpers.build_options(
         price_list or service_request.price_list,
         start_date,
@@ -184,8 +187,16 @@ def create_item_price_schedule(
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
 
+    property_names = helpers.as_list(properties)
+    for property_name in property_names:
+        scope.require_requested_property(service_request, property_name)
+        scope.validate_schedule_start(service_request, property_name, start_date)
+        scope.validate_schedule_end(service_request, property_name, end_date)
+
+    end_date = scope.resolve_schedule_end(service_request, property_names, end_date)
+
     resolved_customer = customer or service_request.customer
-    service_items = helpers.resolve_service_items(helpers.as_list(properties))
+    service_items = helpers.resolve_service_items(property_names)
     options = helpers.build_options(
         price_list or service_request.price_list,
         start_date,

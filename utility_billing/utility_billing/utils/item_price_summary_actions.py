@@ -100,6 +100,9 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
 
     for group_rows in _group_by_customer(rows).values():
         _validate_group(property_name, group_rows, start_date, end_date)
+        scope.validate_schedule_start(
+            service_request, property_name, _earliest_start(group_rows)
+        )
 
     for name in deleted:
         _delete_price(name, allowed_items, result)
@@ -122,6 +125,13 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
                 row.get("customer") or service_request.customer,
                 result,
             )
+
+
+def _earliest_start(rows: list[dict]):
+    """Return the earliest period start among ``rows``, or ``None``."""
+    starts = [getdate(row["valid_from"]) for row in rows if row.get("valid_from")]
+
+    return min(starts) if starts else None
 
 
 def _requested_properties(service_request) -> set[str]:

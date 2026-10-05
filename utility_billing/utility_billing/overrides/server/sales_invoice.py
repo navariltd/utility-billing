@@ -19,6 +19,7 @@ from ...utils.utility_item_classifier import (
 	MATCH_MULTIPLE,
 	PRIMARY,
 	USR_DOCTYPE,
+	get_lease_periods,
 	get_request_lines,
 	get_utility_items,
 	match_error_message,
@@ -45,6 +46,19 @@ class UtilityBillingSalesInvoice(SalesInvoice):
 		with deferred_income_accounts(self):
 			return super().get_gl_entries(inventory_account_map)
 
+	def on_recurring(self, reference_doc, auto_repeat_doc):
+		"""Clear the Deferred Posting Dates copied from the Auto Repeat reference.
+
+		Auto Repeat copies every line of the reference invoice, dates included,
+		and only moves the invoice Posting Date. Clearing the line dates lets
+		``fill_posting_dates`` derive them from the new Posting Date on validate,
+		instead of the copy billing the months of the reference again.
+		"""
+		super().on_recurring(reference_doc, auto_repeat_doc)
+
+		for row in self.get("items") or []:
+			row.set(POSTING_DATE_FIELD, None)
+
 
 def validate(doc: Document, method: str | None = None) -> None:
 	"""Validate the meter readings, the deferred posting and the utility rates of the invoice."""
@@ -52,19 +66,23 @@ def validate(doc: Document, method: str | None = None) -> None:
 	fill_posting_dates(doc)
 	validate_deferred_lines(doc)
 
-	if is_item_price_approach():
-		govern_utility_lines(doc)
+	governed = govern_utility_lines(doc) if is_item_price_approach() else []
+
+	contract = check_service_request_contract(doc)
+	if contract:
+		check_within_contract(contract, governed)
 
 
-def govern_utility_lines(doc: Document) -> None:
+def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 	"""Link the invoice to its Utility Service Request and enforce its utility rates.
 
 	Utility lines must all belong to one submitted Utility Service Request of the
-	customer, which is linked when it is the only one. Primary lines are billed at
-	the Item Price valid on their billing date, secondary lines at the rate on the
-	request. No utility line may bill a month already billed, in this invoice or
-	in a submitted one. Non utility items, lines priced from a Meter Reading and
-	return invoices are left alone.
+	customer, which is linked when it is the only one. Every utility line must bill
+	a date within its lease. Primary lines are billed at the Item Price valid on
+	their billing date, secondary lines at the rate on the request. No utility line
+	may bill a month already billed, in this invoice or in a submitted one. Non
+	utility items, lines priced from a Meter Reading and return invoices are left
+	alone.
 
 	An invoice that no longer bills any utility item has nothing left to govern,
 	so a request linked earlier is cleared rather than left pointing at items the
@@ -73,26 +91,35 @@ def govern_utility_lines(doc: Document) -> None:
 	Args:
 		doc: Sales Invoice being validated.
 
+	Returns:
+		One entry per governed line with its ``row``, ``billing_date`` and the
+		``utility_property`` it bills (``None`` for secondary lines).
+
 	Raises:
 		frappe.ValidationError: When the utility lines cannot be matched to one
-			request, a rate does not follow its source, or a month is billed twice.
+			request, a line bills outside its lease, a rate does not follow its
+			source, or a month is billed twice.
 	"""
 	if doc.get("is_return"):
-		return
+		return []
 
 	rows = get_governed_rows(doc)
 	if not rows:
 		if doc.get(REQUEST_FIELD):
 			doc.set(REQUEST_FIELD, None)
-		return
+		return []
 
 	service_request = link_service_request(doc, [row.item_code for row in rows])
 	lines = get_request_lines(service_request)
+	leases = get_lease_periods(service_request, lines)
 	seen_in_this_invoice: set[tuple[str, int, int]] = set()
+	governed = []
 
 	for row in rows:
 		line = lines[row.item_code]
+		lease = leases[row.item_code]
 		billing_date = getdate(row.get(POSTING_DATE_FIELD) or doc.posting_date)
+		check_within_lease(row, billing_date, lease)
 		check_not_billed_twice_in_invoice(row, billing_date, seen_in_this_invoice)
 
 		if line.role == PRIMARY:
@@ -101,6 +128,161 @@ def govern_utility_lines(doc: Document) -> None:
 		else:
 			check_request_rate(doc, row, line, service_request)
 			check_not_already_invoiced(doc, row, billing_date, service_request=service_request)
+
+		governed.append(
+			frappe._dict(
+				row=row, billing_date=billing_date, utility_property=lease.utility_property
+			)
+		)
+
+	return governed
+
+
+def check_within_lease(row, billing_date, lease) -> None:
+	"""Block a line billing a date outside the lease it belongs to.
+
+	Always applies to governed lines, whether or not a Contract exists: Item
+	Prices alone cannot guarantee it, since prices without a customer or end
+	date, prices left from a longer lease and secondary items all resolve a
+	rate outside the lease. Open ended leases enforce no end.
+
+	Args:
+		row: Sales Invoice Item row being checked.
+		billing_date: Resolved billing date of the row.
+		lease: Entry of ``get_lease_periods`` for the row's item.
+
+	Raises:
+		frappe.ValidationError: Naming the line, the billing date and the boundary.
+	"""
+	if lease.start and billing_date < getdate(lease.start):
+		frappe.throw(
+			_("Row #{0}: {1} is billed for {2}, before the lease of {3} starts on {4}.").format(
+				row.idx, frappe.bold(row.item_code), billing_date, lease.label, getdate(lease.start)
+			)
+		)
+
+	if lease.end and billing_date > getdate(lease.end):
+		frappe.throw(
+			_("Row #{0}: {1} is billed for {2}, after the lease of {3} ended on {4}.").format(
+				row.idx, frappe.bold(row.item_code), billing_date, lease.label, getdate(lease.end)
+			)
+		)
+
+
+def check_service_request_contract(doc: Document) -> str | None:
+	"""Block invoicing a Utility Service Request without the Contract the settings require.
+
+	With Require Contract Before Sales Invoice Creation on, the request needs a
+	submitted Contract - and a signed one when Require Signed Contract is on too.
+
+	Known limitation: this also applies to invoices Auto Repeat generates, so a
+	request without the required Contract makes that scheduled generation fail
+	with this error instead of warning anyone up front.
+
+	Args:
+		doc: Sales Invoice being validated.
+
+	Returns:
+		The name of the Contract satisfying the requirement, or ``None`` when no
+		Contract is required.
+
+	Raises:
+		frappe.ValidationError: When the required Contract does not exist.
+	"""
+	service_request = doc.get(REQUEST_FIELD)
+	if doc.get("is_return") or not service_request:
+		return None
+
+	settings = frappe.get_cached_doc("Utility Billing Settings")
+	if not settings.require_contract_before_sales_invoice_creation:
+		return None
+
+	filters = {"utility_service_request": service_request, "docstatus": 1}
+	if settings.require_signed_contract:
+		filters["is_signed"] = 1
+
+	contracts = frappe.get_all(
+		"Contract", filters=filters, pluck="name", order_by="creation desc", limit=1
+	)
+	if contracts:
+		return contracts[0]
+
+	if settings.require_signed_contract:
+		frappe.throw(
+			_(
+				"Utility Service Request {0} has no signed, submitted Contract. Sign and "
+				"submit its Contract before invoicing it."
+			).format(frappe.bold(service_request))
+		)
+
+	frappe.throw(
+		_(
+			"Utility Service Request {0} has no submitted Contract. Submit its Contract "
+			"before invoicing it."
+		).format(frappe.bold(service_request))
+	)
+
+
+def check_within_contract(contract_name: str, governed: list[frappe._dict]) -> None:
+	"""Block a line billing a date the Contract does not cover.
+
+	Deliberately independent of the lease check: the Contract is read on its
+	own, so a request edited after its Contract was made surfaces as a mismatch
+	instead of one source silently winning. A line's coverage is the Contract
+	row of its property, falling back to the Contract's own dates; a secondary
+	line has no property, so it uses the Contract's own dates. Blank dates are
+	open ended.
+
+	The Contract is read fresh on every call: its row start date stays editable
+	after submit.
+
+	Args:
+		contract_name: Contract satisfying the requirement.
+		governed: Result of ``govern_utility_lines``.
+
+	Raises:
+		frappe.ValidationError: Naming the line, the billing date, the Contract
+			and the boundary.
+	"""
+	if not governed:
+		return
+
+	contract = frappe.get_doc("Contract", contract_name)
+	rows_by_property = {
+		row.utility_property: row for row in contract.get("properties") or [] if row.utility_property
+	}
+
+	for line in governed:
+		contract_row = rows_by_property.get(line.utility_property)
+		start = (contract_row and contract_row.start_date) or contract.start_date
+		end = (contract_row and contract_row.end_date) or contract.end_date
+		coverage = (
+			_("property {0} on Contract {1}").format(line.utility_property, contract.name)
+			if contract_row
+			else _("Contract {0}").format(contract.name)
+		)
+
+		if start and line.billing_date < getdate(start):
+			frappe.throw(
+				_("Row #{0}: {1} is billed for {2}, before {3} starts on {4}.").format(
+					line.row.idx,
+					frappe.bold(line.row.item_code),
+					line.billing_date,
+					coverage,
+					getdate(start),
+				)
+			)
+
+		if end and line.billing_date > getdate(end):
+			frappe.throw(
+				_("Row #{0}: {1} is billed for {2}, after {3} ended on {4}.").format(
+					line.row.idx,
+					frappe.bold(line.row.item_code),
+					line.billing_date,
+					coverage,
+					getdate(end),
+				)
+			)
 
 
 def get_governed_rows(doc: Document) -> list:

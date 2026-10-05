@@ -11,6 +11,8 @@ from frappe.utils import (
 )
 from typing import Optional, Dict, Any
 
+AUTO_REPEAT_SAVEPOINT = "utility_billing_auto_repeat"
+
 @frappe.whitelist()
 def on_update(doc: Document, method: str) -> None:
     """Main handler for Auto Repeat document updates"""
@@ -302,7 +304,13 @@ def create_repeated_entries(data):
 
 @frappe.whitelist()
 def run_all_due_auto_repeats():
-    """Run all Auto Repeats with next_schedule_date <= today."""
+    """Run all Auto Repeats with next_schedule_date <= today.
+
+    Each Auto Repeat runs on its own savepoint, so one that fails is rolled
+    back and disabled while the others still run. Letting the error escape
+    would make the scheduler roll back the whole run, the documents of the
+    Auto Repeats that succeeded included.
+    """
     today_date = getdate(today())
     names = frappe.get_all(
         "Auto Repeat",
@@ -313,7 +321,20 @@ def run_all_due_auto_repeats():
     if not names:
         return "No due Auto Repeats found"
 
-    data = [{"name": name} for name in names]
-    create_repeated_entries(data)
+    failed = []
+    for name in names:
+        frappe.db.savepoint(AUTO_REPEAT_SAVEPOINT)
+        try:
+            create_repeated_entries([{"name": name}])
+        except Exception:
+            # create_repeated_entries has already written the Error Log, which
+            # survives the rollback. Disabled again, as Frappe does for a failed
+            # Auto Repeat, so it is not retried every day until it is fixed.
+            frappe.db.rollback(save_point=AUTO_REPEAT_SAVEPOINT)
+            frappe.db.set_value("Auto Repeat", name, "disabled", 1)
+            failed.append(name)
+
+    if failed:
+        return f"Processed {len(names) - len(failed)} Auto Repeats, {len(failed)} failed: {', '.join(failed)}"
 
     return f"Processed {len(names)} Auto Repeats"
