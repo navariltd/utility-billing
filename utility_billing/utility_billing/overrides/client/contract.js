@@ -51,12 +51,16 @@ frappe.ui.form.on("Contract Utility Property Item", {
 });
 
 // The rows and the request link come from the Utility Service Request through
-// create_contract. Only this form's docfields change, so the request's own
-// table stays editable.
+// create_contract, and so do the dates of a Contract linked to one. Only this
+// form's docfields change, so the request's own table stays editable.
 function lock_properties(frm) {
 	const grid = frm.fields_dict.properties.grid;
 
 	frm.set_df_property("utility_service_request", "read_only", 1);
+	if (frm.doc.utility_service_request) {
+		frm.set_df_property("start_date", "read_only", 1);
+		frm.set_df_property("end_date", "read_only", 1);
+	}
 	// Booleans, not 1: the grid passes these to jQuery toggleClass, which toggles on a number
 	frm.set_df_property("properties", "cannot_add_rows", true);
 	frm.set_df_property("properties", "cannot_delete_rows", true);

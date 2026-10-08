@@ -32,11 +32,15 @@ def row(name="ROW-1", **values):
 
 def contract(rows, docstatus=1, utility_service_request="USR-1", from_service_request=False, **values):
 	return frappe._dict(
-		docstatus=docstatus,
-		utility_service_request=utility_service_request,
-		properties=rows,
-		flags=frappe._dict(from_service_request=from_service_request),
-		**values,
+		{
+			"docstatus": docstatus,
+			"utility_service_request": utility_service_request,
+			"start_date": date(2026, 10, 1),
+			"end_date": date(2027, 10, 1),
+			"properties": rows,
+			"flags": frappe._dict(from_service_request=from_service_request),
+			**values,
+		}
 	)
 
 
@@ -127,3 +131,35 @@ class TestRowsUnchanged(UnitTestCase):
 
 	def test_signing_with_unchanged_rows_is_allowed(self):
 		lock.check_rows_unchanged(contract([row()], is_signed=1), contract([row()], is_signed=0))
+
+
+class TestHeaderDates(UnitTestCase):
+	"""The start and end dates of a Contract linked to a request."""
+
+	def test_unchanged_dates_are_allowed_whatever_the_value_format(self):
+		lock.check_rows_unchanged(
+			contract([row()], start_date="2026-10-01", end_date="2027-10-01"), contract([row()])
+		)
+
+	def test_dates_of_a_submitted_contract_are_locked(self):
+		for fieldname in lock.LOCKED_HEADER_FIELDS:
+			with self.subTest(fieldname=fieldname), self.assertRaises(frappe.ValidationError):
+				lock.check_rows_unchanged(contract([row()], **{fieldname: date(2028, 10, 1)}), contract([row()]))
+
+	def test_dates_of_a_draft_are_locked(self):
+		for fieldname in lock.LOCKED_HEADER_FIELDS:
+			with self.subTest(fieldname=fieldname), self.assertRaises(frappe.ValidationError):
+				lock.check_rows_unchanged(
+					contract([row()], docstatus=0, **{fieldname: date(2028, 10, 1)}),
+					contract([row()], docstatus=0),
+				)
+
+	def test_clearing_the_end_date_is_blocked(self):
+		with self.assertRaises(frappe.ValidationError):
+			lock.check_rows_unchanged(contract([row()], docstatus=0, end_date=None), contract([row()], docstatus=0))
+
+	def test_dates_of_a_contract_without_a_request_stay_editable(self):
+		lock.check_rows_unchanged(
+			contract([], docstatus=0, utility_service_request=None, start_date=date(2026, 11, 1), end_date=None),
+			contract([], docstatus=0, utility_service_request=None),
+		)

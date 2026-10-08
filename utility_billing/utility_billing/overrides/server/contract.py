@@ -17,6 +17,8 @@ LOCKED_ROW_FIELDS = (
     "adjustment_rule",
     "insurance",
 )
+# Copied from the Utility Service Request too, so locked while the Contract is linked to one
+LOCKED_HEADER_FIELDS = ("start_date", "end_date")
 DATE_FIELDS = {"start_date", "end_date"}
 FLOAT_FIELDS = {"contract_length_months"}
 
@@ -68,17 +70,29 @@ def check_new_contract(doc) -> None:
 
 
 def check_rows_unchanged(doc, saved) -> None:
-    """Block adding, removing or editing the properties copied from the request.
+    """Block adding, removing or editing what was copied from the request.
 
-    Compared with the saved Contract, not the request: a request edited after
-    its Contract was made leaves the Contract as it is, and the mismatch is
-    caught when invoicing.
+    That is the properties and, on a Contract linked to a request, its start
+    and end dates. Compared with the saved Contract, not the request: a request
+    edited after its Contract was made leaves the Contract as it is, and the
+    mismatch is caught when invoicing.
 
     Raises:
-        frappe.ValidationError: Naming the request link, row or field changed.
+        frappe.ValidationError: Naming the request link, date, row or field changed.
     """
     if (doc.get("utility_service_request") or None) != (saved.get("utility_service_request") or None):
         frappe.throw(_("The Utility Service Request of a Contract cannot be changed."))
+
+    if saved.get("utility_service_request"):
+        contract_meta = frappe.get_meta("Contract")
+        for fieldname in LOCKED_HEADER_FIELDS:
+            if normalise(fieldname, doc.get(fieldname)) != normalise(fieldname, saved.get(fieldname)):
+                frappe.throw(
+                    _("{0} cannot be changed. It is copied from Utility Service Request {1}.").format(
+                        frappe.bold(_(contract_meta.get_label(fieldname))),
+                        frappe.bold(saved.utility_service_request),
+                    )
+                )
 
     saved_rows = {row.name: row for row in saved.get("properties") or []}
     meta = frappe.get_meta(ROW_DOCTYPE)
