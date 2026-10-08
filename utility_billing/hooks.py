@@ -206,6 +206,10 @@ doc_events = {
 		"on_cancel": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_cancel"],
 	},
 	"Contract": {
+		"validate": ["utility_billing.utility_billing.overrides.server.contract.validate"],
+		"before_update_after_submit": [
+			"utility_billing.utility_billing.overrides.server.contract.before_update_after_submit"
+		],
 		"before_submit": ["utility_billing.utility_billing.overrides.server.contract.before_submit"],
 		"on_cancel": ["utility_billing.utility_billing.overrides.server.contract.on_cancel"],
 		"on_update_after_submit": [

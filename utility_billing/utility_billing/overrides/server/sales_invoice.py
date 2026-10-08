@@ -233,8 +233,9 @@ def check_within_contract(contract_name: str, governed: list[frappe._dict]) -> N
 	line has no property, so it uses the Contract's own dates. Blank dates are
 	open ended.
 
-	The Contract is read fresh on every call: its row start date stays editable
-	after submit.
+	The Contract is read fresh on every call. Its rows are locked to what
+	``create_contract`` copied from the request, so they may differ from the
+	request's current rows.
 
 	Args:
 		contract_name: Contract satisfying the requirement.
