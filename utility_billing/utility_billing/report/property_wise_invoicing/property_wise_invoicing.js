@@ -53,12 +53,6 @@ frappe.query_reports["Property Wise Invoicing"] = {
 		},
 	],
 
-	onload: function (report) {
-		report.page.add_inner_message(
-			__("Status is each property's current status, not its status in that month.")
-		);
-	},
-
 	formatter: function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
 
