@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-12 14:26:47.495782",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "utility_type",
+  "meter_number",
+  "billing_method",
+  "column_break_fudw",
+  "previous_reading",
+  "current_reading",
+  "rate",
+  "deposit"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "utility_type",
+   "fieldtype": "Data",
+   "label": "Utility Type"
+  },
+  {
+   "bold": 1,
+   "columns": 2,
+   "fieldname": "meter_number",
+   "fieldtype": "Data",
+   "label": "Meter Number"
+  },
+  {
+   "columns": 2,
+   "fieldname": "billing_method",
+   "fieldtype": "Data",
+   "label": "Billing Method"
+  },
+  {
+   "fieldname": "column_break_fudw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "previous_reading",
+   "fieldtype": "Float",
+   "label": "Previous Reading"
+  },
+  {
+   "columns": 1,
+   "fieldname": "current_reading",
+   "fieldtype": "Float",
+   "label": "Current Reading"
+  },
+  {
+   "columns": 1,
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
+  },
+  {
+   "columns": 1,
+   "fieldname": "deposit",
+   "fieldtype": "Currency",
+   "label": "Deposit"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-13 01:28:37.221569",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Utilities",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
