@@ -206,6 +206,8 @@ def create_contract(name):
 		contract.append("properties", row_data)
 
 	contract.flags.ignore_mandatory = True
+	# The only way a Contract gets properties: see overrides.server.contract.check_new_contract
+	contract.flags.from_service_request = True
 	contract.insert()
 
 	if not contract.contract_terms:

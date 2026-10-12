@@ -42,9 +42,6 @@ def execute(filters=None):
     if filters.property:
         rows = [row for row in rows if row.property == filters.property]
 
-    for row in rows:
-        row.status = properties.get(row.property, {}).get("status")
-
     return get_columns(), add_totals(rows)
 
 
@@ -54,7 +51,6 @@ def get_columns() -> list[dict]:
         {"label": _("Customer"), "fieldname": "customer", "fieldtype": "Link", "options": "Customer", "width": 180},
         {"label": _("Month"), "fieldname": "month", "fieldtype": "Data", "width": 110},
         {"label": _("Invoiced Amount"), "fieldname": "invoiced_amount", "fieldtype": "Currency", "width": 150},
-        {"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 140},
         {"label": _("Lease Expires"), "fieldname": "lease_expires", "fieldtype": "Date", "width": 120},
     ]
 
@@ -114,13 +110,13 @@ def get_leases(filters) -> list[frappe._dict]:
 
 
 def get_properties() -> dict[str, frappe._dict]:
-    """Return the leaf properties with their status and service item."""
+    """Return the leaf properties with their service item."""
     return {
         row.name: row
         for row in frappe.get_all(
             "Utility Property",
             filters={"is_group": 0},
-            fields=["name", "status", "service_item"],
+            fields=["name", "service_item"],
         )
     }
 
