@@ -29,15 +29,13 @@ accounting_dimension_doctypes = [
 required_apps = ["erpnext", "crm"]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
 add_to_apps_screen = [
-	{
-		"name": "rental",
-		"logo": "/assets/utility_billing/logo.png",
-		"title": "Rental Billing",
-		"route": "/rental",
-		"has_permission": "utility_billing.permissions.check_app_permission",
-	}
+    {
+        "name": "utility_billing",
+        "logo": "/assets/utility_billing/logo.png",
+        "title": "Utility & Rental",
+        "has_permission": "utility_billing.permissions.check_app_permission",
+    },
 ]
 # Includes in <head>
 # ------------------
