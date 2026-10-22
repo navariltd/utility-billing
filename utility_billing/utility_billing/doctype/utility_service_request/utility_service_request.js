@@ -347,6 +347,7 @@ frappe.ui.form.on("Utility Service Request Item", {
 
 	items_add: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
+		let settings = frappe.get_doc(settingsDoctypeName, settingsDoctypeName);
 		let delivery_date = frm.doc.delivery_date || frappe.datetime.nowdate();
 		frappe.model.set_value(cdt, cdn, "delivery_date", delivery_date);
 		frm.script_manager.copy_from_first_row("items", row, [
@@ -371,13 +372,25 @@ frappe.ui.form.on("Utility Service Request Item", {
 });
 
 frappe.ui.form.on("Contract Utility Property Item", {
-	requested_properties_add: function (frm, cdt, cdn) {
+	requested_properties_add: async function (frm, cdt, cdn) {
+		const billing_approach = await frappe.db.get_single_value(
+			"Utility Billing Settings",
+			"rent_billing_approach",
+		);
+
+		if (billing_approach) {
+			console.log("Setting billing approach for new property row:", billing_approach);
+			await frappe.model.set_value(cdt, cdn, "rent_billing_approach", billing_approach);
+		}
+
 		if (frm.doc.start_date) {
 			frappe.model.set_value(cdt, cdn, "start_date", frm.doc.start_date);
 		}
+
 		if (frm.doc.end_date) {
 			frappe.model.set_value(cdt, cdn, "end_date", frm.doc.end_date);
 		}
+
 		if (frm.doc.contract_length_months) {
 			frappe.model.set_value(
 				cdt,
@@ -403,7 +416,6 @@ frappe.ui.form.on("Contract Utility Property Item", {
 	contract_length_months: (frm, cdt, cdn) =>
 		update_child_contract_fields(frm, cdt, cdn, "contract_length_months"),
 });
-
 /**
  * Fill the read-only item of a requested property row.
  *
@@ -828,7 +840,7 @@ function get_item_table_fields(frm) {
 
 		if (field.fieldname === "utility_property") {
 			config.in_list_view = 1;
-			config.reqd = 1;
+			// config.reqd = 1;
 		}
 
 		return config;
@@ -985,60 +997,86 @@ function open_new_sales_document(frm, docType) {
 
 	const usr_items = (frm.doc.items || []).filter((row) => row.item_code);
 
-    // This function owns the new document's rows until they are all in: the
-    // Sales Invoice's own utility handling (linking a request and pre-filling
-    // its items) would otherwise write into the same blank rows meanwhile.
-    frappe.flags.filling_rows_from_service_request = true;
+	// This function owns the new document's rows until they are all in: the
+	// Sales Invoice's own utility handling (linking a request and pre-filling
+	// its items) would otherwise write into the same blank rows meanwhile.
+	frappe.flags.filling_rows_from_service_request = true;
 
-    frappe.new_doc(docType, values)
-        .then(async () => {
-            const new_frm = cur_frm;
+	frappe
+		.new_doc(docType, values)
+		.then(async () => {
+			const new_frm = cur_frm;
 
-            try {
-                if (!usr_items.length) return;
+			try {
+				if (!usr_items.length) return;
 
-                new_frm.clear_table("items");
+				new_frm.clear_table("items");
 
-                // Rows are filled one at a time. Picking an item makes ERPNext send
-                // the whole document to the server and sync its copy back; a row
-                // filled while another is still being fetched has its fetched details
-                // (Income and Expense Account, Cost Center, ...) wiped by that copy.
-                for (const source_row of usr_items) {
-                    const row = new_frm.add_child("items");
-                    await frappe.model.set_value(row.doctype, row.name, "qty", source_row.qty || 1);
-                    if (source_row.uom) {
-                        await frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
-                    }
-                    if (source_row.warehouse) {
-                        await frappe.model.set_value(row.doctype, row.name, "warehouse", source_row.warehouse);
-                    }
-                    // item_code triggers ERPNext's own item-details/rate fetch — set it
-                    // last, after qty/uom/warehouse, so the rate calculation uses their
-                    // final values.
-                    await frappe.model.set_value(row.doctype, row.name, "item_code", source_row.item_code);
-                    await frappe.after_ajax();
-                    await frappe.model.set_value(row.doctype, row.name, "item_name", source_row.item_name);
-                }
+				// Rows are filled one at a time. Picking an item makes ERPNext send
+				// the whole document to the server and sync its copy back; a row
+				// filled while another is still being fetched has its fetched details
+				// (Income and Expense Account, Cost Center, ...) wiped by that copy.
+				for (const source_row of usr_items) {
+					const row = new_frm.add_child("items");
+					await frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"qty",
+						source_row.qty || 1,
+					);
+					if (source_row.uom) {
+						await frappe.model.set_value(row.doctype, row.name, "uom", source_row.uom);
+					}
+					if (source_row.warehouse) {
+						await frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"warehouse",
+							source_row.warehouse,
+						);
+					}
+					// item_code triggers ERPNext's own item-details/rate fetch — set it
+					// last, after qty/uom/warehouse, so the rate calculation uses their
+					// final values.
+					await frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"item_code",
+						source_row.item_code,
+					);
+					await frappe.after_ajax();
+					await frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"item_name",
+						source_row.item_name,
+					);
+				}
 
-                new_frm.refresh_field("items");
+				new_frm.refresh_field("items");
 
-                if (docType === "Sales Invoice") {
-                    for (const row of new_frm.doc.items) {
-                        await frappe.model.set_value(row.doctype, row.name, "custom_posting_date", values.posting_date);
-                        await frappe.after_ajax();
-                    }
-                }
-            } finally {
-                frappe.flags.filling_rows_from_service_request = false;
-                // Let the invoice catch up on the request now that every row is in.
-                if (docType === "Sales Invoice") {
-                    new_frm.script_manager.trigger("utility_service_request");
-                }
-            }
-        })
-        .catch(() => {
-            frappe.flags.filling_rows_from_service_request = false;
-        });
+				if (docType === "Sales Invoice") {
+					for (const row of new_frm.doc.items) {
+						await frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"custom_posting_date",
+							values.posting_date,
+						);
+						await frappe.after_ajax();
+					}
+				}
+			} finally {
+				frappe.flags.filling_rows_from_service_request = false;
+				// Let the invoice catch up on the request now that every row is in.
+				if (docType === "Sales Invoice") {
+					new_frm.script_manager.trigger("utility_service_request");
+				}
+			}
+		})
+		.catch(() => {
+			frappe.flags.filling_rows_from_service_request = false;
+		});
 }
 
 async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false) {
@@ -1111,7 +1149,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			fieldtype: "Link",
 			options: "Utility Property",
 			default: properties.length == 1 ? properties[0] : null,
-			mandatory_depends_on: properties.length ? "eval:1" : "eval:0",
+			// mandatory_depends_on: properties.length ? "eval:1" : "eval:0",
 
 			get_query: () => {
 				if (!properties.length) {
@@ -1165,7 +1203,7 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 			options: "Billing Adjustment Rule",
 			depends_on: "eval:doc.enable_auto_repeat==1",
 			default: defaultProperty?.adjustment_rule,
-			mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
+			// mandatory_depends_on: "eval:doc.enable_auto_repeat==1",
 			description: __("Rule defining how billing amounts will adjust over time"),
 		},
 		{
@@ -1356,7 +1394,8 @@ async function addActionButtons(frm) {
 				!contractName &&
 				(!settings?.require_deposit_before_contract_creation || depositName);
 
-			const isItemPriceApproach = settings?.rent_billing_approach === "Item Price";
+			const isItemPriceApproach =
+				frm.doc.requested_properties[0]?.rent_billing_approach === "Item Price";
 
 			if (isItemPriceApproach) {
 				frm.add_custom_button(
