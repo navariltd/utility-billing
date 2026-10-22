@@ -7,7 +7,6 @@
     "overdue_after_days": 15,
     "increment_interval_months": 12,
     "increment_percentage": 5.0,
-    "adjustment_cap": 10.0,
     "adjustment_basis": "Original Amount",
     "effective_after_months": 12,
     "penalty_type": "Percentage",
@@ -39,7 +38,6 @@
     "repeat_on_day": 1,
     "increment_interval_months": 6,
     "increment_percentage": 3.0,
-    "adjustment_cap": 6.0,
     "adjustment_basis": "Last Adjusted Amount",
     "effective_after_months": 6,
     "disabled": false

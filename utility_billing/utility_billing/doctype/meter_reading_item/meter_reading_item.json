@@ -11,7 +11,7 @@
   "stock_uom",
   "column_break_fkvl",
   "meter_number",
-  "delivery_warehouse",
+  "warehouse",
   "uom",
   "column_break_smgb",
   "current_reading",
@@ -114,21 +114,27 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "delivery_warehouse",
+   "fieldname": "warehouse",
    "fieldtype": "Link",
-   "label": "Delivery Warehouse",
-   "options": "Warehouse"
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-06 06:11:08.641394",
+ "modified": "2026-10-22 09:55:29.202272",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Item",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

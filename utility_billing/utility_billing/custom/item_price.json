@@ -132,6 +132,5 @@
  "custom_perms": [],
  "doctype": "Item Price",
  "links": [],
- "property_setters": [],
- "sync_on_migrate": 1
+ "property_setters": []
 }

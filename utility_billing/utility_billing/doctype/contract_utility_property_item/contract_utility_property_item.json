@@ -1,117 +1,178 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2025-04-25 12:22:15.849019",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "is_active",
-  "utility_property",
-  "adjustment_rule",
-  "insurance",
-  "column_break_cqbg",
-  "start_date",
-  "end_date",
-  "contract_length_months"
- ],
- "fields": [
-  {
-   "columns": 2,
-   "fieldname": "utility_property",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Utility Property",
-   "options": "Utility Property",
-   "reqd": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "columns": 2,
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Start Date",
-   "reqd": 1
-  },
-  {
-   "columns": 1,
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "End Date"
-  },
-  {
-   "allow_on_submit": 1,
-   "columns": 1,
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Is Active?"
-  },
-  {
-   "columns": 2,
-   "fieldname": "adjustment_rule",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Adjustment Rule",
-   "options": "Billing Adjustment Rule",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_cqbg",
-   "fieldtype": "Column Break"
-  },
-  {
-   "columns": 1,
-   "fieldname": "contract_length_months",
-   "fieldtype": "Float",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Length (Months)"
-  },
-  {
-   "columns": 1,
-   "fieldname": "insurance",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Insurance",
-   "options": "Insurance"
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "istable": 1,
- "links": [],
- "modified": "2025-05-19 11:54:46.604438",
- "modified_by": "Administrator",
- "module": "Utility Billing",
- "name": "Contract Utility Property Item",
- "owner": "Administrator",
- "permissions": [],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": []
+  "actions": [],
+  "allow_rename": 1,
+  "creation": "2025-04-25 12:22:15.849019",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "utility_property",
+    "item_code",
+    "is_active",
+    "column_break_mplw",
+    "start_date",
+    "end_date",
+    "section_break_auto_billing",
+    "enable_auto_billing",
+    "rent_billing_approach",
+    "adjustment_rule",
+    "billing_date_type",
+    "billing_day_of_month",
+    "column_break_cqbg",
+    "contract_length_months",
+    "insurance"
+  ],
+  "fields": [
+    {
+      "fieldname": "item_code",
+      "fieldtype": "Link",
+      "label": "Item",
+      "options": "Item",
+      "read_only": 1
+    },
+    {
+      "columns": 2,
+      "fieldname": "utility_property",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Utility Property",
+      "options": "Utility Property",
+      "reqd": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "columns": 2,
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Start Date",
+      "reqd": 1
+    },
+    {
+      "allow_on_submit": 1,
+      "columns": 1,
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "End Date"
+    },
+    {
+      "allow_on_submit": 1,
+      "columns": 1,
+      "default": "1",
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Is Active?"
+    },
+    {
+      "fieldname": "section_break_auto_billing",
+      "fieldtype": "Section Break",
+      "label": "Auto Billing"
+    },
+    {
+      "default": "1",
+      "fieldname": "enable_auto_billing",
+      "fieldtype": "Check",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Enable Auto Billing"
+    },
+    {
+      "depends_on": "eval:doc.enable_auto_billing",
+      "fieldname": "rent_billing_approach",
+      "fieldtype": "Select",
+      "label": "Rent Billing Approach",
+      "mandatory_depends_on": "eval:doc.enable_auto_billing",
+      "options": "Auto Repeat\nItem Price"
+    },
+    {
+      "depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Auto Repeat'",
+      "fieldname": "adjustment_rule",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Adjustment Rule",
+      "mandatory_depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Auto Repeat'",
+      "options": "Billing Adjustment Rule"
+    },
+    {
+      "default": "Last Day of Month",
+      "depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Item Price'",
+      "fieldname": "billing_date_type",
+      "fieldtype": "Select",
+      "label": "Billing Date",
+      "mandatory_depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Item Price'",
+      "options": "First Day of Month\nLast Day of Month\nSpecific Day of Month"
+    },
+    {
+      "default": "1",
+      "depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Item Price' && doc.billing_date_type == 'Specific Day of Month'",
+      "description": "Enter a day from 1 to 31. If the selected day does not exist in a month, the last day of that month will be used.",
+      "fieldname": "billing_day_of_month",
+      "fieldtype": "Int",
+      "label": "Day of Month",
+      "mandatory_depends_on": "eval:doc.enable_auto_billing && doc.rent_billing_approach == 'Item Price' && doc.billing_date_type == 'Specific Day of Month'"
+    },
+    {
+      "fieldname": "column_break_cqbg",
+      "fieldtype": "Column Break"
+    },
+    {
+      "allow_on_submit": 1,
+      "columns": 1,
+      "fieldname": "contract_length_months",
+      "fieldtype": "Float",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Length (Months)"
+    },
+    {
+      "columns": 1,
+      "fieldname": "insurance",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_preview": 1,
+      "in_standard_filter": 1,
+      "label": "Insurance",
+      "options": "Insurance"
+    },
+    {
+      "fieldname": "column_break_mplw",
+      "fieldtype": "Column Break"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "istable": 1,
+  "links": [],
+  "modified": "2026-10-22 10:18:40.051929",
+  "modified_by": "Administrator",
+  "module": "Utility Billing",
+  "name": "Contract Utility Property Item",
+  "owner": "Administrator",
+  "permissions": [],
+  "row_format": "Dynamic",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": []
 }

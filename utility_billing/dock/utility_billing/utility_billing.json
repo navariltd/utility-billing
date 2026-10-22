@@ -1,0 +1,19 @@
+{
+ "doctype": "Dock",
+ "name": "utility_billing",
+ "app": "utility_billing",
+ "user": "",
+ "standard": 1,
+ "mount_on": "",
+ "items": [
+  {
+   "title": "Utility & Rental",
+   "link_type": "Sidebar",
+   "link_to": "Utility & Rental",
+   "icon": "panels-top-left",
+   "added": 0,
+   "hidden": 0
+  }
+ ],
+ "modified": "2026-10-14 17:00:00.000000"
+}

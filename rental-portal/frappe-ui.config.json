@@ -1,0 +1,14 @@
+{
+  "repoUrl": "https://github.com/navariltd/frappe_react_ui_components.git",
+  "remoteDir": "react-ui",
+  "root": "src",
+  "syncFolders": [
+    "components",
+    "config",
+    "contexts",
+    "utils",
+    "hooks",
+    "lib",
+    "types"
+  ]
+}

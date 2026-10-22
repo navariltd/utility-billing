@@ -3,7 +3,17 @@
 
 frappe.ui.form.on("Utility Billing Settings", {
 	refresh(frm) {
-		// Add any initialization logic if needed
+		frm.fields_dict["default_parent_cost_centers"].grid.get_field("parent_cost_center").get_query =
+			function (doc, cdt, cdn) {
+				const row = locals[cdt][cdn];
+
+				return {
+					filters: {
+						is_group: 1,
+						company: row.company || undefined,
+					},
+				};
+			};
 	},
 
 	generate_demo_data(frm) {
