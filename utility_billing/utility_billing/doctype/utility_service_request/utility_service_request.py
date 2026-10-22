@@ -858,14 +858,14 @@ def _handle_auto_repeat(doc, usr, property, enable_auto_repeat, adjustment_rule,
 	if enable_auto_repeat != "1":
 		return
 
-	if _uses_item_price_billing():
-		frappe.msgprint(
-			_(
-				"Auto Repeat not created: Utility Billing Settings use the Item Price "
-				"billing approach. Define item prices on the Utility Service Request instead."
-			)
-		)
-		return
+	# if _uses_item_price_billing():
+	# 	frappe.msgprint(
+	# 		_(
+	# 			"Auto Repeat not created: Utility Billing Settings use the Item Price "
+	# 			"billing approach. Define item prices on the Utility Service Request instead."
+	# 		)
+	# 	)
+	# 	return
 
 	actual_adjustment_rule_name = adjustment_rule or (property.adjustment_rule if property else None)
 	if not actual_adjustment_rule_name:

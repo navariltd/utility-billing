@@ -30,12 +30,12 @@ required_apps = ["erpnext", "crm"]
 
 # Each item in the list will be shown as an app in the apps page
 add_to_apps_screen = [
-    {
-        "name": "utility_billing",
-        "logo": "/assets/utility_billing/logo.png",
-        "title": "Utility & Rental",
-        "has_permission": "utility_billing.permissions.check_app_permission",
-    },
+	{
+		"name": "utility_billing",
+		"logo": "/assets/utility_billing/logo.png",
+		"title": "Utility & Rental",
+		"has_permission": "utility_billing.permissions.check_app_permission",
+	},
 ]
 # Includes in <head>
 # ------------------
@@ -64,6 +64,7 @@ doctype_js = {
 	"Contract": "utility_billing/overrides/client/contract.js",
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
 	"Sales Invoice": "utility_billing/overrides/client/sales_invoice.js",
+	"Warranty Claim": "utility_billing/overrides/client/warranty_claim.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
@@ -235,6 +236,7 @@ scheduler_events = {
 	"daily": [
 		"utility_billing.utility_billing.utils.auto_repeat.process_penalties_for_overdue_invoices",
 		"utility_billing.utility_billing.overrides.server.auto_repeat.run_all_due_auto_repeats",
+		"utility_billing.utility_billing.utils.auto_repeat.create_item_price_sales_invoices",
 		"utility_billing.utility_billing.utils.property_status.release_ended_leases",
 	],
 	# 	"hourly": [

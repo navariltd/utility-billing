@@ -9,6 +9,7 @@
  "field_order": [
   "naming_series",
   "customer",
+  "warehouse",
   "column_break_qmhh",
   "date",
   "customer_name",
@@ -154,8 +155,7 @@
    "fieldname": "property",
    "fieldtype": "Link",
    "label": "Property",
-   "options": "Utility Property",
-   "reqd": 1
+   "options": "Utility Property"
   },
   {
    "fieldname": "cost_center",
@@ -178,12 +178,22 @@
   {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Warehouse",
+   "options": "Warehouse"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-09 14:45:07.073075",
+ "modified": "2026-10-22 09:51:40.884463",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

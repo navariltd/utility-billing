@@ -61,7 +61,7 @@ frappe.ui.form.on("Meter Reading", {
 					frappe.msgprint(
 						__("Current reading cannot be lower than previous reading.for item: {0}", [
 							item.item_code,
-						])
+						]),
 					);
 					frappe.validated = false;
 				}
@@ -69,8 +69,8 @@ frappe.ui.form.on("Meter Reading", {
 				frappe.msgprint(
 					__(
 						"Please ensure that both current and previous readings are provided for item: {0}",
-						[item.item_code]
-					)
+						[item.item_code],
+					),
 				);
 				frappe.validated = false;
 			}
@@ -122,6 +122,16 @@ frappe.ui.form.on("Meter Reading Item", {
 			fetch_previous_reading(frm, row);
 		}
 	},
+
+	items_add: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+
+		if (frm.doc.warehouse) {
+			frappe.model.set_value(cdt, cdn, "warehouse", frm.doc.warehouse);
+		}
+
+		frm.refresh_field("items");
+	},
 });
 
 function update_property_query(frm) {
@@ -147,7 +157,7 @@ function update_property_query(frm) {
 						row.doctype,
 						row.name,
 						"meter_number",
-						closedWarrantySerials[0]
+						closedWarrantySerials[0],
 					);
 				}
 			});
@@ -181,7 +191,7 @@ function update_meter_number_query(frm) {
 						row.doctype,
 						row.name,
 						"meter_number",
-						closedWarrantySerials[0]
+						closedWarrantySerials[0],
 					);
 				}
 			});
