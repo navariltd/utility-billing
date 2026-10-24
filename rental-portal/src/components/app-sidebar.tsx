@@ -29,9 +29,11 @@ import type { PortalCapability } from "@/types/portal";
 import {
   Bell,
   Building2,
+  CalendarCheck2,
   Home,
   LayoutDashboard,
   LogIn,
+  ReceiptText,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -70,6 +72,17 @@ const privateNavGroups: { label: string; items: NavItem[] }[] = [
         url: "/my-properties",
         icon: Building2,
         capability: "view_my_units",
+      },
+      {
+        title: "My Bookings",
+        url: "/bookings",
+        icon: CalendarCheck2,
+        capability: "view_my_units",
+      },
+      {
+        title: "Invoices & Orders",
+        url: "/invoices",
+        icon: ReceiptText,
       },
     ],
   },
