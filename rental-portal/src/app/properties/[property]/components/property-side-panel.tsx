@@ -56,11 +56,14 @@ export function PropertySidePanel({
 }: {
   payload: PropertyDetailsPayload;
 }) {
-  const { tenancy, documents, can_book } = payload;
+  const { tenancy, booking, documents, can_book } = payload;
   const period = [
     formatDate(tenancy?.start_date),
     formatDate(tenancy?.end_date),
   ]
+    .filter(Boolean)
+    .join(" → ");
+  const bookingPeriod = [formatDate(booking?.start_date), formatDate(booking?.end_date)]
     .filter(Boolean)
     .join(" → ");
 
@@ -86,6 +89,27 @@ export function PropertySidePanel({
                 Book Now
               </Link>
             </Button>
+          ) : null}
+
+          {booking && !tenancy ? (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <PropertyStatusBadge
+                  label={booking.lease_status}
+                  tone={tenancyTone(booking.lease_status)}
+                />
+                <span className="text-muted-foreground">Your booking</span>
+              </div>
+              {bookingPeriod ? (
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <CalendarDays className="h-4 w-4" />
+                  {bookingPeriod}
+                </span>
+              ) : null}
+              <Button asChild variant="outline" className="w-full cursor-pointer">
+                <Link to="/bookings">Track booking</Link>
+              </Button>
+            </>
           ) : null}
 
           {tenancy ? (
