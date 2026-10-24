@@ -58,6 +58,27 @@ export interface ServiceRequestRow {
   request_type: string | null;
   request_status: string | null;
   customer: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  docstatus?: number;
+  lease_status?: string;
+  contract?: string | null;
+  contract_status?: string | null;
+  is_signed?: number;
+}
+
+/** A submitted booking request the caller made for the property. */
+export interface PropertyBooking {
+  name: string;
+  date: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  request_status: string | null;
+  docstatus: number;
+  lease_status: string;
+  contract: string | null;
+  contract_status: string | null;
+  is_signed: number;
 }
 
 export interface SalesInvoiceRow {
@@ -77,6 +98,8 @@ export interface SalesOrderRow {
   transaction_date: string | null;
   delivery_date: string | null;
   grand_total: number;
+  advance_paid?: number;
+  per_billed?: number | null;
   status: string | null;
   docstatus: number;
   currency: string | null;
@@ -121,6 +144,7 @@ export interface PropertyTenancy extends TenantProperty {
 export interface PropertyDetailsPayload {
   property: PropertyDetails;
   tenancy: PropertyTenancy | null;
+  booking: PropertyBooking | null;
   is_mine: boolean;
   is_available: boolean;
   can_book: boolean;
