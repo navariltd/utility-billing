@@ -24,6 +24,7 @@ from utility_billing.api.portal.property_vouchers import (
 	get_sales_invoices,
 	get_sales_orders,
 )
+from utility_billing.utility_billing.utils.lease_status import decorate_service_requests
 
 METER_READING_FIELDS = ("name", "date", "customer", "company", "docstatus")
 
@@ -33,6 +34,9 @@ SERVICE_REQUEST_FIELDS = (
 	"request_type",
 	"request_status",
 	"customer",
+	"start_date",
+	"end_date",
+	"docstatus",
 )
 
 
@@ -51,7 +55,9 @@ def get_property_documents(property_name: str, customer_names: list[str]) -> dic
 		return _empty_documents()
 
 	meter_readings = _get_meter_readings(property_name, customer_names)
-	service_requests = _get_service_requests(property_name, customer_names)
+	service_requests = decorate_service_requests(
+		_get_service_requests(property_name, customer_names)
+	)
 	meter_reading_names = [meter.name for meter in meter_readings]
 	service_request_names = [request.name for request in service_requests]
 
