@@ -13,10 +13,9 @@ Allocations are classified as:
 * ``History``  – allocation that was deactivated or whose end date has passed.
 """
 
+import frappe
 from frappe.query_builder import DocType
 from frappe.utils import cint, getdate, today
-
-import frappe
 
 from utility_billing.api.portal.roles import get_linked_customers, require_authenticated_user
 
