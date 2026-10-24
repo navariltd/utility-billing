@@ -14,7 +14,7 @@ already resolved here so that later phases can scope their data without
 touching this module.
 """
 
-from typing import Iterable, Sequence
+from collections.abc import Iterable, Sequence
 
 import frappe
 from frappe.query_builder import DocType
@@ -101,6 +101,153 @@ def get_linked_customer(user: str | None = None) -> str | None:
 	"""Return the first Customer linked to ``user``, if any."""
 	customers = get_linked_customers(user)
 	return customers[0]["name"] if customers else None
+
+
+def get_portal_customers(user: str | None = None, *, create: bool = False) -> list[dict]:
+	"""Return the Customers that represent ``user`` in the portal.
+
+	Resolves ``Customer.portal_users`` first, then the Customer linked to the
+	user's Contact. When neither exists and ``create`` is true, a Customer is
+	provisioned for the user so a first-time tenant can book without admin
+	involvement.
+
+	Args:
+		user: User to inspect. Defaults to the current session user.
+		create: Whether a missing Customer may be created.
+
+	Returns:
+		List of dicts with ``name`` and ``customer_name`` keys.
+	"""
+	user = user or frappe.session.user
+	if not user or user == GUEST:
+		return []
+
+	customers = get_linked_customers(user)
+	if customers:
+		return customers
+
+	contact_customer = get_contact_customer(user)
+	if contact_customer:
+		return [contact_customer]
+
+	if not create:
+		return []
+
+	return [create_customer_for_user(user)]
+
+
+def get_contact_customer(user: str) -> dict | None:
+	"""Return the Customer linked to the user's Contact through its email."""
+	email = frappe.db.get_value("User", user, "email") or user
+	contact = frappe.db.get_value(
+		"Contact Email",
+		{"email_id": email, "parenttype": "Contact"},
+		"parent",
+		order_by="creation asc",
+	)
+	if not contact:
+		return None
+
+	customer = frappe.db.get_value(
+		"Dynamic Link",
+		{"parent": contact, "parenttype": "Contact", "link_doctype": "Customer"},
+		"link_name",
+	)
+	if not customer:
+		return None
+
+	customer_name = frappe.db.get_value("Customer", {"name": customer, "disabled": 0}, "customer_name")
+	if not customer_name:
+		return None
+
+	return {"name": customer, "customer_name": customer_name}
+
+
+def create_customer_for_user(user: str) -> dict:
+	"""Create a Customer for a portal user and link it to their login.
+
+	The portal provisions the Customer itself, so the insert ignores the
+	caller's permissions; the user is appended to ``portal_users`` in the same
+	document.
+
+	Args:
+		user: Login of the portal user.
+
+	Returns:
+		Dict with ``name`` and ``customer_name`` of the Customer.
+	"""
+	user_doc = frappe.get_cached_doc("User", user)
+	email = user_doc.email or user
+
+	existing = frappe.db.get_value(
+		"Customer", {"email_id": email, "disabled": 0}, ["name", "customer_name"], as_dict=True
+	)
+	if existing:
+		link_customer_user(existing.name, user)
+		return {"name": existing.name, "customer_name": existing.customer_name or existing.name}
+
+	customer_name = (user_doc.full_name or user.split("@")[0]).strip() or email
+	customer = frappe.new_doc("Customer")
+	customer.update(
+		{
+			"customer_name": customer_name,
+			"customer_type": "Individual",
+			"customer_group": default_customer_group(),
+			"territory": default_territory(),
+			"email_id": email,
+			"mobile_no": user_doc.mobile_no or user_doc.phone,
+			"portal_users": [{"user": user}],
+		}
+	)
+	customer.flags.ignore_permissions = True
+	customer.insert()
+
+	return {"name": customer.name, "customer_name": customer.customer_name}
+
+
+def link_customer_user(customer: str, user: str) -> None:
+	"""Append ``user`` to the Customer's portal users when not linked yet."""
+	if frappe.db.exists("Portal User", {"parenttype": "Customer", "parent": customer, "user": user}):
+		return
+
+	customer_doc = frappe.get_doc("Customer", customer)
+	customer_doc.append("portal_users", {"user": user})
+	customer_doc.flags.ignore_permissions = True
+	customer_doc.save()
+
+
+def default_customer_group() -> str:
+	"""Return a leaf Customer Group for portal-provisioned Customers.
+
+	Raises:
+		frappe.ValidationError: When no leaf Customer Group exists.
+	"""
+	group = frappe.db.get_default("customer_group")
+	if group and not cint(frappe.db.get_value("Customer Group", group, "is_group")):
+		return group
+
+	group = frappe.db.get_value("Customer Group", {"is_group": 0}, "name", order_by="lft asc")
+	if not group:
+		frappe.throw(frappe._("Create a Customer Group before accepting portal sign-ups."))
+
+	return group
+
+
+def default_territory() -> str:
+	"""Return a leaf Territory for portal-provisioned Customers.
+
+	Raises:
+		frappe.ValidationError: When no leaf Territory exists.
+	"""
+	territory = frappe.db.get_default("territory")
+	if territory and not cint(frappe.db.get_value("Territory", territory, "is_group")):
+		return territory
+
+	territory = frappe.db.get_value("Territory", {"is_group": 0}, "name", order_by="lft asc")
+	if not territory:
+		frappe.throw(frappe._("Create a Territory before accepting portal sign-ups."))
+
+	return territory
 
 
 def resolve_portal_role(roles: Sequence[str], has_linked_customer: bool = False) -> str:
