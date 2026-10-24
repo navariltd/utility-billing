@@ -6,7 +6,30 @@
  */
 
 /** Extract a readable error message from a Frappe SDK error object. */
-export function parseFrappeError(err: any): string {
+const HTML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&#x27;": "'",
+  "&nbsp;": " ",
+};
+
+/**
+ * Remove HTML markup from a server message.
+ *
+ * Frappe highlights values with `<strong>`/`<b>` in `frappe.throw` messages, so
+ * the tags have to be removed before the text is rendered in an alert.
+ */
+export function stripHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(amp|lt|gt|quot|#39|#x27|nbsp);/g, (entity) => HTML_ENTITIES[entity] ?? entity)
+    .trim();
+}
+
+function extractErrorMessage(err: any): string {
   if (err?._server_messages) {
     try {
       const messages = JSON.parse(err._server_messages);
@@ -25,6 +48,10 @@ export function parseFrappeError(err: any): string {
   if (err?.exception) return err.exception;
   if (err?.message) return err.message;
   return "An error occurred";
+}
+
+export function parseFrappeError(err: any): string {
+  return stripHtml(extractErrorMessage(err)) || "An error occurred";
 }
 
 /**
