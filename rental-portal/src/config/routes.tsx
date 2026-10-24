@@ -31,6 +31,8 @@ const PropertyBooking = lazy(
   () => import("@/app/properties/[property]/book/page"),
 );
 const MyProperties = lazy(() => import("@/app/my-properties/page"));
+const Bookings = lazy(() => import("@/app/bookings/page"));
+const Invoices = lazy(() => import("@/app/invoices/page"));
 
 // Generic doctype pages (list and detail) driven by the doctype slug.
 const DocTypeListPage = lazy(() => import("@/app/doctype/DocTypeListPage"));
@@ -126,6 +128,26 @@ export const routes: RouteConfig[] = [
     ),
     searchable: true,
     searchTitle: "My Properties",
+  },
+  {
+    path: "/bookings",
+    element: (
+      <ProtectedRoute>
+        <Bookings />
+      </ProtectedRoute>
+    ),
+    searchable: true,
+    searchTitle: "My Bookings",
+  },
+  {
+    path: "/invoices",
+    element: (
+      <ProtectedRoute>
+        <Invoices />
+      </ProtectedRoute>
+    ),
+    searchable: true,
+    searchTitle: "Invoices & Orders",
   },
   {
     path: "/settings/notifications",
