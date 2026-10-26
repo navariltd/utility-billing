@@ -18,7 +18,7 @@ export default function PropertyBooking() {
       title={`Book ${propertyName || "property"}`}
       description="Reserve this unit"
     >
-      <div className="mx-auto w-full max-w-3xl px-4 lg:px-6">
+      <div className="mx-auto w-full max-w-6xl px-4 lg:px-6">
         {propertyName ? <BookingWizard property={propertyName} /> : null}
       </div>
     </BaseLayout>

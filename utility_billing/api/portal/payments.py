@@ -1,14 +1,14 @@
 """Portal payments for tenancy invoices and order advances.
 
-The portal never creates accounting entries itself. It creates a standard
-ERPNext ``Payment Request`` for the chosen gateway:
+The portal never creates accounting entries or ``Payment Request`` documents
+itself. It asks the selected gateway controller for a checkout URL and redirects
+the customer there:
 
 * a Sales Invoice is paid for its outstanding amount;
 * a Sales Order is paid as an advance for its unbilled balance.
 
-The gateway then returns a checkout URL (card/wallet gateways) or sends a
-payment prompt to the customer's phone (M-Pesa). Payment Entries are created by
-the gateway callback, exactly as they are for desk payments.
+The gateway records the payment on the reference document when it confirms the
+transaction, exactly as it does for the event booking flow.
 """
 
 from collections import defaultdict
@@ -18,17 +18,12 @@ from frappe import _
 from frappe.utils import cint, flt
 
 from utility_billing.api.portal.payment_service import (
-	cancel_payment_request,
-	clean_phone,
-	create_payment_request,
 	empty_documents,
-	open_payment_request,
+	get_payment_url,
 	payable_amount,
-	payment_response,
 	reference_amount,
 	resolve_gateway_account,
 )
-from utility_billing.api.portal.permissions import ignore_permissions
 from utility_billing.api.portal.roles import get_portal_customers, require_authenticated_user
 
 SUPPORTED_DOCTYPES = ("Sales Invoice", "Sales Order")
@@ -181,23 +176,27 @@ def initiate_payment(
 	phone_number: str | None = None,
 	redirect_to: str | None = None,
 ) -> dict:
-	"""Create a Payment Request and return its checkout URL or phone status.
+	"""Return the gateway checkout URL for a submitted document.
+
+	The portal redirects the customer straight to the returned URL; no
+	``Payment Request`` is created. The gateway records the payment on the
+	reference document when it confirms the transaction.
 
 	Args:
 		reference_doctype: ``Sales Invoice`` or ``Sales Order``.
 		reference_name: Submitted document to pay.
 		gateway_account: ``Payment Gateway Account`` name; the company default
 			is used when omitted.
-		phone_number: Payer phone for phone-based gateways (M-Pesa).
+		phone_number: Optional payer phone for phone-based gateways (M-Pesa).
 		redirect_to: Portal path to return to after an external checkout.
 
 	Returns:
-		Dict with the Payment Request, checkout URL, status and amount.
+		Dict with ``payment_url``, amount, currency, gateway and channel.
 
 	Raises:
 		frappe.PermissionError: When the document belongs to another Customer.
-		frappe.ValidationError: When the document is not payable, the gateway is
-			not configured, or a phone number is missing for a phone gateway.
+		frappe.ValidationError: When the document is not payable or no gateway
+			is configured for its company.
 	"""
 	require_authenticated_user()
 	customers = {customer["name"] for customer in get_portal_customers()}
@@ -219,43 +218,20 @@ def initiate_payment(
 	if amount <= 0:
 		frappe.throw(_("There is nothing left to pay on this document."))
 
-	channel = account.payment_channel or "Email"
-	phone = clean_phone(phone_number)
-	if channel == "Phone" and not phone:
-		frappe.throw(_("Enter the phone number that will receive the payment prompt."))
+	payment_url = get_payment_url(
+		ref_doc,
+		account,
+		amount,
+		redirect_to=redirect_to,
+		phone_number=phone_number,
+	)
 
-	with ignore_permissions():
-		existing = open_payment_request(reference_doctype, reference_name)
-		if existing:
-			reusable = (
-				existing.payment_gateway_account == account.name
-				and existing.payment_channel != "Phone"
-				and existing.payment_url
-				and flt(existing.grand_total) == amount
-			)
-			if reusable:
-				return payment_response(existing, redirect_to)
-			cancel_payment_request(existing.name)
-
-		payment_request = create_payment_request(ref_doc, account, amount, channel, phone)
-
-	return payment_response(payment_request, redirect_to)
-
-
-@frappe.whitelist()
-def get_payment_request_status(name: str) -> dict:
-	"""Return the status of one of the caller's Payment Requests.
-
-	Args:
-		name: ``Payment Request`` name.
-
-	Returns:
-		Dict with status, amount and checkout URL.
-	"""
-	require_authenticated_user()
-	customers = {customer["name"] for customer in get_portal_customers()}
-	payment_request = frappe.get_doc("Payment Request", name)
-	if payment_request.party not in customers:
-		raise frappe.PermissionError
-
-	return payment_response(payment_request, None)
+	return {
+		"payment_url": payment_url,
+		"reference_doctype": ref_doc.doctype,
+		"reference_name": ref_doc.name,
+		"amount": amount,
+		"currency": ref_doc.currency,
+		"channel": account.payment_channel or "Email",
+		"payment_gateway": account.payment_gateway,
+	}

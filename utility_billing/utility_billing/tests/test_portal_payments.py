@@ -1,12 +1,64 @@
-"""Unit tests for the portal payment amount and redirect helpers."""
+"""Unit tests for the portal payment amount, redirect and gateway helpers."""
 
+import frappe
 from frappe.tests import UnitTestCase
 
 from utility_billing.api.portal.payment_service import (
+	build_payment_details,
 	clean_phone,
 	payable_amount,
 	safe_redirect,
 )
+
+
+class TestPaymentDetails(UnitTestCase):
+	"""Gateway checkout arguments are built from the reference document."""
+
+	def setUp(self):
+		self.reference_doc = frappe._dict(doctype="Sales Invoice", name="SINV-0001", currency="KES")
+		self.account = frappe._dict(payment_gateway="Mpesa-Test")
+
+	def test_reference_document_and_gateway_are_passed_to_the_controller(self):
+		details = build_payment_details(
+			self.reference_doc,
+			self.account,
+			2500,
+			"Jane Doe",
+			"jane@example.com",
+			redirect_to="/bookings",
+		)
+
+		self.assertEqual(details["reference_doctype"], "Sales Invoice")
+		self.assertEqual(details["reference_docname"], "SINV-0001")
+		self.assertEqual(details["amount"], 2500)
+		self.assertEqual(details["currency"], "KES")
+		self.assertEqual(details["payment_gateway"], "Mpesa-Test")
+		self.assertEqual(details["redirect_to"], "/bookings")
+		self.assertNotIn("phone_number", details)
+
+	def test_external_redirect_is_dropped(self):
+		details = build_payment_details(
+			self.reference_doc,
+			self.account,
+			2500,
+			"Jane Doe",
+			"jane@example.com",
+			redirect_to="https://evil.example",
+		)
+
+		self.assertEqual(details["redirect_to"], "")
+
+	def test_phone_number_is_normalised(self):
+		details = build_payment_details(
+			self.reference_doc,
+			self.account,
+			2500,
+			"Jane Doe",
+			"jane@example.com",
+			phone_number="+254 712 345 678",
+		)
+
+		self.assertEqual(details["phone_number"], "0712345678")
 
 
 class TestPayableAmount(UnitTestCase):

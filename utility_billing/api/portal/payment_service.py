@@ -1,17 +1,20 @@
-"""Payment Request creation and amount helpers for the portal.
+"""Gateway checkout helpers for the portal.
+
+The portal does not create ``Payment Request`` documents. It asks the gateway
+controller for a checkout URL and redirects the customer there, mirroring the
+event booking flow: the gateway owns the transaction and records the payment on
+the reference document when it confirms it.
 
 Kept separate from :mod:`utility_billing.api.portal.payments` so the public
 endpoints stay small and the gateway/amount logic can be unit tested on its own.
 """
 
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlparse
 
 import frappe
 from erpnext.accounts.doctype.payment_request.payment_request import get_amount
 from frappe import _
-from frappe.utils import flt, get_url, nowdate
-
-OPEN_REQUEST_STATUSES = ("Requested", "Initiated", "Partially Paid")
+from frappe.utils import flt, get_url
 
 
 def empty_documents() -> dict:
@@ -85,115 +88,105 @@ def resolve_gateway_account(company: str, gateway_account: str | None = None):
 			)
 
 	if not account:
-		frappe.throw(
-			_("No payment gateway is configured for {0}.").format(frappe.bold(company))
-		)
+		frappe.throw(_("No payment gateway is configured for {0}.").format(frappe.bold(company)))
 
 	return account
 
 
-def open_payment_request(reference_doctype: str, reference_name: str) -> dict | None:
-	"""Return the newest open Payment Request of a reference document."""
-	rows = frappe.db.get_all(
-		"Payment Request",
-		filters={
-			"reference_doctype": reference_doctype,
-			"reference_name": reference_name,
-			"docstatus": 1,
-			"status": ("in", OPEN_REQUEST_STATUSES),
-		},
-		fields=[
-			"name",
-			"status",
-			"payment_url",
-			"payment_channel",
-			"payment_gateway_account",
-			"grand_total",
-			"outstanding_amount",
-			"currency",
-			"reference_doctype",
-			"reference_name",
-		],
-		order_by="creation desc",
-		limit=1,
-	)
-	return rows[0] if rows else None
+def build_payment_details(
+	reference_doc,
+	account,
+	amount: float,
+	payer_name: str | None,
+	payer_email: str | None,
+	redirect_to: str | None = None,
+	phone_number: str | None = None,
+) -> dict:
+	"""Build the keyword arguments a gateway controller's URL builder expects.
 
+	Args:
+		reference_doc: Submitted document the payment settles.
+		account: ``Payment Gateway Account`` row with ``payment_gateway``.
+		amount: Amount to charge in the reference document's currency.
+		payer_name: Customer name shown on the checkout page.
+		payer_email: Customer email the gateway receipt goes to.
+		redirect_to: Same-site portal path to return to after checkout.
+		phone_number: Optional payer phone for phone-based gateways.
 
-def cancel_payment_request(name: str) -> None:
-	"""Cancel an open Payment Request so a new one can replace it."""
-	payment_request = frappe.get_doc("Payment Request", name)
-	if payment_request.docstatus != 1 or payment_request.status in ("Paid", "Cancelled"):
-		return
-
-	payment_request.flags.ignore_permissions = True
-	payment_request.cancel()
-
-
-def create_payment_request(
-	reference_doc, account, amount: float, channel: str, phone: str | None
-):
-	"""Create and submit the Payment Request for a gateway."""
-	email_to = (
-		phone
-		if channel == "Phone"
-		else frappe.db.get_value("User", frappe.session.user, "email") or frappe.session.user
-	)
-
-	payment_request = frappe.new_doc("Payment Request")
-	payment_request.update(
-		{
-			"payment_request_type": "Inward",
-			"transaction_date": nowdate(),
-			"company": reference_doc.company,
-			"party_type": "Customer",
-			"party": reference_doc.customer,
-			"party_name": reference_doc.get("customer_name"),
-			"reference_doctype": reference_doc.doctype,
-			"reference_name": reference_doc.name,
-			"grand_total": amount,
-			"currency": reference_doc.currency,
-			"party_account_currency": reference_doc.get("party_account_currency")
-			or reference_doc.currency,
-			"payment_gateway_account": account.name,
-			"payment_gateway": account.payment_gateway,
-			"payment_account": account.payment_account,
-			"payment_channel": channel,
-			"email_to": email_to,
-			"phone_number": phone,
-			"subject": _("Payment for {0} {1}").format(
-				reference_doc.doctype, reference_doc.name
-			),
-			"message": account.get("message")
-			or _("Payment for {0} {1}").format(reference_doc.doctype, reference_doc.name),
-			"mute_email": 1,
-		}
-	)
-	payment_request.flags.ignore_permissions = True
-	payment_request.insert()
-	payment_request.submit()
-	payment_request.reload()
-
-	return payment_request
-
-
-def payment_response(payment_request, redirect_to: str | None) -> dict:
-	"""Build the portal response from a Payment Request document or row."""
-	payment_url = absolute_url(payment_request.get("payment_url"))
-	if payment_url:
-		payment_url = append_redirect(payment_url, redirect_to)
-
-	return {
-		"payment_request": payment_request.get("name"),
-		"status": payment_request.get("status"),
-		"payment_url": payment_url,
-		"channel": payment_request.get("payment_channel"),
-		"amount": flt(payment_request.get("grand_total")),
-		"outstanding_amount": flt(payment_request.get("outstanding_amount")),
-		"currency": payment_request.get("currency"),
-		"reference_doctype": payment_request.get("reference_doctype"),
-		"reference_name": payment_request.get("reference_name"),
+	Returns:
+		Dict of checkout arguments, including a sanitised redirect target.
+	"""
+	reference_label = f"{reference_doc.doctype} {reference_doc.name}"
+	details = {
+		"amount": amount,
+		"title": _("Payment for {0}").format(reference_label),
+		"description": _("{0}'s payment for {1}").format(payer_name or payer_email, reference_label),
+		"reference_doctype": reference_doc.doctype,
+		"reference_docname": reference_doc.name,
+		"payer_email": payer_email or frappe.session.user,
+		"payer_name": payer_name or payer_email or frappe.session.user,
+		"currency": reference_doc.currency,
+		"payment_gateway": account.payment_gateway,
+		"redirect_to": safe_redirect(redirect_to) or "",
 	}
+
+	phone = clean_phone(phone_number)
+	if phone:
+		details["phone_number"] = phone
+
+	return details
+
+
+def get_payment_url(
+	reference_doc,
+	account,
+	amount: float,
+	redirect_to: str | None = None,
+	phone_number: str | None = None,
+) -> str:
+	"""Return the gateway checkout URL for a reference document.
+
+	No ``Payment Request`` is created: the gateway receives the reference
+	document itself and records the payment when it confirms the transaction.
+
+	Raises:
+		frappe.ValidationError: When the gateway rejects the currency, amount or
+			checkout request.
+	"""
+	from payments.utils import get_payment_gateway_controller
+
+	controller = get_payment_gateway_controller(account.payment_gateway)
+	currency = reference_doc.currency
+
+	if hasattr(controller, "validate_transaction_currency"):
+		controller.validate_transaction_currency(currency)
+	if hasattr(controller, "validate_minimum_transaction_amount"):
+		controller.validate_minimum_transaction_amount(currency, amount)
+
+	payer = (
+		frappe.db.get_value("User", frappe.session.user, ["full_name", "email"], as_dict=True)
+		or frappe._dict()
+	)
+
+	payment_details = build_payment_details(
+		reference_doc,
+		account,
+		amount,
+		payer.get("full_name"),
+		payer.get("email"),
+		redirect_to=redirect_to,
+		phone_number=phone_number,
+	)
+
+	if account.payment_gateway in ("Razorpay", "Paymob"):
+		order = controller.create_order(**payment_details)
+		payment_details["order_id"] = order.get("id")
+
+	url = absolute_url(controller.get_payment_url(**payment_details))
+	if not url:
+		frappe.throw(_("The payment gateway did not return a checkout URL."))
+
+	return url
 
 
 def clean_phone(phone_number: str | None) -> str | None:
@@ -218,16 +211,6 @@ def absolute_url(url: str | None) -> str | None:
 		return url
 
 	return get_url("/" + url.lstrip("/"))
-
-
-def append_redirect(url: str, redirect_to: str | None) -> str:
-	"""Append a safe portal redirect target to a checkout URL."""
-	target = safe_redirect(redirect_to)
-	if not target:
-		return url
-
-	separator = "&" if "?" in url else "?"
-	return f"{url}{separator}{urlencode({'redirect_to': target})}"
 
 
 def safe_redirect(redirect_to: str | None) -> str | None:

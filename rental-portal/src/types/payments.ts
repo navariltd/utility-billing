@@ -56,14 +56,13 @@ export interface CustomerDocuments {
   };
 }
 
-export interface PaymentResult {
-  payment_request: string;
-  status: string;
+/** Checkout link returned by `utility_billing.api.portal.payments.initiate_payment`. */
+export interface PaymentLinkResult {
   payment_url: string | null;
   channel: string;
   amount: number;
-  outstanding_amount: number;
   currency: string | null;
+  payment_gateway: string;
   reference_doctype: string;
   reference_name: string;
 }
