@@ -4,6 +4,7 @@
 
 import { PaymentDialog } from "@/components/payments/payment-dialog";
 import { PropertyStatusBadge } from "@/components/properties";
+import { SupportDialog } from "@/components/support/support-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,7 @@ import {
   CreditCard,
   FileSignature,
   History,
+  LifeBuoy,
   Pencil,
   PlusCircle,
   XCircle,
@@ -53,6 +55,7 @@ export function BookingCard({ booking, onChanged }: BookingCardProps) {
   const [extendOpen, setExtendOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentTarget | null>(null);
 
   return (
@@ -248,6 +251,15 @@ export function BookingCard({ booking, onChanged }: BookingCardProps) {
             size="sm"
             variant="ghost"
             className="cursor-pointer"
+            onClick={() => setSupportOpen(true)}
+          >
+            <LifeBuoy className="mr-2 h-4 w-4" />
+            Support
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="cursor-pointer"
             onClick={() => setHistoryOpen(true)}
           >
             <History className="mr-2 h-4 w-4" />
@@ -279,6 +291,13 @@ export function BookingCard({ booking, onChanged }: BookingCardProps) {
         reference={booking.booking_reference}
         open={historyOpen}
         onOpenChange={setHistoryOpen}
+      />
+      <SupportDialog
+        booking={booking.name}
+        reference={booking.booking_reference}
+        propertyName={property?.property_name}
+        open={supportOpen}
+        onOpenChange={setSupportOpen}
       />
 
       {payment ? (
