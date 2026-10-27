@@ -1,0 +1,96 @@
+[
+  {
+    "customer": "Wanjiku Kamau",
+    "property": "Pinnacle Tower - Unit 1B",
+    "subject": "Kitchen tap is leaking",
+    "description": "The kitchen tap has been dripping since yesterday and is wasting water. Please arrange a plumber.",
+    "status": "Open",
+    "priority": "High",
+    "issue_type": "Maintenance Request",
+    "days_ago": 1
+  },
+  {
+    "customer": "Ochieng Otieno",
+    "property": "Pinnacle Tower - Unit 1A",
+    "subject": "Air conditioner is not cooling",
+    "description": "The sitting room air conditioner runs but does not cool. It was serviced last month.",
+    "status": "Replied",
+    "priority": "Medium",
+    "issue_type": "Maintenance Request",
+    "days_ago": 3,
+    "reply": "A technician has been booked for tomorrow between 9am and 11am."
+  },
+  {
+    "customer": "Daniel Mwangi",
+    "property": "Pinnacle Tower - Unit 1C",
+    "subject": "Low water pressure in the bathroom",
+    "description": "Water pressure in the bathroom has dropped sharply over the last two days.",
+    "status": "Open",
+    "priority": "Medium",
+    "issue_type": "Maintenance Request",
+    "days_ago": 2
+  },
+  {
+    "customer": "Amina Hassan",
+    "property": "Pinnacle Tower - Penthouse",
+    "subject": "Replacement access card",
+    "description": "My second access card stopped working at the main lift reader.",
+    "status": "Resolved",
+    "priority": "Low",
+    "issue_type": "Tenant Support",
+    "days_ago": 9,
+    "reply": "The replacement card was activated and collected from reception."
+  },
+  {
+    "customer": "Faith Njeri",
+    "property": "Kileleshwa Heights - Unit 2",
+    "subject": "Broken window latch",
+    "description": "The bedroom window latch is broken and the window does not close securely.",
+    "status": "Open",
+    "priority": "High",
+    "issue_type": "Maintenance Request",
+    "days_ago": 4
+  },
+  {
+    "customer": "Brian Kiptoo",
+    "property": "Greenpark - House A1",
+    "subject": "Garden irrigation timer",
+    "description": "The irrigation timer no longer starts the garden sprinklers in the morning.",
+    "status": "On Hold",
+    "priority": "Low",
+    "issue_type": "Maintenance Request",
+    "days_ago": 6,
+    "reply": "We are waiting for the replacement timer from the supplier."
+  },
+  {
+    "customer": "Nairobi Enterprises Ltd",
+    "property": "Westlands Plaza - Suite 101",
+    "subject": "Internet outage in Suite 101",
+    "description": "The fibre connection has been down since this morning and staff cannot access the internet.",
+    "status": "Replied",
+    "priority": "High",
+    "issue_type": "Tenant Support",
+    "days_ago": 1,
+    "reply": "The ISP has been notified and an engineer is on the way."
+  },
+  {
+    "customer": "Mombasa Trading Co.",
+    "property": "Mombasa Villa A",
+    "subject": "Pool pump is noisy",
+    "description": "The pool pump has become very noisy at night and disturbs the household.",
+    "status": "Open",
+    "priority": "Medium",
+    "issue_type": "Maintenance Request",
+    "days_ago": 2
+  },
+  {
+    "customer": "Grace Achieng",
+    "property": "Greenpark - House B1",
+    "subject": "Booking: confirm parking allocation",
+    "description": "Could you confirm whether the reservation includes one covered parking bay?",
+    "status": "Open",
+    "priority": "Medium",
+    "issue_type": "Tenant Support",
+    "days_ago": 1
+  }
+]

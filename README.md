@@ -61,6 +61,24 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 
 ## [![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Property-Management.md)
 
+## 📱 Tenant Portal
+
+A React + TypeScript tenant portal is served at `/rental-portal` from the
+`rental-portal` folder of this app.
+
+- **Browse properties** as a guest or tenant: gallery, amenities, unit specs and availability
+- **Book a unit** and track reservations in **My Bookings**
+- **My Properties** dashboard with active, reserved and historical tenancies
+- **Invoices & Orders** with online payment through a configured payment gateway
+- **Support tickets** raised from a booking or an active property, with a live conversation timeline
+- **Notifications**, profile/password handling via standard Frappe pages and a polished theme customiser
+- **Generic doctype browsing** (`/app/:doctype`) for users whose permissions allow it
+
+The portal never trusts client-side amounts or ownership; every endpoint scopes
+records to the session user's linked Customers.
+
+[![Explore Portal Docs](https://img.shields.io/badge/%F0%9F%91%89%20Portal%20Docs-0ea5e9?style=for-the-badge&logo=readthedocs&logoColor=fff)](./utility_billing/docs/Customer-Portal.md)
+
 ## 🧾 Key Doctypes & Customizations
 
 Explore the doctypes that power the system. Below are categorized lists of **new doctypes** and **customizations**.
@@ -68,8 +86,8 @@ Explore the doctypes that power the system. Below are categorized lists of **new
 ### ✨ Customized Doctypes
 
 - 📑 [Contract](./utility_billing/docs/Contract.md)
-- 🧾 [Sales Order and Sales Invoice](./utility_billing/docs/Sales-Order-and-Invoice)
-- 📦 [Item](./utility_billing/docs/Utility-Billing.md#-3-important-notes.md)
+- 🧾 [Sales Order and Sales Invoice](./utility_billing/docs/Sales-Order-and-Invoice.md)
+- 📦 [Item](./utility_billing/docs/Utility-Billing.md#-3-important-notes)
 - 💲 [Item Price](./utility_billing/docs/Utility-Billing.md#-13-price-lists--tariffs)
 
 ### 🆕 New Doctypes
@@ -96,9 +114,17 @@ Get actionable insights from your utility and property data with our built-in re
 
 ## ⚙️ Demo Data Management
 
-For testing and demonstration purposes, the Utility Billing & Property Management app provides a convenient way to generate and clear demo data. This allows you to quickly populate your system with sample records to explore functionalities without affecting your live data.
+Generate a complete demo company with **12 portal users, 6 buildings, 26 units
+with image galleries, 12 service requests, contracts, tiered meter prices,
+meter readings, Sales Orders/Invoices and support tickets** in one action.
 
-[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Demo-Data.md)
+- Free Unsplash cover images and galleries for every property
+- Item Price schedules or Auto Repeat, following the site's configured billing approach
+- Sample portal logins: `wanjiku.kamau@demo.utilitybilling.test` (and 11 more)
+- Shared demo password: `Demo@12345`
+- Clear Demo Data removes the generated company, users, transactions and support tickets
+
+[![Explore Demo Data](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20Demo%20Data-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Demo-Data.md)
 
 ## 🛠️ Installation (Self-Hosted)
 

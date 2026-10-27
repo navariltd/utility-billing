@@ -1,84 +1,208 @@
 [
   {
-    "request_type": "New Connection",
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
     "party_name": "Wanjiku Kamau",
     "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
     "contract_length_months": 12,
-    "contract_template": "Standard Residential Lease"
-  },
-  {
-    "request_type": "Disconnection",
-    "party_name": "Ochieng Otieno",
-    "customer_group": "Standard Residential",
-    "contract_length_months": 6,
-    "contract_template": "Standard Residential Lease"
-  },
-  {
-    "request_type": "Property Lease",
-    "party_name": "Nairobi Enterprises Ltd",
-    "customer_group": "Standard Commercial",
-    "contract_length_months": 24,
-    "contract_template": "Commercial Property Agreement",
+    "start_offset_months": -8,
     "is_signed": true,
-    "requested_properties": [
-      {
-        "utility_property": "Greenpark - House A1",
-        "adjustment_rule": "Standard Rent Adjustment"
-      },
-      {
-        "utility_property": "Greenpark - House A2",
-        "adjustment_rule": "Utility Inflation Adjustment"
-      }
-    ]
-  },
-  {
-    "request_type": "Property Lease",
-    "party_name": "Mombasa Trading Co.",
-    "customer_group": "Standard Commercial",
-    "contract_length_months": 36,
-    "contract_template": "Commercial Property Agreement",
-    "is_signed": true,
-    "requested_properties": [
-      {
-        "utility_property": "Greenpark - House B1",
-        "adjustment_rule": "Commercial Late Payment"
-      },
-      {
-        "utility_property": "Greenpark - House B2",
-        "adjustment_rule": "Standard Rent Adjustment"
-      },
-      {
-        "utility_property": "Westlands Plaza - Suite 101",
-        "adjustment_rule": "Commercial Late Payment"
-      },
-      {
-        "utility_property": "Westlands Plaza - Suite 201",
-        "adjustment_rule": "Utility Inflation Adjustment"
-      }
-    ]
-  },
-  {
-    "request_type": "Property Lease",
-    "party_name": "Daniel Mwangi",
-    "customer_group": "Standard Residential",
-    "contract_length_months": 12,
-    "contract_template": "Standard Residential Lease",
-    "requested_properties": [
-      {
-        "utility_property": "Pinnacle Tower - Unit 1A",
-        "adjustment_rule": "Utility Inflation Adjustment"
-      }
-    ]
-  },
-  {
-    "request_type": "Property Lease",
-    "party_name": "Ochieng Otieno",
-    "customer_group": "Standard Residential",
-    "contract_length_months": 12,
     "contract_template": "Standard Residential Lease",
     "requested_properties": [
       {
         "utility_property": "Pinnacle Tower - Unit 1B",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Ochieng Otieno",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -6,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Pinnacle Tower - Unit 1A",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Daniel Mwangi",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -3,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Pinnacle Tower - Unit 1C",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Amina Hassan",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -2,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Pinnacle Tower - Penthouse",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Faith Njeri",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -5,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Kileleshwa Heights - Unit 2",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Peter Omondi",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -1,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Kileleshwa Heights - Unit 3",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Brian Kiptoo",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 24,
+    "start_offset_months": -10,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Greenpark - House A1",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Grace Achieng",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": 0,
+    "is_signed": false,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Greenpark - House B1",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Nairobi Enterprises Ltd",
+    "customer_group": "Standard Commercial",
+    "price_list": "Standard Commercial",
+    "contract_length_months": 36,
+    "start_offset_months": -12,
+    "is_signed": true,
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Westlands Plaza - Suite 101",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      },
+      {
+        "utility_property": "Westlands Plaza - Suite 201",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Mombasa Trading Co.",
+    "customer_group": "Standard Commercial",
+    "price_list": "Standard Commercial",
+    "contract_length_months": 24,
+    "start_offset_months": -7,
+    "is_signed": true,
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Mombasa Villa A",
+        "adjustment_rule": "Commercial Late Payment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Savanna Retail Group",
+    "customer_group": "Standard Commercial",
+    "price_list": "Standard Commercial",
+    "contract_length_months": 36,
+    "start_offset_months": -4,
+    "is_signed": true,
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Westlands Plaza - Retail Shop 1",
+        "adjustment_rule": "Commercial Late Payment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Kilimani Health Partners",
+    "customer_group": "Standard Commercial",
+    "price_list": "Standard Commercial",
+    "contract_length_months": 12,
+    "start_offset_months": 0,
+    "is_signed": false,
+    "contract_template": "Commercial Property Agreement",
+    "requested_properties": [
+      {
+        "utility_property": "Ruiru Block B - Unit 2",
         "adjustment_rule": "Utility Inflation Adjustment"
       }
     ]

@@ -5,8 +5,10 @@
     "item_name": "Water",
     "item_group": "Utilities",
     "stock_uom": "Unit",
+    "standard_rate": 50,
     "is_stock_item": 0,
-
+    "is_sales_item": 1,
+    "is_utility_item": 1,
     "disabled": 0
   },
   {
@@ -15,52 +17,10 @@
     "item_name": "Electricity",
     "item_group": "Utilities",
     "stock_uom": "Unit",
+    "standard_rate": 65,
     "is_stock_item": 0,
-    "disabled": 0
-  },
-  {
-    "doctype": "Item",
-    "item_code": "Rent",
-    "item_name": "Rent",
-    "item_group": "Utilities",
-    "stock_uom": "Unit",
-    "is_stock_item": 0,
-    "disabled": 0
-  },
-  {
-    "doctype": "Item",
-    "item_code": "Deposit",
-    "item_name": "Deposit",
-    "item_group": "Utilities",
-    "stock_uom": "Unit",
-    "is_stock_item": 0,
-    "disabled": 0
-  },
-  {
-    "doctype": "Item",
-    "item_code": "Meter",
-    "item_name": "Meter",
-    "item_group": "Products",
-    "stock_uom": "Nos",
-    "is_stock_item": 0,
-    "disabled": 0
-  },
-  {
-    "doctype": "Item",
-    "item_code": "Service Charge",
-    "item_name": "Service Charge",
-    "item_group": "Utilities",
-    "stock_uom": "Unit",
-    "is_stock_item": 0,
-    "disabled": 0
-  },
-  {
-    "doctype": "Item",
-    "item_code": "Maintenance Charge",
-    "item_name": "Maintenance Charge",
-    "item_group": "Utilities",
-    "stock_uom": "Unit",
-    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 1,
     "disabled": 0
   },
   {
@@ -69,7 +29,70 @@
     "item_name": "Sewer",
     "item_group": "Utilities",
     "stock_uom": "Unit",
+    "standard_rate": 30,
     "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 1,
+    "disabled": 0
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Rent",
+    "item_name": "Rent",
+    "item_group": "Utilities",
+    "stock_uom": "Unit",
+    "standard_rate": 7000,
+    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 0,
+    "disabled": 0
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Deposit",
+    "item_name": "Deposit",
+    "item_group": "Utilities",
+    "stock_uom": "Unit",
+    "standard_rate": 10000,
+    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 0,
+    "disabled": 0
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Service Charge",
+    "item_name": "Service Charge",
+    "item_group": "Utilities",
+    "stock_uom": "Unit",
+    "standard_rate": 2500,
+    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 0,
+    "disabled": 0
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Maintenance Charge",
+    "item_name": "Maintenance Charge",
+    "item_group": "Utilities",
+    "stock_uom": "Unit",
+    "standard_rate": 1500,
+    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 0,
+    "disabled": 0
+  },
+  {
+    "doctype": "Item",
+    "item_code": "Meter",
+    "item_name": "Meter",
+    "item_group": "Products",
+    "stock_uom": "Nos",
+    "standard_rate": 2000,
+    "is_stock_item": 0,
+    "is_sales_item": 1,
+    "is_utility_item": 0,
     "disabled": 0
   }
 ]

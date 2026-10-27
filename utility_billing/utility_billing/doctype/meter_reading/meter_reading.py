@@ -62,9 +62,11 @@ def create_sales_order(meter_reading):
 		{
 			"doctype": "Sales Order",
 			"customer": meter_reading.customer,
+			"company": meter_reading.company,
 			"meter_readings": [],
 			"items": [],
 			"order_type": "Sales",
+			"currency": meter_reading.currency,
 			"selling_price_list": meter_reading.price_list,
 		}
 	)

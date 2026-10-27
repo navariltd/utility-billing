@@ -3,30 +3,108 @@
     "doctype": "Customer",
     "customer_name": "Wanjiku Kamau",
     "customer_type": "Individual",
-    "customer_group": "Standard Residential"
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "wanjiku.kamau@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1001"
   },
   {
     "doctype": "Customer",
     "customer_name": "Ochieng Otieno",
     "customer_type": "Individual",
-    "customer_group": "Standard Residential"
-  },
-  {
-    "doctype": "Customer",
-    "customer_name": "Nairobi Enterprises Ltd",
-    "customer_type": "Company",
-    "customer_group": "Standard Commercial"
-  },
-  {
-    "doctype": "Customer",
-    "customer_name": "Mombasa Trading Co.",
-    "customer_type": "Company",
-    "customer_group": "Standard Commercial"
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "ochieng.otieno@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1002"
   },
   {
     "doctype": "Customer",
     "customer_name": "Daniel Mwangi",
     "customer_type": "Individual",
-    "customer_group": "Standard Residential"
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "daniel.mwangi@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1003"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Amina Hassan",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "amina.hassan@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1004"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Faith Njeri",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "faith.njeri@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1005"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Peter Omondi",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "peter.omondi@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1006"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Brian Kiptoo",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "brian.kiptoo@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1007"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Grace Achieng",
+    "customer_type": "Individual",
+    "customer_group": "Standard Residential",
+    "default_price_list": "Standard Residential",
+    "email_id": "grace.achieng@demo.utilitybilling.test",
+    "nrc_or_passport_no": "NRB-1008"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Nairobi Enterprises Ltd",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial",
+    "default_price_list": "Standard Commercial",
+    "email_id": "finance@nairobi-enterprises.demo.utilitybilling.test",
+    "nrc_or_passport_no": "BRN-2001"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Mombasa Trading Co.",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial",
+    "default_price_list": "Standard Commercial",
+    "email_id": "accounts@mombasa-trading.demo.utilitybilling.test",
+    "nrc_or_passport_no": "BRN-2002"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Savanna Retail Group",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial",
+    "default_price_list": "Standard Commercial",
+    "email_id": "leases@savanna-retail.demo.utilitybilling.test",
+    "nrc_or_passport_no": "BRN-2003"
+  },
+  {
+    "doctype": "Customer",
+    "customer_name": "Kilimani Health Partners",
+    "customer_type": "Company",
+    "customer_group": "Standard Commercial",
+    "default_price_list": "Standard Commercial",
+    "email_id": "admin@kilimani-health.demo.utilitybilling.test",
+    "nrc_or_passport_no": "BRN-2004"
   }
 ]

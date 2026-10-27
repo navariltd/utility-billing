@@ -13,156 +13,172 @@ FALLBACK_UOM = "Nos"
 
 
 def get_settings() -> frappe._dict:
-    """Return the Utility Billing Settings cached as a dict."""
-    return frappe.get_cached_doc("Utility Billing Settings")
+	"""Return the Utility Billing Settings cached as a dict."""
+	return frappe.get_cached_doc("Utility Billing Settings")
 
 
 def ensure_service_item(property_name: str, save: bool = True) -> str | None:
-    """Return the service item of a property, creating it when missing.
+	"""Return the service item of a property, creating it when missing.
 
-    Args:
-        property_name: ``Utility Property`` name.
-        save: Whether the property should be saved when the item is resolved.
+	Args:
+	    property_name: ``Utility Property`` name.
+	    save: Whether the property should be saved when the item is resolved.
 
-    Returns:
-        The service item code, or ``None`` when auto creation is disabled and
-        the property has no service item yet.
-    """
-    property_doc = frappe.get_doc("Utility Property", property_name)
+	Returns:
+	    The service item code, or ``None`` when auto creation is disabled and
+	    the property has no service item yet.
+	"""
+	property_doc = frappe.get_doc("Utility Property", property_name)
 
-    if property_doc.service_item and frappe.db.exists("Item", property_doc.service_item):
-        return property_doc.service_item
+	if property_doc.service_item and frappe.db.exists("Item", property_doc.service_item):
+		return property_doc.service_item
 
-    item_code = create_service_item_for_property(property_doc)
-    if not item_code:
-        return None
+	item_code = create_service_item_for_property(property_doc)
+	if not item_code:
+		return None
 
-    if save:
-        property_doc.db_set("service_item", item_code, update_modified=False)
-    else:
-        property_doc.service_item = item_code
+	if save:
+		property_doc.db_set("service_item", item_code, update_modified=False)
+	else:
+		property_doc.service_item = item_code
 
-    return item_code
+	return item_code
 
 
 def get_service_item_of_property(property_name: str) -> str | None:
-    """Return the rent billing item of a property.
+	"""Return the rent billing item of a property.
 
-    The service item is created on demand when auto creation is enabled, so a
-    property always has something to bill when the feature is configured.
+	The service item is created on demand when auto creation is enabled, so a
+	property always has something to bill when the feature is configured.
 
-    Args:
-        property_name: ``Utility Property`` name.
+	Args:
+	    property_name: ``Utility Property`` name.
 
-    Returns:
-        The service item code, or ``None`` when the property does not exist or
-        has no service item and auto creation is disabled.
-    """
-    if not frappe.db.exists("Utility Property", property_name):
-        return None
+	Returns:
+	    The service item code, or ``None`` when the property does not exist or
+	    has no service item and auto creation is disabled.
+	"""
+	if not frappe.db.exists("Utility Property", property_name):
+		return None
 
-    return ensure_service_item(property_name)
+	return ensure_service_item(property_name)
 
 
 def get_property_of_service_item(item_code: str) -> str | None:
-    """Return the property billed through an item.
+	"""Return the property billed through an item.
 
-    Service items are created for billable properties only and are named after
-    their property, so the item identifies the property it belongs to.
+	Service items are created for billable properties only and are named after
+	their property, so the item identifies the property it belongs to.
 
-    Args:
-        item_code: Item to resolve.
+	Args:
+	    item_code: Item to resolve.
 
-    Returns:
-        The ``Utility Property`` name, or ``None`` when the item is not the
-        service item of a property.
-    """
-    if not item_code:
-        return None
+	Returns:
+	    The ``Utility Property`` name, or ``None`` when the item is not the
+	    service item of a property.
+	"""
+	if not item_code:
+		return None
 
-    properties = frappe.db.get_all(
-        "Utility Property",
-        filters={"service_item": item_code},
-        pluck="name",
-        order_by="name asc",
-        limit=1,
-    )
+	properties = frappe.db.get_all(
+		"Utility Property",
+		filters={"service_item": item_code},
+		pluck="name",
+		order_by="name asc",
+		limit=1,
+	)
 
-    return properties[0] if properties else None
+	return properties[0] if properties else None
 
 
 def create_service_item_for_property(property_doc) -> str | None:
-    """Create (or link) the rental service item of a property.
+	"""Create (or link) the rental service item of a property.
 
-    The item is a non-stock sales item named after the property. When an item
-    with that name already exists it is linked instead of being created, so
-    repeated calls stay idempotent.
+	The item is a non-stock sales item named after the property. When an item
+	with that name already exists it is linked instead of being created, so
+	repeated calls stay idempotent.
 
-    Args:
-        property_doc: ``Utility Property`` document.
+	Args:
+	    property_doc: ``Utility Property`` document.
 
-    Returns:
-        The item code, or ``None`` when auto creation is disabled or the
-        property has no name to derive the item code from.
-    """
-    settings = get_settings()
-    if not settings.auto_create_service_item:
-        return None
+	Returns:
+	    The item code, or ``None`` when auto creation is disabled or the
+	    property has no name to derive the item code from.
+	"""
+	settings = get_settings()
+	if not settings.auto_create_service_item:
+		return None
 
-    if not property_doc.property_name:
-        return None
+	if not property_doc.property_name:
+		return None
 
-    item_code = property_doc.property_name
+	item_code = property_doc.property_name
 
-    if frappe.db.exists("Item", item_code):
-        return item_code
+	if frappe.db.exists("Item", item_code):
+		return item_code
 
-    item_group = (
-        settings.default_service_item_group
-        or property_doc.utility_category
-        or DEFAULT_SERVICE_ITEM_GROUP
-    )
-    if not frappe.db.exists("Item Group", item_group):
-        item_group = _resolve_fallback_item_group()
+	item_group = (
+		settings.default_service_item_group or property_doc.utility_category or DEFAULT_SERVICE_ITEM_GROUP
+	)
+	if not _is_usable_item_group(item_group):
+		item_group = _resolve_fallback_item_group()
 
-    item_doc = frappe.get_doc(
-        {
-            "doctype": "Item",
-            "item_code": item_code,
-            "item_name": item_code,
-            "item_group": item_group,
-            "is_stock_item": 0,
-            "is_fixed_asset": 0,
-            "is_sales_item": 1,
-            "is_purchase_item": 0,
-            "is_utility_item": 1,
-            "stock_uom": property_doc.get("uom") or FALLBACK_UOM,
-            "description": _("Rental billing item for property {0}").format(
-                property_doc.name
-            ),
-            "disabled": 0,
-        }
-    )
-    item_doc.flags.ignore_mandatory = True
-    item_doc.insert(ignore_permissions=True, ignore_mandatory=True)
+	item_doc = frappe.get_doc(
+		{
+			"doctype": "Item",
+			"item_code": item_code,
+			"item_name": item_code,
+			"item_group": item_group,
+			"is_stock_item": 0,
+			"is_fixed_asset": 0,
+			"is_sales_item": 1,
+			"is_purchase_item": 0,
+			"is_utility_item": 1,
+			"stock_uom": property_doc.get("uom") or FALLBACK_UOM,
+			"description": _("Rental billing item for property {0}").format(property_doc.name),
+			"disabled": 0,
+		}
+	)
+	item_doc.flags.ignore_mandatory = True
+	item_doc.insert(ignore_permissions=True, ignore_mandatory=True)
 
-    return item_doc.name
+	return item_doc.name
+
+
+def _is_usable_item_group(item_group: str | None) -> bool:
+	"""Return whether ``item_group`` is a leaf utility item group."""
+	if not item_group:
+		return False
+
+	group = frappe.db.get_value(
+		"Item Group",
+		item_group,
+		["is_group", "is_utility_item_group"],
+		as_dict=True,
+	)
+	return bool(group and not group.is_group and group.is_utility_item_group)
 
 
 def _resolve_fallback_item_group() -> str:
-    """Return a leaf utility item group usable for service items.
+	"""Return a leaf utility item group usable for service items.
 
-    Raises:
-        frappe.ValidationError: When no suitable item group exists.
-    """
-    for candidate in (DEFAULT_SERVICE_ITEM_GROUP, "All Item Groups", "Fixed Asset"):
-        if frappe.db.exists("Item Group", candidate):
-            return candidate
+	Raises:
+	    frappe.ValidationError: When no suitable item group exists.
+	"""
+	for candidate in (DEFAULT_SERVICE_ITEM_GROUP, "Utilities", "All Item Groups"):
+		if _is_usable_item_group(candidate):
+			return candidate
 
-    item_group = frappe.db.get_value("Item Group", {"is_group": 0}, "name")
-    if not item_group:
-        frappe.throw(
-            _("Please configure a default item group for property service items.")
-        )
+	item_group = frappe.get_all(
+		"Item Group",
+		filters={"is_group": 0, "is_utility_item_group": 1},
+		pluck="name",
+		order_by="name asc",
+		limit=1,
+	)
+	if item_group:
+		return item_group[0]
 
-    return item_group
+	frappe.throw(
+		_("Create a leaf Item Group marked as a Utility Item Group before generating property service items.")
+	)

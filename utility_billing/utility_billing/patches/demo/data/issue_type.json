@@ -1,8 +1,34 @@
 [
-  { "name": "New Connection", "doctype": "Issue Type" },
-  { "name": "Disconnection", "doctype": "Issue Type" },
-  { "name": "Meter Replacement", "doctype": "Issue Type" },
-  { "name": "Billing Inquiry", "doctype": "Issue Type" },
-  { "name": "Tariff Change", "doctype": "Issue Type" },
-  { "name": "Property Lease", "doctype": "Issue Type" }
+  {
+    "name": "New Connection",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Disconnection",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Meter Replacement",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Billing Inquiry",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Tariff Change",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Property Lease",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Maintenance Request",
+    "doctype": "Issue Type"
+  },
+  {
+    "name": "Tenant Support",
+    "doctype": "Issue Type"
+  }
 ]
