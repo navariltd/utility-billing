@@ -8,6 +8,7 @@
 
 "use client";
 
+import { PayButton } from "@/components/payments/pay-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PropertyDocuments } from "@/types/property-details";
 import {
@@ -41,6 +42,19 @@ const invoiceColumns: DocumentColumn<any>[] = [
     render: (row) => formatAmount(row.outstanding_amount, row.currency),
   },
   { label: "Status", render: (row) => row.status || formatDocstatus(row.docstatus) },
+  {
+    label: "",
+    align: "right",
+    render: (row) =>
+      row.docstatus === 1 && Number(row.outstanding_amount) > 0 ? (
+        <PayButton
+          referenceDoctype="Sales Invoice"
+          referenceName={row.name}
+          amount={Number(row.outstanding_amount)}
+          currency={row.currency}
+        />
+      ) : null,
+  },
 ];
 
 const orderColumns: DocumentColumn<any>[] = [
@@ -53,6 +67,29 @@ const orderColumns: DocumentColumn<any>[] = [
     render: (row) => formatAmount(row.grand_total, row.currency),
   },
   { label: "Status", render: (row) => row.status || formatDocstatus(row.docstatus) },
+  {
+    label: "",
+    align: "right",
+    render: (row) => {
+      const payable =
+        Number(row.grand_total ?? 0) - Number(row.advance_paid ?? 0);
+      const canPay =
+        row.docstatus === 1 &&
+        payable > 0 &&
+        Number(row.per_billed ?? 0) < 100 &&
+        row.status !== "Closed";
+
+      return canPay ? (
+        <PayButton
+          referenceDoctype="Sales Order"
+          referenceName={row.name}
+          amount={payable}
+          currency={row.currency}
+          label="Pay advance"
+        />
+      ) : null;
+    },
+  },
 ];
 
 const paymentColumns: DocumentColumn<any>[] = [
@@ -83,6 +120,7 @@ const serviceRequestColumns: DocumentColumn<any>[] = [
   { label: "Date", render: (row) => formatDate(row.date) },
   { label: "Request", render: (row) => row.name },
   { label: "Type", render: (row) => row.request_type || "—" },
+  { label: "Lease", render: (row) => row.lease_status || "—" },
   { label: "Status", render: (row) => row.request_status || "—" },
 ];
 

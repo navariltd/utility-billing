@@ -639,6 +639,7 @@ def create_sales_order_doc(
 			"transaction_date": final_transaction_date,
 			"delivery_date": add_days(final_transaction_date, 7),
 			"company": company or usr.company,
+			"selling_price_list": usr.price_list,
 			"payment_terms_template": usr.payment_terms_template
 			if hasattr(usr, "payment_terms_template")
 			else None,
@@ -714,6 +715,7 @@ def create_sales_invoice_doc(
 			"posting_date": final_posting_date,
 			"due_date": due_date,
 			"company": company or usr.company,
+			"selling_price_list": usr.price_list,
 			"set_draft_from_utility_service_request": 1,
 			"ignore_default_payment_terms_template": 1 if usr.payment_terms_template else 0,
 			"payment_terms_template": usr.payment_terms_template
@@ -798,10 +800,10 @@ def add_transaction_comments(transaction, usr_name, auto_repeat=None):
 
 		content = f"""
         <div class='small'>
-            <strong>{title}:</strong> 
+            <strong>{title}:</strong>
             <a href='/app/{doc_type.lower().replace(" ", "-")}/{doc_name}'>{doc_name}</a>
             <br>
-            <strong>Customer:</strong> 
+            <strong>Customer:</strong>
             <a href='/app/customer/{customer}'>{customer_name}</a>
             <br>
             <strong>Amount:</strong> {amount}
@@ -812,7 +814,7 @@ def add_transaction_comments(transaction, usr_name, auto_repeat=None):
 		if show_request_link:
 			content += f"""
             <br>
-            <strong>From Request:</strong> 
+            <strong>From Request:</strong>
             <a href='/app/utility-service-request/{usr_name}'>{usr_name}</a>
             """
 
@@ -822,7 +824,7 @@ def add_transaction_comments(transaction, usr_name, auto_repeat=None):
 			)
 			content += f"""
             <br>
-            <strong>Property:</strong> 
+            <strong>Property:</strong>
             <a href='/app/utility-property/{auto_repeat.get("utility_property")}'>
                 {property_name or auto_repeat.get("utility_property")}
             </a>
@@ -832,7 +834,7 @@ def add_transaction_comments(transaction, usr_name, auto_repeat=None):
 			auto_repeat_name = frappe.db.get_value("Auto Repeat", doc.auto_repeat, "name")
 			content += f"""
             <br>
-            <strong>Recurring {doc_type}:</strong> 
+            <strong>Recurring {doc_type}:</strong>
             <a href='/app/auto-repeat/{doc.auto_repeat}'>{auto_repeat_name}</a>
             <br>
             <strong>Frequency:</strong> {auto_repeat.get("frequency") if auto_repeat else ""}

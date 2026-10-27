@@ -3,16 +3,15 @@
     "doctype": "Meter Reading",
     "company": "Utility and Rental (Demo)",
     "customer": "Wanjiku Kamau",
-    "date": "2025-06-01",
+    "property": "Pinnacle Tower - Unit 1B",
     "price_list": "Standard Residential",
     "currency": "KES",
-    "property": "Pinnacle Tower - Unit 1B",
+    "reading_age_days": 14,
     "items": [
       {
+        "doctype": "Meter Reading Item",
         "item_code": "Water",
-        "current_reading": 350,
-        "previous_reading": 300,
-        "consumption": 50,
+        "consumption": 18,
         "meter_number": "MTR10001"
       }
     ]
@@ -20,17 +19,16 @@
   {
     "doctype": "Meter Reading",
     "company": "Utility and Rental (Demo)",
-    "customer": "Daniel Mwangi",
-    "date": "2025-06-01",
+    "customer": "Ochieng Otieno",
+    "property": "Pinnacle Tower - Unit 1A",
     "price_list": "Standard Residential",
     "currency": "KES",
-    "property": "Pinnacle Tower - Unit 1C",
+    "reading_age_days": 12,
     "items": [
       {
+        "doctype": "Meter Reading Item",
         "item_code": "Electricity",
-        "current_reading": 1200,
-        "previous_reading": 1100,
-        "consumption": 100,
+        "consumption": 142,
         "meter_number": "MTR10002"
       }
     ]
@@ -38,18 +36,85 @@
   {
     "doctype": "Meter Reading",
     "company": "Utility and Rental (Demo)",
-    "customer": "Nairobi Enterprises Ltd",
-    "date": "2025-06-01",
+    "customer": "Daniel Mwangi",
+    "property": "Pinnacle Tower - Unit 1C",
     "price_list": "Standard Residential",
     "currency": "KES",
-    "property": "Westlands Plaza - Suite 201",
+    "reading_age_days": 10,
     "items": [
       {
+        "doctype": "Meter Reading Item",
         "item_code": "Water",
-        "current_reading": 870,
-        "previous_reading": 800,
-        "consumption": 70,
-        "meter_number": "MTR20001"
+        "consumption": 9,
+        "meter_number": "MTR10003"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Amina Hassan",
+    "property": "Pinnacle Tower - Penthouse",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 9,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Electricity",
+        "consumption": 265,
+        "meter_number": "MTR10004"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Faith Njeri",
+    "property": "Kileleshwa Heights - Unit 2",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 11,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Water",
+        "consumption": 16,
+        "meter_number": "MTR10005"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Peter Omondi",
+    "property": "Kileleshwa Heights - Unit 3",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 8,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Electricity",
+        "consumption": 118,
+        "meter_number": "MTR10006"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Brian Kiptoo",
+    "property": "Greenpark - House A1",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 13,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Water",
+        "consumption": 26,
+        "meter_number": "MTR10007"
       }
     ]
   },
@@ -57,35 +122,67 @@
     "doctype": "Meter Reading",
     "company": "Utility and Rental (Demo)",
     "customer": "Nairobi Enterprises Ltd",
-    "date": "2025-06-01",
-    "price_list": "Standard Residential",
-    "currency": "KES",
     "property": "Westlands Plaza - Suite 101",
+    "price_list": "Standard Commercial",
+    "currency": "KES",
+    "reading_age_days": 7,
     "items": [
       {
+        "doctype": "Meter Reading Item",
         "item_code": "Electricity",
-        "current_reading": 2300,
-        "previous_reading": 2150,
-        "consumption": 150,
-        "meter_number": "MTR20002"
+        "consumption": 185,
+        "meter_number": "MTR10008"
       }
     ]
   },
   {
     "doctype": "Meter Reading",
     "company": "Utility and Rental (Demo)",
-    "customer": "Wanjiku Kamau",
-    "date": "2025-06-01",
-    "price_list": "Standard Residential",
+    "customer": "Nairobi Enterprises Ltd",
+    "property": "Westlands Plaza - Suite 201",
+    "price_list": "Standard Commercial",
     "currency": "KES",
-    "property": "Pinnacle Tower - Penthouse",
+    "reading_age_days": 6,
     "items": [
       {
+        "doctype": "Meter Reading Item",
+        "item_code": "Water",
+        "consumption": 14,
+        "meter_number": "MTR10009"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Mombasa Trading Co.",
+    "property": "Mombasa Villa A",
+    "price_list": "Standard Commercial",
+    "currency": "KES",
+    "reading_age_days": 5,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
         "item_code": "Electricity",
-        "current_reading": 5400,
-        "previous_reading": 5000,
-        "consumption": 400,
-        "meter_number": "MTR10003"
+        "consumption": 224,
+        "meter_number": "MTR10010"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Savanna Retail Group",
+    "property": "Westlands Plaza - Retail Shop 1",
+    "price_list": "Standard Commercial",
+    "currency": "KES",
+    "reading_age_days": 4,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Electricity",
+        "consumption": 318,
+        "meter_number": "MTR10011"
       }
     ]
   }

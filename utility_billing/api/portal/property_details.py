@@ -14,17 +14,19 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from utility_billing.api.portal.property_documents import get_property_documents
 from utility_billing.api.portal.properties import (
 	HISTORY,
 	PROPERTY_FIELDS,
 	get_tenant_properties,
 )
+from utility_billing.api.portal.property_documents import get_property_documents
 from utility_billing.api.portal.roles import (
 	GUEST,
 	get_linked_customers,
 	is_guest,
 )
+from utility_billing.utility_billing.utils.availability import is_property_available
+from utility_billing.utility_billing.utils.lease_status import decorate_service_requests
 
 DETAILS_EXTRA_FIELDS = ("is_group", "lot_size", "unique_features", "legal_description")
 
@@ -59,11 +61,14 @@ def get_property_details(property: str) -> dict:
 
 	customers = [] if is_guest() else get_linked_customers()
 	tenancy = _find_tenancy(property_name, frappe.session.user)
-	is_available = property_doc.get("status") == "Available" and not cint(
-		property_doc.get("is_group")
+	booking = _find_own_booking(property_name, [customer["name"] for customer in customers])
+	is_available = is_property_available(
+		property_doc,
+		status=property_doc.get("status"),
+		is_group=cint(property_doc.get("is_group")),
 	)
 
-	if not tenancy and not is_available:
+	if not tenancy and not is_available and not booking:
 		frappe.throw(_("This property is not available."), frappe.PermissionError)
 
 	documents = (
@@ -77,9 +82,10 @@ def get_property_details(property: str) -> dict:
 	return {
 		"property": property_doc,
 		"tenancy": tenancy,
+		"booking": booking,
 		"is_mine": bool(tenancy),
 		"is_available": is_available,
-		"can_book": is_available and not tenancy,
+		"can_book": is_available and not tenancy and not booking,
 		"documents": documents,
 	}
 
@@ -122,3 +128,29 @@ def _find_tenancy(property_name: str, user: str) -> dict | None:
 			return {**row, "is_current": row["state"] != HISTORY}
 
 	return None
+
+
+def _find_own_booking(property_name: str, customer_names: list[str]) -> dict | None:
+	"""Return the caller's pending booking of the property, if any.
+
+	The property details stay visible to the tenant who has just booked the
+	unit, even though it is no longer publicly available.
+	"""
+	if not customer_names:
+		return None
+
+	requests = frappe.db.get_all(
+		"Utility Service Request",
+		filters={
+			"utility_property": property_name,
+			"customer": ("in", customer_names),
+			"docstatus": 1,
+		},
+		fields=["name", "date", "start_date", "end_date", "request_status", "docstatus"],
+		order_by="creation desc",
+		limit=1,
+	)
+	if not requests:
+		return None
+
+	return decorate_service_requests(requests)[0]

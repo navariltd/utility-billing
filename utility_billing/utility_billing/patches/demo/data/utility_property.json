@@ -1,345 +1,2400 @@
 [
   {
-    "property_name": "The Pinnacle Towers - Kilimani",
-    "category": "Apartment",
-    "utility_category": "Apartment",
-    "unit_type": "Furnished Apartment",
     "doctype": "Utility Property",
-    "features": [
-      {
-        "doctype": "Property Feature",
-        "feature": "Swimming Pool",
-        "feature_type": "Amenity",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
-        "feature": "Gym",
-        "feature_type": "Amenity",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
-        "feature": "24/7 Security",
-        "feature_type": "Security",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
-        "feature": "CCTV Surveillance",
-        "feature_type": "Security",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
-        "feature": "Elevator",
-        "feature_type": "Facility",
-        "notes": ""
-      }
-    ],
+    "property_name": "The Pinnacle Towers - Kilimani",
+    "utility_category": "Apartment",
     "status": "Available",
-    "is_fixed_asset": 1,
     "is_group": 1,
+    "is_fixed_asset": 1,
     "asset_category": "Residential Property",
     "net_purchase_amount": 185000000,
     "purchase_date": "2023-10-01",
     "location": "Kilimani",
     "bedrooms": 0,
     "bathrooms": 0,
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Kileleshwa Heights Apartments",
-    "category": "Apartment",
-    "utility_category": "Apartment",
-    "doctype": "Utility Property",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "The Pinnacle Towers - Kilimani - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "The Pinnacle Towers - Kilimani - Living room",
+        "description": "Bright open plan living and dining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "The Pinnacle Towers - Kilimani - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "The Pinnacle Towers - Kilimani - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      }
+    ],
+    "unique_features": "<p>A landmark residential tower in Kilimani with a pool, gym, backup power and 24-hour security.</p>",
+    "legal_description": "<p>Demo asset record for The Pinnacle Towers - Kilimani, located in Kilimani.</p>",
     "features": [
       {
-        "doctype": "Property Feature",
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
         "feature": "24/7 Security",
         "feature_type": "Security",
         "notes": ""
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Water Storage",
-        "feature_type": "Facility",
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
         "notes": ""
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Balcony",
-        "feature_type": "Amenity",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
+        "doctype": "Utility Property Feature item",
         "feature": "Elevator",
         "feature_type": "Facility",
         "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
       }
-    ],
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Kileleshwa Heights Apartments",
+    "utility_category": "Apartment",
     "status": "Available",
-    "is_fixed_asset": 1,
     "is_group": 1,
+    "is_fixed_asset": 1,
     "asset_category": "Residential Property",
     "net_purchase_amount": 120000000,
     "purchase_date": "2023-10-01",
     "location": "Kileleshwa",
     "bedrooms": 0,
     "bathrooms": 0,
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Greenpark Estate - Runda",
-    "category": "Townhouse",
-    "utility_category": "Townhouse",
-    "doctype": "Utility Property",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights Apartments - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights Apartments - Living room",
+        "description": "Bright open plan living and dining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights Apartments - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights Apartments - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      }
+    ],
+    "unique_features": "<p>Quiet apartment block close to schools, shops and the Kileleshwa river walk.</p>",
+    "legal_description": "<p>Demo asset record for Kileleshwa Heights Apartments, located in Kileleshwa.</p>",
     "features": [
       {
-        "doctype": "Property Feature",
-        "feature": "Gated Community",
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
         "feature_type": "Amenity",
         "notes": ""
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Children's Playground",
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
         "feature_type": "Amenity",
         "notes": ""
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Landscaped Garden",
-        "feature_type": "Amenity",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
+        "doctype": "Utility Property Feature item",
         "feature": "24/7 Security",
         "feature_type": "Security",
         "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
       }
-    ],
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark Estate - Runda",
+    "utility_category": "Townhouse",
     "status": "Available",
-    "is_fixed_asset": 1,
     "is_group": 1,
+    "is_fixed_asset": 1,
     "asset_category": "Residential Property",
     "net_purchase_amount": 250000000,
     "purchase_date": "2023-10-01",
     "location": "Runda",
     "bedrooms": 0,
     "bathrooms": 0,
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Westlands Business Plaza",
-    "category": "Office",
-    "utility_category": "Office",
-    "doctype": "Utility Property",
-    "features": [
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
       {
-        "doctype": "Property Feature",
-        "feature": "Secure Parking",
-        "feature_type": "Amenity",
-        "notes": ""
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark Estate - Runda - Townhouse exterior",
+        "description": "Gated townhouse with private garden and parking."
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Elevator",
-        "feature_type": "Facility",
-        "notes": ""
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark Estate - Runda - Family home",
+        "description": "Contemporary family home with generous living space."
       },
       {
-        "doctype": "Property Feature",
-        "feature": "High-Speed Internet",
-        "feature_type": "Amenity",
-        "notes": ""
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark Estate - Runda - Living room",
+        "description": "Light-filled living room opening to the garden."
       },
       {
-        "doctype": "Property Feature",
-        "feature": "Backup Generator",
-        "feature_type": "Facility",
-        "notes": ""
-      },
-      {
-        "doctype": "Property Feature",
-        "feature": "Concierge Service",
-        "feature_type": "Service",
-        "notes": ""
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark Estate - Runda - Dining area",
+        "description": "Open dining area designed for entertaining."
       }
     ],
+    "unique_features": "<p>Family townhouses in a gated estate with gardens, a playground and visitor parking.</p>",
+    "legal_description": "<p>Demo asset record for Greenpark Estate - Runda, located in Runda.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Business Plaza",
+    "utility_category": "Office",
     "status": "Available",
-    "is_fixed_asset": 1,
     "is_group": 1,
+    "is_fixed_asset": 1,
     "asset_category": "Commercial Property",
     "net_purchase_amount": 320000000,
     "purchase_date": "2023-10-01",
     "location": "Westlands",
     "bedrooms": 0,
     "bathrooms": 0,
-    "company": "Utility and Rental (Demo)"
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Business Plaza - Office reception",
+        "description": "Professional reception and waiting area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Business Plaza - Open workspace",
+        "description": "Flexible open plan workspace with natural light."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Business Plaza - Meeting room",
+        "description": "Fully equipped meeting room."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Business Plaza - Private office",
+        "description": "Private office suite ready for fit-out."
+      }
+    ],
+    "unique_features": "<p>Serviced office and retail space in Westlands with generator backup and fibre internet.</p>",
+    "legal_description": "<p>Demo asset record for Westlands Business Plaza, located in Westlands.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
+    "property_name": "Mombasa Beachfront Villas",
+    "utility_category": "Bungalow",
+    "status": "Available",
+    "is_group": 1,
+    "is_fixed_asset": 1,
+    "asset_category": "Residential Property",
+    "net_purchase_amount": 410000000,
+    "purchase_date": "2023-10-01",
+    "location": "Mombasa",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Beachfront Villas - Beachfront villa",
+        "description": "Beachfront villa with a private pool and sea views."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Beachfront Villas - Villa exterior",
+        "description": "Contemporary villa surrounded by tropical gardens."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Beachfront Villas - Pool terrace",
+        "description": "Private pool and shaded outdoor terrace."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Beachfront Villas - Villa interior",
+        "description": "Airy interior with coastal finishes."
+      }
+    ],
+    "unique_features": "<p>Beachfront villas with private pools, tropical gardens and direct beach access.</p>",
+    "legal_description": "<p>Demo asset record for Mombasa Beachfront Villas, located in Mombasa.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Garden Court",
+    "utility_category": "Apartment",
+    "status": "Available",
+    "is_group": 1,
+    "is_fixed_asset": 1,
+    "asset_category": "Residential Property",
+    "net_purchase_amount": 86000000,
+    "purchase_date": "2023-10-01",
+    "location": "Ruiru",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Garden Court - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Garden Court - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Garden Court - Living space",
+        "description": "Bright living space with garden outlook."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Garden Court - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      }
+    ],
+    "unique_features": "<p>Affordable garden apartments in Ruiru with secure parking and reliable water storage.</p>",
+    "legal_description": "<p>Demo asset record for Ruiru Garden Court, located in Ruiru.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
     "property_name": "Pinnacle Tower - Unit 1A",
-    "unit_type": "2-Bedroom",
     "utility_category": "Apartment",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
+    "unit_type": "2-Bedroom",
+    "unit_number": "1A",
     "bedrooms": 2,
     "bathrooms": 2,
-    "doctype": "Utility Property",
-    "parent_utility_property": "The Pinnacle Towers - Kilimani",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 1050,
+    "floor_level": "1st Floor",
+    "location": "Kilimani",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1A - Living room",
+        "description": "Bright open plan living and dining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1A - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1A - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      }
+    ],
+    "unique_features": "<p>2-Bedroom at The Pinnacle Towers - Kilimani, 1,050 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
     "property_name": "Pinnacle Tower - Unit 1B",
-    "unit_type": "1-Bedroom",
     "utility_category": "Apartment",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
+    "unit_type": "1-Bedroom",
+    "unit_number": "1B",
     "bedrooms": 1,
     "bathrooms": 1,
-    "doctype": "Utility Property",
-    "parent_utility_property": "The Pinnacle Towers - Kilimani",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 720,
+    "floor_level": "1st Floor",
+    "location": "Kilimani",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1B - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1B - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1B - Kitchen",
+        "description": "Fitted kitchen with stone worktops."
+      }
+    ],
+    "unique_features": "<p>1-Bedroom at The Pinnacle Towers - Kilimani, 720 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
     "property_name": "Pinnacle Tower - Unit 1C",
+    "utility_category": "Apartment",
+    "parent_utility_property": "The Pinnacle Towers - Kilimani",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
     "unit_type": "Studio",
-    "utility_category": "Apartment",
-    "status": "Available",
-    "is_fixed_asset": 0,
+    "unit_number": "1C",
     "bedrooms": 0,
     "bathrooms": 1,
-    "doctype": "Utility Property",
-    "parent_utility_property": "The Pinnacle Towers - Kilimani",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 480,
+    "floor_level": "1st Floor",
+    "location": "Kilimani",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1C - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1C - Kitchen",
+        "description": "Fitted kitchen with stone worktops."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Unit 1C - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      }
+    ],
+    "unique_features": "<p>Studio at The Pinnacle Towers - Kilimani, 480 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
     "property_name": "Pinnacle Tower - Penthouse",
-    "unit_type": "Penthouse",
     "utility_category": "Apartment",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "bedrooms": 4,
-    "bathrooms": 4,
-    "doctype": "Utility Property",
     "parent_utility_property": "The Pinnacle Towers - Kilimani",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Greenpark - House A1",
-    "unit_type": "3-Bedroom",
-    "utility_category": "Townhouse",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
-    "bedrooms": 3,
-    "bathrooms": 3,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Greenpark Estate - Runda",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Greenpark - House A2",
-    "unit_type": "4-Bedroom",
-    "utility_category": "Townhouse",
-    "status": "Available",
-    "is_fixed_asset": 0,
+    "unit_type": "Penthouse",
+    "unit_number": "Penthouse",
     "bedrooms": 4,
     "bathrooms": 4,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Greenpark Estate - Runda",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 2400,
+    "floor_level": "Top Floor",
+    "location": "Kilimani",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Penthouse - Kitchen",
+        "description": "Fitted kitchen with stone worktops."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Penthouse - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "Pinnacle Tower - Penthouse - Living room",
+        "description": "Bright open plan living and dining area."
+      }
+    ],
+    "unique_features": "<p>Penthouse at The Pinnacle Towers - Kilimani, 2,400 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
-    "property_name": "Greenpark - House B1",
-    "unit_type": "2-Bedroom",
-    "utility_category": "Townhouse",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "bedrooms": 2,
-    "bathrooms": 2,
     "doctype": "Utility Property",
-    "parent_utility_property": "Greenpark Estate - Runda",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Greenpark - House B2",
-    "unit_type": "Maisonette",
-    "utility_category": "Maisonette",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "bedrooms": 3,
-    "bathrooms": 3,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Greenpark Estate - Runda",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Westlands Plaza - Suite 101",
-    "unit_type": "Office Space",
-    "utility_category": "Office",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Westlands Business Plaza",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Westlands Plaza - Suite 201",
-    "unit_type": "Office Space",
-    "utility_category": "Office",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Westlands Business Plaza",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
-    "property_name": "Westlands Plaza - Serviced Office",
-    "unit_type": "Serviced Office",
-    "utility_category": "Office",
-    "status": "Available",
-    "is_fixed_asset": 0,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Westlands Business Plaza",
-    "company": "Utility and Rental (Demo)"
-  },
-  {
     "property_name": "Kileleshwa Heights - Unit 1",
-    "unit_type": "Bedsitter",
     "utility_category": "Apartment",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
+    "unit_type": "Bedsitter",
+    "unit_number": "1",
     "bedrooms": 0,
     "bathrooms": 1,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Kileleshwa Heights Apartments",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 420,
+    "floor_level": "Ground Floor",
+    "location": "Kileleshwa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 1 - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 1 - Living room",
+        "description": "Bright open plan living and dining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 1 - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      }
+    ],
+    "unique_features": "<p>Bedsitter at Kileleshwa Heights Apartments, 420 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
     "property_name": "Kileleshwa Heights - Unit 2",
-    "unit_type": "1-Bedroom",
     "utility_category": "Apartment",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
+    "unit_type": "1-Bedroom",
+    "unit_number": "2",
     "bedrooms": 1,
     "bathrooms": 1,
-    "doctype": "Utility Property",
-    "parent_utility_property": "Kileleshwa Heights Apartments",
-    "company": "Utility and Rental (Demo)"
+    "unit_size": 680,
+    "floor_level": "2nd Floor",
+    "location": "Kileleshwa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 2 - Living room",
+        "description": "Bright open plan living and dining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 2 - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 2 - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      }
+    ],
+    "unique_features": "<p>1-Bedroom at Kileleshwa Heights Apartments, 680 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
   },
   {
+    "doctype": "Utility Property",
     "property_name": "Kileleshwa Heights - Unit 3",
-    "unit_type": "2-Bedroom",
     "utility_category": "Apartment",
+    "parent_utility_property": "Kileleshwa Heights Apartments",
     "status": "Available",
+    "is_group": 0,
     "is_fixed_asset": 0,
+    "unit_type": "2-Bedroom",
+    "unit_number": "3",
     "bedrooms": 2,
     "bathrooms": 2,
+    "unit_size": 980,
+    "floor_level": "3rd Floor",
+    "location": "Kileleshwa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 3 - Furnished lounge",
+        "description": "Comfortable lounge with contemporary finishes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 3 - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 3 - Kitchen",
+        "description": "Fitted kitchen with stone worktops."
+      }
+    ],
+    "unique_features": "<p>2-Bedroom at Kileleshwa Heights Apartments, 980 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
     "doctype": "Utility Property",
+    "property_name": "Kileleshwa Heights - Unit 4",
+    "utility_category": "Apartment",
     "parent_utility_property": "Kileleshwa Heights Apartments",
-    "company": "Utility and Rental (Demo)"
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "3-Bedroom",
+    "unit_number": "4",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "unit_size": 1350,
+    "floor_level": "4th Floor",
+    "location": "Kileleshwa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 4 - Bedroom",
+        "description": "Spacious bedroom with built-in wardrobes."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 4 - Kitchen",
+        "description": "Fitted kitchen with stone worktops."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+        "title": "Kileleshwa Heights - Unit 4 - Apartment exterior",
+        "description": "Modern apartment tower with secure entry and landscaped grounds."
+      }
+    ],
+    "unique_features": "<p>3-Bedroom at Kileleshwa Heights Apartments, 1,350 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gym",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark - House A1",
+    "utility_category": "Townhouse",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "3-Bedroom",
+    "unit_number": "A1",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "unit_size": 1800,
+    "floor_level": "Ground Floor",
+    "location": "Runda",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A1 - Garden",
+        "description": "Landscaped private garden and patio."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A1 - Townhouse exterior",
+        "description": "Gated townhouse with private garden and parking."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A1 - Family home",
+        "description": "Contemporary family home with generous living space."
+      }
+    ],
+    "unique_features": "<p>3-Bedroom at Greenpark Estate - Runda, 1,800 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark - House A2",
+    "utility_category": "Townhouse",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "4-Bedroom",
+    "unit_number": "A2",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "unit_size": 2200,
+    "floor_level": "Ground Floor",
+    "location": "Runda",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A2 - Townhouse exterior",
+        "description": "Gated townhouse with private garden and parking."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A2 - Family home",
+        "description": "Contemporary family home with generous living space."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House A2 - Living room",
+        "description": "Light-filled living room opening to the garden."
+      }
+    ],
+    "unique_features": "<p>4-Bedroom at Greenpark Estate - Runda, 2,200 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark - House B1",
+    "utility_category": "Townhouse",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "2-Bedroom",
+    "unit_number": "B1",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "unit_size": 1400,
+    "floor_level": "Ground Floor",
+    "location": "Runda",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B1 - Family home",
+        "description": "Contemporary family home with generous living space."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B1 - Living room",
+        "description": "Light-filled living room opening to the garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B1 - Dining area",
+        "description": "Open dining area designed for entertaining."
+      }
+    ],
+    "unique_features": "<p>2-Bedroom at Greenpark Estate - Runda, 1,400 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark - House B2",
+    "utility_category": "Maisonette",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Maisonette",
+    "unit_number": "B2",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "unit_size": 1900,
+    "floor_level": "Ground + Upper",
+    "location": "Runda",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B2 - Living room",
+        "description": "Light-filled living room opening to the garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B2 - Dining area",
+        "description": "Open dining area designed for entertaining."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House B2 - Garden",
+        "description": "Landscaped private garden and patio."
+      }
+    ],
+    "unique_features": "<p>Maisonette at Greenpark Estate - Runda, 1,900 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Greenpark - House C1",
+    "utility_category": "Townhouse",
+    "parent_utility_property": "Greenpark Estate - Runda",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "4-Bedroom",
+    "unit_number": "C1",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "unit_size": 2100,
+    "floor_level": "Ground + Upper",
+    "location": "Runda",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House C1 - Dining area",
+        "description": "Open dining area designed for entertaining."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House C1 - Garden",
+        "description": "Landscaped private garden and patio."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80",
+        "title": "Greenpark - House C1 - Townhouse exterior",
+        "description": "Gated townhouse with private garden and parking."
+      }
+    ],
+    "unique_features": "<p>4-Bedroom at Greenpark Estate - Runda, 2,100 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Children's Playground",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Plaza - Suite 101",
+    "utility_category": "Office",
+    "parent_utility_property": "Westlands Business Plaza",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Office Space",
+    "unit_number": "101",
+    "bedrooms": 0,
+    "bathrooms": 2,
+    "unit_size": 650,
+    "floor_level": "1st Floor",
+    "location": "Westlands",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 101 - Meeting room",
+        "description": "Fully equipped meeting room."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 101 - Private office",
+        "description": "Private office suite ready for fit-out."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 101 - Office reception",
+        "description": "Professional reception and waiting area."
+      }
+    ],
+    "unique_features": "<p>Office Space at Westlands Business Plaza, 650 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Plaza - Suite 201",
+    "utility_category": "Office",
+    "parent_utility_property": "Westlands Business Plaza",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Office Space",
+    "unit_number": "201",
+    "bedrooms": 0,
+    "bathrooms": 2,
+    "unit_size": 850,
+    "floor_level": "2nd Floor",
+    "location": "Westlands",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 201 - Private office",
+        "description": "Private office suite ready for fit-out."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 201 - Office reception",
+        "description": "Professional reception and waiting area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 201 - Open workspace",
+        "description": "Flexible open plan workspace with natural light."
+      }
+    ],
+    "unique_features": "<p>Office Space at Westlands Business Plaza, 850 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Plaza - Suite 301",
+    "utility_category": "Office",
+    "parent_utility_property": "Westlands Business Plaza",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Office Space",
+    "unit_number": "301",
+    "bedrooms": 0,
+    "bathrooms": 3,
+    "unit_size": 1000,
+    "floor_level": "3rd Floor",
+    "location": "Westlands",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 301 - Office reception",
+        "description": "Professional reception and waiting area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 301 - Open workspace",
+        "description": "Flexible open plan workspace with natural light."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Suite 301 - Meeting room",
+        "description": "Fully equipped meeting room."
+      }
+    ],
+    "unique_features": "<p>Office Space at Westlands Business Plaza, 1,000 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Plaza - Serviced Office",
+    "utility_category": "Office",
+    "parent_utility_property": "Westlands Business Plaza",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Serviced Office",
+    "unit_number": "Office",
+    "bedrooms": 0,
+    "bathrooms": 1,
+    "unit_size": 450,
+    "floor_level": "2nd Floor",
+    "location": "Westlands",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Serviced Office - Open workspace",
+        "description": "Flexible open plan workspace with natural light."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Serviced Office - Meeting room",
+        "description": "Fully equipped meeting room."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Serviced Office - Private office",
+        "description": "Private office suite ready for fit-out."
+      }
+    ],
+    "unique_features": "<p>Serviced Office at Westlands Business Plaza, 450 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Westlands Plaza - Retail Shop 1",
+    "utility_category": "Retail",
+    "parent_utility_property": "Westlands Business Plaza",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Retail Shop",
+    "unit_number": "1",
+    "bedrooms": 0,
+    "bathrooms": 1,
+    "unit_size": 550,
+    "floor_level": "Ground Floor",
+    "location": "Westlands",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Retail Shop 1 - Meeting room",
+        "description": "Fully equipped meeting room."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Retail Shop 1 - Private office",
+        "description": "Private office suite ready for fit-out."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+        "title": "Westlands Plaza - Retail Shop 1 - Office reception",
+        "description": "Professional reception and waiting area."
+      }
+    ],
+    "unique_features": "<p>Retail Shop at Westlands Business Plaza, 550 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Elevator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "High-Speed Internet",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Backup Generator",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Concierge Service",
+        "feature_type": "Service",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "CCTV Surveillance",
+        "feature_type": "Security",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Mombasa Villa A",
+    "utility_category": "Bungalow",
+    "parent_utility_property": "Mombasa Beachfront Villas",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "4-Bedroom",
+    "unit_number": "A",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "unit_size": 2600,
+    "floor_level": "Ground Floor",
+    "location": "Mombasa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa A - Garden view",
+        "description": "Mature garden and outdoor entertaining area."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa A - Beachfront villa",
+        "description": "Beachfront villa with a private pool and sea views."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa A - Villa exterior",
+        "description": "Contemporary villa surrounded by tropical gardens."
+      }
+    ],
+    "unique_features": "<p>4-Bedroom at Mombasa Beachfront Villas, 2,600 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Mombasa Villa B",
+    "utility_category": "Bungalow",
+    "parent_utility_property": "Mombasa Beachfront Villas",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "4-Bedroom",
+    "unit_number": "B",
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "unit_size": 2400,
+    "floor_level": "Ground Floor",
+    "location": "Mombasa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa B - Beachfront villa",
+        "description": "Beachfront villa with a private pool and sea views."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa B - Villa exterior",
+        "description": "Contemporary villa surrounded by tropical gardens."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa B - Pool terrace",
+        "description": "Private pool and shaded outdoor terrace."
+      }
+    ],
+    "unique_features": "<p>4-Bedroom at Mombasa Beachfront Villas, 2,400 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Mombasa Villa C",
+    "utility_category": "Bungalow",
+    "parent_utility_property": "Mombasa Beachfront Villas",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "3-Bedroom",
+    "unit_number": "C",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "unit_size": 2000,
+    "floor_level": "Ground Floor",
+    "location": "Mombasa",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa C - Villa exterior",
+        "description": "Contemporary villa surrounded by tropical gardens."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa C - Pool terrace",
+        "description": "Private pool and shaded outdoor terrace."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?auto=format&fit=crop&w=1200&q=80",
+        "title": "Mombasa Villa C - Villa interior",
+        "description": "Airy interior with coastal finishes."
+      }
+    ],
+    "unique_features": "<p>3-Bedroom at Mombasa Beachfront Villas, 2,000 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Swimming Pool",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Gated Community",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Block A - Unit 1",
+    "utility_category": "Apartment",
+    "parent_utility_property": "Ruiru Garden Court",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "1-Bedroom",
+    "unit_number": "1",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "unit_size": 600,
+    "floor_level": "Ground Floor",
+    "location": "Ruiru",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 1 - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 1 - Living space",
+        "description": "Bright living space with garden outlook."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 1 - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      }
+    ],
+    "unique_features": "<p>1-Bedroom at Ruiru Garden Court, 600 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Block A - Unit 2",
+    "utility_category": "Apartment",
+    "parent_utility_property": "Ruiru Garden Court",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "2-Bedroom",
+    "unit_number": "2",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "unit_size": 900,
+    "floor_level": "1st Floor",
+    "location": "Ruiru",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 2 - Living space",
+        "description": "Bright living space with garden outlook."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 2 - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block A - Unit 2 - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      }
+    ],
+    "unique_features": "<p>2-Bedroom at Ruiru Garden Court, 900 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Block B - Unit 1",
+    "utility_category": "Apartment",
+    "parent_utility_property": "Ruiru Garden Court",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "2-Bedroom",
+    "unit_number": "1",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "unit_size": 920,
+    "floor_level": "Ground Floor",
+    "location": "Ruiru",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 1 - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 1 - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 1 - Living space",
+        "description": "Bright living space with garden outlook."
+      }
+    ],
+    "unique_features": "<p>2-Bedroom at Ruiru Garden Court, 920 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Block B - Unit 2",
+    "utility_category": "Apartment",
+    "parent_utility_property": "Ruiru Garden Court",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "3-Bedroom",
+    "unit_number": "2",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "unit_size": 1200,
+    "floor_level": "2nd Floor",
+    "location": "Ruiru",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 2 - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 2 - Living space",
+        "description": "Bright living space with garden outlook."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block B - Unit 2 - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      }
+    ],
+    "unique_features": "<p>3-Bedroom at Ruiru Garden Court, 1,200 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Property",
+    "property_name": "Ruiru Block C - Unit 1",
+    "utility_category": "Apartment",
+    "parent_utility_property": "Ruiru Garden Court",
+    "status": "Available",
+    "is_group": 0,
+    "is_fixed_asset": 0,
+    "unit_type": "Studio",
+    "unit_number": "1",
+    "bedrooms": 0,
+    "bathrooms": 1,
+    "unit_size": 400,
+    "floor_level": "Ground Floor",
+    "location": "Ruiru",
+    "company": "Utility and Rental (Demo)",
+    "cover_image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1600&q=80",
+    "image_gallery": [
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block C - Unit 1 - Living space",
+        "description": "Bright living space with garden outlook."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block C - Unit 1 - Garden court",
+        "description": "Low rise apartment blocks around a central garden."
+      },
+      {
+        "doctype": "Property Gallery Image",
+        "image": "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80",
+        "title": "Ruiru Block C - Unit 1 - Apartment interior",
+        "description": "Neutral interior ready for furnishing."
+      }
+    ],
+    "unique_features": "<p>Studio at Ruiru Garden Court, 400 sq ft.</p>",
+    "features": [
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Landscaped Garden",
+        "feature_type": "Amenity",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "24/7 Security",
+        "feature_type": "Security",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Water Storage",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Secure Parking",
+        "feature_type": "Facility",
+        "notes": ""
+      },
+      {
+        "doctype": "Utility Property Feature item",
+        "feature": "Balcony",
+        "feature_type": "Amenity",
+        "notes": ""
+      }
+    ]
   }
 ]

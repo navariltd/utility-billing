@@ -3,320 +3,210 @@
 The Rental Billing customer portal is a React single page application served at
 `/rental-portal` and built from the `rental-portal` folder of this app.
 
+## Feature map
+
+| Feature | Frontend | Backend |
+| --- | --- | --- |
+| Public property browser | `/properties`, `PropertyCard`, `PropertyRow` | `api.properties.get_available_properties` |
+| Property details and gallery | `/properties/:property` | `api.portal.property_details.get_property_details` |
+| Unit booking | `/properties/:property/book` | `api.portal.bookings.*` |
+| My bookings | `/bookings` | `api.portal.bookings.*` |
+| My properties / tenancy | `/my-properties` | `api.portal.properties.get_my_properties` |
+| Invoices, orders and payments | `/invoices` | `api.portal.payments.*` |
+| Support tickets and replies | property and booking support dialogs | `api.portal.support.*` |
+| Notifications | `/settings/notifications` | standard Frappe notification log |
+| Profile and password | `/app/user/<user>` | standard Frappe user pages |
+| Admin user list | `/users` | standard User APIs |
+| Generic doctype list/form | `/app/:doctype(/:id)` | standard Frappe metadata and CRUD |
+
 ## Authentication
 
 | Flow | Implementation |
 | --- | --- |
 | Sign in | `frappe-react-sdk` `useFrappeAuth` (Frappe session login) |
-| Sign up | standard `frappe.core.doctype.user.user.sign_up` (creates a Website User and emails a verification link) |
-| Forgot password | standard `frappe.core.doctype.user.user.reset_password` |
-| Change password | standard `frappe.core.doctype.user.user.update_password` |
+| Sign up | `frappe.core.doctype.user.user.sign_up` (creates a Website User and emails a verification link) |
+| Forgot password | `frappe.core.doctype.user.user.reset_password` |
+| Change password | `frappe.core.doctype.user.user.update_password` |
 | Logout | Frappe session logout |
 
-The portal never stores or transmits passwords itself; every credential flow is
-handled by Frappe.
-
-Sign-up is only available when `Website Settings > Disable Signup` is unchecked.
-The role granted to new sign-ups comes from `Portal Settings > Default Role`.
-
-## Session bootstrapping
+The portal never stores or transmits passwords itself; credential handling is
+delegated to Frappe. Sign-up is available only when
+`Website Settings → Disable Signup` is unchecked.
 
 `utility_billing/www/rental-portal.py` embeds the standard Frappe session boot
-(`frappe.sessions.get()`) in the page, so the SPA reads the session user and the
-user's roles from `frappe.boot.user` without an extra request. The boot payload
-is also what `frappe-react-sdk` uses for the session.
+so the SPA receives `frappe.boot` and the session user without an extra call.
 
 ## Portal roles and capabilities
 
-`utility_billing.api.portal.context.get_portal_context` resolves the *portal
-role* of the session user and the capabilities granted to it:
+`utility_billing.api.portal.context.get_portal_context` resolves the portal role
+and the capabilities used by navigation and guards:
 
-* `Guest` – anonymous visitor, may only browse properties.
-* `Tenant` – a user with the `Customer` (or `Tenant`) role that is linked to a
-  Customer through the standard `Customer.portal_users` child table.
+* `Guest` – anonymous visitor; may browse properties.
+* `Tenant` – a user with the `Customer` or `Tenant` role linked through
+  `Customer.portal_users`.
 * `Property Owner` / `Landlord`, `Property Manager`, `Utility Customer` – role
-  based (used by later phases).
+  based, reserved for their dashboards.
 
-Guests receive the `browse_properties` capability only; every authenticated
-portal role currently receives all capabilities. Role specific restrictions are
-introduced together with the role specific dashboards.
+Guests receive `browse_properties` only. Authenticated portal roles currently
+receive the full capability map (`browse_properties`, `view_dashboard`,
+`view_my_units`, `manage_profile`, `manage_notifications`).
 
-## Tenant to property linkage
+## Tenant linkage and access control
 
-A tenant's properties are resolved through the standard ERPNext documents:
+A tenant's records resolve through standard ERPNext documents:
 
 ```
-User (portal_users) → Customer → Contract (party_type = Customer) → Contract.properties
+User (Customer.portal_users) → Customer → Contract (party_type = Customer)
+  → Contract Utility Property Item → Utility Property
 ```
 
-`utility_billing.api.portal.properties.get_my_properties` returns the allocations
-of those contracts, classified as:
+`get_my_properties` classifies allocations as:
 
 | State | Rule |
 | --- | --- |
-| `Reserved` | allocation `is_active = 1` on a contract that is not signed yet (`is_signed = 0`) |
-| `Active` | allocation `is_active = 1` on a signed contract, not yet ended |
-| `History` | allocation `is_active = 0` or its `end_date` has passed |
+| `Reserved` | active allocation on a Contract that is not signed |
+| `Active` | active, signed allocation that has not ended |
+| `History` | inactive allocation or an ended lease |
 
-## Profile, password and notification preferences
+Property details, invoices, orders, payments, meter readings and support
+tickets are always scoped to the caller's own Customers **and** the requested
+property/document. Client-supplied ownership, amounts and statuses are never
+trusted.
 
-There are **no portal specific profile/settings pages**. Everything that edits a
-Frappe document is handled by the generic doctype form, exactly like the desk and
-the nppos dashboard:
+## Bookings
 
-| Task | Portal path | Backing doctype |
-| --- | --- | --- |
-| Profile & contact details | `/app/user/<user id>` | `User` (+ linked `Contact`) |
-| Change password | `/app/user/<user id>` (Change Password section) | `User` |
-| Upload profile picture | `/app/user/<user id>` | `User.user_image` / `File` |
-| Notification preferences | `/app/notification-settings/<user id>` | `Notification Settings` |
+A portal booking is a draft `Utility Service Request` created for the caller's
+Customer. It carries the property row, lease dates and tenant notes.
 
-The user menu ("Account") and the dashboard both link to
-`/app/user/<user id>`, and the notifications feed links to
-`/app/notification-settings/<user id>`.
+- The unit stays publicly available until staff submit the request.
+- A second pending booking for the same unit is rejected; the tenant is sent to
+  the existing request.
+- Tenants can modify dates, extend or cancel a pending/current booking according
+  to the same ownership rules.
+- Submitting the request creates the Contract; signing it moves the unit from
+  `Reserved` to `Active`.
 
-Because `User` is a desk-only doctype, `/app/user/<user id>` resolves for users
-with the corresponding permissions (System Users, e.g. staff/administrators).
-A portal tenant without `User` read access is sent to the forbidden page by the
-global `PermissionGuard`; granting tenants access to their own `User` record
-(e.g. through a role permission with a user-permission restriction) is a
-configuration decision for a later phase.
+The portal booking form reads defaults from
+`get_booking_options`: property, monthly rent, deposit, lease dates and any
+pending booking.
 
-Password reset (forgot password), sign-up and login continue to use the standard
-Frappe endpoints listed above — they are not doctype forms.
+## Invoices, orders and payments
+
+`/invoices` lists every submitted, payable Sales Invoice and Sales Order of the
+signed-in Customer.
+
+- An invoice is paid for its outstanding amount.
+- A Sales Order is paid as an advance for its unbilled balance.
+- The portal asks the selected gateway controller for a checkout URL and
+  redirects the customer. It does **not** create Payment Entries or Payment
+  Requests itself; the gateway records the payment on the reference document.
+- A `Payment Gateway Account` must exist for the document's company. The demo
+  data does not create one.
+
+## Support tickets
+
+Customers raise standard ERPNext `Issue` documents from:
+
+- **a booking** (`create_support_issue`), or
+- **an active/reserved property** (`create_property_support_issue`).
+
+Each ticket stores `utility_property`, `utility_service_request` (when known),
+the Customer, the company and `via_customer_portal`. Replies are Comments on the
+Issue and are rendered with the document timeline. Status counts (open, replied,
+resolved) come from the Issue status.
+
+## Property details and related documents
+
+| Viewer | Sees |
+| --- | --- |
+| Guest / unrelated user | details of **available** units only |
+| Tenant of the unit (current or past) | details plus tenancy summary, account totals and related documents |
+| Anybody else | `PermissionError` → "occupied or reserved, not linked to your account" |
+
+Related documents are resolved through:
+
+| Document | Reached through |
+| --- | --- |
+| Meter Reading | `Meter Reading.property` |
+| Utility Service Request | header `utility_property` or `requested_properties` rows |
+| Sales Invoice | `Sales Invoice Item.meter_reading`, `Sales Invoice Meter Reading.meter_reading` or `utility_service_request` |
+| Sales Order | `Sales Order Item.meter_reading`, `Sales Order Meter Reading.meter_reading` or `utility_service_request` |
+| Payment Entry | `Payment Entry Reference` rows pointing at those invoices/orders |
 
 ## API surface
 
 | Endpoint | Guest | Purpose |
 | --- | --- | --- |
 | `utility_billing.api.portal.context.get_portal_context` | yes | session/role/capability bootstrap |
-| `utility_billing.api.portal.properties.get_my_properties` | no | properties of the signed in tenant |
-| `utility_billing.api.portal.property_details.get_property_details` | yes | a single property; own tenancy and documents when the unit is the caller's |
 | `utility_billing.api.properties.get_available_properties` | yes | public property browser |
-
-All other portal functionality (login, sign-up, password reset, password change,
-profile updates, notification preferences, file upload) is served by standard
-Frappe endpoints — either directly or through the generic `/app/:doctype` forms.
+| `utility_billing.api.portal.property_details.get_property_details` | yes | property details; own tenancy/documents when applicable |
+| `utility_billing.api.portal.properties.get_my_properties` | no | tenant allocations |
+| `utility_billing.api.portal.bookings.get_booking_options` | no | booking defaults and pending booking |
+| `utility_billing.api.portal.bookings.create_booking` | no | create a draft booking |
+| `utility_billing.api.portal.bookings.get_my_bookings` | no | current/history bookings |
+| `utility_billing.api.portal.bookings.modify_booking` | no | change pending/current booking dates |
+| `utility_billing.api.portal.bookings.extend_booking` | no | extend a booking |
+| `utility_billing.api.portal.bookings.cancel_booking` | no | cancel a booking |
+| `utility_billing.api.portal.support.get_property_support` | no | tickets for a property |
+| `utility_billing.api.portal.support.get_booking_support` | no | tickets for a booking |
+| `utility_billing.api.portal.support.get_support_issue` | no | one ticket and timeline |
+| `utility_billing.api.portal.support.create_support_issue` | no | raise from a booking |
+| `utility_billing.api.portal.support.create_property_support_issue` | no | raise from a property |
+| `utility_billing.api.portal.support.reply_to_support_issue` | no | customer reply |
+| `utility_billing.api.portal.payments.get_payment_gateways` | no | configured gateway accounts |
+| `utility_billing.api.portal.payments.get_customer_documents` | no | invoices, orders and totals |
+| `utility_billing.api.portal.payments.initiate_payment` | no | gateway checkout URL |
 
 ## Generic doctype browsing (`/app` routes)
 
-The portal reuses the nppos dashboard approach: the generic `DocTypeList` /
-`DocTypeForm` components (`src/components/doctype`, `src/components/fields`) are
-driven entirely by standard Frappe endpoints, and are addressed through
-slug-based routes.
+The portal reuses metadata-driven `DocTypeList` / `DocTypeForm` components for
+`/app/:doctype(/:id)` pages. They use standard Frappe endpoints:
 
-| Route | Page | Standard endpoints used |
-| --- | --- | --- |
-| `/app/:doctype` | `DocTypeListPage` → `DocTypeList` | `frappe.desk.form.load.getdoctype`, `frappe.desk.reportview.get`, `frappe.desk.reportview.get_count` |
-| `/app/:doctype/:id` (`new` for a blank form) | `DocTypeFormPage` → `DocTypeForm` | `frappe.desk.form.load.getdoc`, `frappe.client.save`, `frappe.desk.form.save.savedocs`, `frappe.model.workflow.*`, `frappe.desk.search.search_link` |
+- `frappe.desk.form.load.getdoctype`
+- `frappe.desk.reportview.get` and `get_count`
+- `frappe.desk.form.load.getdoc`
+- `frappe.client.save` / `frappe.desk.form.save.savedocs`
+- `frappe.desk.search.search_link`
+- `frappe.model.workflow.*`
 
-Slug ↔ doctype mapping lives in `src/lib/doctype-map.ts` (e.g.
-`/app/utility-property`, `/app/contract`, `/app/user/Administrator`), with a
-best-effort fallback for any doctype that is not explicitly mapped.
+Slug mapping lives in `src/lib/doctype-map.ts`. Users without permission are
+redirected by `PermissionGuard` to the forbidden page.
 
-`DocType` records are only readable by desk users, so the command search only
-offers the doctype lookup to System Users; everything else still works for any
-user the individual doctype permissions allow. The user menu links a System
-User's "Account" entry to `/app/user/<self>`, while tenants keep the portal
-profile page. Any user who opens a page they cannot read is redirected by the
-global `PermissionGuard` (403 → forbidden page).
+## Notifications and appearance
 
-## Notifications
-
-* **Feed** – `/settings/notifications` reads the standard
-  `frappe.desk.doctype.notification_log.notification_log.get_notification_logs`
-  endpoint through `NotificationProvider` (`src/contexts/notification-context.tsx`)
-  and renders the unread count, the list and a detail panel.
-* **Badge** – the user menu shows the unread count from the same provider.
-* **Preferences** – `/app/notification-settings/<user id>` (the user's own
-  `Notification Settings` record, edited through the generic doctype form); the
-  feed's *Preferences* button links straight to it.
-
-## Command search
-
-`⌘K` / the header search box opens the command palette
-(`src/components/command-search.tsx`), which searches:
-
-* **App Pages** – pages marked `searchable: true` in `src/config/routes.tsx`
-  (the route tree is walked at runtime, so no list needs maintaining);
-* **Doctypes** – `New X` / `X List` shortcuts into the `/app/:doctype` routes
-  (System Users only, see above);
-* **Global results** – records via `frappe.desk.reportview.get`.
-
-## Theme customizer
-
-The portal ships the same theme customizer as the nppos dashboard
-(`src/components/theme-customizer/`):
-
-* mounted by `BaseLayout` and opened from the user menu ("Customize Theme");
-* **non modal** – the panel has no dimming overlay and does not lock scrolling,
-  so the page behind stays visible and usable as a live preview; clicking
-  outside the panel (or pressing Escape) closes it, and the X button is in the
-  header;
-* **Theme** tab – built-in property presets, the shadcn and Tweakcn preset
-  families, per-mode colour and gradient editing, radius, appearance
-  (light/dark) and theme import;
-* **Layout** tab – sidebar variant, collapsible mode and side (drives
-  `useSidebarConfig` and `useSidebar`);
-* selections (preset, radius, imported theme) are persisted by the customizer
-  itself in `localStorage` under `rental-portal:theme` and reapplied on load.
-
-### Property theme engine
-
-Theming lives in three layers:
-
-| Layer | Location | Responsibility |
-| --- | --- | --- |
-| Catalogue | `src/config/theme-token-groups.ts` | every token the editor exposes, grouped (Brand, Background & Surfaces, Sidebar, States, Charts) plus which gradient surfaces belong to each group |
-| Engine | `src/utils/theme-tokens.ts`, `theme-storage.ts`, `theme-gradients.ts` | merging preset tokens with overrides, `localStorage` persistence (with legacy migration) and the CSS gradient builders |
-| Runtime | `src/contexts/theme-editor-context.tsx` + `src/hooks/use-theme-manager.ts` | the React state, and the low level writer of inline CSS variables |
-
-`ThemeEditorProvider` is mounted in `App.tsx` above the router, so every page
-(portal shell, auth pages, error pages) is themed – not only pages that render
-`BaseLayout`.
-
-**Presets.** `src/utils/estate-presets/` holds one file per built-in theme plus
-`preset-factory.ts`, which fills in the tokens every theme shares. `index.ts`
-orders the sixteen presets for the customizer and names `DEFAULT_ESTATE_THEME`
-(`estate-navy`), applied to a visitor who has never chosen a theme. The picker
-renders them as miniature interfaces in a searchable two column grid.
-**Presets are flat**: no preset contains a gradient.
-
-| Preset | Palette |
-| --- | --- |
-| Estate Navy | navy + gold (portal default) |
-| Nairobi Slate | deep blue + earth gold |
-| Emerald Estate | forest green + brass |
-| Obsidian Gold | near-black + gold |
-| Azure Property | product blue + teal |
-| Indigo Estate | enterprise indigo + cyan |
-| Terracotta Estate | warm architectural orange |
-| Modern Graphite | neutral graphite + fresh green |
-| Steel Blueprint | industrial steel + safety orange |
-| Mocha Estate | mocha + clay earth tones |
-| Burgundy Reserve | deep wine + brass |
-| Arctic Mint | mint + cool slate |
-| Oceanic | deep cyan + sky |
-| Midnight Aurora | violet + cyan |
-| Rose Quartz | rose + violet |
-| Cyber Lime | acid lime on charcoal |
-
-Each preset defines a light **and** a dark variant of every token the editor
-exposes: background, card, popover, primary, secondary, muted, accent, border,
-input, ring, the five chart colours, all eight sidebar tokens and the radius.
-
-**Per-mode editing.** Colours are tuned per mode: the editor's Light/Dark switch
-follows the app appearance but can be flipped to tune the other mode, and shows
-the resolved value of the mode being edited. Edits are stored as *overrides*
-(`overrides.light`, `overrides.dark` in `localStorage`), layered on top of the
-selected preset, and are diffed against the preset so a value identical to the
-preset is not stored. Applying another preset clears the overrides, and
-"Portal default colours" drops the preset entirely to use `src/index.css`.
-
-**Gradients are opt-in.** A fresh install is completely flat; gradients are
-added from the editor and stored as overrides. `buildGradient(surface, variant)`
-generates the blends (sheen, diagonal, aurora, mesh) from the surface's own
-tokens via `color-mix()` and `var()`, so one gradient value blends correctly in
-both modes – which is why the editor writes a gradient to **both** modes at once
-instead of asking for it twice. A free text field accepts any custom CSS
-gradient. `src/index.css` consumes them: `--background-gradient` on `body` and
-the sidebar inset, `--sidebar-gradient` on the sidebar surfaces, and
-`--primary-gradient` through the `.bg-brand-gradient` class used by the brand
-panel, the sidebar mark and the customizer trigger.
-
-**Semantic state colours** (`--success`, `--warning`, `--info`, and their
-foregrounds) are editable like any other token but default to `src/index.css`,
-because they carry meaning rather than branding.
-
-**Surface polish.** `src/index.css` carries a small, theme aware depth layer so
-components need no per-element classes: cards get a soft shadow mixed from
-`--foreground`, clickable cards (property grid and list rows) lift on hover, the
-inset panel reads as a raised surface, sidebar rows transition colour and nudge
-towards the content, the active row grows an accent indicator bar (it uses
-`--sidebar-ring`, so it is gold on Estate Navy), and page content eases in on
-navigation. Every transform and animation is switched off under
-`prefers-reduced-motion: reduce`.
-
-Two small deviations from nppos: the storage key is portal-specific (nppos uses
-`nppos:theme`), and the customizer is mounted *inside* `SidebarProvider` because
-its Layout tab calls `useSidebar()`, which throws outside a provider. nppos also
-keeps a second, partial theme persistence in `app-layout.tsx` that writes the
-same key with fewer fields; that duplicate is intentionally not copied here.
-
-## Property browsing and "My Properties"
-
-Both the public browser (`/properties`) and the tenant view (`/my-properties`)
-render the same presentation components from `src/components/properties/`:
-
-| Component | Purpose |
-| --- | --- |
-| `PropertyCard` | grid card: cover image, status badge, title, specs, amenity tags |
-| `PropertyRow` | compact list row: thumbnail, title, specs, meta |
-| `PropertyMedia` | cover image with lazy loading and **initials placeholder** (e.g. "Pinnacle Tower - 1A" → `PT`) when a property has no image or the image fails to load |
-| `LayoutToggle` | grid / list switcher |
-| `PropertyStatusBadge` | availability (`Available`, `Occupied`, `Reserved`, `Under Maintenance`) and tenancy (`Active`, `Reserved`, `History`) badges |
-
-Each page maps its own payload onto the shared `PropertyView`
-(`toAvailablePropertyView`, `toTenantPropertyView`), so cards and rows are
-defined once.
-
-The chosen layout is remembered per page in `sessionStorage` through
-`usePageState` (key `layout`), i.e. `/properties` and `/my-properties` keep
-independent preferences.
-
-The guest listing endpoint only selects descriptive fields — asset and purchase
-information (`asset_category`, `purchase_date`, `net_purchase_amount`) is not
-exposed publicly.
-
-## Property details and related documents
-
-`/properties/<unit>` renders the property details page, served by
-`utility_billing.api.portal.property_details.get_property_details`.
-
-| Viewer | Sees |
-| --- | --- |
-| Guest / any other user | details of **available** units only: gallery, description, amenities, specifications and a **Book Now** button (booking itself is a later phase) |
-| Tenant of the unit (current or past allocation) | everything above **plus** the tenancy summary (contract, signed state, period), the account totals (invoiced / paid / outstanding) and every related document |
-| Anybody else | `PermissionError` → the page shows "occupied or reserved, not linked to your account" |
-
-Related documents are resolved for the caller's own Customers **and** the
-requested property:
-
-| Document | Reached through |
-| --- | --- |
-| Meter Reading | `Meter Reading.property` |
-| Utility Service Request | `utility_property` header or `requested_properties` child rows |
-| Sales Invoice | `Sales Invoice Item.meter_reading`, `Sales Invoice Meter Reading.meter_reading` or `utility_service_request` |
-| Sales Order | `Sales Order Item.meter_reading`, `Sales Order Meter Reading.meter_reading` or `utility_service_request` |
-| Payment Entry | `Payment Entry Reference` rows pointing at those invoices/orders |
-
-`Sales Invoice` and `Sales Order` have no property field of their own, which is
-why the meter reading and service request links are used. The queries live in
-`api/portal/property_documents.py` (meter readings, service requests) and
-`api/portal/property_vouchers.py` (orders, invoices, payments, totals).
+- Notification feed and unread badge use the standard notification log.
+- Preferences are handled by `/app/notification-settings/<user>`.
+- The theme customiser supports light/dark mode, 16 estate presets, per-mode
+  token overrides, opt-in gradients, radius, sidebar variant and layout.
+- Theme selections persist in `localStorage` under `rental-portal:theme`.
 
 ## Frontend structure
 
 ```
 rental-portal/src
-├── contexts/portal-context.tsx   # portal role, linked customer, capabilities
-├── contexts/user-context.tsx     # session user (from the Frappe boot) + logout
-├── contexts/notification-context.tsx
-├── lib/portal.ts                 # boot accessors and role/capability helpers
-├── lib/doctype-map.ts            # doctype slug ↔ name mapping
-├── lib/frappe-service.ts         # thin wrappers around frappe-react-sdk
-├── types/portal.ts               # shared portal types
-├── components/doctype/           # generic list/form UI built on standard APIs
-├── components/fields/            # Frappe field renderers
-├── components/properties/        # property card/row/media/layout switcher
-├── components/command-search.tsx # command palette
-├── components/theme-customizer/  # theme + sidebar layout customizer
-└── app/                          # pages (auth, dashboard, properties, settings, doctype, ...)
+├── app/                          # auth, dashboard, properties, bookings, invoices, support pages
+├── components/
+│   ├── properties/               # card, row, media, status and layout components
+│   ├── payments/                 # pay button and gateway dialog
+│   ├── support/                  # support list/create/detail/reply/timeline
+│   ├── doctype/ + fields/        # generic Frappe metadata renderers
+│   ├── theme-customizer/         # presets, colours, gradients, layout
+│   └── ui/                       # shared primitives
+├── config/routes.tsx             # route tree and command-search metadata
+├── contexts/                     # user, portal role, notifications
+├── lib/                          # Frappe helpers, doctype slugs, formatting
+└── types/                        # shared payloads
 ```
+
+## Demo accounts
+
+The demo generator creates 12 Website Users linked to Customers. See
+[Demo Data](./Demo-Data.md) for every email. All demo accounts use the password
+`Demo@12345`; use them for staging and training only.
 
 ## Tests
 
-`utility_billing/utility_billing/tests/test_portal_roles.py` covers the role,
+`utility_billing/utility_billing/tests/test_portal_roles.py` covers role,
 capability and allocation classification rules:
 
 ```bash

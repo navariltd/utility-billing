@@ -43,6 +43,8 @@ SALES_ORDER_FIELDS = (
 	"transaction_date",
 	"delivery_date",
 	"grand_total",
+	"advance_paid",
+	"per_billed",
 	"status",
 	"docstatus",
 	"currency",

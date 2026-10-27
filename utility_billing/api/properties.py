@@ -1,5 +1,4 @@
 import frappe
-from frappe import _
 from frappe.query_builder import DocType, Order
 
 

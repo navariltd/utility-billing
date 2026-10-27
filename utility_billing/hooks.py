@@ -134,13 +134,13 @@ utility_demo_master_doctypes = [
 	"insurance",
 	"issue_type",
 	"item_group",
+	"uom",
 	"item",
 	"price_list",
 	"utility_tariff_block",
 	"item_price",
 	"location",
 	"serial_no",
-	"uom",
 	"utility_property_feature_type",
 	"utility_property_feature",
 	"utility_property_unit_type",
@@ -238,6 +238,7 @@ scheduler_events = {
 		"utility_billing.utility_billing.overrides.server.auto_repeat.run_all_due_auto_repeats",
 		"utility_billing.utility_billing.utils.auto_repeat.create_item_price_sales_invoices",
 		"utility_billing.utility_billing.utils.property_status.release_ended_leases",
+		"utility_billing.api.portal.notifications.send_payment_reminders",
 	],
 	# 	"hourly": [
 	# 		"utility_billing.tasks.hourly"

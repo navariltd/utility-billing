@@ -25,6 +25,7 @@ import { PropertyDocumentsView } from "./components/property-documents";
 import { PropertyGallery } from "./components/property-gallery";
 import { PropertyOverview } from "./components/property-overview";
 import { PropertySidePanel } from "./components/property-side-panel";
+import { PropertySupport } from "./components/property-support";
 
 interface PropertyDetailsResponse {
   message: PropertyDetailsPayload;
@@ -89,7 +90,7 @@ export default function PropertyDetailsPage() {
     );
   }
 
-  const { property: details, documents, is_mine } = payload;
+  const { property: details, documents, is_mine, tenancy } = payload;
 
   return (
     <BaseLayout
@@ -112,6 +113,14 @@ export default function PropertyDetailsPage() {
               <h2 className="text-lg font-semibold">Related documents</h2>
               <PropertyDocumentsView documents={documents} />
             </div>
+          ) : null}
+
+          {tenancy?.is_current ? (
+            <PropertySupport
+              property={details.name}
+              reference={tenancy.contract}
+              propertyName={details.property_name}
+            />
           ) : null}
         </div>
 
