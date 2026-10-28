@@ -9,6 +9,8 @@ Invoice item grid uses when a Deferred Posting Date is set on a line.
 
 import frappe
 from erpnext.stock.get_item_details import get_price_list_rate_for
+from frappe.query_builder import Order
+from frappe.query_builder.functions import IfNull
 from frappe.utils import cint, flt
 
 from utility_billing.utility_billing.utils.price_list import resolve_price_list
@@ -25,6 +27,7 @@ def get_rate_for_date(
 	conversion_factor: float = 1,
 	plc_conversion_rate: float = 1,
 	conversion_rate: float = 1,
+	service_request: str | None = None,
 ) -> float | None:
 	"""Return the selling rate of an item valid on a date.
 
@@ -43,6 +46,8 @@ def get_rate_for_date(
 		conversion_factor: Stock UOM to UOM conversion factor of the line.
 		plc_conversion_rate: Price list currency to company currency rate.
 		conversion_rate: Transaction currency to company currency rate.
+		service_request: When given, only the prices this Utility Service
+			Request owns are considered, whatever their customer.
 
 	Returns:
 		The rate in the currency of the transaction, or None when no Item Price
@@ -69,8 +74,43 @@ def get_rate_for_date(
 		}
 	)
 
-	price_list_rate = get_price_list_rate_for(context, item_code)
+	price_list_rate = (
+		get_request_price(context, item_code, service_request)
+		if service_request
+		else get_price_list_rate_for(context, item_code)
+	)
 	if price_list_rate is None:
 		return None
 
 	return flt(price_list_rate, 6) * flt(plc_conversion_rate, 6) / (flt(conversion_rate, 6) or 1)
+
+
+def get_request_price(context: frappe._dict, item_code: str, service_request: str) -> float | None:
+	"""Return the rate of the Item Price a request owns that is valid on the context date.
+
+	Mirrors ERPNext's lookup (UOM match or blank, latest ``valid_from`` first and a
+	UOM conversion when the price is not UOM dependant), restricted to one request.
+	"""
+	ip = frappe.qb.DocType("Item Price")
+	date = context.transaction_date
+	rows = (
+		frappe.qb.from_(ip)
+		.select(ip.price_list_rate, ip.uom)
+		.where(ip.item_code == item_code)
+		.where(ip.price_list == context.price_list)
+		.where(ip.utility_service_request == service_request)
+		.where(IfNull(ip.uom, "").isin(["", context.uom]))
+		.where(IfNull(ip.valid_from, "2000-01-01") <= date)
+		.where(IfNull(ip.valid_upto, "2500-12-31") >= date)
+		.orderby(ip.valid_from, order=Order.desc)
+		.limit(1)
+	).run(as_dict=True)
+
+	if not rows:
+		return None
+
+	price = rows[0]
+	if price.uom == context.uom or context.price_list_uom_dependant:
+		return price.price_list_rate
+
+	return flt(price.price_list_rate * flt(context.conversion_factor))

@@ -36,7 +36,9 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		factories.delete_prices(OTHER_ITEM, PRICE_LIST)
 
 		self.service_request = self._create_request([PROPERTY])
-		self.price = self._create_price(TEST_ITEM, 1000)
+		self.price = self._create_price(
+			TEST_ITEM, 1000, service_request=self.service_request.name
+		)
 
 	def tearDown(self):
 		factories.delete_prices(TEST_ITEM, PRICE_LIST)
@@ -70,7 +72,7 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 
 		return request
 
-	def _create_price(self, item_code, rate, customer=None):
+	def _create_price(self, item_code, rate, customer=None, service_request=None):
 		"""Insert one Item Price for the given item and return its name."""
 		return item_price_utils.insert_item_price(
 			item_price_utils.ScheduleOptions(
@@ -81,7 +83,10 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 				frequency="Yearly",
 			),
 			item_price_utils.ScheduleLine(
-				item_code=item_code, customer=customer, base_rate=rate
+				item_code=item_code,
+				customer=customer,
+				base_rate=rate,
+				service_request=service_request,
 			),
 			RatePeriod(
 				valid_from="2026-01-01",

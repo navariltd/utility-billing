@@ -353,7 +353,6 @@ frappe.ui.form.on("Utility Service Request Item", {
 		frm.script_manager.copy_from_first_row("items", row, [
 			"income_account",
 			"discount_account",
-			"cost_center",
 		]);
 	},
 
@@ -499,7 +498,7 @@ function sync_items_from_properties(frm) {
 
 	frappe.call({
 		method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.get_service_items_for_properties",
-		args: { properties, price_list: frm.doc.price_list },
+		args: { properties, price_list: frm.doc.price_list, company: frm.doc.company },
 		callback: function (response) {
 			if (!response.message) return;
 
@@ -2300,8 +2299,9 @@ function build_summary_period_row($block) {
 				<input type="number" step="0.01" min="0" class="form-control input-sm uips-input uips-rate">
 			</td>
 			<td class="text-right">
-				<button type="button" class="btn btn-xs btn-link uips-remove-row">
-					<i class="fa fa-times"></i>
+				<button type="button" class="btn btn-xs btn-link uips-remove-row"
+					title="${__("Remove period")}" aria-label="${__("Remove period")}">
+					${frappe.utils.icon("x", "sm")}
 				</button>
 			</td>
 		</tr>`,

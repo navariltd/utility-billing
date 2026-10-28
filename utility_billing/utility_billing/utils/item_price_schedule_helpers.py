@@ -148,6 +148,7 @@ def build_lines(
     customer: str | None,
     base_rates: dict[str, float],
     manual_schedules: dict[str, list[RatePeriod]] | None = None,
+    service_request: str | None = None,
 ) -> list[item_price_utils.ScheduleLine]:
     """Build one schedule line per property service item.
 
@@ -157,6 +158,7 @@ def build_lines(
         base_rates: Mapping of property name to the first period rate.
         manual_schedules: Hand edited periods of a property, replacing
             generation for that line.
+        service_request: Utility Service Request that will own the prices.
 
     Returns:
         Schedule lines for every property.
@@ -179,6 +181,7 @@ def build_lines(
                 base_rate=base_rate,
                 utility_property=property_name,
                 manual_periods=manual,
+                service_request=service_request,
             )
         )
 

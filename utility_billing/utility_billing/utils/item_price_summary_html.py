@@ -150,7 +150,9 @@ def _render_row(price: dict, editable: bool) -> str:
         "</td>"
         "<td class='text-right'>"
         "<button type='button' class='btn btn-xs btn-link uips-remove-row'"
-        f" title=\"{_('Remove period')}\"><i class='fa fa-times'></i></button>"
+        f" title=\"{_('Remove period')}\" aria-label=\"{_('Remove period')}\">"
+        "<svg class='icon icon-sm' aria-hidden='true'><use href='#icon-x'></use></svg>"
+        "</button>"
         "</td>"
         "</tr>"
     )

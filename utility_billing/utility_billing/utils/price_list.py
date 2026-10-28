@@ -4,11 +4,13 @@ A request needs a price list so item rates and the rent schedule can resolve.
 The value is taken from, in order:
 
 1. the request itself, when one is already set;
-2. the customer's ``default_price_list``;
-3. the ``Default Price List`` configured in Utility Billing Settings.
+2. the customer's default price list, then its Customer Group's;
+3. the ``Default Price List`` configured in Utility Billing Settings;
+4. the selling price list of Selling Settings, as ERPNext uses on invoices.
 """
 
 import frappe
+from erpnext.accounts.party import get_default_price_list
 
 
 def resolve_price_list(customer: str | None = None) -> str | None:
@@ -21,14 +23,15 @@ def resolve_price_list(customer: str | None = None) -> str | None:
         The resolved price list, or ``None`` when none is configured.
     """
     if customer:
-        customer_price_list = frappe.db.get_value(
-            "Customer", customer, "default_price_list"
+        customer_price_list = get_default_price_list(
+            frappe.get_cached_doc("Customer", customer)
         )
         if customer_price_list:
             return customer_price_list
 
     return (
         frappe.db.get_single_value("Utility Billing Settings", "default_price_list")
+        or frappe.db.get_single_value("Selling Settings", "selling_price_list")
         or None
     )
 

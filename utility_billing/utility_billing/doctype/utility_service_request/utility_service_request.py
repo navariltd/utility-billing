@@ -11,6 +11,11 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
+from utility_billing.utility_billing.utils.cost_center import (
+	fill_request_item_cost_centers,
+	resolve_primary_cost_center,
+)
+from utility_billing.utility_billing.utils.item_prices import delete_request_prices
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
@@ -27,11 +32,13 @@ class UtilityServiceRequest(Document):
 		self.validate_contract_dates()
 		self.validate_child_items()
 		ensure_service_items_for_properties(self)
+		fill_request_item_cost_centers(self)
 
 	def before_update_after_submit(self):
 		# Re-run validation logic when updating after submission
 		self.validate_contract_dates()
 		self.validate_child_items()
+		fill_request_item_cost_centers(self)
 		validate_no_overlapping_leases(self)
 
 	def before_submit(self):
@@ -45,6 +52,9 @@ class UtilityServiceRequest(Document):
 		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
 		if settings.create_customer_from_utility_service_request_on_submit:
 			make_customer(self.name)
+
+	def on_cancel(self):
+		delete_request_prices(self.name)
 
 	def validate_items(self):
 		"""Fill the items table from the bill structure when it is empty.
@@ -419,7 +429,7 @@ def update_request_status(request_name):
 
 @frappe.whitelist()
 @frappe.whitelist()
-def get_service_items_for_properties(properties, price_list=None):
+def get_service_items_for_properties(properties, price_list=None, company=None):
 	"""Return the rent billing item of each property, ready for the items table.
 
 	The property service item is created on demand when auto creation is
@@ -428,6 +438,7 @@ def get_service_items_for_properties(properties, price_list=None):
 	Args:
 	    properties: JSON list or list of ``Utility Property`` names.
 	    price_list: Optional price list used to resolve each item's rate.
+	    company: Optional company used to resolve each item's cost center.
 
 	Returns:
 	    One entry per resolvable property, holding the item details plus the
@@ -446,6 +457,8 @@ def get_service_items_for_properties(properties, price_list=None):
 
 		item_details = get_item_details(item_code, price_list)
 		item_details["utility_property"] = property_name
+		if company:
+			item_details["cost_center"] = resolve_primary_cost_center(property_name, item_code, company)
 		details.append(item_details)
 
 	return details
