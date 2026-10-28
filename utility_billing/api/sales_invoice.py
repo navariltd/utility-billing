@@ -13,6 +13,7 @@ from utility_billing.utility_billing.utils.service_item import (
 	get_service_item_of_property,
 )
 from utility_billing.utility_billing.utils.utility_item_classifier import (
+	get_primary_items,
 	get_request_lines,
 	match_error_message,
 	match_requests,
@@ -30,6 +31,7 @@ def get_line_rate(
 	conversion_factor: float | None = None,
 	plc_conversion_rate: float | None = None,
 	conversion_rate: float | None = None,
+	utility_service_request: str | None = None,
 ) -> float | None:
 	"""Return the rate of an item valid on a date.
 
@@ -46,11 +48,21 @@ def get_line_rate(
 		conversion_factor: Stock UOM to UOM conversion factor of the line.
 		plc_conversion_rate: Price list currency to company currency rate.
 		conversion_rate: Transaction currency to company currency rate.
+		utility_service_request: Request linked to the invoice. Under the Item
+			Price approach its primary items are priced from its own prices only.
 
 	Returns:
 		The rate in the currency of the transaction, or None when no Item Price
 		covers the item, the customer and the date.
 	"""
+	service_request = (
+		utility_service_request
+		if utility_service_request
+		and is_item_price_approach()
+		and item_code in get_primary_items(utility_service_request)
+		else None
+	)
+
 	return get_rate_for_date(
 		item_code,
 		posting_date,
@@ -61,6 +73,7 @@ def get_line_rate(
 		conversion_factor=conversion_factor or 1,
 		plc_conversion_rate=plc_conversion_rate or 1,
 		conversion_rate=conversion_rate or 1,
+		service_request=service_request,
 	)
 
 
@@ -100,7 +113,10 @@ def get_line_item(utility_property: str) -> str | None:
 
 @frappe.whitelist()
 def match_utility_service_requests(
-	customer: str, item_codes: list | str, new_item_code: str | None = None
+	customer: str,
+	item_codes: list | str,
+	new_item_code: str | None = None,
+	billing_dates: dict | str | None = None,
 ) -> dict:
 	"""Return the Utility Service Requests able to govern an invoice's utility lines.
 
@@ -108,6 +124,8 @@ def match_utility_service_requests(
 		customer: Customer of the invoice.
 		item_codes: Item codes on the invoice; non utility items are ignored.
 		new_item_code: Item just added, named in a blocking message.
+		billing_dates: Optional mapping of item code to its billing dates, used to
+			pick the one request whose lease covers them when several match.
 
 	Returns:
 		``applies`` (False when the invoice has no utility item or rates are not
@@ -120,7 +138,8 @@ def match_utility_service_requests(
 	frappe.has_permission("Utility Service Request", "read", throw=True)
 
 	codes = frappe.parse_json(item_codes) if isinstance(item_codes, str) else item_codes
-	match = match_requests(customer, codes)
+	dates = frappe.parse_json(billing_dates) if isinstance(billing_dates, str) else billing_dates
+	match = match_requests(customer, codes, dates)
 	if not match.status:
 		return {"applies": False}
 

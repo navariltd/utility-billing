@@ -7,7 +7,8 @@ grouped by property as an editable table. It is used by the HTML field on
 
 Grouping works off the property's **service item**: each property owns an item
 named after it, so an Item Price is attributed to a property by its
-``item_code``. No extra tagging on ``Item Price`` is required.
+``item_code``, and to the request that created it by its
+``utility_service_request``.
 
 Nothing is written while typing: the surrounding page reads the inputs and
 saves them through ``item_price_summary_actions.save_item_price_schedule``.
@@ -44,17 +45,20 @@ def get_property_item_codes(properties: list[str]) -> dict[str, str]:
     }
 
 
-def get_created_prices(item_code: str, price_list: str | None = None) -> list[dict]:
-    """Return the Item Prices of an item, ordered by date.
+def get_created_prices(
+    item_code: str, service_request: str, price_list: str | None = None
+) -> list[dict]:
+    """Return the Item Prices a request created for an item, ordered by date.
 
     Args:
         item_code: Item whose prices are read.
+        service_request: Utility Service Request that owns the prices.
         price_list: Optional price list filter.
 
     Returns:
         Item Price rows with the item, customer, dates and rate.
     """
-    filters = {"item_code": item_code}
+    filters = {"item_code": item_code, "utility_service_request": service_request}
     if price_list:
         filters["price_list"] = price_list
 
@@ -76,6 +80,7 @@ def get_created_prices(item_code: str, price_list: str | None = None) -> list[di
 
 def build_schedule_html(
     properties: list[str],
+    service_request: str,
     price_list: str | None = None,
     property_periods: dict | None = None,
     customer: str | None = None,
@@ -85,6 +90,7 @@ def build_schedule_html(
 
     Args:
         properties: Properties to render.
+        service_request: Utility Service Request whose prices are shown.
         price_list: Optional price list filter.
         property_periods: Optional mapping of property name to its
             ``(start_date, end_date)`` contract period, used by the editor to
@@ -115,7 +121,11 @@ def build_schedule_html(
                 "customer": customer,
                 "start_date": start_date,
                 "end_date": end_date,
-                "prices": get_created_prices(item_code, price_list) if item_code else [],
+                "prices": (
+                    get_created_prices(item_code, service_request, price_list)
+                    if item_code
+                    else []
+                ),
             }
         )
 

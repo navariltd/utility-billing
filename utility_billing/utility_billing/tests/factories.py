@@ -120,3 +120,68 @@ def delete_prices(item_code: str, price_list: str) -> None:
         price_list: Price list to clear.
     """
     frappe.db.delete("Item Price", {"item_code": item_code, "price_list": price_list})
+
+
+def remove_price_list_fallbacks(test_case, customer: str) -> None:
+    """Clear every price list a request could fall back to, for one test.
+
+    The customer's default, its Customer Group's, the Utility Billing
+    Settings default and the Selling Settings price list are emptied and
+    restored when the test finishes.
+
+    Args:
+        test_case: Running test, used to register the restore.
+        customer: Customer whose own and group default are cleared.
+    """
+    group = frappe.db.get_value("Customer", customer, "customer_group")
+    saved = (
+        frappe.db.get_value("Customer", customer, "default_price_list"),
+        frappe.db.get_value("Customer Group", group, "default_price_list") if group else None,
+        frappe.db.get_single_value("Utility Billing Settings", "default_price_list"),
+        frappe.db.get_single_value("Selling Settings", "selling_price_list"),
+    )
+
+    def set_sources(customer_list, group_list, settings_list, selling_list):
+        frappe.db.set_value("Customer", customer, "default_price_list", customer_list)
+        if group:
+            frappe.db.set_value("Customer Group", group, "default_price_list", group_list)
+            frappe.clear_document_cache("Customer Group", group)
+        frappe.db.set_single_value(
+            "Utility Billing Settings", "default_price_list", settings_list
+        )
+        frappe.db.set_single_value("Selling Settings", "selling_price_list", selling_list)
+        frappe.clear_document_cache("Customer", customer)
+        frappe.clear_cache(doctype="Utility Billing Settings")
+        frappe.clear_cache(doctype="Selling Settings")
+
+    set_sources(None, None, None, None)
+    test_case.addCleanup(set_sources, *saved)
+
+
+def ensure_cost_center(cost_center_name: str, company: str) -> str:
+    """Create a leaf cost center under the company's root if it does not exist.
+
+    Args:
+        cost_center_name: Cost center name without the company abbreviation.
+        company: Company the cost center belongs to.
+
+    Returns:
+        The full cost center name.
+    """
+    abbr = frappe.db.get_value("Company", company, "abbr")
+    name = f"{cost_center_name} - {abbr}"
+    if not frappe.db.exists("Cost Center", name):
+        frappe.get_doc(
+            {
+                "doctype": "Cost Center",
+                "cost_center_name": cost_center_name,
+                "company": company,
+                "parent_cost_center": frappe.db.get_value(
+                    "Cost Center",
+                    {"company": company, "is_group": 1, "parent_cost_center": ["is", "not set"]},
+                ),
+                "is_group": 0,
+            }
+        ).insert(ignore_permissions=True)
+
+    return name

@@ -143,3 +143,68 @@ def _default_parent_cost_center(settings, company: str | None) -> str | None:
 def get_settings():
 	"""Return the cached Utility Billing Settings document."""
 	return frappe.get_cached_doc("Utility Billing Settings")
+
+
+def resolve_primary_cost_center(property_name: str, item_code: str, company: str) -> str | None:
+	"""Return the cost center a primary request row of ``property_name`` defaults to.
+
+	The property's own cost center, then the service item's Default Selling Cost
+	Center for the company, then the company default. A cost center of another
+	company is never used.
+	"""
+	candidates = (
+		frappe.db.get_value("Utility Property", property_name, "cost_center"),
+		frappe.db.get_value(
+			"Item Default",
+			{"parent": item_code, "parenttype": "Item", "company": company},
+			"selling_cost_center",
+		),
+		frappe.get_cached_value("Company", company, "cost_center"),
+	)
+	for cost_center in candidates:
+		if cost_center and frappe.get_cached_value("Cost Center", cost_center, "company") == company:
+			return cost_center
+
+	return None
+
+
+def fill_request_item_cost_centers(doc) -> None:
+	"""Default the cost center of each primary row of a Utility Service Request.
+
+	A primary row bills a requested property's service item. It is matched by its
+	own ``utility_property``, else by item when exactly one requested property owns
+	that item; a service item shared by several is not guessed and stays blank.
+	Rows with a cost center, secondary utility items, meter rows and other items
+	are left to ERPNext's normal resolution.
+	"""
+	if not doc.get("company"):
+		return
+
+	requested = [row.utility_property for row in doc.get("requested_properties") or [] if row.utility_property]
+	if not requested:
+		return
+
+	service_items = dict(
+		frappe.get_all(
+			"Utility Property",
+			filters={"name": ["in", requested]},
+			fields=["name", "service_item"],
+			as_list=True,
+		)
+	)
+	owners = {}
+	for property_name, item_code in service_items.items():
+		if item_code:
+			owners.setdefault(item_code, []).append(property_name)
+
+	for row in doc.get("items") or []:
+		if row.get("cost_center") or not row.item_code:
+			continue
+
+		property_name = row.get("utility_property")
+		if service_items.get(property_name) != row.item_code:
+			candidates = owners.get(row.item_code) or []
+			property_name = candidates[0] if len(candidates) == 1 else None
+
+		if property_name:
+			row.cost_center = resolve_primary_cost_center(property_name, row.item_code, doc.company)

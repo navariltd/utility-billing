@@ -105,26 +105,32 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
         )
 
     for name in deleted:
-        _delete_price(name, allowed_items, result)
+        _delete_price(name, allowed_items, service_request.name, result)
 
-    options = _build_options(service_request, item_code, start_date, end_date)
+    new_rows = [row for row in rows if not row.get("name")]
+    # Only inserting needs a price list; dates, rates and removals do not.
+    options = (
+        _build_options(service_request, item_code, start_date, end_date)
+        if new_rows
+        else None
+    )
 
     # Updates run before inserts so a split period frees its dates for the new
     # row instead of being seen as an overlap.
     for row in rows:
         if row.get("name"):
-            _update_price(row, allowed_items, result)
+            _update_price(row, allowed_items, service_request.name, result)
 
-    for row in rows:
-        if not row.get("name"):
-            _create_price(
-                options,
-                row,
-                item_code,
-                property_name,
-                row.get("customer") or service_request.customer,
-                result,
-            )
+    for row in new_rows:
+        _create_price(
+            options,
+            row,
+            item_code,
+            property_name,
+            row.get("customer") or service_request.customer,
+            service_request.name,
+            result,
+        )
 
 
 def _earliest_start(rows: list[dict]):
@@ -207,7 +213,13 @@ def _build_options(
     )
 
     if not price_list:
-        frappe.throw(_("Please set a Price List before editing Item Prices."))
+        frappe.throw(
+            _(
+                "No Price List found for new Item Prices. Set a Default Price List "
+                "on the customer, its Customer Group, Utility Billing Settings or "
+                "Selling Settings."
+            )
+        )
 
     return item_price_utils.ScheduleOptions(
         price_list=price_list,
@@ -217,9 +229,11 @@ def _build_options(
     )
 
 
-def _delete_price(name: str, allowed_items: set[str], result: dict) -> None:
+def _delete_price(
+    name: str, allowed_items: set[str], service_request: str, result: dict
+) -> None:
     """Delete the Item Price of ``name`` when it belongs to the request."""
-    price = scope.get_allowed_price(name, allowed_items)
+    price = scope.get_allowed_price(name, allowed_items, service_request)
     if not price:
         result["skipped"] += 1
         return
@@ -228,9 +242,11 @@ def _delete_price(name: str, allowed_items: set[str], result: dict) -> None:
     result["deleted"] += 1
 
 
-def _update_price(row: dict, allowed_items: set[str], result: dict) -> None:
+def _update_price(
+    row: dict, allowed_items: set[str], service_request: str, result: dict
+) -> None:
     """Write the new dates and rate of an existing Item Price."""
-    price = scope.get_allowed_price(row.get("name"), allowed_items)
+    price = scope.get_allowed_price(row.get("name"), allowed_items, service_request)
     if not price:
         result["skipped"] += 1
         return
@@ -262,6 +278,7 @@ def _create_price(
     item_code: str,
     property_name: str,
     customer: str | None,
+    service_request: str,
     result: dict,
 ) -> None:
     """Insert an Item Price for a newly added period."""
@@ -271,6 +288,7 @@ def _create_price(
         customer=customer or None,
         base_rate=period.rate,
         utility_property=property_name,
+        service_request=service_request,
     )
 
     if item_price_utils.has_overlapping_price(options, line, period):

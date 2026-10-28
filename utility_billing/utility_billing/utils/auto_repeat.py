@@ -345,6 +345,7 @@ def create_item_price_sales_invoices():
 				invoice = frappe.new_doc("Sales Invoice")
 				invoice.customer = customer
 				invoice.company = request.company
+				invoice.utility_service_request = request.name
 				invoice.posting_date = billing_date
 				invoice.set_posting_time = 1
 

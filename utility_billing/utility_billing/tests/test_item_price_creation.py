@@ -22,6 +22,7 @@ from utility_billing.utility_billing.utils.item_price_uom import (
 
 TEST_ITEM = "_Test Rent Schedule Item"
 TEST_PRICE_LIST = "_Test Rent Schedule Price List"
+TEST_PROPERTY = "_Test Rent Schedule Property"
 
 
 class TestItemPriceCreation(FrappeTestCase):
@@ -34,6 +35,7 @@ class TestItemPriceCreation(FrappeTestCase):
 
 	def tearDown(self):
 		factories.delete_prices(TEST_ITEM, TEST_PRICE_LIST)
+		frappe.db.delete("Utility Service Request", {"price_list": TEST_PRICE_LIST})
 		super().tearDown()
 
 	def _options(self, **overrides):
@@ -49,12 +51,36 @@ class TestItemPriceCreation(FrappeTestCase):
 
 		return item_price_utils.ScheduleOptions(**defaults)
 
-	def _lines(self, base_rate=1000, customer=None):
+	def _lines(self, base_rate=1000, customer=None, service_request=None):
 		return [
 			item_price_utils.ScheduleLine(
-				item_code=TEST_ITEM, customer=customer, base_rate=base_rate
+				item_code=TEST_ITEM,
+				customer=customer,
+				base_rate=base_rate,
+				service_request=service_request,
 			)
 		]
+
+	def _create_request(self, customer=None):
+		"""Insert a draft request for the test property to own prices."""
+		factories.ensure_property(TEST_PROPERTY, service_item=TEST_ITEM)
+
+		request = frappe.new_doc("Utility Service Request")
+		request.customer = customer
+		request.company = frappe.db.get_value("Company", {}, "name")
+		request.price_list = TEST_PRICE_LIST
+		request.start_date = "2026-01-01"
+		request.end_date = "2026-03-31"
+		request.append(
+			"requested_properties",
+			{"utility_property": TEST_PROPERTY, "start_date": "2026-01-01", "is_active": 1},
+		)
+		request.append("items", {"item_code": TEST_ITEM, "qty": 1, "rate": 1000})
+		request.flags.ignore_mandatory = True
+		request.flags.ignore_links = True
+		request.insert(ignore_permissions=True)
+
+		return request.name
 
 	def _fetch_prices(self):
 		return frappe.get_all(
@@ -99,8 +125,11 @@ class TestItemPriceCreation(FrappeTestCase):
 		"""The summary attributes prices to a property via its service item."""
 		property_name = "_Test Grouped Property"
 		factories.ensure_property(property_name, service_item=TEST_ITEM)
+		request = self._create_request()
 
-		item_price_utils.create_item_prices(self._options(), self._lines())
+		item_price_utils.create_item_prices(
+			self._options(), self._lines(service_request=request)
+		)
 
 		item_by_property = {
 			name: item
@@ -111,7 +140,10 @@ class TestItemPriceCreation(FrappeTestCase):
 
 		self.assertEqual(item_by_property.get(property_name), TEST_ITEM)
 		self.assertEqual(
-			len(item_price_summary.get_created_prices(TEST_ITEM, TEST_PRICE_LIST)), 1
+			len(
+				item_price_summary.get_created_prices(TEST_ITEM, request, TEST_PRICE_LIST)
+			),
+			1,
 		)
 
 	def test_rerunning_the_same_schedule_creates_no_duplicates(self):
@@ -157,29 +189,55 @@ class TestItemPriceCreation(FrappeTestCase):
 		self.assertEqual(prices[0]["item_code"], TEST_ITEM)
 		self.assertEqual(prices[0]["customer"], None)
 
-	def test_delete_existing_schedule_removes_all_prices_of_the_item(self):
-		"""Deletion scopes to one item, price list and customer."""
+	def test_delete_existing_schedule_removes_only_the_request_prices(self):
+		"""Deletion scopes to the owning request, whatever the customer."""
+		customer = self._ensure_customer()
+		owner = self._create_request(customer)
+		other = self._create_request(customer)
+
+		item_price_utils.create_item_prices(
+			self._options(), self._lines(customer=customer, service_request=owner)
+		)
+		item_price_utils.create_item_prices(
+			self._options(start_date="2026-04-01", end_date="2026-06-30"),
+			self._lines(customer=customer, service_request=other),
+		)
+
+		unlinked = frappe.new_doc("Item Price")
+		unlinked.item_code = TEST_ITEM
+		unlinked.price_list = TEST_PRICE_LIST
+		unlinked.uom = "Nos"
+		unlinked.price_list_rate = 5000
+		unlinked.valid_from = "2030-01-01"
+		unlinked.insert(ignore_permissions=True)
+
+		deleted = item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST, owner)
+
+		self.assertEqual(deleted, 1)
+		remaining = frappe.get_all(
+			"Item Price",
+			filters={"item_code": TEST_ITEM, "price_list": TEST_PRICE_LIST},
+			pluck="utility_service_request",
+		)
+		self.assertCountEqual(remaining, [other, None])
+
+	def test_delete_existing_schedule_without_a_request_deletes_nothing(self):
 		item_price_utils.create_item_prices(self._options(), self._lines())
 
-		manual = frappe.new_doc("Item Price")
-		manual.item_code = TEST_ITEM
-		manual.price_list = TEST_PRICE_LIST
-		manual.uom = "Nos"
-		manual.price_list_rate = 5000
-		manual.valid_from = "2030-01-01"
-		manual.insert(ignore_permissions=True)
+		deleted = item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST, None)
 
-		deleted = item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST)
-
-		self.assertEqual(deleted, 2)
-		self.assertEqual(len(self._fetch_prices()), 0)
+		self.assertEqual(deleted, 0)
+		self.assertEqual(len(self._fetch_prices()), 1)
 
 	def test_delete_existing_schedule_leaves_other_items_alone(self):
 		other_item = "_Test Other Rent Item"
 		factories.ensure_item(other_item)
+		request = self._create_request()
 
 		try:
-			item_price_utils.create_item_prices(self._options(), self._lines())
+			item_price_utils.create_item_prices(
+				self._options(), self._lines(service_request=request)
+			)
 
 			other = frappe.new_doc("Item Price")
 			other.item_code = other_item
@@ -187,9 +245,10 @@ class TestItemPriceCreation(FrappeTestCase):
 			other.uom = "Nos"
 			other.price_list_rate = 7000
 			other.valid_from = "2030-01-01"
+			other.utility_service_request = request
 			other.insert(ignore_permissions=True)
 
-			item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST)
+			item_price_utils.delete_existing_schedule(TEST_ITEM, TEST_PRICE_LIST, request)
 
 			self.assertTrue(frappe.db.exists("Item Price", other.name))
 		finally:

@@ -429,6 +429,9 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		self.assertEqual(preview[0]["periods"][0]["valid_from"], "2026-01-01")
 
 	def test_creating_still_requires_a_price_list(self):
+		# Selling Settings is the last fallback, so nothing must resolve. Cleared
+		# first, as saving the request would otherwise default its price list.
+		factories.remove_price_list_fallbacks(self, TEST_CUSTOMER)
 		args = self._action_args()
 		args["price_list"] = None
 		self.service_request.price_list = None

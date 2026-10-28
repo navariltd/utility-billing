@@ -242,22 +242,27 @@ def resolve_schedule_end(service_request, property_names: list[str], schedule_en
     return str(end) if end else None
 
 
-def get_allowed_price(name: str, allowed_items: set[str]):
-    """Return an Item Price only when it belongs to an allowed item.
+def get_allowed_price(name: str, allowed_items: set[str], service_request: str):
+    """Return an Item Price only when the request owns it and its item is allowed.
 
     Args:
         name: ``Item Price`` name submitted by the client.
         allowed_items: Item codes this request is allowed to edit.
+        service_request: Utility Service Request that must own the price.
 
     Returns:
         The ``Item Price`` row, or ``None`` when it is out of scope.
     """
-    if not name or not allowed_items:
+    if not name or not allowed_items or not service_request:
         return None
 
     return frappe.db.get_value(
         "Item Price",
-        {"name": name, "item_code": ("in", list(allowed_items))},
+        {
+            "name": name,
+            "item_code": ("in", list(allowed_items)),
+            "utility_service_request": service_request,
+        },
         [
             "name",
             "item_code",

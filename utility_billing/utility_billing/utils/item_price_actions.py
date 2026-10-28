@@ -42,6 +42,7 @@ def get_item_price_summary(docname: str) -> dict:
 
     html = item_price_summary.build_schedule_html(
         properties,
+        service_request.name,
         service_request.price_list,
         property_periods=property_periods,
         customer=service_request.customer,
@@ -55,7 +56,9 @@ def get_item_price_summary(docname: str) -> dict:
         ).items()
     }
     has_prices = any(
-        item_price_summary.get_created_prices(item_code, service_request.price_list)
+        item_price_summary.get_created_prices(
+            item_code, service_request.name, service_request.price_list
+        )
         for item_code in item_by_property.values()
     )
 
@@ -170,8 +173,8 @@ def create_item_price_schedule(
         customer: Customer the Item Prices are scoped to.
         adjustment_rule: Optional ``Billing Adjustment Rule`` supplying defaults.
         overrides: Optional manual rate periods.
-        replace_existing: When set, previously generated schedule prices of
-            the same item and customer are removed first.
+        replace_existing: When set, the prices this request generated for
+            the same item are removed first. Other requests' prices are kept.
         frequency: Optional manual billing frequency.
         increment: Optional manual increment settings.
         manual_schedules: Optional hand edited periods per property, replacing
@@ -215,13 +218,14 @@ def create_item_price_schedule(
         resolved_customer,
         helpers.as_dict(base_rates),
         helpers.parse_manual_schedules(manual_schedules),
+        service_request=service_request.name,
     )
 
     try:
         if cint(replace_existing):
             for item_code in service_items.values():
                 item_price_utils.delete_existing_schedule(
-                    item_code, options.price_list, resolved_customer
+                    item_code, options.price_list, service_request.name
                 )
 
         result = item_price_utils.create_item_prices(options, lines)
@@ -271,7 +275,7 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
         if rate < 0:
             frappe.throw(_("Item Price rates cannot be negative."))
 
-        price = scope.get_allowed_price(row.get("name"), allowed_items)
+        price = scope.get_allowed_price(row.get("name"), allowed_items, service_request.name)
         if not price:
             rejected += 1
             continue

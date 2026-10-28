@@ -31,10 +31,13 @@ class ScheduleLine:
         item_code: Service item the prices are created for.
         customer: Customer the prices are scoped to, if any.
         base_rate: Rate of the first period.
-        utility_property: Property the prices belong to, tagged onto every
-            generated ``Item Price`` so prices can be grouped by property.
+        utility_property: Property the line was built for. It is not stored
+            on the prices; each ``Item Price`` carries its USR instead
+            (see ``service_request``).
         manual_periods: Hand edited periods that replace generation for this
             line, validated against the contract period.
+        service_request: Utility Service Request that owns the generated
+            prices, stored on each one as ``utility_service_request``.
     """
 
     item_code: str
@@ -42,6 +45,7 @@ class ScheduleLine:
     base_rate: float
     utility_property: str | None = None
     manual_periods: list[RatePeriod] | None = None
+    service_request: str | None = None
 
 
 @dataclass
@@ -255,8 +259,8 @@ def insert_item_price(
     """Insert a single Item Price record and return its name.
 
     These are ordinary Item Price records: the property is expressed by the
-    item itself (each property owns a service item named after it), so no extra
-    tagging is needed.
+    item itself (each property owns a service item named after it), and the
+    owning request is stored as ``utility_service_request``.
 
     Args:
         options: Shared schedule options.
@@ -276,6 +280,7 @@ def insert_item_price(
             "price_list_rate": flt(period.rate),
             "valid_from": period.valid_from,
             "valid_upto": period.valid_upto,
+            "utility_service_request": line.service_request,
         }
     )
     doc.insert(ignore_permissions=True)
@@ -283,29 +288,53 @@ def insert_item_price(
     return doc.name
 
 
-def delete_existing_schedule(
-    item_code: str, price_list: str, customer: str | None = None
-) -> int:
-    """Delete the Item Prices previously generated for an item.
+def delete_existing_schedule(item_code: str, price_list: str, service_request: str) -> int:
+    """Delete the Item Prices a request generated for an item.
 
-    The scope is deliberately narrow - one item, one price list and one
-    customer - which is exactly what a rent schedule creates. Prices belonging
-    to any other item, price list or customer are never touched.
+    Only prices owned by ``service_request`` are deleted, whatever their
+    customer, so another request's prices for the same property and customer,
+    and prices linked to no request, are never touched.
 
     Args:
         item_code: Item the schedule belongs to.
         price_list: Price list the schedule was created in.
-        customer: Customer the schedule was scoped to, if any.
+        service_request: Utility Service Request that owns the prices.
 
     Returns:
         Number of Item Price records deleted.
     """
-    filters = {"item_code": item_code, "price_list": price_list}
+    if not service_request:
+        return 0
 
-    if customer:
-        filters["customer"] = customer
+    filters = {
+        "item_code": item_code,
+        "price_list": price_list,
+        "utility_service_request": service_request,
+    }
 
     names = frappe.get_all("Item Price", filters=filters, pluck="name")
+    for name in names:
+        frappe.delete_doc("Item Price", name, ignore_permissions=True, force=True)
+
+    return len(names)
+
+
+def delete_request_prices(service_request: str) -> int:
+    """Delete every Item Price owned by a request, used when it is cancelled.
+
+    A request linked to a submitted Sales Invoice cannot be cancelled, so the
+    prices deleted here never priced a submitted invoice. Invoice rows keep
+    their own rate and no doctype links to Item Price.
+
+    Args:
+        service_request: Utility Service Request being cancelled.
+
+    Returns:
+        Number of Item Price records deleted.
+    """
+    names = frappe.get_all(
+        "Item Price", filters={"utility_service_request": service_request}, pluck="name"
+    )
     for name in names:
         frappe.delete_doc("Item Price", name, ignore_permissions=True, force=True)
 
