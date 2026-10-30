@@ -19,7 +19,7 @@ from utility_billing.utility_billing.utils.service_item import ensure_service_it
 from .constants import DEMO_COMPANY
 from .fiscal import active_fiscal_date
 from .pricing import load_rent_rates
-from .utils import logger
+from .utils import apply_demo_flags, logger
 
 DUE_AFTER_DAYS = 10
 TRANSACTION_SAVEPOINT = "demo_rent_transaction"
@@ -91,7 +91,7 @@ def _create_sales_order(request, base_rents: dict, settings) -> str | None:
 	)
 
 	if settings.sales_order_creation_state == "Submitted":
-		frappe.get_doc("Sales Order", name).submit()
+		apply_demo_flags(frappe.get_doc("Sales Order", name)).submit()
 
 	return name
 
@@ -124,7 +124,7 @@ def _create_sales_invoice(request, row, base_rents: dict, settings, approach: st
 	)
 
 	if approach == "Auto Repeat" or settings.sales_invoice_creation_state == "Submitted":
-		frappe.get_doc("Sales Invoice", name).submit()
+		apply_demo_flags(frappe.get_doc("Sales Invoice", name)).submit()
 
 	return name
 

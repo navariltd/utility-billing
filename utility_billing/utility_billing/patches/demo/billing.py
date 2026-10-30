@@ -5,7 +5,7 @@ from frappe.utils import add_days, flt, today
 
 from .constants import DEMO_COMPANY, demo_company_names
 from .customers import resolve_customer
-from .utils import logger, safe_load_json
+from .utils import apply_demo_flags, logger, safe_load_json
 
 METER_READING_SAVEPOINT = "demo_meter_reading"
 
@@ -35,7 +35,7 @@ def insert_meter_readings() -> None:
 
 		frappe.db.savepoint(METER_READING_SAVEPOINT)
 		try:
-			doc = _build_meter_reading(entry, customer)
+			doc = apply_demo_flags(_build_meter_reading(entry, customer))
 			doc.insert()
 			doc.submit()
 		except Exception:

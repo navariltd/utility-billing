@@ -5,6 +5,7 @@ blocks in the demo data before a site is populated.
 """
 
 import json
+from collections import Counter
 from pathlib import Path
 
 import frappe
@@ -60,14 +61,29 @@ class TestDemoData(UnitTestCase):
 				self.assertNotIn(row["utility_property"], assigned)
 				assigned.add(row["utility_property"])
 
-	def test_portal_users_reference_customers(self):
+	def test_single_portal_user_references_a_known_customer(self):
 		customers = {row["customer_name"] for row in load("customer.json")}
 		users = load("portal_user.json")
 
-		self.assertEqual({row["customer"] for row in users}, customers)
-		self.assertEqual(len({row["email"] for row in users}), len(users))
-		for row in users:
-			self.assertIn("demo.utilitybilling.test", row["email"])
+		self.assertEqual(len(users), 1)
+		self.assertIn(users[0]["customer"], customers)
+		self.assertIn("demo.utilitybilling.test", users[0]["email"])
+
+	def test_portal_customer_has_the_richest_dataset(self):
+		portal_customer = load("portal_user.json")[0]["customer"]
+		datasets = (
+			("utility_service_request.json", "party_name"),
+			("meter_reading.json", "customer"),
+			("support_issue.json", "customer"),
+		)
+
+		for filename, field in datasets:
+			counts = Counter(row[field] for row in load(filename))
+			other_records = max(
+				count for name, count in counts.items() if name != portal_customer
+			)
+
+			self.assertGreater(counts[portal_customer], other_records)
 
 	def test_meter_readings_reference_known_customers_and_properties(self):
 		customers = {row["customer_name"] for row in load("customer.json")}

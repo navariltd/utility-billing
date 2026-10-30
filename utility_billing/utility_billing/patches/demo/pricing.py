@@ -28,7 +28,7 @@ from utility_billing.utility_billing.utils.price_list import resolve_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 from .constants import DEMO_COMPANY
-from .utils import logger, safe_load_json
+from .utils import apply_demo_flags, logger, safe_load_json
 
 RENT_FILE = "data/property_rent.json"
 PRICING_SAVEPOINT = "demo_rent_pricing"
@@ -152,7 +152,7 @@ def _create_base_price(
 	if _has_price_covering(item_code, price_list, uom, valid_from):
 		return
 
-	frappe.get_doc(
+	price = frappe.get_doc(
 		{
 			"doctype": "Item Price",
 			"item_code": item_code,
@@ -163,7 +163,9 @@ def _create_base_price(
 			"valid_from": valid_from,
 			"tariffs": [],
 		}
-	).insert(ignore_permissions=True)
+	)
+	apply_demo_flags(price)
+	price.insert()
 
 
 def _has_price_covering(item_code: str, price_list: str, uom: str, valid_from: date | str) -> bool:

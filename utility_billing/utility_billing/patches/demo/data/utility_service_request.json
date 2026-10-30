@@ -206,5 +206,56 @@
         "adjustment_rule": "Utility Inflation Adjustment"
       }
     ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Wanjiku Kamau",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 24,
+    "start_offset_months": -18,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Kileleshwa Heights - Unit 4",
+        "adjustment_rule": "Standard Rent Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Wanjiku Kamau",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": -2,
+    "is_signed": true,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Ruiru Block C - Unit 1",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
+  },
+  {
+    "doctype": "Utility Service Request",
+    "request_type": "Property Lease",
+    "party_name": "Wanjiku Kamau",
+    "customer_group": "Standard Residential",
+    "price_list": "Standard Residential",
+    "contract_length_months": 12,
+    "start_offset_months": 0,
+    "is_signed": false,
+    "contract_template": "Standard Residential Lease",
+    "requested_properties": [
+      {
+        "utility_property": "Kileleshwa Heights - Unit 1",
+        "adjustment_rule": "Utility Inflation Adjustment"
+      }
+    ]
   }
 ]

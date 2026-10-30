@@ -7,6 +7,8 @@ item group and item price UOM, and the service item auto-creation flag.
 
 import frappe
 
+from .utils import apply_demo_flags
+
 SETTINGS_DOCTYPE = "Utility Billing Settings"
 DEMO_PRICE_LISTS = ("Standard Residential", "Standard Commercial")
 
@@ -28,8 +30,7 @@ def ensure_demo_price_lists() -> None:
 		price_list.currency = "KES"
 		price_list.selling = 1
 		price_list.enabled = 1
-		price_list.flags.ignore_permissions = True
-		price_list.save()
+		apply_demo_flags(price_list).save()
 
 
 def configure_demo_settings() -> None:
@@ -58,7 +59,7 @@ def configure_demo_settings() -> None:
 		changed = True
 
 	if changed:
-		settings.save(ignore_permissions=True)
+		apply_demo_flags(settings).save()
 
 	ensure_auto_repeat_doctype()
 

@@ -92,5 +92,38 @@
     "priority": "Medium",
     "issue_type": "Tenant Support",
     "days_ago": 1
+  },
+  {
+    "customer": "Wanjiku Kamau",
+    "property": "Pinnacle Tower - Unit 1B",
+    "subject": "Water meter reading looks too high",
+    "description": "The last water bill shows 18 units but we were away for two weeks. Please re-check the meter.",
+    "status": "Replied",
+    "priority": "High",
+    "issue_type": "Billing Inquiry",
+    "days_ago": 8,
+    "reply": "A meter verification visit has been scheduled and the bill will be adjusted if the reading is wrong."
+  },
+  {
+    "customer": "Wanjiku Kamau",
+    "property": "Kileleshwa Heights - Unit 4",
+    "subject": "Quarterly pest control visit",
+    "description": "Please confirm the date of the next scheduled pest control visit for the unit.",
+    "status": "Closed",
+    "priority": "Low",
+    "issue_type": "Tenant Support",
+    "days_ago": 22,
+    "reply": "The pest control team visited the unit and the report was shared by email."
+  },
+  {
+    "customer": "Wanjiku Kamau",
+    "property": "Ruiru Block C - Unit 1",
+    "subject": "Request for rent payment receipt",
+    "description": "Kindly send the official receipt for the rent payment made this month.",
+    "status": "Resolved",
+    "priority": "Medium",
+    "issue_type": "Billing Inquiry",
+    "days_ago": 12,
+    "reply": "The receipt was generated and sent to your portal account."
   }
 ]

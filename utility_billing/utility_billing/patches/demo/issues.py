@@ -8,10 +8,10 @@ support reply so the portal timeline and status counts have data to show.
 import frappe
 from frappe.utils import add_days, today
 
-from .constants import DEMO_COMPANY, demo_company_names
+from .constants import DEMO_COMPANY, DEMO_EMAIL_DOMAIN, demo_company_names
 from .customers import resolve_customer
 from .portal_users import get_demo_user_email
-from .utils import logger, safe_load_json
+from .utils import apply_demo_flags, logger, safe_load_json
 
 ISSUE_FILE = "data/support_issue.json"
 ISSUE_TYPE_DOCTYPE = "Issue Type"
@@ -108,7 +108,7 @@ def _create_issue(record: dict, requests_by_property: dict[str, str]) -> str | N
 			"description": f"<p>{record.get('description') or ''}</p>",
 			"customer": customer.name,
 			"customer_name": customer.customer_name,
-			"raised_by": get_demo_user_email(customer_reference),
+			"raised_by": get_demo_user_email(customer_reference) or f"support@{DEMO_EMAIL_DOMAIN}",
 			"company": DEMO_COMPANY,
 			"status": record.get("status") or "Open",
 			"priority": record.get("priority") or "Medium",
@@ -119,7 +119,7 @@ def _create_issue(record: dict, requests_by_property: dict[str, str]) -> str | N
 			"utility_service_request": requests_by_property.get(property_name),
 		}
 	)
-	issue.flags.ignore_permissions = True
+	apply_demo_flags(issue)
 	issue.insert()
 
 	reply = (record.get("reply") or "").strip()
