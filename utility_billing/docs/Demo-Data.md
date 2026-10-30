@@ -116,6 +116,13 @@ Commercial** price lists. Water, Electricity and Sewer use tiered
 therefore fills its read-only **Rates** table with one row per block and creates
 a meter Sales Order.
 
+`data/meter_reading.json` describes one reading per property, except the
+Pinnacle Tower - Unit 1B water meter (MTR10001), which lists several readings
+under `readings`. A chained entry stores the consumption of each reading; the
+demo turns it into the previous/current pair, starting from a previous reading
+of 0 and carrying the current reading of one reading into the next, so the
+portal shows an increasing meter with a few months of history.
+
 ---
 
 ## 📄 Contracts, Billing and Support Data

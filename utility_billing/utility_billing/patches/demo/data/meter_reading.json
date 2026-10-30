@@ -6,13 +6,54 @@
     "property": "Pinnacle Tower - Unit 1B",
     "price_list": "Standard Residential",
     "currency": "KES",
-    "reading_age_days": 14,
-    "items": [
+    "readings": [
       {
-        "doctype": "Meter Reading Item",
-        "item_code": "Water",
-        "consumption": 18,
-        "meter_number": "MTR10001"
+        "doctype": "Meter Reading",
+        "reading_age_days": 104,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 12,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 74,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 18,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 44,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 9,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 14,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 14,
+            "meter_number": "MTR10001"
+          }
+        ]
       }
     ]
   },

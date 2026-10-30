@@ -13,6 +13,7 @@ The Rental Billing customer portal is a React single page application served at
 | My bookings | `/bookings` | `api.portal.bookings.*` |
 | My properties / tenancy | `/my-properties` | `api.portal.properties.get_my_properties` |
 | Invoices, orders and payments | `/invoices` | `api.portal.payments.*` |
+| Meter readings | `/meter-readings`, `/meter-readings/:reading` | `api.portal.meter_readings.*` |
 | Support tickets and replies | property and booking support dialogs | `api.portal.support.*` |
 | Notifications | `/settings/notifications` | standard Frappe notification log |
 | Profile and password | `/app/user/<user>` | standard Frappe user pages |
@@ -103,6 +104,32 @@ signed-in Customer.
 - A `Payment Gateway Account` must exist for the document's company. The demo
   data does not create one.
 
+## Meter readings
+
+`/meter-readings` lists every non-cancelled `Meter Reading` recorded for the
+signed-in Customer, newest first, one row per reading:
+
+- the reading's date and name, the unit (unit number, house number or plot
+  number of the `Utility Property`) and the meters of each line;
+- total consumption (the stored consumption of each line, falling back to
+  `current_reading - previous_reading`) and the amount billed for the reading;
+- draft/submitted state, plus totals for the returned page (readings,
+  consumption, amount and latest date).
+
+Selecting a row opens `/meter-readings/:reading`, which shows the full reading:
+
+- reading number, date, unit, customer, company, price list and status;
+- every meter line with its previous reading, current reading, consumption and
+  amount;
+- the block distribution: each `Utility Tariff Block` billed, with the quantity,
+  rate and amount, and the total amount of the reading.
+
+Rows are scoped to the caller's Customers (`Customer.portal_users`); a cancelled
+reading is never listed and a reading of another Customer answers with a
+`DoesNotExistError`. The demo dataset chains several monthly readings on one
+meter (MTR10001, starting from a previous reading of 0) so the list and the
+block distribution have something to show.
+
 ## Support tickets
 
 Customers raise standard ERPNext `Issue` documents from:
@@ -156,6 +183,8 @@ Related documents are resolved through:
 | `utility_billing.api.portal.payments.get_payment_gateways` | no | configured gateway accounts |
 | `utility_billing.api.portal.payments.get_customer_documents` | no | invoices, orders and totals |
 | `utility_billing.api.portal.payments.initiate_payment` | no | gateway checkout URL |
+| `utility_billing.api.portal.meter_readings.get_customer_meter_readings` | no | meter readings, consumption and amounts |
+| `utility_billing.api.portal.meter_readings.get_customer_meter_reading` | no | one reading with its block distribution |
 
 ## Generic doctype browsing (`/app` routes)
 
@@ -184,7 +213,7 @@ redirected by `PermissionGuard` to the forbidden page.
 
 ```
 rental-portal/src
-├── app/                          # auth, dashboard, properties, bookings, invoices, support pages
+├── app/                          # auth, dashboard, properties, bookings, invoices, meter readings, support pages
 ├── components/
 │   ├── properties/               # card, row, media, status and layout components
 │   ├── payments/                 # pay button and gateway dialog

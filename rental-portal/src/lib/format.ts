@@ -21,6 +21,16 @@ export function formatAmount(
   }
 }
 
+/** Format a plain quantity (meter reading or consumption). */
+export function formatNumber(
+  value: number | null | undefined,
+  fallback = "—",
+): string {
+  if (value === null || value === undefined) return fallback;
+
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
 /** Format a date value, returning the fallback for empty values. */
 export function formatDate(
   value?: string | null,

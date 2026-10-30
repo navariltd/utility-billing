@@ -11,6 +11,8 @@ from pathlib import Path
 import frappe
 from frappe.tests import UnitTestCase
 
+from utility_billing.utility_billing.patches.demo.billing import _chain_readings
+
 DATA_DIR = Path(__file__).resolve().parents[1] / "patches/demo/data"
 
 
@@ -89,13 +91,18 @@ class TestDemoData(UnitTestCase):
 		customers = {row["customer_name"] for row in load("customer.json")}
 		properties = {row["property_name"] for row in load("utility_property.json")}
 
-		for reading in load("meter_reading.json"):
-			self.assertIn(reading["customer"], customers)
-			self.assertIn(reading["property"], properties)
-			self.assertTrue(reading["items"])
-			for item in reading["items"]:
-				self.assertIn(item["item_code"], {"Water", "Electricity"})
-				self.assertGreater(item["consumption"], 0)
+		for entry in load("meter_reading.json"):
+			self.assertIn(entry["customer"], customers)
+			self.assertIn(entry["property"], properties)
+
+			# An entry is either a single reading or a chain of readings of the
+			# same meters on different dates.
+			readings = entry.get("readings") or [entry]
+			for reading in readings:
+				self.assertTrue(reading["items"])
+				for item in reading["items"]:
+					self.assertIn(item["item_code"], {"Water", "Electricity"})
+					self.assertGreater(item["consumption"], 0)
 
 	def test_meter_prices_have_contiguous_tariff_blocks(self):
 		prices = [
@@ -131,3 +138,38 @@ class TestDemoData(UnitTestCase):
 		unit = load("uom.json")[0]
 		self.assertEqual(unit["uom_name"], "Unit")
 		self.assertEqual(unit["enabled"], 1)
+
+
+class TestMeterReadingChain(UnitTestCase):
+	"""Chained demo readings keep a meter increasing from a previous reading of 0."""
+
+	def test_readings_are_chained_oldest_first(self):
+		chained = _chain_readings(
+			{
+				"readings": [
+					{"reading_age_days": 30, "items": [self._item(12)]},
+					{"reading_age_days": 90, "items": [self._item(8)]},
+					{"reading_age_days": 60, "items": [self._item(10)]},
+				]
+			}
+		)
+
+		self.assertEqual([row["reading_age_days"] for row in chained], [90, 60, 30])
+		self.assertEqual(
+			[
+				(item["previous_reading"], item["current_reading"])
+				for item in (row["items"][0] for row in chained)
+			],
+			[(0, 8), (8, 18), (18, 30)],
+		)
+
+	def test_single_reading_entry_starts_from_zero(self):
+		chained = _chain_readings({"reading_age_days": 5, "items": [self._item(20)]})
+
+		item = chained[0]["items"][0]
+		self.assertEqual((item["previous_reading"], item["current_reading"]), (0, 20))
+		self.assertEqual(item["consumption"], 20)
+
+	def _item(self, consumption: float) -> dict:
+		return {"item_code": "Water", "consumption": consumption, "meter_number": "MTR-1"}
+
