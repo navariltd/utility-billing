@@ -4,7 +4,7 @@ The customer portal is the tenant's side of the system, served at
 `/utility-billing`: browse available units, book one, follow the tenancy, see
 invoices and meter readings, pay online and talk to support.
 
-[![Watch the video](./images/portal.png)](./video/portal.mp4)
+![Portal](./images/portal.png)
 
 ## What a tenant can do
 
@@ -23,6 +23,11 @@ invoices and meter readings, pay online and talk to support.
 | **Profile / Appearance** | Name, password, and the portal's theme                                                       |
 
 ## Signing in
+
+<video controls width="800">
+  <source src="https://github.com/muruthigitau/utility-billing/raw/refs/heads/develop/utility_billing/docs/video/portal.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 - **Sign in** uses the user's Frappe account, created when the office links them
   to a customer.
