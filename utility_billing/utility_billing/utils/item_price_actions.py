@@ -13,7 +13,7 @@ from frappe.utils import cint, flt
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils import item_price_schedule_helpers as helpers
 from utility_billing.utility_billing.utils import item_price_scope as scope
-from utility_billing.utility_billing.utils import item_price_summary
+from utility_billing.utility_billing.utils import item_price_summary, request_prices
 
 
 @frappe.whitelist()
@@ -42,6 +42,7 @@ def get_item_price_summary(docname: str) -> dict:
 
     html = item_price_summary.build_schedule_html(
         properties,
+        service_request,
         service_request.price_list,
         property_periods=property_periods,
         customer=service_request.customer,
@@ -55,8 +56,10 @@ def get_item_price_summary(docname: str) -> dict:
         ).items()
     }
     has_prices = any(
-        item_price_summary.get_created_prices(item_code, service_request.price_list)
-        for item_code in item_by_property.values()
+        item_price_summary.get_created_prices(
+            item_code, service_request, property_name, service_request.price_list
+        )
+        for property_name, item_code in item_by_property.items()
     )
 
     return {"html": html, "has_prices": has_prices}
@@ -108,6 +111,7 @@ def preview_item_price_schedule(
     # The boundary the create action will use, so the preview shows the same schedule.
     end_date = scope.resolve_schedule_end(service_request, property_names, end_date)
     service_items = helpers.resolve_service_items(property_names)
+    request_prices.validate_unshared_service_items(service_request, set(service_items.values()))
     options = helpers.build_options(
         price_list or service_request.price_list,
         start_date,
@@ -170,8 +174,9 @@ def create_item_price_schedule(
         customer: Customer the Item Prices are scoped to.
         adjustment_rule: Optional ``Billing Adjustment Rule`` supplying defaults.
         overrides: Optional manual rate periods.
-        replace_existing: When set, previously generated schedule prices of
-            the same item and customer are removed first.
+        replace_existing: When set, the prices this request owns for the same
+            items and price list are removed first: its customer's prices that
+            start inside its lease window. Other requests' prices are kept.
         frequency: Optional manual billing frequency.
         increment: Optional manual increment settings.
         manual_schedules: Optional hand edited periods per property, replacing
@@ -184,8 +189,10 @@ def create_item_price_schedule(
         frappe.ValidationError: If the inputs are incomplete or a manual
             schedule does not cover the property's contract period.
     """
+    request_prices.require_item_price_approach()
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
+    request_prices.require_submitted(service_request)
 
     property_names = helpers.as_list(properties)
     for property_name in property_names:
@@ -195,8 +202,15 @@ def create_item_price_schedule(
 
     end_date = scope.resolve_schedule_end(service_request, property_names, end_date)
 
-    resolved_customer = customer or service_request.customer
+    resolved_customer = request_prices.require_customer(service_request)
+    if customer and customer != resolved_customer:
+        frappe.throw(
+            _("Item Prices of {0} belong to its customer {1}, not {2}.").format(
+                service_request.name, resolved_customer, customer
+            )
+        )
     service_items = helpers.resolve_service_items(property_names)
+    request_prices.validate_unshared_service_items(service_request, set(service_items.values()))
     options = helpers.build_options(
         price_list or service_request.price_list,
         start_date,
@@ -216,13 +230,17 @@ def create_item_price_schedule(
         helpers.as_dict(base_rates),
         helpers.parse_manual_schedules(manual_schedules),
     )
+    for line in lines:
+        if line.manual_periods:
+            request_prices.validate_within_window(
+                service_request, line.utility_property, line.manual_periods
+            )
 
     try:
         if cint(replace_existing):
-            for item_code in service_items.values():
-                item_price_utils.delete_existing_schedule(
-                    item_code, options.price_list, resolved_customer
-                )
+            item_price_utils.delete_existing_schedule(
+                service_request, options.price_list, set(service_items.values())
+            )
 
         result = item_price_utils.create_item_prices(options, lines)
         schedule_rows = item_price_utils.preview_schedule(options, lines)
@@ -258,10 +276,13 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
     Raises:
         frappe.ValidationError: If a rate is not a non-negative number.
     """
+    request_prices.require_item_price_approach()
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
+    request_prices.require_submitted(service_request)
 
     allowed_items = scope.request_service_items(service_request)
+    request_prices.validate_unshared_service_items(service_request, allowed_items)
     updated = 0
     unchanged = 0
     rejected = 0
@@ -271,7 +292,7 @@ def update_item_price_rates(docname: str, rates: list | str) -> dict:
         if rate < 0:
             frappe.throw(_("Item Price rates cannot be negative."))
 
-        price = scope.get_allowed_price(row.get("name"), allowed_items)
+        price = scope.get_allowed_price(row.get("name"), allowed_items, service_request)
         if not price:
             rejected += 1
             continue

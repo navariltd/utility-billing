@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 
-from utility_billing.utility_billing.utils import item_price_summary
+from utility_billing.utility_billing.utils import item_price_summary, request_prices
 
 ITEM_PRICE_APPROACH = "Item Price"
 
@@ -242,22 +242,29 @@ def resolve_schedule_end(service_request, property_names: list[str], schedule_en
     return str(end) if end else None
 
 
-def get_allowed_price(name: str, allowed_items: set[str]):
-    """Return an Item Price only when it belongs to an allowed item.
+def get_allowed_price(name: str, allowed_items: set[str], service_request):
+    """Return an Item Price only when the request owns it and its item is allowed.
+
+    Ownership is the request's customer and the lease window the price starts
+    in, so a price of another request or customer is never returned.
 
     Args:
         name: ``Item Price`` name submitted by the client.
         allowed_items: Item codes this request is allowed to edit.
+        service_request: ``Utility Service Request`` document that must own it.
 
     Returns:
         The ``Item Price`` row, or ``None`` when it is out of scope.
     """
-    if not name or not allowed_items:
+    if not name or not allowed_items or not service_request:
         return None
 
-    return frappe.db.get_value(
+    price = frappe.db.get_value(
         "Item Price",
-        {"name": name, "item_code": ("in", list(allowed_items))},
+        {
+            "name": name,
+            "item_code": ("in", list(allowed_items)),
+        },
         [
             "name",
             "item_code",
@@ -269,3 +276,5 @@ def get_allowed_price(name: str, allowed_items: set[str]):
         ],
         as_dict=True,
     )
+
+    return price if request_prices.owns_price(service_request, price) else None

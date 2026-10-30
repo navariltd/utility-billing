@@ -7,7 +7,8 @@ grouped by property as an editable table. It is used by the HTML field on
 
 Grouping works off the property's **service item**: each property owns an item
 named after it, so an Item Price is attributed to a property by its
-``item_code``. No extra tagging on ``Item Price`` is required.
+``item_code``, and to a request by its customer and the lease window it starts
+in (see ``request_prices``).
 
 Nothing is written while typing: the surrounding page reads the inputs and
 saves them through ``item_price_summary_actions.save_item_price_schedule``.
@@ -15,7 +16,7 @@ saves them through ``item_price_summary_actions.save_item_price_schedule``.
 
 import frappe
 
-from utility_billing.utility_billing.utils import item_price_summary_html
+from utility_billing.utility_billing.utils import item_price_summary_html, request_prices
 
 
 def get_property_item_codes(properties: list[str]) -> dict[str, str]:
@@ -44,38 +45,26 @@ def get_property_item_codes(properties: list[str]) -> dict[str, str]:
     }
 
 
-def get_created_prices(item_code: str, price_list: str | None = None) -> list[dict]:
-    """Return the Item Prices of an item, ordered by date.
+def get_created_prices(
+    item_code: str, service_request, property_name: str, price_list: str | None = None
+) -> list[dict]:
+    """Return the Item Prices a request owns for a property's item, ordered by date.
 
     Args:
-        item_code: Item whose prices are read.
+        item_code: The property's service item.
+        service_request: ``Utility Service Request`` document.
+        property_name: Requested property whose lease window is used.
         price_list: Optional price list filter.
 
     Returns:
         Item Price rows with the item, customer, dates and rate.
     """
-    filters = {"item_code": item_code}
-    if price_list:
-        filters["price_list"] = price_list
-
-    return frappe.get_all(
-        "Item Price",
-        filters=filters,
-        fields=[
-            "name",
-            "item_code",
-            "customer",
-            "price_list",
-            "valid_from",
-            "valid_upto",
-            "price_list_rate",
-        ],
-        order_by="valid_from asc",
-    )
+    return request_prices.get_window_prices(service_request, property_name, item_code, price_list)
 
 
 def build_schedule_html(
     properties: list[str],
+    service_request,
     price_list: str | None = None,
     property_periods: dict | None = None,
     customer: str | None = None,
@@ -85,6 +74,7 @@ def build_schedule_html(
 
     Args:
         properties: Properties to render.
+        service_request: ``Utility Service Request`` document whose prices are shown.
         price_list: Optional price list filter.
         property_periods: Optional mapping of property name to its
             ``(start_date, end_date)`` contract period, used by the editor to
@@ -115,7 +105,11 @@ def build_schedule_html(
                 "customer": customer,
                 "start_date": start_date,
                 "end_date": end_date,
-                "prices": get_created_prices(item_code, price_list) if item_code else [],
+                "prices": (
+                    get_created_prices(item_code, service_request, property_name, price_list)
+                    if item_code
+                    else []
+                ),
             }
         )
 

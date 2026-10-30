@@ -138,6 +138,7 @@ function govern_utility_lines(frm, cdn) {
 				customer: frm.doc.customer,
 				item_codes: item_codes,
 				new_item_code: new_row ? new_row.item_code : null,
+				billing_dates: get_billing_dates(frm),
 			},
 			callback: function (r) {
 				if (sequence !== frm.utility_match_sequence) return; // superseded
@@ -154,6 +155,20 @@ function govern_utility_lines(frm, cdn) {
 			},
 		});
 	});
+}
+
+// The date each line bills, keyed by item, so the server can pick the one
+// request whose lease covers them when the customer has several.
+function get_billing_dates(frm) {
+	const dates = {};
+	(frm.doc.items || [])
+		.filter((row) => row.item_code && !row.meter_reading)
+		.forEach((row) => {
+			(dates[row.item_code] = dates[row.item_code] || []).push(
+				row.custom_posting_date || frm.doc.posting_date,
+			);
+		});
+	return dates;
 }
 
 // Clear a linked request once the invoice no longer bills any of its utility
@@ -336,6 +351,7 @@ function enforce_governed_rate(frm, cdt, cdn) {
 			item_code: row.item_code,
 			posting_date: row.custom_posting_date || frm.doc.posting_date,
 			customer: frm.doc.customer,
+			utility_service_request: frm.doc.utility_service_request,
 			price_list: frm.doc.selling_price_list,
 			uom: row.uom,
 			qty: row.qty,
@@ -468,6 +484,7 @@ function apply_rate_of_deferred_date(frm, cdt, cdn, force) {
 			item_code: row.item_code,
 			posting_date: row.custom_posting_date,
 			customer: frm.doc.customer,
+			utility_service_request: frm.doc.utility_service_request,
 			price_list: frm.doc.selling_price_list,
 			uom: row.uom,
 			qty: row.qty,
