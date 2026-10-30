@@ -6,7 +6,7 @@ The **Utility Billing & Property Management App** is a powerful addition to [ERP
 
 ![Overview](./utility_billing/docs/images/workspace.png)
 
-## 🔌 [Utility Billing](./utility_billing/docs/Utility-Billing.md)
+## 🔌 [Utility Billing](./utility_billing/docs/00-Overview.md)
 
 A comprehensive module for managing utility services (water, electricity, gas, etc.) with end-to-end billing automation.
 
@@ -35,9 +35,9 @@ A comprehensive module for managing utility services (water, electricity, gas, e
 - **Inventory**: Meters as serials
 - **Accounting**: Auto-invoicing
 
-[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Utility-Billing.md)
+[![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/00-Overview.md)
 
-## 🏢 [Property Management](./utility_billing/docs/Property-Management.md)
+## 🏢 [Property Management](./utility_billing/docs/03-Property-Management.md)
 
 The **ERPNext Property Management** module simplifies rental operations from tenant onboarding to recurring rent and utility billing.
 
@@ -59,7 +59,7 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 - Recurring and utility billing under a single customer record
 - Built-in support for renewals, notices, and changes
 
-## [![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Property-Management.md)
+## [![Explore More](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/03-Property-Management.md)
 
 ## 📱 Tenant Portal
 
@@ -77,27 +77,27 @@ A React + TypeScript tenant portal is served at `/utility-billing` from the
 The portal never trusts client-side amounts or ownership; every endpoint scopes
 records to the session user's linked Customers.
 
-[![Explore Portal Docs](https://img.shields.io/badge/%F0%9F%91%89%20Portal%20Docs-0ea5e9?style=for-the-badge&logo=readthedocs&logoColor=fff)](./utility_billing/docs/Customer-Portal.md)
+[![Explore Portal Docs](https://img.shields.io/badge/%F0%9F%91%89%20Portal%20Docs-0ea5e9?style=for-the-badge&logo=readthedocs&logoColor=fff)](./utility_billing/docs/12-Customer-Portal.md)
 
-## 🧾 Key Doctypes & Customizations
+## 🧾 Key Records & Guides
 
-Explore the doctypes that power the system. Below are categorized lists of **new doctypes** and **customizations**.
+The same records, described from the user's side.
 
-### ✨ Customized Doctypes
+### ✨ Customized ERPNext Records
 
-- 📑 [Contract](./utility_billing/docs/Contract.md)
-- 🧾 [Sales Order and Sales Invoice](./utility_billing/docs/Sales-Order-and-Invoice.md)
-- 📦 [Item](./utility_billing/docs/Utility-Billing.md#-3-important-notes)
-- 💲 [Item Price](./utility_billing/docs/Utility-Billing.md#-13-price-lists--tariffs)
+- 📑 [Contract](./utility_billing/docs/06-Contracts.md)
+- 🧾 [Sales Order and Sales Invoice](./utility_billing/docs/10-Sales-Orders-and-Invoices.md)
+- 📦 [Item](./utility_billing/docs/00-Overview.md#records-you-will-work-with)
+- 💲 [Item Price](./utility_billing/docs/08-Rent-Billing.md)
 
-### 🆕 New Doctypes
+### 🆕 New Records
 
-- ⚙️ [Utility Billing Settings](./utility_billing/docs/Settings.md)
-- 🏢 [Utility Property](./utility_billing/docs/Property.md)
-- 📝 [Utility Service Request](./utility_billing/docs/Service-Request.md)
-- 🧾 [Utility Bill Structure](./utility_billing/docs/Bill-Structure.md)
-- 📈 [Meter Reading](./utility_billing/docs/Meter-Reading.md)
-- 🪙 [Billing Adjustment Rule](./utility_billing/docs/Billing-Adjustment-Rule.md)
+- ⚙️ [Utility Billing Settings](./utility_billing/docs/01-Settings.md)
+- 🏢 [Utility Property](./utility_billing/docs/02-Properties.md)
+- 📝 [Utility Service Request](./utility_billing/docs/04-Service-Requests.md)
+- 🧾 [Utility Bill Structure](./utility_billing/docs/05-Bill-Structures.md)
+- 📈 [Meter Reading](./utility_billing/docs/09-Meter-Readings.md)
+- 🪙 [Billing Adjustment Rule](./utility_billing/docs/07-Billing-Adjustment-Rules.md)
 
 ## 📊 Reports
 
@@ -110,7 +110,7 @@ Get actionable insights from your utility and property data with our built-in re
 - **📝 Tenancy Summary Report** – Manage leases, durations, and contract changes.
 - **🔌 Meter Reading Summary** – Analyze utility consumption, tariff blocks, and billing.
 
-## [![View Reports](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Reports.md)
+## [![View Reports](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20More-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/11-Reports.md)
 
 ## ⚙️ Demo Data Management
 
@@ -124,7 +124,7 @@ meter readings, Sales Orders/Invoices and support tickets** in one action.
 - Shared demo password: `Demo@12345`
 - Clear Demo Data removes the generated company, user, transactions and support tickets
 
-[![Explore Demo Data](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20Demo%20Data-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Demo-Data.md)
+[![Explore Demo Data](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20Demo%20Data-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/13-Demo-Data.md)
 
 ## 🛠️ Installation (Self-Hosted)
 
@@ -146,7 +146,9 @@ bench --site [site_name] install-app utility_billing
 
 ## 📚 Documentation & Support
 
-Need help? Browse detailed guides, FAQs, or open an issue in our GitHub repo.
+Need help? The [user guide](./utility_billing/docs/README.md) walks through every
+task in order, from setup to reports. For bugs and requests, open an issue in our
+GitHub repo.
 
 [![Full Documentation](https://img.shields.io/badge/Full_Documentation-6366F1?style=for-the-badge&logo=readthedocs&logoColor=fff)](https://github.com/navariltd/utility-billing/wiki)
 [![ERPNext Docs](https://img.shields.io/badge/ERPNext_Docs-FF6B6B?style=for-the-badge&logo=erpnext&logoColor=fff)](https://docs.erpnext.com)

@@ -107,15 +107,15 @@ Commit the regenerated portal HTML/assets with front-end changes.
 
 Generate demo data from **Utility Billing Settings → Generate Demo Data** and
 sign in with any account from
-[`Demo-Data.md`](../utility_billing/docs/Demo-Data.md).
+[`13-Demo-Data.md`](../utility_billing/docs/13-Demo-Data.md).
 
 All demo accounts use the password `Demo@12345`. They are Website Users linked
 to CRM Customers and are intended for demos/training only.
 
 ## More documentation
 
-- [Customer Portal architecture and API surface](../utility_billing/docs/Customer-Portal.md)
-- [Demo dataset and billing approaches](../utility_billing/docs/Demo-Data.md)
-- [Property management](../utility_billing/docs/Property-Management.md)
-- [Billing adjustment rules](../utility_billing/docs/Billing-Adjustment-Rule.md)
-- [Rent billing by Item Price](../utility_billing/docs/Rent-Billing-by-Item-Price.md)
+- [Customer portal guide](../utility_billing/docs/12-Customer-Portal.md)
+- [Demo dataset and billing approaches](../utility_billing/docs/13-Demo-Data.md)
+- [Property management](../utility_billing/docs/03-Property-Management.md)
+- [Billing adjustment rules](../utility_billing/docs/07-Billing-Adjustment-Rules.md)
+- [Rent billing by Item Price](../utility_billing/docs/08-Rent-Billing.md)
