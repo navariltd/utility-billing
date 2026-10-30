@@ -137,6 +137,8 @@ class TestManualSchedulePersistence(FrappeTestCase):
 
 	def tearDown(self):
 		self._clear_prices()
+		frappe.db.delete("Contract Utility Property Item", {"parent": self.service_request.name})
+		frappe.db.delete("Utility Service Request Item", {"parent": self.service_request.name})
 		frappe.db.delete("Utility Service Request", {"name": self.service_request.name})
 		super().tearDown()
 
@@ -147,11 +149,13 @@ class TestManualSchedulePersistence(FrappeTestCase):
 		frappe.clear_cache(doctype="Utility Billing Settings")
 
 	def _clear_prices(self):
-		item_price_utils.delete_existing_schedule(ITEM, PRICE_LIST)
-		item_price_utils.delete_existing_schedule(OTHER_ITEM, PRICE_LIST)
+		factories.delete_prices(ITEM, PRICE_LIST)
+		factories.delete_prices(OTHER_ITEM, PRICE_LIST)
 
 	def _create_request(self):
 		request = frappe.new_doc("Utility Service Request")
+		request.service_request_from = "Customer"
+		request.party_name = CUSTOMER
 		request.customer = CUSTOMER
 		request.company = frappe.db.get_value("Company", {}, "name")
 		request.price_list = PRICE_LIST
@@ -171,6 +175,8 @@ class TestManualSchedulePersistence(FrappeTestCase):
 		request.flags.ignore_mandatory = True
 		request.flags.ignore_links = True
 		request.insert(ignore_permissions=True)
+		# Item Prices are defined on submitted requests only.
+		request.submit()
 
 		return request
 
@@ -231,6 +237,18 @@ class TestManualSchedulePersistence(FrappeTestCase):
 					[{"valid_from": START, "valid_upto": "2026-06-30", "rate": 1000}]
 				)
 			)
+
+		self.assertEqual(self._prices(), [])
+
+	def test_create_rejects_a_period_past_the_lease_end(self):
+		"""A price running past the lease would start in this window but cover the next lease."""
+		args = self._action_args(
+			[{"valid_from": START, "valid_upto": "2027-03-31", "rate": 1000}]
+		)
+		args["end_date"] = None
+
+		with self.assertRaises(frappe.ValidationError):
+			item_price_actions.create_item_price_schedule(**args)
 
 		self.assertEqual(self._prices(), [])
 
@@ -375,6 +393,68 @@ class TestManualSchedulePersistence(FrappeTestCase):
 			)
 		finally:
 			frappe.delete_doc("Item Price", foreign, force=True, ignore_permissions=True)
+
+	def _remove_every_price_list_source(self):
+		"""Leave the request with no price list from any fallback."""
+		frappe.db.set_value(
+			"Utility Service Request", self.service_request.name, "price_list", None
+		)
+		factories.remove_price_list_fallbacks(self, CUSTOMER)
+
+	def test_editing_and_removing_without_a_price_list_succeeds(self):
+		item_price_actions.create_item_price_schedule(
+			**self._action_args(
+				[
+					{"valid_from": START, "valid_upto": "2026-06-30", "rate": 1000},
+					{"valid_from": "2026-07-01", "valid_upto": END, "rate": 1500},
+				]
+			)
+		)
+		first, second = self._prices()
+		self._remove_every_price_list_source()
+
+		result = item_price_summary_actions.save_item_price_schedule(
+			self.service_request.name,
+			{
+				PROPERTY: {
+					"periods": [
+						{
+							"name": first["name"],
+							"valid_from": START,
+							"valid_upto": END,
+							"price_list_rate": 1200,
+						}
+					],
+					"deleted": [second["name"]],
+				}
+			},
+		)
+
+		self.assertEqual(result["updated"], 1)
+		self.assertEqual(result["deleted"], 1)
+		prices = self._prices()
+		self.assertEqual(len(prices), 1)
+		self.assertEqual(prices[0]["price_list_rate"], 1200.0)
+
+	def test_adding_a_period_without_a_price_list_is_rejected(self):
+		self._remove_every_price_list_source()
+
+		with self.assertRaisesRegex(
+			frappe.ValidationError, "No Price List found for new Item Prices"
+		):
+			item_price_summary_actions.save_item_price_schedule(
+				self.service_request.name,
+				{
+					PROPERTY: {
+						"periods": [
+							{"valid_from": START, "valid_upto": END, "price_list_rate": 1000}
+						],
+						"deleted": [],
+					}
+				},
+			)
+
+		self.assertEqual(self._prices(), [])
 
 	def test_saving_is_blocked_when_rent_is_not_billed_by_item_price(self):
 		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")

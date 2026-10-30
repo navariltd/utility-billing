@@ -35,12 +35,24 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		factories.delete_prices(TEST_ITEM, PRICE_LIST)
 		factories.delete_prices(OTHER_ITEM, PRICE_LIST)
 
+		self._delete_requests()
 		self.service_request = self._create_request([PROPERTY])
-		self.price = self._create_price(TEST_ITEM, 1000)
+		# Owned by the request: its customer, its service item, inside its lease.
+		self.price = self._create_price(TEST_ITEM, 1000, customer=CUSTOMER)
 
 	def tearDown(self):
 		factories.delete_prices(TEST_ITEM, PRICE_LIST)
 		factories.delete_prices(OTHER_ITEM, PRICE_LIST)
+		self._delete_requests()
+
+	def _delete_requests(self):
+		names = frappe.get_all(
+			"Utility Service Request", filters={"price_list": PRICE_LIST}, pluck="name"
+		)
+		for name in names:
+			frappe.db.delete("Contract Utility Property Item", {"parent": name})
+			frappe.db.delete("Utility Service Request Item", {"parent": name})
+			frappe.db.delete("Utility Service Request", {"name": name})
 
 	def _enable_item_price_approach(self):
 		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
@@ -49,11 +61,13 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		frappe.clear_cache(doctype="Utility Billing Settings")
 
 	def _create_request(self, properties):
+		"""Insert and submit a request leasing ``properties`` for 2026."""
 		request = frappe.new_doc("Utility Service Request")
 		request.customer = CUSTOMER
 		request.party_type = "Customer"
 		request.party_name = CUSTOMER
 		request.price_list = PRICE_LIST
+		request.start_date = "2026-01-01"
 		request.flags.ignore_mandatory = True
 		request.flags.ignore_links = True
 
@@ -63,10 +77,17 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		for property_name in properties:
 			request.append(
 				"requested_properties",
-				{"utility_property": property_name, "item_code": TEST_ITEM},
+				{
+					"utility_property": property_name,
+					"item_code": TEST_ITEM,
+					"start_date": "2026-01-01",
+					"end_date": "2026-12-31",
+					"is_active": 1,
+				},
 			)
 
 		request.insert(ignore_permissions=True)
+		request.submit()
 
 		return request
 
@@ -81,7 +102,9 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 				frequency="Yearly",
 			),
 			item_price_utils.ScheduleLine(
-				item_code=item_code, customer=customer, base_rate=rate
+				item_code=item_code,
+				customer=customer,
+				base_rate=rate,
 			),
 			RatePeriod(
 				valid_from="2026-01-01",
@@ -126,6 +149,34 @@ class TestItemPriceRateUpdates(FrappeTestCase):
 		self.assertEqual(result["updated"], 0)
 		self.assertEqual(result["rejected"], 1)
 		self.assertEqual(self._rate_of(foreign), 500)
+
+	def test_price_of_another_customer_is_rejected(self):
+		foreign = self._create_price(TEST_ITEM, 600, customer=factories.ensure_customer("_Test Rate Edit Other Customer"))
+
+		result = item_price_actions.update_item_price_rates(
+			self.service_request.name,
+			[{"name": foreign, "price_list_rate": 9999}],
+		)
+
+		self.assertEqual(result["rejected"], 1)
+		self.assertEqual(self._rate_of(foreign), 600)
+
+	def test_price_starting_outside_the_lease_is_rejected(self):
+		outside = item_price_utils.insert_item_price(
+			item_price_utils.ScheduleOptions(
+				price_list=PRICE_LIST, start_date="2027-01-01", end_date="2027-12-31", uom="Nos"
+			),
+			item_price_utils.ScheduleLine(item_code=TEST_ITEM, customer=CUSTOMER, base_rate=700),
+			RatePeriod(valid_from="2027-01-01", valid_upto="2027-12-31", rate=700, increment_count=0),
+		)
+
+		result = item_price_actions.update_item_price_rates(
+			self.service_request.name,
+			[{"name": outside, "price_list_rate": 9999}],
+		)
+
+		self.assertEqual(result["rejected"], 1)
+		self.assertEqual(self._rate_of(outside), 700)
 
 	def test_unknown_price_name_is_rejected(self):
 		result = item_price_actions.update_item_price_rates(

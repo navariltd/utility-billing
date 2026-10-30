@@ -143,3 +143,112 @@ def _default_parent_cost_center(settings, company: str | None) -> str | None:
 def get_settings():
 	"""Return the cached Utility Billing Settings document."""
 	return frappe.get_cached_doc("Utility Billing Settings")
+
+
+def resolve_primary_cost_center(property_name: str, item_code: str, company: str) -> str | None:
+	"""Return the cost center a request row or invoice line of ``property_name`` takes.
+
+	The property's own cost center wins; without one, ERPNext's fallback for the
+	item (see ``default_cost_center``) applies. A cost center of another company
+	is never used.
+	"""
+	candidates = (
+		frappe.db.get_value("Utility Property", property_name, "cost_center"),
+		default_cost_center(item_code, company),
+	)
+	for cost_center in candidates:
+		if cost_center and frappe.get_cached_value("Cost Center", cost_center, "company") == company:
+			return cost_center
+
+	return None
+
+
+def default_cost_center(item_code: str, company: str) -> str | None:
+	"""Return the cost center ERPNext gives a selling line of ``item_code``.
+
+	The item's Default Selling Cost Center, then its Item Group's, then its
+	Brand's, then the company default, as ERPNext fills a new line.
+	"""
+	from erpnext.stock.get_item_details import get_default_cost_center
+
+	ctx = frappe._dict(item_code=item_code, company=company, customer=True)
+
+	return get_default_cost_center(ctx, company=company) or frappe.get_cached_value(
+		"Company", company, "cost_center"
+	)
+
+
+def service_item_owners(properties: list[str]) -> dict[str, list[str]]:
+	"""Return ``{service item: properties}`` for the given properties."""
+	owners: dict[str, list[str]] = {}
+	for property_name, item_code in frappe.get_all(
+		"Utility Property",
+		filters={"name": ("in", properties), "service_item": ("is", "set")},
+		fields=["name", "service_item"],
+		as_list=True,
+	):
+		owners.setdefault(item_code, []).append(property_name)
+
+	return owners
+
+
+def request_row_property(row, requested: list[str], owners: dict[str, list[str]]) -> str | None:
+	"""Return the requested property a request row or invoice line belongs to.
+
+	Its own ``utility_property`` when that property is requested; else the only
+	requested property; else the one requested property whose service item it
+	bills. Anything else is not guessed and gives ``None``.
+	"""
+	if row.get("utility_property") in requested:
+		return row.utility_property
+
+	if len(requested) == 1:
+		return requested[0]
+
+	candidates = owners.get(row.get("item_code")) or []
+
+	return candidates[0] if len(candidates) == 1 else None
+
+
+def requested_properties(service_request) -> list[str]:
+	"""Return the properties a request still holds, in row order, without repeats."""
+	from utility_billing.utility_billing.utils.request_prices import active_rows
+
+	return list(dict.fromkeys(row.utility_property for row in active_rows(service_request)))
+
+
+def fill_request_item_cost_centers(doc, skip_rows: set[str] | None = None) -> None:
+	"""Default the cost center of each row of a Utility Service Request from its property.
+
+	Only under the Item Price approach. With requested properties every row,
+	rent item or not, takes the cost center of its property (see
+	``request_row_property``), so the property wins over the item's own
+	default. A row that already has a cost center, set by hand or earlier, is
+	left alone, as are meter rows, rows whose property cannot be told and
+	``skip_rows`` (rows already submitted, whose cost center is fixed).
+	Without a requested property nothing is filled, so invoice lines follow
+	ERPNext's fallback.
+	"""
+	from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
+
+	if not doc.get("company") or not is_item_price_approach():
+		return
+
+	requested = requested_properties(doc)
+	if not requested:
+		return
+
+	owners = service_item_owners(requested)
+
+	for row in doc.get("items") or []:
+		if (
+			row.get("cost_center")
+			or not row.item_code
+			or row.get("meter_number")
+			or row.name in (skip_rows or set())
+		):
+			continue
+
+		property_name = request_row_property(row, requested, owners)
+		if property_name:
+			row.cost_center = resolve_primary_cost_center(property_name, row.item_code, doc.company)

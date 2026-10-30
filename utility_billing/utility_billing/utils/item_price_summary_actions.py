@@ -15,7 +15,7 @@ from frappe import _
 from frappe.utils import flt, getdate
 
 from utility_billing.utility_billing.utils import item_price_scope as scope
-from utility_billing.utility_billing.utils import item_price_uom
+from utility_billing.utility_billing.utils import item_price_uom, request_prices
 from utility_billing.utility_billing.utils import item_prices as item_price_utils
 from utility_billing.utility_billing.utils.item_price_schedule import RatePeriod
 from utility_billing.utility_billing.utils.item_price_validation import (
@@ -46,6 +46,7 @@ def save_item_price_schedule(docname: str, schedules: dict | str) -> dict:
 
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("write")
+    request_prices.require_customer(service_request)
 
     result = {"updated": 0, "created": 0, "deleted": 0, "unchanged": 0, "skipped": 0}
 
@@ -91,12 +92,17 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
         )
 
     allowed_items = {item_code}
+    request_prices.validate_unshared_service_items(service_request, allowed_items)
     start_date, end_date = scope.property_contract_period(service_request, property_name)
 
     rows = [row for row in (schedule.get("periods") or []) if isinstance(row, dict)]
     deleted = [name for name in (schedule.get("deleted") or []) if name]
 
     _reject_conflicting_names(rows, deleted)
+    _reject_other_customers(service_request, rows)
+    request_prices.validate_within_window(
+        service_request, property_name, [_to_period(row) for row in rows]
+    )
 
     for group_rows in _group_by_customer(rows).values():
         _validate_group(property_name, group_rows, start_date, end_date)
@@ -105,25 +111,41 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
         )
 
     for name in deleted:
-        _delete_price(name, allowed_items, result)
+        _delete_price(name, allowed_items, service_request, result)
 
-    options = _build_options(service_request, item_code, start_date, end_date)
+    new_rows = [row for row in rows if not row.get("name")]
+    # Only inserting needs a price list; dates, rates and removals do not.
+    options = (
+        _build_options(service_request, item_code, start_date, end_date)
+        if new_rows
+        else None
+    )
 
     # Updates run before inserts so a split period frees its dates for the new
     # row instead of being seen as an overlap.
     for row in rows:
         if row.get("name"):
-            _update_price(row, allowed_items, result)
+            _update_price(row, allowed_items, service_request, result)
 
+    for row in new_rows:
+        _create_price(
+            options,
+            row,
+            item_code,
+            property_name,
+            service_request.customer,
+            result,
+        )
+
+
+def _reject_other_customers(service_request, rows: list[dict]) -> None:
+    """Raise when a period is scoped to anyone but the request's customer."""
     for row in rows:
-        if not row.get("name"):
-            _create_price(
-                options,
-                row,
-                item_code,
-                property_name,
-                row.get("customer") or service_request.customer,
-                result,
+        if row.get("customer") and row["customer"] != service_request.customer:
+            frappe.throw(
+                _("Rent periods of {0} belong to its customer {1}, not {2}.").format(
+                    service_request.name, service_request.customer, row["customer"]
+                )
             )
 
 
@@ -207,7 +229,13 @@ def _build_options(
     )
 
     if not price_list:
-        frappe.throw(_("Please set a Price List before editing Item Prices."))
+        frappe.throw(
+            _(
+                "No Price List found for new Item Prices. Set a Default Price List "
+                "on the customer, its Customer Group, Utility Billing Settings or "
+                "Selling Settings."
+            )
+        )
 
     return item_price_utils.ScheduleOptions(
         price_list=price_list,
@@ -217,9 +245,9 @@ def _build_options(
     )
 
 
-def _delete_price(name: str, allowed_items: set[str], result: dict) -> None:
+def _delete_price(name: str, allowed_items: set[str], service_request, result: dict) -> None:
     """Delete the Item Price of ``name`` when it belongs to the request."""
-    price = scope.get_allowed_price(name, allowed_items)
+    price = scope.get_allowed_price(name, allowed_items, service_request)
     if not price:
         result["skipped"] += 1
         return
@@ -228,9 +256,9 @@ def _delete_price(name: str, allowed_items: set[str], result: dict) -> None:
     result["deleted"] += 1
 
 
-def _update_price(row: dict, allowed_items: set[str], result: dict) -> None:
+def _update_price(row: dict, allowed_items: set[str], service_request, result: dict) -> None:
     """Write the new dates and rate of an existing Item Price."""
-    price = scope.get_allowed_price(row.get("name"), allowed_items)
+    price = scope.get_allowed_price(row.get("name"), allowed_items, service_request)
     if not price:
         result["skipped"] += 1
         return

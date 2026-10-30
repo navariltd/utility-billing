@@ -43,6 +43,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 	def tearDown(self):
 		factories.delete_prices(TEST_ITEM, TEST_PRICE_LIST)
 		factories.delete_prices(SECOND_ITEM, TEST_PRICE_LIST)
+		frappe.db.delete("Contract Utility Property Item", {"parent": self.service_request.name})
+		frappe.db.delete("Utility Service Request Item", {"parent": self.service_request.name})
 		frappe.db.delete("Utility Service Request", {"name": self.service_request.name})
 		super().tearDown()
 
@@ -54,6 +56,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 	def _make_service_request(self):
 		service_request = frappe.new_doc("Utility Service Request")
+		service_request.service_request_from = "Customer"
+		service_request.party_name = TEST_CUSTOMER
 		service_request.customer = TEST_CUSTOMER
 		service_request.company = frappe.db.get_value("Company", {}, "name")
 		service_request.price_list = TEST_PRICE_LIST
@@ -79,6 +83,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		service_request.flags.ignore_mandatory = True
 		service_request.flags.ignore_links = True
 		service_request.insert(ignore_permissions=True)
+		# Item Prices are defined on submitted requests only.
+		service_request.submit()
 
 		return service_request
 
@@ -417,10 +423,9 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 	def test_preview_works_without_a_price_list(self):
 		args = self._action_args()
 		args["price_list"] = None
-		self.service_request.price_list = None
-		self.service_request.flags.ignore_mandatory = True
-		self.service_request.flags.ignore_links = True
-		self.service_request.save(ignore_permissions=True)
+		# The request is submitted and Price List is not allowed on submit.
+		frappe.db.set_value("Utility Service Request", self.service_request.name, "price_list", None)
+		self.service_request.reload()
 
 		preview = item_price_actions.preview_item_price_schedule(**args)
 
@@ -429,12 +434,14 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		self.assertEqual(preview[0]["periods"][0]["valid_from"], "2026-01-01")
 
 	def test_creating_still_requires_a_price_list(self):
+		# Selling Settings is the last fallback, so nothing must resolve. Cleared
+		# first, as saving the request would otherwise default its price list.
+		factories.remove_price_list_fallbacks(self, TEST_CUSTOMER)
 		args = self._action_args()
 		args["price_list"] = None
-		self.service_request.price_list = None
-		self.service_request.flags.ignore_mandatory = True
-		self.service_request.flags.ignore_links = True
-		self.service_request.save(ignore_permissions=True)
+		# The request is submitted and Price List is not allowed on submit.
+		frappe.db.set_value("Utility Service Request", self.service_request.name, "price_list", None)
+		self.service_request.reload()
 
 		with self.assertRaises(frappe.ValidationError):
 			item_price_actions.create_item_price_schedule(**args)
@@ -572,6 +579,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		factories.ensure_property(SECOND_PROPERTY, service_item=SECOND_ITEM)
 
 		# Only a request's own properties can be priced through it.
+		self.service_request.reload()
 		if not any(
 			row.utility_property == SECOND_PROPERTY
 			for row in self.service_request.requested_properties

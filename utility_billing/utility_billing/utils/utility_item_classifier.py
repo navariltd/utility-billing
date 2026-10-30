@@ -33,21 +33,29 @@ MATCH_CONFLICT = "conflict"
 
 
 def get_utility_items(item_codes) -> set[str]:
-	"""Return the codes among ``item_codes`` whose Item is a utility item.
+	"""Return the codes among ``item_codes`` that are utility items.
+
+	An item is a utility item when it is flagged ``is_utility_item`` or is the
+	service item of a ``Utility Property``. The second test catches a property
+	whose service item was picked by hand and never flagged, so its rent is
+	still governed by a request.
 
 	Args:
 		item_codes: Item codes to check. Empty values are ignored.
 
 	Returns:
-		The item codes flagged ``is_utility_item``.
+		The utility item codes among ``item_codes``.
 	"""
 	codes = list({code for code in item_codes or [] if code})
 	if not codes:
 		return set()
 
-	return set(
-		frappe.get_all("Item", filters={"name": ("in", codes), "is_utility_item": 1}, pluck="name")
+	flagged = frappe.get_all("Item", filters={"name": ("in", codes), "is_utility_item": 1}, pluck="name")
+	service_items = frappe.get_all(
+		"Utility Property", filters={"service_item": ("in", codes)}, pluck="service_item"
 	)
+
+	return set(flagged) | set(service_items)
 
 
 def get_primary_items(service_request: str) -> set[str]:
@@ -151,12 +159,18 @@ def get_requests_by_item(customer: str, item_codes) -> dict[str, set[str]]:
 	return requests_by_item
 
 
-def match_requests(customer: str, item_codes) -> frappe._dict:
+def match_requests(customer: str, item_codes, billing_dates: dict | None = None) -> frappe._dict:
 	"""Find the requests of a customer covering every utility item given.
+
+	When several requests cover the items and ``billing_dates`` is given, only
+	the requests whose leases cover every billing date are kept, and the match
+	becomes single when exactly one remains. Otherwise every candidate is kept,
+	so nothing is linked and the user chooses.
 
 	Args:
 		customer: Customer of the invoice.
 		item_codes: Item codes on the invoice; non utility items are ignored.
+		billing_dates: Optional mapping of item code to the dates it is billed for.
 
 	Returns:
 		``status`` (``None`` when no utility item is given, otherwise one of the
@@ -187,8 +201,48 @@ def match_requests(customer: str, item_codes) -> frappe._dict:
 		match.status = MATCH_SINGLE
 	else:
 		match.status = MATCH_MULTIPLE
+		covering = requests_covering_dates(match.candidates, billing_dates or {})
+		if len(covering) == 1:
+			match.candidates = covering
+			match.status = MATCH_SINGLE
 
 	return match
+
+
+def requests_covering_dates(candidates: list[str], billing_dates: dict) -> list[str]:
+	"""Return the candidates whose leases cover every billing date given.
+
+	Args:
+		candidates: ``Utility Service Request`` names.
+		billing_dates: Mapping of item code to the dates it is billed for.
+
+	Returns:
+		The candidates covering them all, or none when no dates are given.
+	"""
+	if not billing_dates:
+		return []
+
+	covering = []
+	for name in candidates:
+		leases = get_lease_periods(name, get_request_lines(name))
+		if all(
+			_lease_covers(leases.get(code), date) for code, dates in billing_dates.items() for date in dates
+		):
+			covering.append(name)
+
+	return covering
+
+
+def _lease_covers(lease, date) -> bool:
+	"""Return whether ``date`` falls within ``lease``; blank bounds are open."""
+	if not lease or not date:
+		return False
+
+	date = getdate(date)
+	if lease.start and date < getdate(lease.start):
+		return False
+
+	return not (lease.end and date > getdate(lease.end))
 
 
 def match_error_message(match: frappe._dict, customer: str, item_code: str | None = None) -> str | None:

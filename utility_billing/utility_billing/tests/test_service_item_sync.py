@@ -89,3 +89,16 @@ class TestServiceItemsForProperties(FrappeTestCase):
 		)
 
 		self.assertEqual(details[0]["rate"], item_standard_rate)
+
+	def test_cost_center_is_returned_only_when_a_company_is_given(self):
+		company = frappe.db.get_value("Utility Property", TEST_PROPERTY_A, "company")
+		cost_center = frappe.db.get_value(
+			"Cost Center", {"company": company, "is_group": 0}, "name"
+		)
+		frappe.db.set_value("Utility Property", TEST_PROPERTY_A, "cost_center", cost_center)
+
+		without = get_service_items_for_properties([TEST_PROPERTY_A])
+		with_company = get_service_items_for_properties([TEST_PROPERTY_A], company=company)
+
+		self.assertNotIn("cost_center", without[0])
+		self.assertEqual(with_company[0]["cost_center"], cost_center)

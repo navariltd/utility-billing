@@ -13,6 +13,7 @@ from typing import Any
 import frappe
 from frappe.utils import flt, getdate
 
+from utility_billing.utility_billing.utils import request_prices
 from utility_billing.utility_billing.utils.item_price_schedule import (
     DEFAULT_ADJUSTMENT_BASIS,
     IncrementRule,
@@ -31,8 +32,9 @@ class ScheduleLine:
         item_code: Service item the prices are created for.
         customer: Customer the prices are scoped to, if any.
         base_rate: Rate of the first period.
-        utility_property: Property the prices belong to, tagged onto every
-            generated ``Item Price`` so prices can be grouped by property.
+        utility_property: Property the line was built for. It is not stored
+            on the prices: a request finds its prices by service item,
+            customer and lease window (see ``request_prices``).
         manual_periods: Hand edited periods that replace generation for this
             line, validated against the contract period.
     """
@@ -255,8 +257,8 @@ def insert_item_price(
     """Insert a single Item Price record and return its name.
 
     These are ordinary Item Price records: the property is expressed by the
-    item itself (each property owns a service item named after it), so no extra
-    tagging is needed.
+    item itself (each property owns a service item named after it), and the
+    owning request by the customer and the lease window the price starts in.
 
     Args:
         options: Shared schedule options.
@@ -283,30 +285,39 @@ def insert_item_price(
     return doc.name
 
 
-def delete_existing_schedule(
-    item_code: str, price_list: str, customer: str | None = None
-) -> int:
-    """Delete the Item Prices previously generated for an item.
+def delete_existing_schedule(service_request, price_list: str, item_codes: set[str]) -> int:
+    """Delete the Item Prices a request owns for some items in a price list.
 
-    The scope is deliberately narrow - one item, one price list and one
-    customer - which is exactly what a rent schedule creates. Prices belonging
-    to any other item, price list or customer are never touched.
+    Ownership is the request's customer and lease window, so another request's
+    prices for the same property, prices of another customer and blank
+    customer prices are never touched.
 
     Args:
-        item_code: Item the schedule belongs to.
-        price_list: Price list the schedule was created in.
-        customer: Customer the schedule was scoped to, if any.
+        service_request: ``Utility Service Request`` document.
+        price_list: Price list the schedule is being recreated in.
+        item_codes: Service items whose prices are replaced.
 
     Returns:
         Number of Item Price records deleted.
     """
-    filters = {"item_code": item_code, "price_list": price_list}
+    return request_prices.delete_window_prices(service_request, price_list, set(item_codes))
 
-    if customer:
-        filters["customer"] = customer
 
-    names = frappe.get_all("Item Price", filters=filters, pluck="name")
-    for name in names:
-        frappe.delete_doc("Item Price", name, ignore_permissions=True, force=True)
+def delete_request_prices(service_request) -> int:
+    """Delete every Item Price a request owns, used when it is cancelled.
 
-    return len(names)
+    A request linked to a submitted Sales Invoice cannot be cancelled, so the
+    prices deleted here never priced a submitted invoice. Invoice rows keep
+    their own rate and no doctype links to Item Price.
+
+    Args:
+        service_request: ``Utility Service Request`` document being cancelled.
+
+    Returns:
+        Number of Item Price records deleted. Always ``0`` when rent is not
+        billed by Item Price, so cancelling never touches prices there.
+    """
+    if not request_prices.is_item_price_approach():
+        return 0
+
+    return request_prices.delete_window_prices(service_request)

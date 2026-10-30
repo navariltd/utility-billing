@@ -6,6 +6,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, fmt_money, getdate
 
+from ...utils.cost_center import (
+	default_cost_center,
+	request_row_property,
+	requested_properties,
+	resolve_primary_cost_center,
+	service_item_owners,
+)
 from ...utils.deferred_posting import (
 	cancel_deferred_journal_entries,
 	create_deferred_journal_entries,
@@ -67,6 +74,8 @@ def validate(doc: Document, method: str | None = None) -> None:
 	validate_deferred_lines(doc)
 
 	governed = govern_utility_lines(doc) if is_item_price_approach() else []
+	# After linking, so a request linked on this save already gives its lines their cost center.
+	fill_request_line_dimensions(doc)
 
 	contract = check_service_request_contract(doc)
 	if contract:
@@ -109,7 +118,13 @@ def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 			doc.set(REQUEST_FIELD, None)
 		return []
 
-	service_request = link_service_request(doc, [row.item_code for row in rows])
+	billing_dates: dict[str, list] = {}
+	for row in rows:
+		billing_dates.setdefault(row.item_code, []).append(
+			getdate(row.get(POSTING_DATE_FIELD) or doc.posting_date)
+		)
+
+	service_request = link_service_request(doc, [row.item_code for row in rows], billing_dates)
 	lines = get_request_lines(service_request)
 	leases = get_lease_periods(service_request, lines)
 	seen_in_this_invoice: set[tuple[str, int, int]] = set()
@@ -123,7 +138,7 @@ def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 		check_not_billed_twice_in_invoice(row, billing_date, seen_in_this_invoice)
 
 		if line.role == PRIMARY:
-			apply_schedule_rate(doc, row, billing_date)
+			apply_schedule_rate(doc, row, billing_date, service_request)
 			check_not_already_invoiced(doc, row, billing_date)
 		else:
 			check_request_rate(doc, row, line, service_request)
@@ -294,14 +309,18 @@ def get_governed_rows(doc: Document) -> list:
 	return [row for row in rows if row.item_code in utility_items]
 
 
-def link_service_request(doc: Document, item_codes: list[str]) -> str:
+def link_service_request(
+	doc: Document, item_codes: list[str], billing_dates: dict | None = None
+) -> str:
 	"""Return the Utility Service Request governing the utility lines.
 
-	The request is linked when it is the only one covering every utility line.
+	The request is linked when it is the only one covering every utility line,
+	or the only one of several whose leases cover every billing date.
 
 	Args:
 		doc: Sales Invoice being validated.
 		item_codes: Utility items billed by the invoice.
+		billing_dates: Mapping of item code to the dates it is billed for.
 
 	Returns:
 		The governing ``Utility Service Request`` name.
@@ -311,7 +330,7 @@ def link_service_request(doc: Document, item_codes: list[str]) -> str:
 			line, the linked request does not, several do and none is chosen, or
 			the request is in another currency.
 	"""
-	match = match_requests(doc.customer, item_codes)
+	match = match_requests(doc.customer, item_codes, billing_dates)
 
 	message = match_error_message(match, doc.customer)
 	if message:
@@ -371,10 +390,11 @@ def check_not_billed_twice_in_invoice(row, billing_date, seen: set) -> None:
 	seen.add(key)
 
 
-def apply_schedule_rate(doc: Document, row, billing_date) -> None:
-	"""Lock a primary line to the Item Price valid on its billing date.
+def apply_schedule_rate(doc: Document, row, billing_date, service_request: str) -> None:
+	"""Lock a primary line to the Item Price its request owns on its billing date.
 
-	Whatever the client sent, the rate is overwritten here.
+	Whatever the client sent, the rate is overwritten here. Prices of another
+	request, or linked to none, are never used.
 
 	Raises:
 		frappe.ValidationError: When no Item Price covers the item, the customer
@@ -390,12 +410,13 @@ def apply_schedule_rate(doc: Document, row, billing_date) -> None:
 		conversion_factor=row.conversion_factor or 1,
 		plc_conversion_rate=doc.plc_conversion_rate or 1,
 		conversion_rate=doc.conversion_rate or 1,
+		service_request=service_request,
 	)
 
 	if rate is None:
 		frappe.throw(
-			_("Row #{0}: No Item Price found for {1} valid on {2}.").format(
-				row.idx, frappe.bold(row.item_code), billing_date
+			_("Row #{0}: No Item Price of Utility Service Request {1} found for {2} valid on {3}.").format(
+				row.idx, frappe.bold(service_request), frappe.bold(row.item_code), billing_date
 			)
 		)
 
@@ -479,6 +500,8 @@ def check_not_already_invoiced(
 
 def before_validate(doc: Document, method: str) -> None:
 	"""Intercepts submit event for document"""
+	# Also here, as invoices inserted with ``ignore_validate`` never reach ``validate``.
+	fill_request_line_dimensions(doc)
 	if not doc.taxes:
 		AccountsController.append_taxes_from_item_tax_template(doc)
 		calculate_taxes_and_totals(doc)
@@ -493,6 +516,85 @@ def before_validate(doc: Document, method: str) -> None:
 
 	for sales_order in unique_sales_orders:
 		map_sales_order_meter_readings_to_invoice(sales_order, doc)
+
+
+def fill_request_line_dimensions(doc: Document) -> None:
+	"""Give the lines that came from the linked request the cost center of their request.
+
+	Only under the Item Price approach; under Auto Repeat invoice lines are left
+	exactly as they are. A line came from the request when its item is on the
+	request's item rows; meter lines, lines of items the request does not list
+	and return invoices are left to ERPNext.
+
+	With requested properties, a line's property is its own ``utility_property``
+	when requested, else the one property the request's rows of that item
+	resolve to (see ``request_row_property``); a line that resolves to none or
+	several is not guessed. Rent lines also get their property. The line takes
+	the cost center of its request row, else of its property. Without a
+	requested property, the line takes the cost center the request's rows of
+	its item agree on, if any.
+
+	Only a blank cost center, the company default or ERPNext's own default for
+	the item is replaced, so a cost center chosen by hand is kept. Running it
+	again changes nothing, so it runs both before validation (invoices inserted
+	with ``ignore_validate``, such as the daily Item Price billing) and after the
+	request is linked in ``validate``.
+	"""
+	if not is_item_price_approach():
+		return
+
+	request = doc.get(REQUEST_FIELD)
+	if doc.get("is_return") or not doc.get("company") or not request:
+		return
+
+	request_doc = frappe.get_doc(USR_DOCTYPE, request)
+	requested = requested_properties(request_doc)
+	owners = service_item_owners(requested) if requested else {}
+	request_rows: dict[str, list] = {}
+	for row in request_doc.get("items") or []:
+		if row.item_code and not row.get("meter_number"):
+			request_rows.setdefault(row.item_code, []).append(row)
+
+	company_default = frappe.get_cached_value("Company", doc.company, "cost_center")
+
+	for line in doc.get("items") or []:
+		rows = request_rows.get(line.item_code)
+		if not rows or line.get("meter_reading") or line.get("meter_number"):
+			continue
+
+		if requested:
+			if line.get("utility_property") in requested:
+				property_name = line.utility_property
+			else:
+				found = {request_row_property(row, requested, owners) for row in rows}
+				property_name = found.pop() if len(found) == 1 else None
+			if not property_name:
+				continue
+
+			if not line.get("utility_property") and property_name in (owners.get(line.item_code) or []):
+				line.utility_property = property_name
+
+		# A cost center chosen by hand that equals the item's or the company's
+		# default cannot be told from ERPNext's own, so it may be replaced.
+		if line.get("cost_center") not in (None, "", company_default, default_cost_center(line.item_code, doc.company)):
+			continue
+
+		if requested:
+			chosen = {
+				row.cost_center
+				for row in rows
+				if row.get("cost_center") and request_row_property(row, requested, owners) == property_name
+			}
+			cost_center = (chosen.pop() if len(chosen) == 1 else None) or resolve_primary_cost_center(
+				property_name, line.item_code, doc.company
+			)
+		else:
+			# No property to fall back on: only rows that all agree on a cost center give one.
+			agreed = {row.get("cost_center") or None for row in rows}
+			cost_center = agreed.pop() if len(agreed) == 1 else None
+
+		if cost_center:
+			line.cost_center = cost_center
 
 
 def map_sales_order_meter_readings_to_invoice(sales_order_name, target_doc):
