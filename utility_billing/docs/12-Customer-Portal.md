@@ -4,6 +4,8 @@ The customer portal is the tenant's side of the system, served at
 `/utility-billing`: browse available units, book one, follow the tenancy, see
 invoices and meter readings, pay online and talk to support.
 
+[![Watch the video](./images/portal.png)](./video/portal.mp4)
+
 ## What a tenant can do
 
 | Page                     | What it is for                                                                               |

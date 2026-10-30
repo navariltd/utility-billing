@@ -61,11 +61,7 @@ unrelated tenants never share a login.
 
    ![Generate Demo Data — Settings](./images/demo-settings.png)
 
-2. **From the toolbar** — use the demo quick action in the app toolbar.
-
-   ![Generate Demo Data — Toolbar](./images/demo-toolbar.png)
-
-3. **From the command line** (System Manager only):
+2. **From the command line** (System Manager only):
 
    ```bash
    bench --site <site> execute utility_billing.setup.demo.setup_demo_data

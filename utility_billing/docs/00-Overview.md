@@ -7,23 +7,11 @@ Utility Billing & Property Management adds two connected modules to ERPNext:
 - **Property management** — register buildings and units, take tenant enquiries,
   sign contracts and bill rent and utilities on a single customer record.
 
-This is the first of fourteen short guides; the [guide index](./README.md) lists
-them all and points to the one for each task.
-
 It is built for water, electricity, gas and waste providers, landlords, estate
 managers and property developers.
 
 ![Workspace](./images/workspace.png)
-
-## Who uses it
-
-| Role                       | What they do                                               |
-| -------------------------- | ---------------------------------------------------------- |
-| Front desk / letting agent | Take enquiries, book units, record deposits                |
-| Meter reader / operations  | Record readings, assign meters, handle connection requests |
-| Billing clerk              | Review and submit orders and invoices, apply adjustments   |
-| Finance                    | Collect payments, follow receivables and penalties         |
-| Tenant / customer          | Self-service on the customer portal                        |
+|
 
 ## The two journeys
 

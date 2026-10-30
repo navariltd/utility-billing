@@ -34,6 +34,7 @@ unit is billed on its own.
 ## What each section is for
 
 ### Unit information
+![Utility Property](./images/utility_property-unit.png)
 
 | Field                    | What to enter                                                      |
 | ------------------------ | ------------------------------------------------------------------ |

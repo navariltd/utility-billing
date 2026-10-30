@@ -6,8 +6,6 @@ rent repeats. Set it up once, before you enter live records.
 
 ![Utility Billing Settings](./images/utility-settings.png)
 
-> Only a System Manager can change these options.
-
 ## Sales and stock documents
 
 | Setting                                                          | What it does                                                       | What to choose                                                                                              |
