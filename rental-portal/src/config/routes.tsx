@@ -33,6 +33,8 @@ const PropertyBooking = lazy(
 const MyProperties = lazy(() => import("@/app/my-properties/page"));
 const Bookings = lazy(() => import("@/app/bookings/page"));
 const Invoices = lazy(() => import("@/app/invoices/page"));
+const InvoiceDetails = lazy(() => import("@/app/invoices/[invoice]/page"));
+const OrderDetails = lazy(() => import("@/app/orders/[order]/page"));
 const MeterReadings = lazy(() => import("@/app/meter-readings/page"));
 const MeterReadingDetails = lazy(
   () => import("@/app/meter-readings/[reading]/page"),
@@ -152,6 +154,24 @@ export const routes: RouteConfig[] = [
     ),
     searchable: true,
     searchTitle: "Invoices & Orders",
+  },
+  {
+    path: "/invoices/:invoice",
+    element: (
+      <ProtectedRoute>
+        <InvoiceDetails />
+      </ProtectedRoute>
+    ),
+    searchable: false,
+  },
+  {
+    path: "/orders/:order",
+    element: (
+      <ProtectedRoute>
+        <OrderDetails />
+      </ProtectedRoute>
+    ),
+    searchable: false,
   },
   {
     path: "/meter-readings",

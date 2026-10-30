@@ -12,7 +12,7 @@ The Rental Billing customer portal is a React single page application served at
 | Unit booking | `/properties/:property/book` | `api.portal.bookings.*` |
 | My bookings | `/bookings` | `api.portal.bookings.*` |
 | My properties / tenancy | `/my-properties` | `api.portal.properties.get_my_properties` |
-| Invoices, orders and payments | `/invoices` | `api.portal.payments.*` |
+| Invoices, orders and payments | `/invoices`, `/invoices/:invoice`, `/orders/:order` | `api.portal.payments.*` |
 | Meter readings | `/meter-readings`, `/meter-readings/:reading` | `api.portal.meter_readings.*` |
 | Support tickets and replies | property and booking support dialogs | `api.portal.support.*` |
 | Notifications | `/settings/notifications` | standard Frappe notification log |
@@ -94,10 +94,30 @@ pending booking.
 ## Invoices, orders and payments
 
 `/invoices` lists every submitted, payable Sales Invoice and Sales Order of the
-signed-in Customer.
+signed-in Customer. Selecting a row opens the document:
+
+- `/invoices/:invoice` for a Sales Invoice, `/orders/:order` for a Sales Order;
+- the customer, the posting (order) date, the due (delivery) date, the status
+  and the company;
+- the items with quantity, rate and amount;
+- the meter readings the document carries (only when the document has any),
+  each linking to the reading's details page;
+- the taxes applied, and the totals: taxes, grand total, rounded total, paid
+  amount or advance paid, and the outstanding or remaining balance.
+
+A document of another Customer, a draft or a cancelled document answers with a
+`DoesNotExistError`, so the details endpoint is scoped server side.
+
+The details page is laid out as a hero with the amount still due and its due
+state (due in N days, due today, overdue by N days), a strip with the net total,
+taxes, grand total and paid amount, tabs for the items, meter readings and
+taxes, and a sticky summary with the amount breakdown and the payment action.
+
+Payments:
 
 - An invoice is paid for its outstanding amount.
 - A Sales Order is paid as an advance for its unbilled balance.
+- The payment action is available on the list and on the details page.
 - The portal asks the selected gateway controller for a checkout URL and
   redirects the customer. It does **not** create Payment Entries or Payment
   Requests itself; the gateway records the payment on the reference document.
@@ -182,6 +202,7 @@ Related documents are resolved through:
 | `utility_billing.api.portal.support.reply_to_support_issue` | no | customer reply |
 | `utility_billing.api.portal.payments.get_payment_gateways` | no | configured gateway accounts |
 | `utility_billing.api.portal.payments.get_customer_documents` | no | invoices, orders and totals |
+| `utility_billing.api.portal.payments.get_customer_document` | no | one invoice or order with its items, meter readings, taxes and totals |
 | `utility_billing.api.portal.payments.initiate_payment` | no | gateway checkout URL |
 | `utility_billing.api.portal.meter_readings.get_customer_meter_readings` | no | meter readings, consumption and amounts |
 | `utility_billing.api.portal.meter_readings.get_customer_meter_reading` | no | one reading with its block distribution |

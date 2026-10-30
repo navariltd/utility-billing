@@ -1,6 +1,6 @@
 /**
- * One meter reading of the customer: its meter lines, the tariff blocks the
- * consumption was billed through and the total amount.
+ * One meter reading of the customer: the consumption, the meters that were read
+ * and the tariff blocks the consumption was billed through.
  *
  * The payload comes from `get_customer_meter_reading`, which scopes the reading
  * to the caller's Customers server side.
@@ -8,10 +8,19 @@
 
 "use client";
 
+import {
+  CountPill,
+  DetailHero,
+  InfoList,
+  SectionCard,
+  readingStatus,
+  StatTile,
+  StatusPill,
+} from "@/components/details";
 import { BaseLayout } from "@/components/layouts/base-layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -22,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAmount, formatDate, formatNumber } from "@/lib/format";
 import type {
   MeterReadingDetail,
@@ -29,7 +39,18 @@ import type {
   MeterReadingRate,
 } from "@/types/meter-readings";
 import { useFrappeGetCall } from "frappe-react-sdk";
-import { ArrowLeft, SearchX } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CalendarDays,
+  Coins,
+  Gauge,
+  Layers,
+  ReceiptText,
+  Scale,
+  SearchX,
+  Timer,
+} from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 interface MeterReadingResponse {
@@ -51,11 +72,19 @@ export default function MeterReadingDetailsPage() {
 
   if (readingName && isLoading && !payload) {
     return (
-      <BaseLayout title="Meter Reading">
-        <div className="space-y-4 px-4 lg:px-6">
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+      <BaseLayout>
+        <div className="mx-auto w-full max-w-6xl space-y-4 px-4 lg:px-6">
+          <Skeleton className="h-36 w-full rounded-2xl" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Skeleton className="h-72 rounded-xl lg:col-span-2" />
+            <Skeleton className="h-72 rounded-xl" />
+          </div>
         </div>
       </BaseLayout>
     );
@@ -70,10 +99,15 @@ export default function MeterReadingDetailsPage() {
         <div className="px-4 lg:px-6">
           <Card>
             <CardContent className="text-muted-foreground flex flex-col items-center gap-3 py-16 text-center text-sm">
-              <SearchX className="h-6 w-6" />
+              <SearchX className="size-6" />
               {error?.message || "Please check the reading number and try again."}
               <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm" className="cursor-pointer">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer"
+                >
                   <Link to="/meter-readings">Back to meter readings</Link>
                 </Button>
                 <Button
@@ -92,169 +126,288 @@ export default function MeterReadingDetailsPage() {
     );
   }
 
+  const status = readingStatus(payload.docstatus);
+  const currency = payload.currency;
+  const unit = payload.property_label || payload.property;
+  const amounts = lineAmounts(payload.rates);
+
   return (
-    <BaseLayout
-      title={`Meter Reading ${payload.name}`}
-      description={
-        payload.property_label
-          ? `${payload.property_label} · ${formatDate(payload.date)}`
-          : formatDate(payload.date)
-      }
-    >
-      <div className="space-y-4 px-4 lg:px-6">
-        <Button asChild variant="ghost" size="sm" className="cursor-pointer">
+    <BaseLayout>
+      <div className="mx-auto w-full max-w-6xl space-y-4 px-4 lg:px-6">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground -ml-2 cursor-pointer"
+        >
           <Link to="/meter-readings">
-            <ArrowLeft className="mr-1 h-4 w-4" />
+            <ArrowLeft className="size-4" />
             All meter readings
           </Link>
         </Button>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard
-            title="Total consumption"
+        <DetailHero
+          icon={Gauge}
+          eyebrow="Meter reading"
+          title={payload.name}
+          description={
+            [unit, payload.customer_name || payload.customer]
+              .filter(Boolean)
+              .join(" · ")
+          }
+          badges={<StatusPill label={status.label} tone={status.tone} />}
+          meta={[
+            { icon: CalendarDays, label: formatDate(payload.date) },
+            ...(payload.company
+              ? [{ icon: Building2, label: payload.company }]
+              : []),
+            ...(payload.price_list
+              ? [{ icon: Scale, label: payload.price_list }]
+              : []),
+          ]}
+          aside={
+            <>
+              <p className="text-muted-foreground text-[11px] font-medium tracking-[0.12em] uppercase">
+                Total amount
+              </p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums sm:text-3xl">
+                {formatAmount(payload.totals.amount, currency)}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {formatNumber(payload.totals.consumption)} units consumed
+              </p>
+            </>
+          }
+        />
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatTile
+            label="Consumption"
             value={formatNumber(payload.totals.consumption)}
+            hint={`Read on ${formatDate(payload.date)}`}
+            icon={Gauge}
+            tone="info"
           />
-          <SummaryCard
-            title="Blocks billed"
-            value={String(payload.totals.blocks)}
+          <StatTile
+            label="Meters read"
+            value={formatNumber(payload.items.length)}
+            hint={payload.items
+              .map((item) => item.meter_number)
+              .filter(Boolean)
+              .join(", ")}
+            icon={Timer}
           />
-          <SummaryCard
-            title="Total amount"
-            value={formatAmount(payload.totals.amount, payload.currency)}
+          <StatTile
+            label="Blocks billed"
+            value={formatNumber(payload.totals.blocks)}
+            hint="Tariff blocks applied"
+            icon={Layers}
+          />
+          <StatTile
+            label="Amount"
+            value={formatAmount(payload.totals.amount, currency)}
+            hint="Charged for this reading"
+            icon={Coins}
+            tone="primary"
           />
         </div>
 
-        <ReadingDetailsCard reading={payload} />
-        <MeterLinesTable
-          items={payload.items}
-          rates={payload.rates}
-          currency={payload.currency}
-        />
-        <BlockDistributionTable rates={payload.rates} currency={payload.currency} />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="meters" className="gap-3">
+              <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
+                <TabsTrigger value="meters" className="cursor-pointer">
+                  Meter lines
+                  <span className="text-muted-foreground tabular-nums">
+                    {payload.items.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="blocks" className="cursor-pointer">
+                  Tariff blocks
+                  <span className="text-muted-foreground tabular-nums">
+                    {payload.rates.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="meters">
+                <MeterLinesCard
+                  items={payload.items}
+                  amounts={amounts}
+                  currency={currency}
+                />
+              </TabsContent>
+
+              <TabsContent value="blocks">
+                <TariffBlocksCard rates={payload.rates} currency={currency} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+            <SectionCard title="Summary" icon={ReceiptText}>
+              <div className="space-y-3 p-4 sm:p-5">
+                <InfoList
+                  items={[
+                    {
+                      label: "Consumption",
+                      value: formatNumber(payload.totals.consumption),
+                    },
+                    {
+                      label: "Blocks billed",
+                      value: formatNumber(payload.totals.blocks),
+                    },
+                    {
+                      label: "Price list",
+                      value: payload.price_list || "—",
+                    },
+                  ]}
+                />
+                <div className="bg-primary/5 border-primary/15 flex items-center justify-between rounded-lg border px-3 py-2.5">
+                  <span className="text-muted-foreground text-xs font-medium tracking-[0.1em] uppercase">
+                    Total amount
+                  </span>
+                  <span className="text-lg font-semibold tabular-nums">
+                    {formatAmount(payload.totals.amount, currency)}
+                  </span>
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Reading details" icon={CalendarDays}>
+              <div className="p-4 sm:p-5">
+                <InfoList
+                  items={[
+                    { label: "Reading", value: payload.name },
+                    { label: "Date", value: formatDate(payload.date) },
+                    { label: "Unit", value: unit || "—" },
+                    {
+                      label: "Customer",
+                      value: payload.customer_name || payload.customer,
+                    },
+                    { label: "Company", value: payload.company || "—" },
+                    { label: "Status", value: status.label },
+                  ]}
+                />
+              </div>
+            </SectionCard>
+          </div>
+        </div>
       </div>
     </BaseLayout>
   );
 }
 
-function SummaryCard({ title, value }: { title: string; value: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
-function ReadingDetailsCard({ reading }: { reading: MeterReadingDetail }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Reading details</CardTitle>
-        <CardAction>
-          <Badge variant={reading.docstatus === 1 ? "default" : "secondary"}>
-            {reading.docstatus === 1 ? "Submitted" : "Draft"}
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <DetailRow label="Reading number" value={reading.name} />
-          <DetailRow label="Reading date" value={formatDate(reading.date)} />
-          <DetailRow label="Unit" value={reading.property_label || reading.property} />
-          <DetailRow label="Customer" value={reading.customer_name || reading.customer} />
-          <DetailRow label="Company" value={reading.company} />
-          <DetailRow label="Price list" value={reading.price_list} />
-        </dl>
-      </CardContent>
-    </Card>
-  );
-}
 
-function DetailRow({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="space-y-0.5">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="font-medium break-words">{value || "—"}</dd>
-    </div>
-  );
-}
-
+/** Amount billed per meter line, summed from the tariff blocks of that line. */
 function lineAmounts(rates: MeterReadingRate[]): Record<string, number> {
-  const amounts: Record<string, number> = {};
-  for (const rate of rates) {
-    const key = rate.meter_reading_item || "unassigned";
-    amounts[key] = (amounts[key] ?? 0) + Number(rate.amount ?? 0);
-  }
+  return rates.reduce<Record<string, number>>((amounts, rate) => {
+    if (!rate.meter_reading_item) return amounts;
 
-  return amounts;
+    amounts[rate.meter_reading_item] =
+      (amounts[rate.meter_reading_item] ?? 0) + Number(rate.amount ?? 0);
+
+    return amounts;
+  }, {});
 }
 
-function MeterLinesTable({
+function MeterLinesCard({
   items,
-  rates,
+  amounts,
   currency,
 }: {
   items: MeterReadingItem[];
-  rates: MeterReadingRate[];
+  amounts: Record<string, number>;
   currency: string | null;
 }) {
-  if (items.length === 0) {
-    return null;
-  }
-
-  const amounts = lineAmounts(rates);
+  const total = items.reduce((sum, item) => sum + (amounts[item.name] ?? 0), 0);
+  const maxConsumption = items.reduce(
+    (max, item) => Math.max(max, Number(item.consumption ?? 0)),
+    0,
+  );
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <CardHeader className="py-4">
-        <CardTitle className="text-base">Meter lines</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
+    <SectionCard
+      title="Meter lines"
+      description="Previous and current readings of every meter."
+      icon={Gauge}
+      action={<CountPill>{items.length}</CountPill>}
+    >
+      {items.length === 0 ? (
+        <p className="text-muted-foreground px-4 py-10 text-center text-sm">
+          This reading has no meter lines.
+        </p>
+      ) : (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Meter</TableHead>
-              <TableHead>Item</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-4 sm:pl-5">Meter</TableHead>
               <TableHead className="text-right">Previous</TableHead>
               <TableHead className="text-right">Current</TableHead>
               <TableHead className="text-right">Consumption</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="pr-4 text-right sm:pr-5">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TableRow key={item.name}>
-                <TableCell className="font-medium">{item.meter_number || "—"}</TableCell>
-                <TableCell>{item.item_name || item.item_code || "—"}</TableCell>
-                <TableCell className="text-right">
-                  {formatNumber(item.previous_reading)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatNumber(item.current_reading)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatNumber(item.consumption)}
-                  {item.uom ? (
-                    <span className="text-muted-foreground ml-1 text-xs">{item.uom}</span>
-                  ) : null}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatAmount(amounts[item.name] ?? 0, currency)}
-                </TableCell>
-              </TableRow>
-            ))}
+            {items.map((item) => {
+              const consumption = Number(item.consumption ?? 0);
+              const share =
+                maxConsumption > 0
+                  ? Math.min(100, (consumption / maxConsumption) * 100)
+                  : 0;
+
+              return (
+                <TableRow key={item.name}>
+                  <TableCell className="pl-4 sm:pl-5">
+                    <p className="font-mono text-sm font-semibold">
+                      {item.meter_number || "—"}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {item.item_name || item.item_code || "—"}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                    {formatNumber(item.previous_reading)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
+                    {formatNumber(item.current_reading)}
+                  </TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <span className="font-medium tabular-nums">
+                      {formatNumber(consumption)}
+                    </span>
+                    {item.uom ? (
+                      <span className="text-muted-foreground ml-1 text-xs">
+                        {item.uom}
+                      </span>
+                    ) : null}
+                    <Progress value={share} className="mt-1.5 ml-auto h-1 w-20" />
+                  </TableCell>
+                  <TableCell className="pr-4 text-right font-medium whitespace-nowrap tabular-nums sm:pr-5">
+                    {formatAmount(amounts[item.name] ?? 0, currency)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
+          <TableFooter>
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="pl-4 font-medium sm:pl-5">
+                Total
+              </TableCell>
+              <TableCell className="pr-4 text-right font-semibold tabular-nums sm:pr-5">
+                {formatAmount(total, currency)}
+              </TableCell>
+            </TableRow>
+          </TableFooter>
         </Table>
-      </CardContent>
-    </Card>
+      )}
+    </SectionCard>
   );
 }
 
-function BlockDistributionTable({
+function TariffBlocksCard({
   rates,
   currency,
 }: {
@@ -264,36 +417,54 @@ function BlockDistributionTable({
   const total = rates.reduce((sum, rate) => sum + Number(rate.amount ?? 0), 0);
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <CardHeader className="py-4">
-        <CardTitle className="text-base">Block distribution</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        {rates.length === 0 ? (
-          <p className="text-muted-foreground px-4 py-8 text-sm">
-            This reading has not been billed through any tariff block yet.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Meter</TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Block</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Rate</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rates.map((rate, index) => (
-                <TableRow key={`${rate.meter_reading_item}-${rate.block}-${index}`}>
-                  <TableCell className="font-medium">
-                    {rate.meter_number || "—"}
+    <SectionCard
+      title="Tariff blocks"
+      description="How the consumption was split across the tariff blocks."
+      icon={Layers}
+      action={<CountPill>{rates.length}</CountPill>}
+    >
+      {rates.length === 0 ? (
+        <p className="text-muted-foreground px-4 py-10 text-center text-sm">
+          This reading has not been billed through any tariff block yet.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-4 sm:pl-5">Meter</TableHead>
+              <TableHead>Block</TableHead>
+              <TableHead className="text-right">Quantity</TableHead>
+              <TableHead className="text-right">Rate</TableHead>
+              <TableHead className="pr-4 text-right sm:pr-5">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rates.map((rate, index) => {
+              const share =
+                total > 0 ? (Number(rate.amount ?? 0) / total) * 100 : 0;
+
+              return (
+                <TableRow
+                  key={`${rate.meter_reading_item}-${rate.block}-${index}`}
+                >
+                  <TableCell className="pl-4 sm:pl-5">
+                    <p className="font-mono text-sm font-medium">
+                      {rate.meter_number || "—"}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {rate.item_name || rate.item_code || "—"}
+                    </p>
                   </TableCell>
-                  <TableCell>{rate.item_name || rate.item_code || "—"}</TableCell>
-                  <TableCell>{rate.block || "Flat rate"}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="min-w-32">
+                    <p className="font-medium">{rate.block || "Flat rate"}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <Progress value={share} className="h-1 w-16" />
+                      <span className="text-muted-foreground text-xs tabular-nums">
+                        {share.toFixed(0)}%
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right whitespace-nowrap tabular-nums">
                     {formatNumber(rate.qty)}
                     {rate.uom ? (
                       <span className="text-muted-foreground ml-1 text-xs">
@@ -301,29 +472,29 @@ function BlockDistributionTable({
                       </span>
                     ) : null}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap tabular-nums">
                     {formatAmount(rate.rate, currency)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="pr-4 text-right font-medium whitespace-nowrap tabular-nums sm:pr-5">
                     {formatAmount(rate.amount, currency)}
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={5} className="font-medium">
-                  Total
-                </TableCell>
-                <TableCell className="text-right font-semibold">
-                  {formatAmount(total, currency)}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              );
+            })}
+          </TableBody>
+          <TableFooter>
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="pl-4 font-medium sm:pl-5">
+                Total
+              </TableCell>
+              <TableCell className="pr-4 text-right font-semibold tabular-nums sm:pr-5">
+                {formatAmount(total, currency)}
+              </TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      )}
+    </SectionCard>
   );
 }
 
