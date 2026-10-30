@@ -63,7 +63,7 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 
 ## 📱 Tenant Portal
 
-A React + TypeScript tenant portal is served at `/rental-portal` from the
+A React + TypeScript tenant portal is served at `/utility-billing` from the
 `rental-portal` folder of this app.
 
 - **Browse properties** as a guest or tenant: gallery, amenities, unit specs and availability

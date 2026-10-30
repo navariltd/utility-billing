@@ -1,4 +1,4 @@
-"""Context for the Rental Billing portal SPA served at ``/rental-portal``.
+"""Context for the Rental Billing portal SPA served at ``/utility-billing``.
 
 The SPA is bootstrapped like the other Frappe single page apps in this bench: the
 standard Frappe session boot (built by ``frappe.sessions.get()``) is embedded in

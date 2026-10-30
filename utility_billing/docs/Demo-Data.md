@@ -71,7 +71,7 @@ meter readings — so every portal page has something to show.
 | --- | --- |
 | Wanjiku Kamau | `wanjiku.kamau@demo.utilitybilling.test` |
 
-Sign in at `/rental-portal` with this account to exercise the tenant flows. The
+Sign in at `/utility-billing` with this account to exercise the tenant flows. The
 other demo Customers exist only in the desk, so the portal never has to share
 one login between unrelated tenants.
 

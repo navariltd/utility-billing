@@ -19,7 +19,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "../utility_billing/public/rental-portal",
+    outDir: "../utility_billing/public/utility-billing",
     emptyOutDir: true,
     target: "es2015",
   },

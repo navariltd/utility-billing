@@ -488,7 +488,7 @@
    "open_in_new_tab": 1,
    "show_arrow": 0,
    "type": "Link",
-   "url": "/rental-portal"
+   "url": "/utility-billing"
   },
   {
    "added": 0,
@@ -507,7 +507,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-30 10:53:34.902505",
+ "modified": "2026-10-30 11:43:19.197006",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility & Rental",

@@ -11,7 +11,7 @@ import { FrappeProvider } from "frappe-react-sdk";
 import { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 
-const basename = "rental-portal";
+const basename = "utility-billing";
 
 function App() {
   useEffect(() => {

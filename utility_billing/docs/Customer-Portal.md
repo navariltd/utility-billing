@@ -1,7 +1,7 @@
 # Customer Portal
 
 The Rental Billing customer portal is a React single page application served at
-`/rental-portal` and built from the `rental-portal` folder of this app.
+`/utility-billing` and built from the `rental-portal` folder of this app.
 
 ## Feature map
 
@@ -33,7 +33,7 @@ The portal never stores or transmits passwords itself; credential handling is
 delegated to Frappe. Sign-up is available only when
 `Website Settings → Disable Signup` is unchecked.
 
-`utility_billing/www/rental-portal.py` embeds the standard Frappe session boot
+`utility_billing/www/utility-billing.py` embeds the standard Frappe session boot
 so the SPA receives `frappe.boot` and the session user without an extra call.
 
 ## Portal roles and capabilities

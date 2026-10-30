@@ -1,7 +1,7 @@
 """Session bootstrap for the rental portal single page application.
 
 The SPA receives the standard Frappe session boot (including ``frappe.boot.user.roles``)
-with the ``/rental-portal`` page. This endpoint adds the portal specific context
+with the ``/utility-billing`` page. This endpoint adds the portal specific context
 that the framework cannot derive on its own: the resolved portal role, the
 Customer the user is linked to and the capabilities granted to that role.
 
