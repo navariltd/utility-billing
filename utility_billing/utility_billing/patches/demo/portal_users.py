@@ -1,16 +1,19 @@
 """Portal Users for the demo tenants.
 
-Each demo Customer gets a Website User linked through ``Customer.portal_users``
-so the rental portal resolves the user as a Tenant. All demo accounts share the
-documented demonstration password and use the reserved ``.test`` email domain.
+A single demo Customer gets a Website User linked through
+``Customer.portal_users`` so the rental portal resolves the user as a Tenant.
+That Customer also owns the largest slice of the dataset (several leases,
+meter readings and support tickets), so the portal has meaningful data to
+show. The demo account uses the documented demonstration password and the
+reserved ``.test`` email domain.
 """
 
 import frappe
 from frappe.model.document import Document
 
-from .constants import DEMO_PASSWORD, PORTAL_ROLE
+from .constants import DEMO_EMAIL_DOMAIN, DEMO_PASSWORD, PORTAL_ROLE
 from .customers import resolve_customer
-from .utils import logger, safe_load_json
+from .utils import apply_demo_flags, logger, safe_load_json
 
 PORTAL_USER_FILE = "data/portal_user.json"
 
@@ -28,20 +31,51 @@ def create_portal_users() -> None:
 
 
 def delete_demo_portal_users() -> None:
-	"""Unlink and delete every User created for the demo dataset."""
-	records = safe_load_json(PORTAL_USER_FILE) or []
+	"""Unlink and delete every User created for the demo dataset.
 
-	for record in records:
-		email = record.get("email")
-		if not email:
-			continue
-
+	The lookup also matches the reserved demo email domain, so Users left
+	behind by earlier demo runs (when every Customer had a portal account)
+	are removed as well.
+	"""
+	for email in _demo_portal_emails():
 		try:
-			_unlink_customer(record.get("customer"), email)
+			for customer in _linked_customers(email):
+				_unlink_customer(customer, email)
 			if frappe.db.exists("User", email):
 				frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 		except Exception:
 			logger.exception(f"Could not delete demo portal user {email}")
+
+
+def _demo_portal_emails() -> set[str]:
+	"""Return the demo portal emails of this dataset and of earlier runs.
+
+	Earlier datasets also used sub-domains (``finance@company.demo...``), so the
+	lookup matches the reserved domain wherever it appears in the email.
+	"""
+	emails = {
+		record["email"].strip().lower()
+		for record in safe_load_json(PORTAL_USER_FILE) or []
+		if record.get("email")
+	}
+	emails.update(
+		frappe.get_all(
+			"User",
+			filters={"name": ("like", f"%{DEMO_EMAIL_DOMAIN}")},
+			pluck="name",
+		)
+	)
+	return emails
+
+
+def _linked_customers(email: str) -> list[str]:
+	"""Return the Customers whose ``portal_users`` table links the User."""
+	return frappe.get_all(
+		"Portal User",
+		filters={"user": email, "parenttype": "Customer"},
+		pluck="parent",
+		distinct=True,
+	)
 
 
 def get_demo_user_email(customer: str | None) -> str | None:
@@ -86,8 +120,7 @@ def _upsert_user(record: dict) -> Document:
 	}:
 		user.append("roles", {"role": PORTAL_ROLE})
 
-	user.flags.ignore_permissions = True
-	user.save()
+	apply_demo_flags(user).save()
 	return user
 
 
@@ -101,8 +134,7 @@ def _link_customer(customer: str, user: str) -> None:
 		return
 
 	customer_doc.append("portal_users", {"user": user})
-	customer_doc.flags.ignore_permissions = True
-	customer_doc.save()
+	apply_demo_flags(customer_doc).save()
 
 
 def _unlink_customer(customer: str | None, user: str) -> None:
@@ -116,8 +148,7 @@ def _unlink_customer(customer: str | None, user: str) -> None:
 		return
 
 	customer_doc.set("portal_users", remaining)
-	customer_doc.flags.ignore_permissions = True
-	customer_doc.save()
+	apply_demo_flags(customer_doc).save()
 
 
 def _split_name(full_name: str) -> tuple[str, str | None]:

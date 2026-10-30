@@ -56,6 +56,56 @@ ORDER_FIELDS = (
 	"customer",
 )
 
+DETAIL_FIELDS = {
+	"Sales Invoice": (
+		"name",
+		"customer",
+		"customer_name",
+		"posting_date",
+		"due_date",
+		"status",
+		"company",
+		"currency",
+		"conversion_rate",
+		"party_account_currency",
+		"net_total",
+		"total_taxes_and_charges",
+		"grand_total",
+		"rounded_total",
+		"paid_amount",
+		"outstanding_amount",
+	),
+	"Sales Order": (
+		"name",
+		"customer",
+		"customer_name",
+		"transaction_date",
+		"delivery_date",
+		"status",
+		"company",
+		"currency",
+		"conversion_rate",
+		"party_account_currency",
+		"net_total",
+		"total_taxes_and_charges",
+		"grand_total",
+		"rounded_total",
+		"advance_paid",
+	),
+}
+
+LINE_FIELDS = ("item_code", "item_name", "description", "qty", "uom", "rate", "amount")
+TAX_FIELDS = ("description", "charge_type", "rate", "tax_amount")
+METER_LINE_FIELDS = (
+	"item_code",
+	"meter_number",
+	"previous_reading",
+	"current_reading",
+	"uom",
+	"consumption",
+	"meter_reading",
+)
+
 
 @frappe.whitelist()
 def get_payment_gateways() -> dict:
@@ -166,6 +216,66 @@ def get_customer_documents() -> dict:
 			"advances": dict(order_totals),
 		},
 	}
+
+
+@frappe.whitelist()
+def get_customer_document(reference_doctype: str, reference_name: str) -> dict:
+	"""Return one submitted invoice or order of the customer with its sections.
+
+	Args:
+		reference_doctype: ``Sales Invoice`` or ``Sales Order``.
+		reference_name: Name of the submitted document.
+
+	Returns:
+		The document header fields plus ``lines``, ``taxes``,
+		``meter_readings`` and its ``payable_amount``.
+
+	Raises:
+		frappe.DoesNotExistError: When the document does not exist, is not
+			submitted or belongs to another Customer.
+	"""
+	require_authenticated_user()
+	if reference_doctype not in SUPPORTED_DOCTYPES:
+		frappe.throw(
+			_("Documents are not supported for {0}.").format(reference_doctype),
+			frappe.DoesNotExistError,
+		)
+
+	customers = {customer["name"] for customer in get_portal_customers()}
+	document = frappe.db.get_value(
+		reference_doctype,
+		{"name": reference_name, "docstatus": 1},
+		[*DETAIL_FIELDS[reference_doctype], "docstatus"],
+		as_dict=True,
+	)
+	if not document or document.customer not in customers:
+		frappe.throw(
+			_("{0} {1} was not found.").format(_(reference_doctype), reference_name),
+			frappe.DoesNotExistError,
+		)
+
+	document.doctype = reference_doctype
+	document.lines = frappe.db.get_all(
+		f"{reference_doctype} Item",
+		filters={"parent": reference_name, "parenttype": reference_doctype},
+		fields=list(LINE_FIELDS),
+		order_by="idx asc",
+	)
+	document.taxes = frappe.db.get_all(
+		"Sales Taxes and Charges",
+		filters={"parent": reference_name, "parenttype": reference_doctype},
+		fields=list(TAX_FIELDS),
+		order_by="idx asc",
+	)
+	document.meter_readings = frappe.db.get_all(
+		f"{reference_doctype} Meter Reading",
+		filters={"parent": reference_name, "parenttype": reference_doctype},
+		fields=list(METER_LINE_FIELDS),
+		order_by="idx asc",
+	)
+	document.payable_amount = payable_amount(document, reference_doctype)
+
+	return document
 
 
 @frappe.whitelist()

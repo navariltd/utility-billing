@@ -4,7 +4,7 @@ from typing import Optional
 
 import frappe
 
-from .utils import logger, safe_load_json
+from .utils import apply_demo_flags, logger, safe_load_json
 
 COMPANY_NAME: str | None = None
 COMPANY_ABBR: str | None = None
@@ -57,8 +57,8 @@ def create_sample_company() -> None:
 	company_data["abbr"] = COMPANY_ABBR
 
 	try:
-		company = frappe.get_doc({"doctype": "Company", **company_data})
-		company.insert(ignore_permissions=True, set_name=COMPANY_NAME)
+		company = apply_demo_flags(frappe.get_doc({"doctype": "Company", **company_data}))
+		company.insert(set_name=COMPANY_NAME)
 		logger.info(f"Company {COMPANY_NAME} created with abbr {COMPANY_ABBR}.")
 	except Exception:
 		logger.exception("Error creating company")

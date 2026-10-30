@@ -7,7 +7,7 @@ from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import today
 
 from .constants import DEMO_COMPANY, demo_company_names
-from .utils import safe_load_json
+from .utils import apply_demo_flags, safe_load_json
 
 
 def clear_bill_structures() -> None:
@@ -42,13 +42,15 @@ def insert_bill_structures() -> None:
 	fiscal_year_name = fiscal_year[0] if fiscal_year else None
 
 	for structure in bill_structures:
-		doc = frappe.get_doc(
-			{
-				"doctype": "Utility Bill Structure",
-				"fiscal_year": fiscal_year_name,
-				"items": [],
-				"company": structure.get("company") or DEMO_COMPANY,
-			}
+		doc = apply_demo_flags(
+			frappe.get_doc(
+				{
+					"doctype": "Utility Bill Structure",
+					"fiscal_year": fiscal_year_name,
+					"items": [],
+					"company": structure.get("company") or DEMO_COMPANY,
+				}
+			)
 		)
 
 		for item in structure.get("items", []):
@@ -56,7 +58,7 @@ def insert_bill_structures() -> None:
 				"items", {"item": item.get("item"), "amount": item.get("amount"), "total": item.get("total")}
 			)
 
-		doc.insert(ignore_permissions=True)
+		doc.insert()
 		doc.submit()
 
 

@@ -9,8 +9,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, fmt_money, formatdate, nowdate
 
-BOOKING_LINK = "/rental-portal/bookings"
-INVOICE_LINK = "/rental-portal/invoices"
+BOOKING_LINK = "/utility-billing/bookings"
+INVOICE_LINK = "/utility-billing/invoices"
 REMINDER_INTERVAL_DAYS = 7
 
 

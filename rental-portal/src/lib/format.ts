@@ -21,6 +21,16 @@ export function formatAmount(
   }
 }
 
+/** Format a plain quantity (meter reading or consumption). */
+export function formatNumber(
+  value: number | null | undefined,
+  fallback = "—",
+): string {
+  if (value === null || value === undefined) return fallback;
+
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
 /** Format a date value, returning the fallback for empty values. */
 export function formatDate(
   value?: string | null,
@@ -49,4 +59,26 @@ export function formatDateTime(
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Whole days from today to a date: negative when the date is in the past. */
+export function daysUntil(value?: string | null): number | null {
+  if (!value) return null;
+
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return null;
+
+  const startOfTarget = Date.UTC(
+    target.getFullYear(),
+    target.getMonth(),
+    target.getDate(),
+  );
+  const now = new Date();
+  const startOfToday = Date.UTC(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+
+  return Math.round((startOfTarget - startOfToday) / 86_400_000);
 }

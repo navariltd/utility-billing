@@ -63,7 +63,7 @@ The **ERPNext Property Management** module simplifies rental operations from ten
 
 ## 📱 Tenant Portal
 
-A React + TypeScript tenant portal is served at `/rental-portal` from the
+A React + TypeScript tenant portal is served at `/utility-billing` from the
 `rental-portal` folder of this app.
 
 - **Browse properties** as a guest or tenant: gallery, amenities, unit specs and availability
@@ -114,15 +114,15 @@ Get actionable insights from your utility and property data with our built-in re
 
 ## ⚙️ Demo Data Management
 
-Generate a complete demo company with **12 portal users, 6 buildings, 26 units
-with image galleries, 12 service requests, contracts, tiered meter prices,
+Generate a complete demo company with **one portal user, 6 buildings, 26 units
+with image galleries, 15 service requests, contracts, tiered meter prices,
 meter readings, Sales Orders/Invoices and support tickets** in one action.
 
 - Free Unsplash cover images and galleries for every property
 - Item Price schedules or Auto Repeat, following the site's configured billing approach
-- Sample portal logins: `wanjiku.kamau@demo.utilitybilling.test` (and 11 more)
+- Sample portal login: `wanjiku.kamau@demo.utilitybilling.test`
 - Shared demo password: `Demo@12345`
-- Clear Demo Data removes the generated company, users, transactions and support tickets
+- Clear Demo Data removes the generated company, user, transactions and support tickets
 
 [![Explore Demo Data](https://img.shields.io/badge/%F0%9F%91%89%20Explore%20Demo%20Data-6f42c1?style=for-the-badge&logo=github)](./utility_billing/docs/Demo-Data.md)
 

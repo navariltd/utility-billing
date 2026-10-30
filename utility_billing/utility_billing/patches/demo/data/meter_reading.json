@@ -6,13 +6,54 @@
     "property": "Pinnacle Tower - Unit 1B",
     "price_list": "Standard Residential",
     "currency": "KES",
-    "reading_age_days": 14,
-    "items": [
+    "readings": [
       {
-        "doctype": "Meter Reading Item",
-        "item_code": "Water",
-        "consumption": 18,
-        "meter_number": "MTR10001"
+        "doctype": "Meter Reading",
+        "reading_age_days": 104,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 12,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 74,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 18,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 44,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 9,
+            "meter_number": "MTR10001"
+          }
+        ]
+      },
+      {
+        "doctype": "Meter Reading",
+        "reading_age_days": 14,
+        "items": [
+          {
+            "doctype": "Meter Reading Item",
+            "item_code": "Water",
+            "consumption": 14,
+            "meter_number": "MTR10001"
+          }
+        ]
       }
     ]
   },
@@ -183,6 +224,52 @@
         "item_code": "Electricity",
         "consumption": 318,
         "meter_number": "MTR10011"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Wanjiku Kamau",
+    "property": "Kileleshwa Heights - Unit 4",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 19,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Water",
+        "consumption": 22,
+        "meter_number": "MTR10012"
+      },
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Electricity",
+        "consumption": 168,
+        "meter_number": "MTR10013"
+      }
+    ]
+  },
+  {
+    "doctype": "Meter Reading",
+    "company": "Utility and Rental (Demo)",
+    "customer": "Wanjiku Kamau",
+    "property": "Ruiru Block C - Unit 1",
+    "price_list": "Standard Residential",
+    "currency": "KES",
+    "reading_age_days": 3,
+    "items": [
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Electricity",
+        "consumption": 64,
+        "meter_number": "MTR10014"
+      },
+      {
+        "doctype": "Meter Reading Item",
+        "item_code": "Water",
+        "consumption": 11,
+        "meter_number": "MTR10015"
       }
     ]
   }

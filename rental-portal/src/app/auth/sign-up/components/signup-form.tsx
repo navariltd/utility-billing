@@ -61,7 +61,7 @@ export function SignupForm({
       const [statusCode, detail] = (await call({
         email,
         full_name: fullName,
-        redirect_to: "/rental-portal",
+        redirect_to: "/utility-billing",
       })) as unknown as SignUpResponse;
 
       if (statusCode === 0) {

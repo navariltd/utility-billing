@@ -2,7 +2,7 @@
 
 The tenant-facing single page application of **Utility Billing & Property
 Management**. It is built with React 19, TypeScript, Vite and
-`frappe-react-sdk`, and is served by Frappe at `/rental-portal`.
+`frappe-react-sdk`, and is served by Frappe at `/utility-billing`.
 
 ## Features
 
@@ -78,10 +78,10 @@ yarn build
 
 The build:
 
-1. writes hashed assets to `utility_billing/public/rental-portal/`;
+1. writes hashed assets to `utility_billing/public/utility-billing/`;
 2. copies the generated `index.html` to
-   `utility_billing/www/rental-portal.html`, which the
-   `utility_billing/www/rental-portal.py` controller serves with the Frappe
+   `utility_billing/www/utility-billing.html`, which the
+   `utility_billing/www/utility-billing.py` controller serves with the Frappe
    session boot embedded.
 
 Commit the regenerated portal HTML/assets with front-end changes.

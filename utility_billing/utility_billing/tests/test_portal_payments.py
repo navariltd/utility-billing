@@ -9,6 +9,7 @@ from utility_billing.api.portal.payment_service import (
 	payable_amount,
 	safe_redirect,
 )
+from utility_billing.api.portal.payments import get_customer_document
 
 
 class TestPaymentDetails(UnitTestCase):
@@ -101,6 +102,18 @@ class TestPayableAmount(UnitTestCase):
 			"conversion_rate": 1,
 		}
 		self.assertEqual(payable_amount(order, "Sales Order"), 0)
+
+
+class TestDocumentDetails(UnitTestCase):
+	"""Document details are limited to the customer's invoices and orders."""
+
+	def test_unsupported_doctype_is_rejected(self):
+		with self.assertRaises(frappe.DoesNotExistError):
+			get_customer_document("Sales Invoice Item", "ITEM-1")
+
+	def test_unknown_document_is_not_found(self):
+		with self.assertRaises(frappe.DoesNotExistError):
+			get_customer_document("Sales Invoice", "PORTAL-DOES-NOT-EXIST")
 
 
 class TestRedirectSafety(UnitTestCase):

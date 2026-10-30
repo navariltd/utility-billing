@@ -33,6 +33,12 @@ const PropertyBooking = lazy(
 const MyProperties = lazy(() => import("@/app/my-properties/page"));
 const Bookings = lazy(() => import("@/app/bookings/page"));
 const Invoices = lazy(() => import("@/app/invoices/page"));
+const InvoiceDetails = lazy(() => import("@/app/invoices/[invoice]/page"));
+const OrderDetails = lazy(() => import("@/app/orders/[order]/page"));
+const MeterReadings = lazy(() => import("@/app/meter-readings/page"));
+const MeterReadingDetails = lazy(
+  () => import("@/app/meter-readings/[reading]/page"),
+);
 
 // Generic doctype pages (list and detail) driven by the doctype slug.
 const DocTypeListPage = lazy(() => import("@/app/doctype/DocTypeListPage"));
@@ -148,6 +154,43 @@ export const routes: RouteConfig[] = [
     ),
     searchable: true,
     searchTitle: "Invoices & Orders",
+  },
+  {
+    path: "/invoices/:invoice",
+    element: (
+      <ProtectedRoute>
+        <InvoiceDetails />
+      </ProtectedRoute>
+    ),
+    searchable: false,
+  },
+  {
+    path: "/orders/:order",
+    element: (
+      <ProtectedRoute>
+        <OrderDetails />
+      </ProtectedRoute>
+    ),
+    searchable: false,
+  },
+  {
+    path: "/meter-readings",
+    element: (
+      <ProtectedRoute>
+        <MeterReadings />
+      </ProtectedRoute>
+    ),
+    searchable: true,
+    searchTitle: "Meter Readings",
+  },
+  {
+    path: "/meter-readings/:reading",
+    element: (
+      <ProtectedRoute>
+        <MeterReadingDetails />
+      </ProtectedRoute>
+    ),
+    searchable: false,
   },
   {
     path: "/settings/notifications",

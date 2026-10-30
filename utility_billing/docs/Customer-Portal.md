@@ -1,7 +1,7 @@
 # Customer Portal
 
 The Rental Billing customer portal is a React single page application served at
-`/rental-portal` and built from the `rental-portal` folder of this app.
+`/utility-billing` and built from the `rental-portal` folder of this app.
 
 ## Feature map
 
@@ -12,7 +12,8 @@ The Rental Billing customer portal is a React single page application served at
 | Unit booking | `/properties/:property/book` | `api.portal.bookings.*` |
 | My bookings | `/bookings` | `api.portal.bookings.*` |
 | My properties / tenancy | `/my-properties` | `api.portal.properties.get_my_properties` |
-| Invoices, orders and payments | `/invoices` | `api.portal.payments.*` |
+| Invoices, orders and payments | `/invoices`, `/invoices/:invoice`, `/orders/:order` | `api.portal.payments.*` |
+| Meter readings | `/meter-readings`, `/meter-readings/:reading` | `api.portal.meter_readings.*` |
 | Support tickets and replies | property and booking support dialogs | `api.portal.support.*` |
 | Notifications | `/settings/notifications` | standard Frappe notification log |
 | Profile and password | `/app/user/<user>` | standard Frappe user pages |
@@ -33,7 +34,7 @@ The portal never stores or transmits passwords itself; credential handling is
 delegated to Frappe. Sign-up is available only when
 `Website Settings → Disable Signup` is unchecked.
 
-`utility_billing/www/rental-portal.py` embeds the standard Frappe session boot
+`utility_billing/www/utility-billing.py` embeds the standard Frappe session boot
 so the SPA receives `frappe.boot` and the session user without an extra call.
 
 ## Portal roles and capabilities
@@ -93,15 +94,61 @@ pending booking.
 ## Invoices, orders and payments
 
 `/invoices` lists every submitted, payable Sales Invoice and Sales Order of the
-signed-in Customer.
+signed-in Customer. Selecting a row opens the document:
+
+- `/invoices/:invoice` for a Sales Invoice, `/orders/:order` for a Sales Order;
+- the customer, the posting (order) date, the due (delivery) date, the status
+  and the company;
+- the items with quantity, rate and amount;
+- the meter readings the document carries (only when the document has any),
+  each linking to the reading's details page;
+- the taxes applied, and the totals: taxes, grand total, rounded total, paid
+  amount or advance paid, and the outstanding or remaining balance.
+
+A document of another Customer, a draft or a cancelled document answers with a
+`DoesNotExistError`, so the details endpoint is scoped server side.
+
+The details page is laid out as a hero with the amount still due and its due
+state (due in N days, due today, overdue by N days), a strip with the net total,
+taxes, grand total and paid amount, tabs for the items, meter readings and
+taxes, and a sticky summary with the amount breakdown and the payment action.
+
+Payments:
 
 - An invoice is paid for its outstanding amount.
 - A Sales Order is paid as an advance for its unbilled balance.
+- The payment action is available on the list and on the details page.
 - The portal asks the selected gateway controller for a checkout URL and
   redirects the customer. It does **not** create Payment Entries or Payment
   Requests itself; the gateway records the payment on the reference document.
 - A `Payment Gateway Account` must exist for the document's company. The demo
   data does not create one.
+
+## Meter readings
+
+`/meter-readings` lists every non-cancelled `Meter Reading` recorded for the
+signed-in Customer, newest first, one row per reading:
+
+- the reading's date and name, the unit (unit number, house number or plot
+  number of the `Utility Property`) and the meters of each line;
+- total consumption (the stored consumption of each line, falling back to
+  `current_reading - previous_reading`) and the amount billed for the reading;
+- draft/submitted state, plus totals for the returned page (readings,
+  consumption, amount and latest date).
+
+Selecting a row opens `/meter-readings/:reading`, which shows the full reading:
+
+- reading number, date, unit, customer, company, price list and status;
+- every meter line with its previous reading, current reading, consumption and
+  amount;
+- the block distribution: each `Utility Tariff Block` billed, with the quantity,
+  rate and amount, and the total amount of the reading.
+
+Rows are scoped to the caller's Customers (`Customer.portal_users`); a cancelled
+reading is never listed and a reading of another Customer answers with a
+`DoesNotExistError`. The demo dataset chains several monthly readings on one
+meter (MTR10001, starting from a previous reading of 0) so the list and the
+block distribution have something to show.
 
 ## Support tickets
 
@@ -155,7 +202,10 @@ Related documents are resolved through:
 | `utility_billing.api.portal.support.reply_to_support_issue` | no | customer reply |
 | `utility_billing.api.portal.payments.get_payment_gateways` | no | configured gateway accounts |
 | `utility_billing.api.portal.payments.get_customer_documents` | no | invoices, orders and totals |
+| `utility_billing.api.portal.payments.get_customer_document` | no | one invoice or order with its items, meter readings, taxes and totals |
 | `utility_billing.api.portal.payments.initiate_payment` | no | gateway checkout URL |
+| `utility_billing.api.portal.meter_readings.get_customer_meter_readings` | no | meter readings, consumption and amounts |
+| `utility_billing.api.portal.meter_readings.get_customer_meter_reading` | no | one reading with its block distribution |
 
 ## Generic doctype browsing (`/app` routes)
 
@@ -184,7 +234,7 @@ redirected by `PermissionGuard` to the forbidden page.
 
 ```
 rental-portal/src
-├── app/                          # auth, dashboard, properties, bookings, invoices, support pages
+├── app/                          # auth, dashboard, properties, bookings, invoices, meter readings, support pages
 ├── components/
 │   ├── properties/               # card, row, media, status and layout components
 │   ├── payments/                 # pay button and gateway dialog

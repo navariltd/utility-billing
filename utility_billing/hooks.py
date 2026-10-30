@@ -334,5 +334,5 @@ website_route_rules = [
 ]
 
 website_route_rules = [
-	{"from_route": "/rental-portal/<path:app_path>", "to_route": "rental-portal"},
+	{"from_route": "/utility-billing/<path:app_path>", "to_route": "utility-billing"},
 ]

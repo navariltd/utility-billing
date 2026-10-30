@@ -9,7 +9,7 @@ from .bill_structures import get_random_bill_structure
 from .constants import DEMO_COMPANY, demo_company_names
 from .customers import demo_customer_ids, resolve_customer
 from .pricing import load_rent_rates
-from .utils import safe_load_json
+from .utils import apply_demo_flags, safe_load_json
 
 SERVICE_REQUEST_SAVEPOINT = "demo_service_request"
 
@@ -118,23 +118,25 @@ def create_and_finalize_contract(service_request_name: str, is_signed: bool, pro
 	)
 
 	contract_name = create_contract(service_request_name)
-	contract = frappe.get_doc("Contract", contract_name)
-	contract.save(ignore_permissions=True)
+	contract = apply_demo_flags(frappe.get_doc("Contract", contract_name))
+	contract.save()
 	contract.submit()
 
 	status = "Occupied" if is_signed else "Reserved"
 	for prop in properties:
 		if prop.get("utility_property"):
 			try:
-				property_doc = frappe.get_doc("Utility Property", prop.get("utility_property"))
+				property_doc = apply_demo_flags(
+					frappe.get_doc("Utility Property", prop.get("utility_property"))
+				)
 				property_doc.status = status
-				property_doc.save(ignore_permissions=True)
+				property_doc.save()
 			except Exception as e:
 				frappe.log_error(f"Failed to update property status: {str(e)}")
 
 	if is_signed:
 		contract.is_signed = 1
-		contract.save(ignore_permissions=True)
+		contract.save()
 
 
 def insert_service_requests() -> list[str]:
@@ -179,9 +181,10 @@ def insert_service_requests() -> list[str]:
 
 			assign_properties_to_request(doc, properties, service_start, service_end, is_signed)
 			apply_contract_terms(doc, request.get("contract_template"))
-			doc.insert(ignore_permissions=True)
+			apply_demo_flags(doc)
+			doc.insert()
 			append_property_service_items(doc)
-			doc.save(ignore_permissions=True)
+			doc.save()
 			doc.submit()
 
 			if properties:

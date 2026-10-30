@@ -56,6 +56,66 @@ export interface CustomerDocuments {
   };
 }
 
+export interface DocumentLine {
+  item_code: string;
+  item_name: string | null;
+  description: string | null;
+  qty: number;
+  uom: string | null;
+  rate: number;
+  amount: number;
+}
+
+export interface DocumentTax {
+  description: string | null;
+  charge_type: string | null;
+  rate: number;
+  tax_amount: number;
+}
+
+export interface DocumentMeterReading {
+  item_code: string | null;
+  meter_number: string | null;
+  previous_reading: number | null;
+  current_reading: number | null;
+  uom: string | null;
+  consumption: number | null;
+  meter_reading: string | null;
+}
+
+/**
+ * One invoice or order with the sections shown on its details page, returned
+ * by `utility_billing.api.portal.payments.get_customer_document`.
+ *
+ * Invoices carry `posting_date`/`due_date`/`outstanding_amount`; orders carry
+ * `transaction_date`/`delivery_date`/`advance_paid`.
+ */
+export interface CustomerDocumentDetail {
+  doctype: "Sales Invoice" | "Sales Order";
+  name: string;
+  docstatus: number;
+  customer: string;
+  customer_name: string | null;
+  status: string | null;
+  company: string | null;
+  currency: string | null;
+  posting_date?: string | null;
+  due_date?: string | null;
+  transaction_date?: string | null;
+  delivery_date?: string | null;
+  net_total?: number;
+  total_taxes_and_charges?: number;
+  grand_total: number;
+  rounded_total: number;
+  paid_amount?: number;
+  outstanding_amount?: number;
+  advance_paid?: number;
+  payable_amount: number;
+  lines: DocumentLine[];
+  taxes: DocumentTax[];
+  meter_readings: DocumentMeterReading[];
+}
+
 /** Checkout link returned by `utility_billing.api.portal.payments.initiate_payment`. */
 export interface PaymentLinkResult {
   payment_url: string | null;
