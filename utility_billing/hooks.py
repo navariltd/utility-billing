@@ -289,6 +289,9 @@ scheduler_events = {
 # before_job = ["utility_billing.utils.before_job"]
 # after_job = ["utility_billing.utils.after_job"]
 
+# Keeps released Contracts Inactive right after ERPNext's daily Contract status job
+after_job = ["utility_billing.utility_billing.utils.contract_status.after_scheduled_job"]
+
 # User Data Protection
 # --------------------
 

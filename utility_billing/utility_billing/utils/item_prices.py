@@ -57,6 +57,8 @@ class ScheduleOptions:
     frequency: str = "Monthly"
     rule: IncrementRule | None = None
     overrides: list[RateOverride] | None = None
+    # See ScheduleRequest.last_day_rules
+    last_day_rules: bool = True
 
     def to_request(self, line: ScheduleLine) -> ScheduleRequest:
         """Build the pure schedule request of ``line``.
@@ -75,6 +77,7 @@ class ScheduleOptions:
             rule=self.rule or IncrementRule(),
             overrides=list(self.overrides or []),
             manual_periods=list(line.manual_periods) if line.manual_periods else None,
+            last_day_rules=self.last_day_rules,
         )
 
 

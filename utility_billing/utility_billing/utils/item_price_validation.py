@@ -16,19 +16,22 @@ from datetime import date
 from frappe import _
 from frappe.utils import add_days, cint, flt, formatdate, getdate
 
-from utility_billing.utility_billing.utils.item_price_schedule import RatePeriod
+from utility_billing.utility_billing.utils.item_price_schedule import RatePeriod, last_lease_day
 
 
 def build_manual_schedule(
-    periods: list[RatePeriod], start_date, end_date
+    periods: list[RatePeriod], start_date, end_date, last_day_rules: bool = True
 ) -> list[RatePeriod]:
     """Return the validated, ordered periods of a manual schedule.
 
     Args:
         periods: Manually defined ``RatePeriod`` rows, in any order.
         start_date: First date the schedule must cover.
-        end_date: Last date the schedule must cover, or ``None`` when the
-            contract is open ended.
+        end_date: Lease end as stored, or ``None`` when the contract is open
+            ended. The schedule must reach its last billed day (see
+            ``last_lease_day``); running on to the stored end is accepted too.
+        last_day_rules: When off (the Auto Repeat preview), the schedule must
+            reach the stored end itself.
 
     Returns:
         The periods ordered by ``valid_from``, normalised to dates and floats.
@@ -45,10 +48,20 @@ def build_manual_schedule(
     _validate_coverage(
         normalized,
         getdate(start_date),
-        getdate(end_date) if end_date else None,
+        _coverage_end(start_date, end_date, last_day_rules),
     )
 
     return normalized
+
+
+def _coverage_end(start_date, end_date, last_day_rules: bool):
+    """Return the last day a manual schedule has to reach."""
+    if not end_date:
+        return None
+    if not last_day_rules:
+        return getdate(end_date)
+
+    return last_lease_day(getdate(start_date), getdate(end_date))
 
 
 def _sort_by_start(periods: list[RatePeriod]) -> list[RatePeriod]:
