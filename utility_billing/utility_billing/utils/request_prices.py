@@ -82,6 +82,37 @@ def lease_window(service_request, property_name: str) -> tuple:
 	return (getdate(start) if start else None, getdate(end) if end else None)
 
 
+def last_billed_day(service_request, property_name: str, end=None):
+	"""Return the last day a property's lease is billed for.
+
+	The lease end is the day after the last billed day when it falls whole
+	months after the property's start, or after the request's start: a row
+	keeping the request's end, as the form fills it, ends on the request's
+	anniversary even when the property started later.
+
+	Args:
+		service_request: ``Utility Service Request`` document.
+		property_name: Requested property.
+		end: Lease end to use instead of the property's own, when given.
+
+	Returns:
+		The last billed day, or ``None`` for an open ended lease.
+	"""
+	from utility_billing.utility_billing.utils.item_price_schedule import last_lease_day
+
+	start, lease_end = lease_window(service_request, property_name)
+	end = getdate(end) if end else lease_end
+	if not end:
+		return None
+
+	request_start = getdate(service_request.start_date) if service_request.get("start_date") else None
+	for anchor in (start, request_start):
+		if anchor and last_lease_day(anchor, end) != end:
+			return last_lease_day(anchor, end)
+
+	return end
+
+
 def require_customer(service_request) -> str:
 	"""Return the request's customer, raising when it has none.
 

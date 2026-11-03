@@ -3,6 +3,11 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt, getdate
 from utility_billing.utility_billing.utils.auto_repeat import cancel_auto_repeats_for_property
+from utility_billing.utility_billing.utils.contract_status import (
+    released_property_status,
+    set_inactive_when_released,
+)
+from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
 
 ROW_DOCTYPE = "Contract Utility Property Item"
 
@@ -32,6 +37,8 @@ def validate(doc: Document, method: str) -> None:
 
 def before_update_after_submit(doc: Document, method: str) -> None:
     check_rows_unchanged(doc, get_saved_contract(doc))
+    # After ERPNext's own hook, which sets the status from the dates
+    set_inactive_when_released(doc)
 
 
 def get_saved_contract(doc: Document) -> Document:
@@ -77,9 +84,16 @@ def check_rows_unchanged(doc, saved) -> None:
     edited after its Contract was made leaves the Contract as it is, and the
     mismatch is caught when invoicing.
 
+    A Contract updated by its request (see ``contract_sync``) carries the server
+    only ``from_service_request`` flag and is not checked: that is the one way
+    its dates and rows change.
+
     Raises:
         frappe.ValidationError: Naming the request link, date, row or field changed.
     """
+    if doc.flags.from_service_request:
+        return
+
     if (doc.get("utility_service_request") or None) != (saved.get("utility_service_request") or None):
         frappe.throw(_("The Utility Service Request of a Contract cannot be changed."))
 
@@ -192,14 +206,19 @@ def on_update_after_submit(doc: Document, method: str) -> None:
             frappe.db.set_value("Utility Property", utility_property, "status", "Occupied")
             continue
 
+        # Under Item Price a row unticked in the same save that changes the status
+        # (the last row released makes the Contract Inactive) is freed too.
+        unticked = entry.has_value_changed("is_active") and not entry.is_active
         should_set_available = (
             (status_changed and entry.is_active) or
-            (not status_changed and entry.has_value_changed("is_active") and not entry.is_active)
+            (unticked and (not status_changed or is_item_price_approach()))
         )
 
         if should_set_available:
             cancel_auto_repeats_for_property(utility_property)
-            frappe.db.set_value("Utility Property", utility_property, "status", "Available")
+            frappe.db.set_value(
+                "Utility Property", utility_property, "status", released_property_status(doc, entry)
+            )
 
 
 

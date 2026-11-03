@@ -275,8 +275,9 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 		periods = sorted(result[0]["periods"], key=lambda p: p["valid_from"])
 
-		# One merged period per year, each covering a full year.
-		self.assertEqual(len(periods), 6)
+		# One merged period per year, each covering a full year. The lease end
+		# 2031-01-01 is the day after the lease, so no period starts on it.
+		self.assertEqual(len(periods), 5)
 		self.assertEqual(
 			[
 				(str(p["valid_from"]), str(p["valid_upto"]), flt(p["rate"]))
@@ -288,7 +289,6 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 				("2028-01-01", "2028-12-31", 1100),
 				("2029-01-01", "2029-12-31", 1150),
 				("2030-01-01", "2030-12-31", 1200),
-				("2031-01-01", "2031-01-01", 1250),
 			],
 		)
 
@@ -309,7 +309,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		periods = sorted(result[0]["periods"], key=lambda p: p["valid_from"])
 		rates = [flt(period["rate"]) for period in periods]
 
-		self.assertEqual(len(periods), 6)
+		self.assertEqual(len(periods), 5)
+		self.assertEqual(str(periods[-1]["valid_upto"]), "2030-12-31")
 		self.assertEqual(rates[0], 1000)
 		self.assertEqual(rates[1], 1050)
 		self.assertAlmostEqual(rates[2], 1102.5, places=4)
@@ -342,7 +343,6 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			[
 				("2026-01-01", "2027-12-31", 1000),
 				("2028-01-01", "2028-12-31", 1050),
-				("2029-01-01", "2029-01-01", 1100),
 			],
 		)
 
@@ -488,7 +488,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 
 		result = item_price_actions.create_item_price_schedule(**args)
 
-		self.assertEqual(result["created_count"], 6)
+		self.assertEqual(result["created_count"], 5)
 
 		prices = frappe.get_all(
 			"Item Price",
@@ -503,7 +503,7 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 			order_by="valid_from asc",
 		)
 
-		self.assertEqual(len(prices), 6)
+		self.assertEqual(len(prices), 5)
 
 		self.assertEqual(
 			[(str(p["valid_from"]), str(p["valid_upto"]), flt(p["price_list_rate"])) for p in prices],
@@ -513,7 +513,6 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 				("2028-01-01", "2028-12-31", 1100),
 				("2029-01-01", "2029-12-31", 1150),
 				("2030-01-01", "2030-12-31", 1200),
-				("2031-01-01", "2031-01-01", 1250),
 			],
 		)
 
@@ -536,7 +535,8 @@ class TestItemPriceScheduleActions(FrappeTestCase):
 		)
 
 		self.assertEqual(str(prices[0]["valid_from"]), "2026-01-01")
-		self.assertEqual(str(prices[-1]["valid_upto"]), "2029-01-01")
+		# 2029-01-01 is the day after the lease
+		self.assertEqual(str(prices[-1]["valid_upto"]), "2028-12-31")
 
 		for previous, current in zip(prices, prices[1:]):
 			self.assertEqual(

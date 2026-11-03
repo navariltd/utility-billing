@@ -11,6 +11,10 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
+from utility_billing.utility_billing.utils.contract_sync import (
+	refuse_unconfirmed_contract_change,
+	sync_contracts,
+)
 from utility_billing.utility_billing.utils.cost_center import (
 	fill_request_item_cost_centers,
 	resolve_primary_cost_center,
@@ -45,11 +49,14 @@ class UtilityServiceRequest(Document):
 		validate_no_overlapping_leases(self)
 		if before:
 			validate_lease_move(self, before)
+			# Last, so a change refused by the checks above never reaches the Contract
+			refuse_unconfirmed_contract_change(self, before)
 
 	def on_update_after_submit(self):
 		before = self.get_doc_before_save()
 		if before:
 			adjust_prices_to_window(self, before)
+			sync_contracts(self, before)
 
 	def before_submit(self):
 		validate_no_overlapping_leases(self)

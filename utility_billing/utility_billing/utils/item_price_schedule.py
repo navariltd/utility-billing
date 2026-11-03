@@ -120,6 +120,10 @@ class ScheduleRequest:
             covers each stretch where the rate does not change.
         manual_periods: Fully hand edited periods. When supplied they replace
             generation entirely and are validated against the contract period.
+        last_day_rules: Whether the schedule stops at the lease's last billed
+            day with periods anchored on the start (see ``build_schedule``).
+            Off only for the read only preview under Auto Repeat, which keeps
+            the schedule it always showed there.
     """
 
     start_date: date
@@ -131,6 +135,7 @@ class ScheduleRequest:
     overrides: list[RateOverride] = field(default_factory=list)
     merge: bool = True
     manual_periods: list[RatePeriod] | None = None
+    last_day_rules: bool = True
 
 
 def months_per_period(frequency: str) -> int:
@@ -157,6 +162,40 @@ def period_end_date(start: date, frequency: str) -> date:
         Last day of the period, one day before the next period starts.
     """
     return add_days(add_months(start, months_per_period(frequency)), -1)
+
+
+def last_lease_day(start_date: date, end_date: date | None) -> date | None:
+    """Return the last day a lease is billed for.
+
+    A request records a lease of whole months by its anniversary: two months
+    from 2025-10-01 end on 2025-12-01 (see ``validate_contract_dates``). That
+    day starts the next month, so the day before is the last one billed. Any
+    other end date is inclusive as entered.
+
+    A start late in the month is clamped by ``add_months`` (one month from
+    2025-01-31 ends on 2025-02-28), so the next anniversary is checked too.
+
+    Args:
+        start_date: First day of the lease.
+        end_date: Lease end as stored, or ``None`` when open ended.
+
+    Returns:
+        The last billed day, or ``end_date`` itself when it is not an
+        anniversary of ``start_date``.
+    """
+    if not end_date:
+        return end_date
+
+    start_date, end_date = getdate(start_date), getdate(end_date)
+    if end_date <= start_date:
+        return end_date
+
+    months = month_diff(start_date, end_date)
+    anniversaries = (getdate(add_months(start_date, months)), getdate(add_months(start_date, months + 1)))
+    if end_date in anniversaries:
+        return getdate(add_days(end_date, -1))
+
+    return end_date
 
 
 def increment_count(rule: IncrementRule, months_elapsed: int) -> int:
@@ -216,11 +255,16 @@ def apply_increment(base_rate: float, rule: IncrementRule, months_elapsed: int) 
 def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
     """Build the dated rate periods covering a lease.
 
-    Periods run from ``request.start_date`` until ``request.end_date`` is
-    reached. A manual override starting on the first day of a period replaces
-    the generated rate from that period onwards and becomes the base for
-    subsequent increments. When ``request.manual_periods`` is set the periods
-    are used as-is after being validated against the contract period.
+    Periods run from ``request.start_date`` until the last billed day of the
+    lease (see ``last_lease_day``): a lease end falling whole months after the
+    start is the day after the lease, so no period starts on it. Every period
+    is anchored on the start, so a lease starting on the 31st keeps its day
+    instead of drifting to the 28th after February, and increments are counted
+    in periods for the same reason. A manual override starting on the first
+    day of a period replaces the generated rate from that period onwards and
+    becomes the base for subsequent increments. When
+    ``request.manual_periods`` is set the periods are used as-is after being
+    validated against the contract period.
 
     Args:
         request: Schedule definition.
@@ -243,8 +287,69 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
             build_manual_schedule,
         )
 
-        return build_manual_schedule(request.manual_periods, start_date, end_date)
+        return build_manual_schedule(
+            request.manual_periods, start_date, end_date, last_day_rules=request.last_day_rules
+        )
 
+    if not request.last_day_rules:
+        periods = _periods_to_stored_end(request, start_date, end_date)
+        return merge_by_rate(periods) if request.merge else periods
+
+    end_date = last_lease_day(start_date, end_date)
+    overrides = _index_overrides(request.overrides)
+    base_rate = float(request.base_rate or 0)
+    step = months_per_period(request.frequency)
+
+    periods: list[RatePeriod] = []
+    current_start = start_date
+    applied_override = None
+    # Index of the period the current rate is anchored on: the first one, or
+    # the period a manual override starts on.
+    anchor_index = 0
+    limit = _period_limit(request, start_date, end_date)
+
+    while len(periods) < limit:
+        override = overrides.pop(current_start, None)
+        if override is not None:
+            applied_override = override
+            anchor_index = len(periods)
+
+        anchor_rate = float(applied_override.rate) if applied_override is not None else base_rate
+
+        months_elapsed = (len(periods) - anchor_index) * step
+        rate = apply_increment(anchor_rate, request.rule, months_elapsed)
+
+        current_end = getdate(add_days(add_months(start_date, (len(periods) + 1) * step), -1))
+        if end_date and current_end > end_date:
+            current_end = end_date
+
+        periods.append(
+            RatePeriod(
+                valid_from=current_start,
+                valid_upto=current_end,
+                rate=rate,
+                increment_count=increment_count(request.rule, months_elapsed),
+            )
+        )
+
+        if end_date and current_end >= end_date:
+            break
+
+        current_start = getdate(add_months(start_date, len(periods) * step))
+
+    return merge_by_rate(periods) if request.merge else periods
+
+
+def _periods_to_stored_end(
+    request: ScheduleRequest, start_date: date, end_date: date | None
+) -> list[RatePeriod]:
+    """Return the periods up to and including the stored lease end.
+
+    Each period starts the day after the previous one ends, and increments
+    count calendar months. This is the schedule the Auto Repeat preview has
+    always shown; Item Price schedules use ``build_schedule`` with
+    ``last_day_rules`` on.
+    """
     overrides = _index_overrides(request.overrides)
     base_rate = float(request.base_rate or 0)
 
@@ -286,7 +391,7 @@ def build_schedule(request: ScheduleRequest) -> list[RatePeriod]:
 
         current_start = add_days(current_end, 1)
 
-    return merge_by_rate(periods) if request.merge else periods
+    return periods
 
 
 def _period_limit(

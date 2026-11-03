@@ -13,6 +13,7 @@ from collections import defaultdict
 import frappe
 from frappe.utils import getdate, today
 
+from .contract_status import set_released_contracts_inactive
 from .item_price_scope import property_contract_period
 
 HELD_STATUSES = ("Occupied", "Reserved")
@@ -29,9 +30,15 @@ def release_ended_leases() -> list[str]:
 	not started yet still holds the property. A property without any submitted
 	lease is left alone, since there is no end date to judge it by.
 
+	Under Item Price it also sets released Contracts back to Inactive, a
+	backstop for the after_job hook that does so after ERPNext's daily status
+	job (see ``contract_status``).
+
 	Returns:
 		Names of the properties set back to Available.
 	"""
+	set_released_contracts_inactive()
+
 	held = frappe.get_all(
 		"Utility Property",
 		filters={"is_group": 0, "status": ("in", HELD_STATUSES)},

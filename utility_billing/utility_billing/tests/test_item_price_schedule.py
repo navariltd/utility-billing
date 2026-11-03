@@ -277,9 +277,10 @@ class TestBuildSchedule(UnitTestCase):
 
 		periods = build_schedule(request)
 
+		# 2038-11-01 is whole months after the start: the day after the lease.
 		self.assertEqual(len(periods), 1)
 		self.assertEqual(periods[0].valid_from, date(2026, 9, 1))
-		self.assertEqual(periods[0].valid_upto, date(2038, 11, 1))
+		self.assertEqual(periods[0].valid_upto, date(2038, 10, 31))
 
 	def test_long_lease_with_increments_reaches_the_end_date(self):
 		request = ScheduleRequest(
@@ -293,7 +294,8 @@ class TestBuildSchedule(UnitTestCase):
 		periods = build_schedule(request)
 
 		self.assertEqual(periods[0].valid_from, date(2026, 9, 1))
-		self.assertEqual(periods[-1].valid_upto, date(2038, 11, 1))
+		self.assertEqual(periods[-1].valid_upto, date(2038, 10, 31))
+		self.assertEqual(periods[-1].valid_from, date(2038, 9, 1))
 
 
 class TestMergeByRate(UnitTestCase):

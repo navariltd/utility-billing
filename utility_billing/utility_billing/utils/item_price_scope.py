@@ -201,6 +201,29 @@ def validate_schedule_end(service_request, property_name: str, schedule_end) -> 
     )
 
 
+def require_one_start(service_request, property_names: list[str]) -> None:
+    """Refuse one schedule for properties whose leases start on different dates.
+
+    A schedule has one start date, so generating it for a property that
+    started earlier would replace that property's earlier prices. The Define
+    dialog sends one property at a time and is never refused.
+
+    Raises:
+        frappe.ValidationError: Naming the properties.
+    """
+    starts = {
+        getdate(start) if start else None
+        for start, _end in (property_contract_period(service_request, name) for name in property_names)
+    }
+    if len(starts) > 1:
+        frappe.throw(
+            _(
+                "Properties {0} start on different dates. Define their Item Prices one "
+                "property at a time."
+            ).format(", ".join(property_names))
+        )
+
+
 def resolve_schedule_end(service_request, property_names: list[str], schedule_end):
     """Return the date generation must stop at.
 
@@ -208,6 +231,12 @@ def resolve_schedule_end(service_request, property_names: list[str], schedule_en
     end, so a blank Lease End never generates past a lease that has an end.
     Only a genuinely open ended lease is left open, which the generator caps at
     ``ScheduleRequest.max_periods`` periods.
+
+    Under Item Price, when that date is the properties' own lease end, the
+    last billed day is returned instead (see ``request_prices.last_billed_day``),
+    so a row ending on the request's anniversary is not billed for that day
+    either. Under Auto Repeat only the preview calls this, and it keeps the
+    stored end.
 
     Known follow-up: once an open ended lease's capped periods run out,
     invoicing fails with "No Item Price found" - a future job could detect and
@@ -225,11 +254,11 @@ def resolve_schedule_end(service_request, property_names: list[str], schedule_en
         frappe.ValidationError: When the Lease End is blank and the properties
             end on different dates, so no single boundary applies.
     """
-    if schedule_end:
+    if schedule_end and not is_item_price_approach():
         return schedule_end
 
     ends = {property_lease_end(service_request, name)[0] for name in property_names}
-    if len(ends) > 1:
+    if not schedule_end and len(ends) > 1:
         frappe.throw(
             _(
                 "Properties {0} end on different dates. Define their Item Prices one "
@@ -237,7 +266,11 @@ def resolve_schedule_end(service_request, property_names: list[str], schedule_en
             ).format(", ".join(property_names))
         )
 
-    end = next(iter(ends), None)
+    end = getdate(schedule_end) if schedule_end else next(iter(ends), None)
+    if end and ends == {end} and is_item_price_approach():
+        billed = {request_prices.last_billed_day(service_request, name, end) for name in property_names}
+        if len(billed) == 1:
+            end = billed.pop()
 
     return str(end) if end else None
 

@@ -5,6 +5,9 @@ import frappe
 from frappe.query_builder import DocType
 from frappe.utils import add_days, cint, date_diff, getdate, today
 
+from utility_billing.utility_billing.utils.contract_status import contract_requirement_blocks
+from utility_billing.utility_billing.utils.request_prices import is_item_price_approach, last_billed_day
+
 
 @frappe.whitelist()
 def cancel_auto_repeats_for_property(property_name: str) -> None:
@@ -308,6 +311,21 @@ def create_item_price_sales_invoices():
 			request = frappe.get_doc("Utility Service Request", row.parent)
 
 			if request.docstatus != 1:
+				continue
+
+			# A lease end falling whole months after the start is the day after
+			# the last billed day, so nothing is billed on it.
+			if (
+				row.end_date
+				and is_item_price_approach()
+				and billing_date > last_billed_day(request, row.utility_property, row.end_date)
+			):
+				continue
+
+			# The drafts are inserted without validation, so Require Contract is
+			# checked here: no submitted Contract, none signed when signing is
+			# required, or every row released.
+			if contract_requirement_blocks(request.name):
 				continue
 
 			customer = request.get("customer") or (

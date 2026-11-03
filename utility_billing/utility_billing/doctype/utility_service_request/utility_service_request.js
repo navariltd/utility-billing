@@ -11,6 +11,9 @@ frappe.ui.form.on("Utility Service Request", {
 		frm.toggle_display("address_html", !frm.is_new());
 		frm.toggle_display("contact_html", !frm.is_new());
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
+		// Consent to update the Contract covers one save only
+		delete frm.doc.__update_contract;
+		wrap_save_for_contract_update(frm);
 
 		set_dynamic_field_label(frm);
 
@@ -1895,6 +1898,7 @@ function select_property(dialog, frm, property) {
 	if (previous && previous !== property) {
 		set_property_rate(dialog, previous, dialog.get_value("starting_rate"));
 		capture_schedule_rows(dialog, previous);
+		remember_property_increments(dialog, previous);
 	}
 
 	// Everything the dialog does from here on is for this property, even while
@@ -1904,6 +1908,7 @@ function select_property(dialog, frm, property) {
 	dialog._suppress_auto_preview = true;
 	dialog.set_value("starting_rate", get_base_rate(dialog, property));
 	apply_property_dates(dialog, frm, property);
+	apply_property_increments(dialog, frm, property);
 	set_schedule_table_rows(dialog, []);
 	dialog._suppress_auto_preview = false;
 
@@ -1914,6 +1919,66 @@ function select_property(dialog, frm, property) {
 
 	// The final call also cancels the previews the field changes above queued.
 	schedule_auto_preview(dialog, frm, { reset_manual: false });
+}
+
+/**
+ * Increment fields of the Define dialog, kept per property.
+ */
+const INCREMENT_FIELDS = [
+	"adjustment_rule",
+	"frequency",
+	"increment_interval_months",
+	"increment_percentage",
+	"effective_after_months",
+	"adjustment_basis",
+];
+
+/**
+ * What the increment fields hold for a property nothing was entered for:
+ * the dialog's own defaults.
+ */
+const INCREMENT_DEFAULTS = {
+	adjustment_rule: null,
+	frequency: "Monthly",
+	increment_interval_months: 12,
+	increment_percentage: 0,
+	effective_after_months: 0,
+	adjustment_basis: "Original Amount",
+};
+
+/**
+ * Remember the increments entered for a property, so they are never carried
+ * over to the next property selected.
+ */
+function remember_property_increments(dialog, property) {
+	if (!property) return;
+
+	dialog._property_increments = dialog._property_increments || {};
+	dialog._property_increments[property] = Object.fromEntries(
+		INCREMENT_FIELDS.map((fieldname) => [fieldname, dialog.get_value(fieldname)]),
+	);
+}
+
+/**
+ * Show a property's own increments: those entered for it, else the dialog's
+ * defaults filled from the property's own Billing Adjustment Rule, if any.
+ *
+ * The rule field is set without its change handler fetching the rule again,
+ * which would overwrite increments tuned by hand.
+ */
+function apply_property_increments(dialog, frm, property) {
+	const saved = (dialog._property_increments || {})[property];
+	const rule = saved ? null : get_property_lease(frm, property).row?.adjustment_rule || null;
+	const values = saved || { ...INCREMENT_DEFAULTS, adjustment_rule: rule };
+
+	dialog._restoring_increments = true;
+	Promise.all(INCREMENT_FIELDS.map((fieldname) => dialog.set_value(fieldname, values[fieldname])))
+		.then(() => {
+			if (rule) apply_rule_defaults(dialog, rule);
+		})
+		.finally(() => {
+			dialog._restoring_increments = false;
+		});
 }
 
 /**
@@ -2221,6 +2286,8 @@ function load_item_price_summary(frm) {
 			if (!response.message) return;
 
 			field.$wrapper.html(response.message.html);
+			// The Define dialog opens on the first property still without prices
+			frm._priced_properties = response.message.priced_properties || [];
 			bind_item_price_summary_editor(frm, field);
 		},
 	});
@@ -2503,6 +2570,65 @@ function make_dialog_wide(dialog, width = "92vw") {
 	dialog.$wrapper.find(".modal-dialog").css({ "max-width": width, width: width });
 }
 
+/**
+ * Ask before an Update that would change the request's Contracts.
+ *
+ * Frappe runs no client validation on Update, so the form's save is wrapped.
+ * The server lists the Contracts the change would update (Item Price only).
+ * With consent the save carries ``__update_contract`` and the server updates
+ * them; without it nothing is saved. The server refuses such a change on its
+ * own as well, so API calls and imports are covered too.
+ */
+function wrap_save_for_contract_update(frm) {
+	if (frm._contract_save_wrapped) return;
+	frm._contract_save_wrapped = true;
+
+	const save = frm.save.bind(frm);
+
+	frm.save = function (save_action, ...args) {
+		if (save_action !== "Update" || frm.doc.docstatus !== 1 || frm.doc.__update_contract) {
+			return save(save_action, ...args);
+		}
+
+		return frappe
+			.call({
+				method: "utility_billing.utility_billing.utils.contract_sync.get_contracts_to_update",
+				args: { doc: frm.doc },
+			})
+			.then((response) => {
+				const contracts = response.message || [];
+				if (!contracts.length) return save(save_action, ...args);
+
+				return new Promise((resolve) => {
+					frappe.confirm(
+						__(
+							"This change also applies to Contract {0}. Update the Contract to match?",
+							[contracts.join(", ")],
+						),
+						() => {
+							frm.doc.__update_contract = 1;
+							save(save_action, ...args).finally(() => {
+								delete frm.doc.__update_contract;
+								resolve();
+							});
+						},
+						() => {
+							frappe.msgprint({
+								title: __("Not saved"),
+								message: __(
+									"The change was not saved, because Contract {0} has to follow the request.",
+									[contracts.join(", ")],
+								),
+								indicator: "orange",
+							});
+							resolve();
+						},
+					);
+				});
+			});
+	};
+}
+
 function showItemPriceScheduleModal(frm) {
 	const properties = get_requested_properties(frm);
 
@@ -2609,6 +2735,7 @@ function showItemPriceScheduleModal(frm) {
 				label: __("Billing Adjustment Rule"),
 				description: __("Optional. Fills the fields below."),
 				change: function () {
+					if (dialog._restoring_increments) return;
 					apply_rule_defaults(dialog, this.get_value());
 				},
 			},
@@ -2726,17 +2853,14 @@ function showItemPriceScheduleModal(frm) {
 
 	dialog._frm = frm;
 
-	const first_property = properties[0];
+	// Properties already priced count as done, so the dialog opens on the first
+	// one without prices; when none or all are priced it opens on the first.
+	const priced = (frm._priced_properties || []).filter((name) => properties.includes(name));
+	dialog._created_properties = Object.fromEntries(priced.map((name) => [name, true]));
+
+	const first_property = properties.find((name) => !priced.includes(name)) || properties[0];
 	dialog.set_value("utility_property", first_property);
 	select_property(dialog, frm, first_property);
-
-	const default_property = (frm.doc.requested_properties || []).find(
-		(property) => property.utility_property && property.adjustment_rule,
-	);
-	if (default_property) {
-		dialog.set_value("adjustment_rule", default_property.adjustment_rule);
-		apply_rule_defaults(dialog, default_property.adjustment_rule);
-	}
 
 	dialog.show();
 	report_progress(dialog, properties);

@@ -24,7 +24,9 @@ def get_item_price_summary(docname: str) -> dict:
         docname: ``Utility Service Request`` name.
 
     Returns:
-        Dictionary holding the rendered HTML and whether any prices exist.
+        Dictionary holding the rendered HTML, whether any prices exist and the
+        properties that already have prices, which the Define dialog skips
+        when it opens.
     """
     service_request = frappe.get_doc("Utility Service Request", docname)
     service_request.check_permission("read")
@@ -55,14 +57,20 @@ def get_item_price_summary(docname: str) -> dict:
             properties
         ).items()
     }
-    has_prices = any(
-        item_price_summary.get_created_prices(
+    priced_properties = [
+        property_name
+        for property_name, item_code in item_by_property.items()
+        if item_price_summary.get_created_prices(
             item_code, service_request, property_name, service_request.price_list
         )
-        for property_name, item_code in item_by_property.items()
-    )
+    ]
 
-    return {"html": html, "has_prices": has_prices}
+    summary = {"html": html, "has_prices": bool(priced_properties)}
+    # Only the Item Price Define dialog uses it
+    if scope.is_item_price_approach():
+        summary["priced_properties"] = priced_properties
+
+    return summary
 
 
 @frappe.whitelist()
@@ -108,6 +116,10 @@ def preview_item_price_schedule(
     service_request.check_permission("read")
 
     property_names = helpers.as_list(properties)
+    # Under Auto Repeat nothing can be created from the preview, so it is left as it was.
+    item_price_approach = scope.is_item_price_approach()
+    if item_price_approach:
+        scope.require_one_start(service_request, property_names)
     # The boundary the create action will use, so the preview shows the same schedule.
     end_date = scope.resolve_schedule_end(service_request, property_names, end_date)
     service_items = helpers.resolve_service_items(property_names)
@@ -123,6 +135,7 @@ def preview_item_price_schedule(
         customer=customer or service_request.customer,
     )
     options.overrides = helpers.parse_overrides(overrides)
+    options.last_day_rules = item_price_approach
 
     lines = helpers.build_lines(
         service_items,
@@ -197,6 +210,8 @@ def create_item_price_schedule(
     property_names = helpers.as_list(properties)
     for property_name in property_names:
         scope.require_requested_property(service_request, property_name)
+    scope.require_one_start(service_request, property_names)
+    for property_name in property_names:
         scope.validate_schedule_start(service_request, property_name, start_date)
         scope.validate_schedule_end(service_request, property_name, end_date)
 

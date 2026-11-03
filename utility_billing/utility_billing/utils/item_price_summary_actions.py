@@ -104,8 +104,13 @@ def _apply_property_schedule(service_request, property_name, schedule, result) -
         service_request, property_name, [_to_period(row) for row in rows]
     )
 
+    # The schedule has to reach the last billed day; a lease end falling whole
+    # months after the start is the day after it.
+    coverage_end = (
+        request_prices.last_billed_day(service_request, property_name, end_date) if end_date else None
+    )
     for group_rows in _group_by_customer(rows).values():
-        _validate_group(property_name, group_rows, start_date, end_date)
+        _validate_group(property_name, group_rows, start_date, coverage_end)
         scope.validate_schedule_start(
             service_request, property_name, _earliest_start(group_rows)
         )

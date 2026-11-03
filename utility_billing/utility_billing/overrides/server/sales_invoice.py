@@ -13,6 +13,7 @@ from ...utils.cost_center import (
 	resolve_primary_cost_center,
 	service_item_owners,
 )
+from ...utils.contract_status import contract_released
 from ...utils.deferred_posting import (
 	cancel_deferred_journal_entries,
 	create_deferred_journal_entries,
@@ -189,6 +190,8 @@ def check_service_request_contract(doc: Document) -> str | None:
 
 	With Require Contract Before Sales Invoice Creation on, the request needs a
 	submitted Contract - and a signed one when Require Signed Contract is on too.
+	Under Item Price that Contract must also still hold a property: one whose
+	every row is released no longer allows the request to be invoiced.
 
 	Known limitation: this also applies to invoices Auto Repeat generates, so a
 	request without the required Contract makes that scheduled generation fail
@@ -202,7 +205,8 @@ def check_service_request_contract(doc: Document) -> str | None:
 		Contract is required.
 
 	Raises:
-		frappe.ValidationError: When the required Contract does not exist.
+		frappe.ValidationError: When the required Contract does not exist, or
+			under Item Price has released every property.
 	"""
 	service_request = doc.get(REQUEST_FIELD)
 	if doc.get("is_return") or not service_request:
@@ -216,11 +220,20 @@ def check_service_request_contract(doc: Document) -> str | None:
 	if settings.require_signed_contract:
 		filters["is_signed"] = 1
 
-	contracts = frappe.get_all(
-		"Contract", filters=filters, pluck="name", order_by="creation desc", limit=1
-	)
+	contracts = frappe.get_all("Contract", filters=filters, pluck="name", order_by="creation desc")
+	if not is_item_price_approach():
+		contracts = contracts[:1]
+	held = [name for name in contracts if not (is_item_price_approach() and contract_released(name))]
+	if held:
+		return held[0]
+
 	if contracts:
-		return contracts[0]
+		frappe.throw(
+			_(
+				"Contract {0} of Utility Service Request {1} has released every property, so the "
+				"request can no longer be invoiced."
+			).format(frappe.bold(contracts[0]), frappe.bold(service_request))
+		)
 
 	if settings.require_signed_contract:
 		frappe.throw(
