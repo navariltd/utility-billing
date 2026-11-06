@@ -11,6 +11,8 @@ from frappe.utils import (
 )
 from typing import Optional, Dict, Any
 
+from utility_billing.utility_billing.utils.line_request import line_request
+
 AUTO_REPEAT_SAVEPOINT = "utility_billing_auto_repeat"
 
 @frappe.whitelist()
@@ -260,8 +262,11 @@ def add_audit_comment(
         ("Auto Repeat", new_auto_repeat.name),
     ]
 
-    if hasattr(new_reference_doc, 'utility_service_request') and new_reference_doc.utility_service_request:
-        targets.append(("Utility Service Request", new_reference_doc.utility_service_request))
+    # Each line's own request, else the header's (an invoice from before lines had one)
+    requests = {line_request(new_reference_doc, row) for row in new_reference_doc.get("items") or []}
+    requests.add(new_reference_doc.get("utility_service_request"))
+    for service_request in sorted(requests - {None, ""}):
+        targets.append(("Utility Service Request", service_request))
 
     for doctype, name in filter(None, targets):
         frappe.get_doc({

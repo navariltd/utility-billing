@@ -5,11 +5,14 @@
 // of that property: both are kept in step here.
 //
 // Under the Item Price billing approach, utility lines (items flagged
-// `is_utility_item`) are also governed by a Utility Service Request: the invoice
-// is linked to the one request of the customer covering all of them, that
-// request's utility items are pre-filled, and their rates follow the request -
-// primary lines the Item Price valid on their date, secondary lines the rate on
-// the request row. A rate typed by hand is put back when the field is left. The
+// `is_utility_item`) are also governed by a Utility Service Request, carried by
+// each line: the request leasing the line's property on its date, or for an
+// item without a property the one request without properties covering the
+// date. Where several qualify the user picks one on the line. The rates follow
+// the line's request - primary lines the Item Price valid on their date,
+// secondary lines the rate on the request row. A rate typed by hand is put back
+// when the field is left. The header request stays read only; only a draft Auto
+// Repeat generated from an invoice linked through its header keeps using it. The
 // server enforces all of this again on save; this is UX only.
 
 // Rates already resolved per line (line, item and date), so a form refresh or a
@@ -21,7 +24,7 @@ var UTILITY_API = "utility_billing.api.sales_invoice";
 
 frappe.ui.form.on("Sales Invoice", {
 	setup: function (frm) {
-		set_service_request_query(frm);
+		set_line_request_query(frm);
 	},
 
 	// The posting dates of the lines are filled on the server when the invoice is
@@ -31,15 +34,16 @@ frappe.ui.form.on("Sales Invoice", {
 			apply_rate_of_deferred_date(frm, row.doctype, row.name);
 		});
 
-		load_service_request_lines(frm, false);
+		govern_utility_lines(frm);
 	},
 
 	customer: function (frm) {
 		govern_utility_lines(frm);
 	},
 
+	// Editable only on a draft that keeps its header request (see above).
 	utility_service_request: function (frm) {
-		load_service_request_lines(frm, true);
+		govern_utility_lines(frm);
 	},
 });
 
@@ -51,6 +55,11 @@ frappe.ui.form.on("Sales Invoice Item", {
 
 	utility_property: function (frm, cdt, cdn) {
 		set_item_of_property(frm, cdt, cdn);
+		govern_utility_lines(frm, cdn);
+	},
+
+	utility_service_request: function (frm, cdt, cdn) {
+		govern_utility_lines(frm, cdn);
 	},
 
 	items_remove: function (frm) {
@@ -58,6 +67,8 @@ frappe.ui.form.on("Sales Invoice Item", {
 	},
 
 	custom_posting_date: function (frm, cdt, cdn) {
+		// The date may give the line another request
+		govern_utility_lines(frm, cdn);
 		if (enforce_governed_rate(frm, cdt, cdn)) return;
 		apply_rate_of_deferred_date(frm, cdt, cdn, true);
 	},
@@ -82,27 +93,28 @@ function is_item_price_approach() {
 		.then((approach) => approach === "Item Price");
 }
 
-// Only submitted requests of the customer can be linked, narrowed to the
-// requests covering every utility line once they are known.
-function set_service_request_query(frm) {
-	frm.set_query("utility_service_request", () => {
+// A line's request is picked among the submitted requests of the customer the
+// server found for that line.
+function set_line_request_query(frm) {
+	frm.set_query("utility_service_request", "items", (doc, cdt, cdn) => {
 		const filters = { docstatus: 1 };
+		const entry = (frm.utility_line_results || {})[cdn];
 
 		if (frm.doc.customer) {
 			filters.customer = frm.doc.customer;
 		}
-		if ((frm.utility_request_candidates || []).length) {
-			filters.name = ["in", frm.utility_request_candidates];
+		if (entry && (entry.candidates || []).length) {
+			filters.name = ["in", entry.candidates];
 		}
 
 		return { filters };
 	});
 }
 
-// Match the utility lines of the invoice to the customer's requests, once both
-// a utility item and the customer are set - whichever comes first.
+// Find the request of each utility line once a utility item and the customer
+// are set - whichever comes first.
 function govern_utility_lines(frm, cdn) {
-	if (frm.doc.docstatus !== 0 || frm.doc.is_return || frm.prefilling_utility_lines) {
+	if (frm.doc.docstatus !== 0 || frm.doc.is_return) {
 		return;
 	}
 
@@ -112,225 +124,116 @@ function govern_utility_lines(frm, cdn) {
 		return;
 	}
 
-	const item_codes = [
-		...new Set(
-			(frm.doc.items || [])
-				.filter((row) => row.item_code && !row.meter_reading)
-				.map((row) => row.item_code),
-		),
-	];
+	const has_item = (frm.doc.items || []).some((row) => row.item_code && !row.meter_reading);
 
-	if (!frm.doc.customer || !item_codes.length) {
-		frm.utility_request_candidates = [];
-		clear_orphaned_service_request(frm);
+	if (!frm.doc.customer || !has_item) {
+		frm.utility_line_results = {};
 		return;
 	}
 
-	const new_row = cdn ? locals["Sales Invoice Item"][cdn] : null;
 	const sequence = (frm.utility_match_sequence = (frm.utility_match_sequence || 0) + 1);
 
 	is_item_price_approach().then((applies) => {
+		toggle_header_request(frm, applies);
 		if (!applies) return;
 
 		frappe.call({
-			method: `${UTILITY_API}.match_utility_service_requests`,
-			args: {
-				customer: frm.doc.customer,
-				item_codes: item_codes,
-				new_item_code: new_row ? new_row.item_code : null,
-				billing_dates: get_billing_dates(frm),
-			},
+			method: `${UTILITY_API}.resolve_invoice_lines`,
+			args: { doc: frm.doc },
 			callback: function (r) {
 				if (sequence !== frm.utility_match_sequence) return; // superseded
 
 				// Picking an item makes ERPNext send the invoice to the server
 				// (process_item_selection) and sync the server copy back when it
 				// answers, deleting any field set on the form in between. Acting
-				// once no request is in flight keeps the link and rates in place.
+				// once no request is in flight keeps the requests and rates in place.
 				frappe.after_ajax(() => {
 					if (sequence !== frm.utility_match_sequence) return; // superseded meanwhile
 
-					handle_request_match(frm, r.message || {}, cdn);
+					handle_line_resolutions(frm, r.message || {}, cdn);
 				});
 			},
 		});
 	});
 }
 
-// The date each line bills, keyed by item, so the server can pick the one
-// request whose lease covers them when the customer has several.
-function get_billing_dates(frm) {
-	const dates = {};
-	(frm.doc.items || [])
-		.filter((row) => row.item_code && !row.meter_reading)
-		.forEach((row) => {
-			(dates[row.item_code] = dates[row.item_code] || []).push(
-				row.custom_posting_date || frm.doc.posting_date,
-			);
-		});
-	return dates;
+// Under Item Price the header request is read only, except on a draft that
+// keeps it (see above).
+function toggle_header_request(frm, item_price) {
+	const keeps_header = !!(frm.doc.auto_repeat && frm.doc.utility_service_request);
+	frm.set_df_property("utility_service_request", "read_only", item_price && !keeps_header ? 1 : 0);
 }
 
-// Clear a linked request once the invoice no longer bills any of its utility
-// items - an invoice with no utility item has nothing left to govern.
-function clear_orphaned_service_request(frm) {
-	if (frm.doc.utility_service_request) {
-		frm.set_value("utility_service_request", null);
+// Fill each line's request and property, let the user pick a request where
+// several qualify, and say why a line has none.
+function handle_line_resolutions(frm, result, cdn) {
+	frm.utility_line_results = result.applies ? result.rows || {} : {};
+
+	if (!result.applies) return;
+
+	const messages = [];
+	const updates = [];
+
+	(frm.doc.items || []).forEach((row) => {
+		const entry = frm.utility_line_results[row.name];
+
+		row.__utility_request_pickable = entry && entry.editable ? 1 : 0;
+		if (!entry) return;
+
+		if (entry.status === "not_listed" && row.name === cdn) {
+			block_utility_line(frm, entry, cdn);
+			return;
+		}
+
+		if (!result.header_path) {
+			const request = entry.service_request || (entry.editable ? row.utility_service_request : null);
+			if ((row.utility_service_request || null) !== (request || null)) {
+				updates.push([row, "utility_service_request", request || null]);
+			}
+			if (entry.utility_property && !row.utility_property) {
+				updates.push([row, "utility_property", entry.utility_property]);
+			}
+		}
+
+		if (entry.message) messages.push(entry.message);
+	});
+
+	updates.forEach(([row, fieldname, value]) => {
+		row[fieldname] = value; // set directly: set_value would resolve the lines again
+	});
+
+	frm.refresh_field("items");
+
+	(frm.doc.items || []).forEach((row) => {
+		if (get_governed_line(frm, row)) enforce_governed_rate(frm, row.doctype, row.name);
+	});
+
+	if (messages.length) {
+		frappe.show_alert({ message: messages.join("<br>"), indicator: "orange" }, 10);
 	}
 }
 
-function handle_request_match(frm, match, cdn) {
-	frm.utility_request_candidates = match.applies ? match.candidates || [] : [];
-
-	if (!match.applies) {
-		clear_orphaned_service_request(frm);
-		return;
-	}
-
-	if (!match.status) {
-		// No utility item on the invoice at all.
-		clear_orphaned_service_request(frm);
-		return;
-	}
-
-	if (match.status === "missing" || match.status === "conflict") {
-		block_utility_line(frm, match, cdn);
-		return;
-	}
-
-	const linked = frm.doc.utility_service_request;
-
-	if (linked && match.candidates.includes(linked)) {
-		if (cdn) enforce_governed_rate(frm, "Sales Invoice Item", cdn);
-		return;
-	}
-
-	if (match.status === "single") {
-		frm.set_value("utility_service_request", match.candidates[0]);
-		return;
-	}
-
-	// Several requests qualify: the user picks one, the picker lists only them.
-	if (linked) {
-		frm.set_value("utility_service_request", null);
-	}
-
-	frappe.show_alert(
-		{
-			message: __(
-				"Several Utility Service Requests of {0} cover the utility items on this invoice. Select one in the Utility Service Request field.",
-				[frm.doc.customer],
-			),
-			indicator: "orange",
-		},
-		10,
-	);
-	frm.scroll_to_field("utility_service_request");
-}
-
-// Remove the line that cannot be billed. When the customer changed instead, the
-// lines stay for the user to fix and the request is unlinked.
-function block_utility_line(frm, match, cdn) {
+// Remove the line just added that cannot be billed: its item is on no request
+// of the customer.
+function block_utility_line(frm, entry, cdn) {
 	frappe.msgprint({
 		title: __("Utility item not allowed"),
-		message: match.message,
+		message: entry.message,
 		indicator: "red",
 	});
 
-	const row = cdn ? locals["Sales Invoice Item"][cdn] : null;
-	const is_culprit =
-		row && (match.status === "conflict" || (match.missing || []).includes(row.item_code));
-	const grid_row = is_culprit ? frm.fields_dict.items.grid.get_row(cdn) : null;
-
-	if (grid_row) {
-		grid_row.remove();
-		return;
-	}
-
-	if (frm.doc.utility_service_request) {
-		frm.set_value("utility_service_request", null);
-	}
+	const grid_row = frm.fields_dict.items.grid.get_row(cdn);
+	if (grid_row) grid_row.remove();
 }
 
-// Load the governed lines of the linked request and bring every line in step.
-// When the request was just linked its utility items are pre-filled first.
-function load_service_request_lines(frm, prefill) {
-	// Rows are still being added from the Utility Service Request, which runs
-	// this again once they are all in.
-	if (frappe.flags.filling_rows_from_service_request) {
-		return;
-	}
-
-	frm.utility_lines = {};
-	frm.utility_expected_rates = {};
-
-	const request = frm.doc.utility_service_request;
-
-	if (frm.doc.docstatus !== 0 || frm.doc.is_return || !request) {
-		return;
-	}
-
-	is_item_price_approach().then((applies) => {
-		if (!applies) return;
-
-		frappe.call({
-			method: `${UTILITY_API}.get_utility_service_request_lines`,
-			args: { utility_service_request: request },
-			callback: function (r) {
-				if (frm.doc.utility_service_request !== request) return; // relinked meanwhile
-
-				const lines = r.message || [];
-				lines.forEach((line) => {
-					frm.utility_lines[line.item_code] = line;
-				});
-
-				const ready = prefill ? prefill_service_request_lines(frm, lines) : Promise.resolve();
-
-				// Pre-filled items are still being processed by ERPNext; their
-				// answers would overwrite the rates if these were set first.
-				ready
-					.then(() => frappe.after_ajax())
-					.then(() => {
-						if (frm.doc.utility_service_request !== request) return; // relinked meanwhile
-
-						(frm.doc.items || []).forEach((row) => {
-							enforce_governed_rate(frm, row.doctype, row.name);
-						});
-					});
-			},
-		});
-	});
-}
-
-// Add the request's utility items the invoice does not bill yet.
-async function prefill_service_request_lines(frm, lines) {
-	const billed = new Set((frm.doc.items || []).map((row) => row.item_code));
-	const missing = lines.filter((line) => !billed.has(line.item_code));
-
-	if (!missing.length) return;
-
-	frm.prefilling_utility_lines = true;
-
-	try {
-		for (const line of missing) {
-			const row = (frm.doc.items || []).find((item) => !item.item_code) || frm.add_child("items");
-
-			await frappe.model.set_value(row.doctype, row.name, "item_code", line.item_code);
-			await frappe.model.set_value(row.doctype, row.name, "qty", line.qty);
-		}
-	} finally {
-		frm.prefilling_utility_lines = false;
-	}
-
-	frm.refresh_field("items");
-}
-
-// The governed line of the linked request billed by a row, if any.
+// The resolved request line billed by a row, if any.
 function get_governed_line(frm, row) {
 	if (!row || !row.item_code || row.meter_reading) return null;
 	if (frm.doc.docstatus !== 0 || frm.doc.is_return) return null;
 
-	return (frm.utility_lines || {})[row.item_code] || null;
+	const entry = (frm.utility_line_results || {})[row.name];
+
+	return entry && entry.status === "resolved" && entry.role ? entry : null;
 }
 
 // Set the rate a governed row must bill. Returns whether the row is governed.
@@ -345,13 +248,15 @@ function enforce_governed_rate(frm, cdt, cdn) {
 		return true;
 	}
 
+	const item_code = row.item_code;
+
 	frappe.call({
 		method: `${UTILITY_API}.get_line_rate`,
 		args: {
-			item_code: row.item_code,
+			item_code: item_code,
 			posting_date: row.custom_posting_date || frm.doc.posting_date,
 			customer: frm.doc.customer,
-			utility_service_request: frm.doc.utility_service_request,
+			utility_service_request: line.service_request,
 			price_list: frm.doc.selling_price_list,
 			uom: row.uom,
 			qty: row.qty,
@@ -362,7 +267,7 @@ function enforce_governed_rate(frm, cdt, cdn) {
 		callback: function (r) {
 			// A missing Item Price is reported by the server on save.
 			if (r.message === null || r.message === undefined) return;
-			if (!locals[cdt][cdn] || locals[cdt][cdn].item_code !== line.item_code) return;
+			if (!locals[cdt][cdn] || locals[cdt][cdn].item_code !== item_code) return;
 
 			set_governed_rate(frm, locals[cdt][cdn], flt(r.message));
 		},
@@ -388,8 +293,9 @@ function set_governed_rate(frm, row, rate) {
 // Put back a governed rate edited by hand. Returns whether the row is governed.
 function revert_governed_rate(frm, cdt, cdn, fieldname) {
 	const row = locals[cdt][cdn];
+	const line = get_governed_line(frm, row);
 
-	if (!get_governed_line(frm, row)) return false;
+	if (!line) return false;
 
 	const expected = (frm.utility_expected_rates || {})[cdn];
 
@@ -403,7 +309,7 @@ function revert_governed_rate(frm, cdt, cdn, fieldname) {
 	frappe.show_alert({
 		message: __("The rate of {0} is set by Utility Service Request {1} and cannot be changed.", [
 			row.item_code,
-			frm.doc.utility_service_request,
+			line.service_request,
 		]),
 		indicator: "orange",
 	});
@@ -484,7 +390,7 @@ function apply_rate_of_deferred_date(frm, cdt, cdn, force) {
 			item_code: row.item_code,
 			posting_date: row.custom_posting_date,
 			customer: frm.doc.customer,
-			utility_service_request: frm.doc.utility_service_request,
+			utility_service_request: row.utility_service_request || frm.doc.utility_service_request,
 			price_list: frm.doc.selling_price_list,
 			uom: row.uom,
 			qty: row.qty,

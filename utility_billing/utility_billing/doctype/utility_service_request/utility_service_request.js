@@ -17,6 +17,7 @@ frappe.ui.form.on("Utility Service Request", {
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
 			load_item_price_summary(frm);
+			load_request_invoices(frm);
 			frappe.call({
 				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.update_request_status",
 				args: {
@@ -2565,6 +2566,50 @@ function show_item_price_schedule_result(result) {
  */
 function make_dialog_wide(dialog, width = "92vw") {
 	dialog.$wrapper.find(".modal-dialog").css({ "max-width": width, width: width });
+}
+
+/**
+ * List the Sales Invoices of the request, found through their header or their
+ * lines. Connections only follow the header while that field exists, so an
+ * invoice carrying the request on its lines shows here only. The dashboard
+ * clears the section on every refresh.
+ */
+function load_request_invoices(frm) {
+	frappe.call({
+		method: "utility_billing.api.sales_invoice.get_request_invoices",
+		args: { utility_service_request: frm.doc.name },
+		callback: function (r) {
+			const invoices = r.message || [];
+			if (!invoices.length) return;
+
+			const rows = invoices
+				.map((invoice) => {
+					const link = `<a href="/app/sales-invoice/${encodeURIComponent(invoice.name)}">${frappe.utils.escape_html(invoice.name)}</a>`;
+					return `<tr>
+						<td>${link}</td>
+						<td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
+						<td>${frappe.utils.escape_html(__(invoice.status))}</td>
+						<td class="text-right">${format_currency(invoice.grand_total, invoice.currency)}</td>
+						<td class="text-right">${format_currency(invoice.outstanding_amount, invoice.currency)}</td>
+					</tr>`;
+				})
+				.join("");
+
+			frm.dashboard.add_section(
+				`<table class="table table-condensed table-bordered small">
+					<thead><tr>
+						<th>${__("Sales Invoice")}</th>
+						<th>${__("Posting Date")}</th>
+						<th>${__("Status")}</th>
+						<th class="text-right">${__("Grand Total")}</th>
+						<th class="text-right">${__("Outstanding")}</th>
+					</tr></thead>
+					<tbody>${rows}</tbody>
+				</table>`,
+				__("Sales Invoices (header or lines)"),
+			);
+		},
+	});
 }
 
 function showItemPriceScheduleModal(frm) {

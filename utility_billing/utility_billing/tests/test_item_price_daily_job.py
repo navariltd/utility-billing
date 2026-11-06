@@ -50,9 +50,10 @@ class DailyJobCase(fx.SavepointMixin, FrappeTestCase):
 		with patch.object(auto_repeat, "today", return_value=day):
 			auto_repeat.create_item_price_sales_invoices()
 
+		# By the job's marker: under Item Price the request is on the line, not the header
 		return frappe.get_all(
 			"Sales Invoice",
-			filters={"utility_service_request": self.request.name, "posting_date": day, "docstatus": 0},
+			filters={"remarks": ("like", f"%AUTO-BILLING:{self.request.name}:%"), "posting_date": day, "docstatus": 0},
 			pluck="grand_total",
 		)
 

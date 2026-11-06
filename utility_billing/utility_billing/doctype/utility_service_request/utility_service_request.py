@@ -16,10 +16,15 @@ from utility_billing.utility_billing.utils.cost_center import (
 	resolve_primary_cost_center,
 )
 from utility_billing.utility_billing.utils.item_prices import delete_request_prices
+from utility_billing.utility_billing.utils.line_request import fill_single_property
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
 from utility_billing.utility_billing.utils.request_contract_lock import check_contract_terms_locked
-from utility_billing.utility_billing.utils.request_prices import adjust_prices_to_window, validate_lease_move
+from utility_billing.utility_billing.utils.request_prices import (
+	adjust_prices_to_window,
+	is_item_price_approach,
+	validate_lease_move,
+)
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -733,10 +738,13 @@ def create_sales_invoice_doc(
 		docname, property, posting_date, start_date, end_date
 	)
 
+	# Under Item Price the request is carried by each line, not the header
+	item_price = is_item_price_approach()
+
 	si = frappe.get_doc(
 		{
 			"doctype": "Sales Invoice",
-			"utility_service_request": docname,
+			"utility_service_request": None if item_price else docname,
 			"utility_property": property if property else None,
 			"customer": customer or usr.customer,
 			"customer_name": customer_name or usr.customer_name,
@@ -757,7 +765,9 @@ def create_sales_invoice_doc(
 
 	for item_data in items:
 		item_dict = item_data.copy()
-		si.append("items", item_dict)
+		row = si.append("items", item_dict)
+		if item_price:
+			fill_request_line(row, docname, property)
 	si.insert()
 
 	_handle_auto_repeat(
@@ -765,6 +775,25 @@ def create_sales_invoice_doc(
 	)
 
 	return si.name
+
+
+def fill_request_line(row, service_request: str, property_name: str | None = None) -> None:
+	"""Give an invoice line made from a request that request and the property it bills.
+
+	The rent item of a property bills that property. Another item takes the
+	property chosen when the invoice was made, else the request's property
+	when it has exactly one; with several and none chosen the user picks it on
+	the line.
+	"""
+	row.utility_service_request = service_request
+	if row.get("utility_property"):
+		return
+
+	owner = frappe.db.get_value("Utility Property", {"service_item": row.item_code}, "name") if row.item_code else None
+	if owner or property_name:
+		row.utility_property = owner or property_name
+	else:
+		fill_single_property(row, service_request)
 
 
 def _validate_items(items):
