@@ -255,17 +255,23 @@ class TestAutoRepeatUnchanged(ContractStatusCase):
 
 
 class TestPropertyAvailability(ContractStatusCase):
-	"""What a Contract leaves its properties in (Part D)."""
+	"""What a Contract leaves its properties in (Part D).
 
-	def move_start(self, contract, start):
-		"""Move a submitted Contract's dates the way its request's sync does."""
+	A submitted Contract's dates cannot change, so a status change with a future
+	start comes from signing an unsigned Contract after submit: Unsigned becomes
+	Inactive.
+	"""
+
+	def future_lease(self, *properties):
+		"""Submit an unsigned Contract starting in three months."""
+		start = getdate(add_months(today(), 3)).replace(day=1)
+		end = getdate(add_months(start, 12))
+		request = fx.make_request([(name, start, end) for name in properties], start, end)
+		return fx.make_contract(request.name, signed=False)
+
+	def sign(self, contract):
 		contract.reload()
-		contract.start_date = getdate(start)
-		contract.end_date = getdate(add_months(start, 12))
-		for row in contract.properties:
-			row.start_date, row.end_date = contract.start_date, contract.end_date
-		contract.flags.from_service_request = True
-		contract.flags.ignore_validate_update_after_submit = True
+		contract.is_signed = 1
 		contract.save(ignore_permissions=True)
 		contract.reload()
 
@@ -278,19 +284,20 @@ class TestPropertyAvailability(ContractStatusCase):
 		self.assertEqual(fx.property_status(P1), "Available")
 		cancel.assert_called_once_with(P1)
 
-	def test_moving_the_start_into_the_future_reserves_the_property(self):
-		contract = self.lease(P1)
+	def test_signing_a_contract_with_a_future_start_reserves_the_property(self):
+		contract = self.future_lease(P1)
+		self.assertEqual((contract.status, fx.property_status(P1)), ("Unsigned", "Reserved"))
 
-		self.move_start(contract, add_months(today(), 3))
+		self.sign(contract)
 
 		self.assertEqual(contract.status, "Inactive")
 		self.assertEqual(fx.property_status(P1), "Reserved")
 
 	def test_a_released_row_is_available_even_with_a_future_start(self):
-		contract = self.lease(P1, P2)
+		contract = self.future_lease(P1, P2)
 		fx.release_rows(contract, 0)
 
-		self.move_start(contract, add_months(today(), 3))
+		self.sign(contract)
 
 		self.assertEqual((fx.property_status(P1), fx.property_status(P2)), ("Available", "Reserved"))
 
@@ -298,18 +305,19 @@ class TestPropertyAvailability(ContractStatusCase):
 class TestPropertyAvailabilityUnderAutoRepeat(TestPropertyAvailability):
 	approach = "Auto Repeat"
 
-	def test_moving_the_start_into_the_future_reserves_the_property(self):
-		contract = self.lease(P1)
+	def test_signing_a_contract_with_a_future_start_reserves_the_property(self):
+		contract = self.future_lease(P1)
 
-		self.move_start(contract, add_months(today(), 3))
+		self.sign(contract)
 
 		# As on develop
+		self.assertEqual(contract.status, "Inactive")
 		self.assertEqual(fx.property_status(P1), "Available")
 
 	def test_a_released_row_is_available_even_with_a_future_start(self):
-		contract = self.lease(P1, P2)
+		contract = self.future_lease(P1, P2)
 		fx.release_rows(contract, 0)
 
-		self.move_start(contract, add_months(today(), 3))
+		self.sign(contract)
 
 		self.assertEqual((fx.property_status(P1), fx.property_status(P2)), ("Available", "Available"))

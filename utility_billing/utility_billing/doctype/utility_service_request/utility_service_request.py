@@ -11,10 +11,6 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
-from utility_billing.utility_billing.utils.contract_sync import (
-	refuse_unconfirmed_contract_change,
-	sync_contracts,
-)
 from utility_billing.utility_billing.utils.cost_center import (
 	fill_request_item_cost_centers,
 	resolve_primary_cost_center,
@@ -22,6 +18,7 @@ from utility_billing.utility_billing.utils.cost_center import (
 from utility_billing.utility_billing.utils.item_prices import delete_request_prices
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
+from utility_billing.utility_billing.utils.request_contract_lock import check_contract_terms_locked
 from utility_billing.utility_billing.utils.request_prices import adjust_prices_to_window, validate_lease_move
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
@@ -31,6 +28,9 @@ class UtilityServiceRequest(Document):
 		load_address_and_contact(self)
 
 	def validate(self):
+		# First, so a refused change gets this message rather than a date check's
+		# (a draft request can have a Contract too)
+		check_contract_terms_locked(self)
 		self.validate_items()
 		self.set_customer_if_needed()
 		apply_default_price_list(self)
@@ -40,6 +40,7 @@ class UtilityServiceRequest(Document):
 		fill_request_item_cost_centers(self)
 
 	def before_update_after_submit(self):
+		check_contract_terms_locked(self)
 		# Re-run validation logic when updating after submission
 		self.validate_contract_dates()
 		self.validate_child_items()
@@ -49,14 +50,11 @@ class UtilityServiceRequest(Document):
 		validate_no_overlapping_leases(self)
 		if before:
 			validate_lease_move(self, before)
-			# Last, so a change refused by the checks above never reaches the Contract
-			refuse_unconfirmed_contract_change(self, before)
 
 	def on_update_after_submit(self):
 		before = self.get_doc_before_save()
 		if before:
 			adjust_prices_to_window(self, before)
-			sync_contracts(self, before)
 
 	def before_submit(self):
 		validate_no_overlapping_leases(self)
