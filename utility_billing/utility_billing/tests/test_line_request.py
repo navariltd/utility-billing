@@ -17,6 +17,7 @@ from utility_billing.utility_billing.doctype.utility_service_request.utility_ser
 )
 from utility_billing.utility_billing.overrides.server import sales_invoice
 from utility_billing.utility_billing.tests import lease_fixtures as fx
+from utility_billing.utility_billing.utils.line_request import resolve_lines
 from utility_billing.utility_billing.tests.line_request_fixtures import (
 	ELECTRICITY,
 	OTHER_CUSTOMER,
@@ -130,6 +131,50 @@ class TestByProperty(LineRequestCase):
 		self.govern(invoice)
 
 		self.assertEqual(self.requests(invoice), [self.u1.name])
+
+
+class TestTwoPropertiesListingOneItem(LineRequestCase):
+	"""Electricity on two properties' requests, as for customer Omondi: the property decides."""
+
+	def resolve(self, posting_date, **line):
+		invoice = make_invoice([{"item_code": ELECTRICITY, **line}], posting_date)
+		return next(iter(resolve_lines(invoice, invoice.items).values()))
+
+	def test_each_property_gets_its_own_request(self):
+		self.assertEqual(self.resolve("2027-03-10", utility_property=P1).service_request, self.u1.name)
+		self.assertEqual(self.resolve("2027-03-10", utility_property=P2).service_request, self.u3.name)
+
+	def test_without_a_property_the_message_names_the_properties_of_the_date(self):
+		result = self.resolve("2027-03-10")
+
+		self.assertEqual((result.status, result.property_candidates), ("pick_property", [P1, P2]))
+		self.assertIn(f"can be billed for: <strong>{P1}</strong>, <strong>{P2}</strong>", result.message)
+		self.assertEqual(result.candidates, [])
+
+	def test_a_property_not_billing_the_item_on_the_date_names_the_one_that_does(self):
+		# P1 is leased by U2 in September, but U2 does not list Electricity
+		result = self.resolve("2027-09-10", utility_property=P1)
+
+		self.assertEqual((result.status, result.property_candidates), ("not_covered", [P2]))
+		self.assertIn(f"can be billed for: <strong>{P2}</strong>", result.message)
+
+	def test_a_date_no_property_covers_says_so(self):
+		result = self.resolve("2028-03-10", utility_property=P2)
+
+		self.assertIn("No property of", result.message)
+
+
+class TestLineFieldVisible(FrappeTestCase):
+	def test_the_line_request_is_never_read_only(self):
+		import json
+		import os
+
+		path = os.path.join(os.path.dirname(__file__), "..", "custom", "sales_invoice_item.json")
+		fields = {field["fieldname"]: field for field in json.load(open(path))["custom_fields"]}
+
+		# Frappe hides an empty read only field, so the user could not see or pick it
+		self.assertFalse(fields["utility_service_request"]["read_only"])
+		self.assertFalse(fields["utility_service_request"]["read_only_depends_on"])
 
 
 class TestReleasedRows(LineRequestCase):

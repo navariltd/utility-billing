@@ -256,6 +256,17 @@ class RequestIndex:
 
 		return False
 
+	def properties_leased(self, service_requests, date) -> list[str]:
+		"""Return the properties some requests lease on a date, released rows aside."""
+		return sorted(
+			{
+				row.utility_property
+				for name in service_requests
+				for row in self.leases.get(name) or []
+				if self.leases_property(name, row.utility_property, date)
+			}
+		)
+
 	def has_properties(self, service_request: str) -> bool:
 		return bool(self.leases.get(service_request))
 
@@ -279,13 +290,21 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 		``status`` (one of the module's statuses), ``service_request`` when
 		resolved, ``utility_property`` the line bills (``None`` without one),
 		``candidates`` the user may pick from, ``editable`` whether the line's
-		request is the user's to pick, and the blocking ``message``.
+		request is the user's to pick, ``property_candidates`` the properties
+		of the customer leased on the line's date by a request listing its item,
+		and the blocking ``message``.
 	"""
 	date = billing_date(doc, row)
 	customer = frappe.bold(doc.customer)
 	item = frappe.bold(row.item_code)
 	result = frappe._dict(
-		status=None, service_request=None, utility_property=None, candidates=[], editable=False, message=None
+		status=None,
+		service_request=None,
+		utility_property=None,
+		candidates=[],
+		editable=False,
+		property_candidates=[],
+		message=None,
 	)
 
 	listing = sorted(index.listing.get(row.item_code) or [])
@@ -296,6 +315,15 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 			"customer's Utility Service Requests, or create one, before billing it."
 		).format(row.idx, item, customer)
 		return result
+
+	result.property_candidates = index.properties_leased(listing, date)
+	on_date = (
+		_("On {0}, {1} can be billed for: {2}.").format(
+			date, item, ", ".join(frappe.bold(name) for name in result.property_candidates)
+		)
+		if result.property_candidates
+		else _("No property of {0} listing {1} is leased on {2}.").format(customer, item, date)
+	)
 
 	owners = index.owners.get(row.item_code) or []
 	property_name = row.get("utility_property")
@@ -311,14 +339,13 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 			row,
 			date,
 			leasing,
-			_(
-				"Row #{0}: No Utility Service Request of {1} leases {2} on {3} and lists {4}."
-			).format(row.idx, customer, frappe.bold(property_name), date, item),
+			_("Row #{0}: No Utility Service Request of {1} leases {2} on {3} and lists {4}. {5}").format(
+				row.idx, customer, frappe.bold(property_name), date, item, on_date
+			),
 		)
 
 	if owners:
 		result.status = PICK_PROPERTY
-		result.candidates = owners
 		result.message = _("Row #{0}: Pick the property on this line. {1} is the rent item of {2}.").format(
 			row.idx, item, ", ".join(owners)
 		)
@@ -329,8 +356,8 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 		result.status = PICK_PROPERTY
 		result.message = _(
 			"Row #{0}: Pick the property on this line. Every Utility Service Request of {1} listing "
-			"{2} has properties: {3}."
-		).format(row.idx, customer, item, ", ".join(listing))
+			"{2} has properties. {3}"
+		).format(row.idx, customer, item, on_date)
 		return result
 
 	covering = [name for name in without_property if index.header_covers(name, date)]

@@ -93,8 +93,11 @@ function is_item_price_approach() {
 		.then((approach) => approach === "Item Price");
 }
 
-// A line's request is picked among the submitted requests of the customer the
-// server found for that line.
+// A line's request is picked among the requests the server found for that
+// line: the one it resolved to, or the several the user chooses between. The
+// field stays visible and editable, since Frappe hides an empty read only
+// field; a request the line cannot have is replaced when the lines are resolved
+// again, and on save.
 function set_line_request_query(frm) {
 	frm.set_query("utility_service_request", "items", (doc, cdt, cdn) => {
 		const filters = { docstatus: 1 };
@@ -103,8 +106,8 @@ function set_line_request_query(frm) {
 		if (frm.doc.customer) {
 			filters.customer = frm.doc.customer;
 		}
-		if (entry && (entry.candidates || []).length) {
-			filters.name = ["in", entry.candidates];
+		if (entry) {
+			filters.name = ["in", (entry.candidates || []).length ? entry.candidates : [""]];
 		}
 
 		return { filters };
@@ -177,7 +180,6 @@ function handle_line_resolutions(frm, result, cdn) {
 	(frm.doc.items || []).forEach((row) => {
 		const entry = frm.utility_line_results[row.name];
 
-		row.__utility_request_pickable = entry && entry.editable ? 1 : 0;
 		if (!entry) return;
 
 		if (entry.status === "not_listed" && row.name === cdn) {
