@@ -22,14 +22,87 @@ var resolved_line_rates = resolved_line_rates || {};
 
 var UTILITY_API = "utility_billing.api.sales_invoice";
 
+// ERPNext carries a row's property and cost center into other rows in three ways:
+//
+// * a new row copies the first row's values: the Sales Invoice controller's own
+//   items_add copies cost_center (with the income and discount accounts), and the
+//   accounting dimension copy copies the property and cost_center;
+// * changing a row's property or cost center copies it into every row that has
+//   none (copy_value_in_all_rows, from the cost_center and dimension triggers).
+//
+// Under Item Price a property or cost center stays on its own row, so a new line
+// starts with Frappe's default cost center (the company's) and no property: a rent
+// line takes its property from its item, a service line waits for the user to
+// pick it, and its cost center then follows the property. A copied cost center
+// would otherwise pass for one set by hand, and give the line its property on
+// save. The first row copy goes through the form's own copy_from_first_row, and
+// the row to row copy through copy_value_in_all_rows, so both are filtered there.
+// A cost center set on the invoice header still applies to every row, and a
+// draft keeping its header request, like every Auto Repeat site, copies as before.
+var UTILITY_UNCOPIED_FIELDS = ["utility_property", "cost_center"];
+var utility_item_price_docs = utility_item_price_docs || new WeakSet();
+
+function keeps_row_values_apart(doc) {
+	return (
+		!!doc &&
+		doc.doctype === "Sales Invoice" &&
+		utility_item_price_docs.has(doc) &&
+		!(doc.auto_repeat && doc.utility_service_request)
+	);
+}
+
+function mark_item_price_form(frm, applies) {
+	frm.utility_item_price = applies;
+	if (applies) utility_item_price_docs.add(frm.doc);
+}
+
+function wrap_first_row_copy(frm) {
+	const script_manager = frm.script_manager;
+	if (!script_manager || script_manager.__utility_copy_wrapped) return;
+
+	const copy_from_first_row = script_manager.copy_from_first_row.bind(script_manager);
+	script_manager.copy_from_first_row = function (parentfield, current_row, fieldnames) {
+		if (parentfield === "items" && keeps_row_values_apart(frm.doc)) {
+			fieldnames = [].concat(fieldnames).filter((fieldname) => !UTILITY_UNCOPIED_FIELDS.includes(fieldname));
+			if (!fieldnames.length) return;
+		}
+		return copy_from_first_row(parentfield, current_row, fieldnames);
+	};
+	script_manager.__utility_copy_wrapped = true;
+}
+
+if (erpnext.utils?.copy_value_in_all_rows && !erpnext.utils.__utility_copy_wrapped) {
+	const copy_value_in_all_rows = erpnext.utils.copy_value_in_all_rows;
+
+	erpnext.utils.copy_value_in_all_rows = function (doc, dt, dn, table_fieldname, fieldname) {
+		// From one row to the others only; the invoice header's value still applies to all rows
+		if (
+			dt === "Sales Invoice Item" &&
+			table_fieldname === "items" &&
+			UTILITY_UNCOPIED_FIELDS.includes(fieldname) &&
+			keeps_row_values_apart(doc)
+		) {
+			return;
+		}
+		return copy_value_in_all_rows.apply(this, arguments);
+	};
+	erpnext.utils.__utility_copy_wrapped = true;
+}
+
 frappe.ui.form.on("Sales Invoice", {
 	setup: function (frm) {
 		set_line_request_query(frm);
+		wrap_first_row_copy(frm);
+		// Known before the first row is added, for the row copies above
+		is_item_price_approach().then((applies) => mark_item_price_form(frm, applies));
 	},
 
 	// The posting dates of the lines are filled on the server when the invoice is
 	// saved, so their rates are brought in line with them when the form opens.
 	refresh: function (frm) {
+		// A save can replace frm.doc, so the form is marked again
+		is_item_price_approach().then((applies) => mark_item_price_form(frm, applies));
+
 		(frm.doc.items || []).forEach((row) => {
 			apply_rate_of_deferred_date(frm, row.doctype, row.name);
 		});
@@ -49,27 +122,20 @@ frappe.ui.form.on("Sales Invoice", {
 
 frappe.ui.form.on("Sales Invoice Item", {
 	item_code: function (frm, cdt, cdn) {
+		// A property that came from the previous item, a rent item, goes with it;
+		// one the user picked stays
+		const row = locals[cdt][cdn];
+		if (row.__property_from_item && row.utility_property === row.__property_from_item) {
+			row.utility_property = null;
+		}
+		delete row.__property_from_item;
+
 		set_property_of_item(frm, cdt, cdn);
 		govern_utility_lines(frm, cdn);
 	},
 
-	// ERPNext copies the first row's accounting dimensions, the property included,
-	// into a new row. Remember what it copied, so a service line is not left on a
-	// property the user never picked.
-	items_add: function (frm, cdt, cdn) {
-		setTimeout(() => {
-			const row = locals[cdt] && locals[cdt][cdn];
-			if (row && row.utility_property) row.__copied_property = row.utility_property;
-		}, 0);
-	},
-
 	utility_property: function (frm, cdt, cdn) {
-		const row = locals[cdt][cdn];
-		if (row.__copied_property && row.utility_property !== row.__copied_property) {
-			delete row.__copied_property; // picked by the user
-		}
 		set_item_of_property(frm, cdt, cdn);
-		set_cost_center_of_property(frm, cdt, cdn);
 		govern_utility_lines(frm, cdn);
 	},
 
@@ -156,6 +222,7 @@ function govern_utility_lines(frm, cdn) {
 	const sequence = (frm.utility_match_sequence = (frm.utility_match_sequence || 0) + 1);
 
 	is_item_price_approach().then((applies) => {
+		mark_item_price_form(frm, applies);
 		toggle_header_request(frm, applies);
 		if (!applies) return;
 
@@ -194,28 +261,6 @@ function handle_line_resolutions(frm, result, cdn) {
 
 	if (!result.applies) return;
 
-	// A service line still on the property ERPNext copied from the first row is
-	// cleared, so the user picks its property; then the lines are found again.
-	const copied = (frm.doc.items || []).filter((row) => {
-		const entry = frm.utility_line_results[row.name];
-		return (
-			!result.header_path &&
-			entry &&
-			!entry.rent_item &&
-			row.__copied_property &&
-			row.utility_property === row.__copied_property
-		);
-	});
-	if (copied.length) {
-		copied.forEach((row) => {
-			row.utility_property = null;
-			delete row.__copied_property;
-		});
-		govern_utility_lines(frm);
-		return;
-	}
-
-	const messages = [];
 	const updates = [];
 
 	(frm.doc.items || []).forEach((row) => {
@@ -238,7 +283,6 @@ function handle_line_resolutions(frm, result, cdn) {
 			}
 		}
 
-		if (entry.message) messages.push(entry.message);
 	});
 
 	updates.forEach(([row, fieldname, value]) => {
@@ -249,11 +293,14 @@ function handle_line_resolutions(frm, result, cdn) {
 
 	(frm.doc.items || []).forEach((row) => {
 		if (get_governed_line(frm, row)) enforce_governed_rate(frm, row.doctype, row.name);
+		// A utility line's cost center follows its property; an ordinary line keeps ERPNext's
+		const entry = frm.utility_line_results[row.name];
+		if (entry && !result.header_path && row.utility_property) {
+			set_cost_center_of_property(frm, row.doctype, row.name);
+		}
 	});
 
-	if (messages.length) {
-		frappe.show_alert({ message: messages.join("<br>"), indicator: "orange" }, 10);
-	}
+	// Why a line has no request is said when the invoice is saved, not while it is edited
 }
 
 // Remove the line just added that cannot be billed: its item is on no request
@@ -375,13 +422,6 @@ function revert_governed_rate(frm, cdt, cdn, fieldname) {
 		if (price === undefined || flt(row.price_list_rate) === flt(price)) return true;
 
 		frappe.model.set_value(cdt, cdn, "price_list_rate", price);
-		frappe.show_alert({
-			message: __("The price list rate of {0} is the Item Price of Utility Service Request {1}.", [
-				row.item_code,
-				line.service_request,
-			]),
-			indicator: "orange",
-		});
 		return true;
 	}
 
@@ -463,6 +503,7 @@ function set_property_of_item(frm, cdt, cdn) {
 			const property = r.message;
 
 			if (property && property !== row.utility_property) {
+				locals[cdt][cdn].__property_from_item = property;
 				frappe.model.set_value(cdt, cdn, "utility_property", property);
 			}
 		},

@@ -153,7 +153,7 @@ def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 		return govern_header_lines(doc)
 
 	rows = get_governed_rows(doc)
-	clear_request_of_other_lines(doc, rows)
+	clear_other_lines(doc, rows)
 	if not rows:
 		if doc.get(REQUEST_FIELD):
 			doc.set(REQUEST_FIELD, None)
@@ -210,12 +210,21 @@ def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 	return governed
 
 
-def clear_request_of_other_lines(doc: Document, governed_rows: list) -> None:
-	"""Clear the request of lines billing an item that needs none. Meter lines are left alone."""
+def clear_other_lines(doc: Document, governed_rows: list) -> None:
+	"""Clear the request and the property of lines billing an item that needs neither.
+
+	An ordinary item bills no property; one copied onto its line (ERPNext copies
+	the first row's accounting dimensions into a new row) is cleared, so its
+	cost center stays ERPNext's. Meter lines are left alone.
+	"""
 	governed = {id(row) for row in governed_rows}
 	for row in doc.get("items") or []:
-		if id(row) not in governed and not row.get("meter_reading") and row.get(REQUEST_FIELD):
+		if id(row) in governed or row.get("meter_reading"):
+			continue
+		if row.get(REQUEST_FIELD):
 			row.set(REQUEST_FIELD, None)
+		if row.get("utility_property"):
+			row.set("utility_property", None)
 
 
 def govern_header_lines(doc: Document) -> list[frappe._dict]:
@@ -808,8 +817,7 @@ def fill_request_line_dimensions(doc: Document) -> None:
 	Each line is filled from its own request, else the invoice header's (an
 	invoice from before lines had one, or a draft Auto Repeat generated from
 	it), so lines of several requests each take their own. A line of an item
-	that needs no request, but with a property picked, takes that property's
-	cost center; not on a draft that keeps its header, which stays as before.
+	that needs no request keeps ERPNext's cost center.
 
 	Only under the Item Price approach; under Auto Repeat invoice lines are left
 	exactly as they are. A line came from the request when its item is on the
@@ -844,28 +852,6 @@ def fill_request_line_dimensions(doc: Document) -> None:
 
 	for request, lines in lines_by_request.items():
 		fill_lines_of_request(doc, request, lines)
-
-	if not uses_header_path(doc):
-		fill_property_cost_centers(doc)
-
-
-def fill_property_cost_centers(doc: Document) -> None:
-	"""Give a line without a request but with a property picked the cost center of that property.
-
-	Meter lines are left alone, and so is a cost center chosen by hand (see
-	``fill_lines_of_request``).
-	"""
-	company_default = frappe.get_cached_value("Company", doc.company, "cost_center")
-
-	for line in doc.get("items") or []:
-		if line_request(doc, line) or line.get("meter_reading") or not line.get("utility_property"):
-			continue
-		if line.get("cost_center") not in (None, "", company_default, default_cost_center(line.item_code, doc.company)):
-			continue
-
-		cost_center = resolve_primary_cost_center(line.utility_property, line.item_code, doc.company)
-		if cost_center:
-			line.cost_center = cost_center
 
 
 def fill_lines_of_request(doc: Document, request: str, lines: list) -> None:

@@ -134,6 +134,18 @@ class TestPropertyAndCostCenter(RatesCase):
 
 		self.assertEqual(invoice.items[0].cost_center, self.center_hand)
 
+	def test_a_cost_center_already_on_the_line_is_kept_even_from_another_property(self):
+		# Why the form no longer copies row 1's cost center: the server cannot tell a
+		# copied one from one set by hand, and keeps it over the picked property's
+		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P2, "cost_center": self.center_1}])
+
+		self.assertEqual((invoice.items[0].utility_property, invoice.items[0].cost_center), (P2, self.center_1))
+
+	def test_a_line_left_blank_gets_the_picked_property_cost_center(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P2, "cost_center": None}])
+
+		self.assertEqual(invoice.items[0].cost_center, self.center_2)
+
 	def test_a_utility_line_without_a_cost_center_is_refused(self):
 		entry = frappe._dict(row=frappe._dict(idx=1, item_code=ELECTRICITY, cost_center=None))
 

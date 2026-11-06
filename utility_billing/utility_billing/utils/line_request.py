@@ -346,10 +346,8 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 	without_property = [name for name in listing if not index.has_properties(name)]
 	if not without_property:
 		result.status = PICK_PROPERTY
-		result.message = _(
-			"Row #{0}: Pick the property on this line. Every Utility Service Request of {1} listing "
-			"{2} has properties. {3}"
-		).format(row.idx, customer, item, on_date)
+		# Plain, and apart from the lease message: the line has no property at all
+		result.message = _("Row #{0}: {1} has no property. Pick the property on this line.").format(row.idx, item)
 		return result
 
 	covering = [name for name in without_property if index.header_covers(name, date)]

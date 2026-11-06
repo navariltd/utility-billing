@@ -230,13 +230,14 @@ class TestCostCenters(LineRequestCase):
 
 		self.assertEqual([row.cost_center for row in invoice.items], [self.center_1, self.center_2, self.center_2])
 
-	def test_an_ordinary_line_with_a_property_takes_its_cost_center(self):
+	def test_an_ordinary_line_keeps_erpnext_cost_center_and_drops_the_property(self):
 		invoice = make_invoice([{"item_code": OTHER_ITEM, "rate": 5, "utility_property": P2}], "2027-03-10")
 
 		sales_invoice.prefill_line_rates(invoice)
 		sales_invoice.validate(invoice)
 
-		self.assertEqual(invoice.items[0].cost_center, self.center_2)
+		self.assertNotEqual(invoice.items[0].cost_center, self.center_2)
+		self.assertIsNone(invoice.items[0].get("utility_property"))
 		self.assertIsNone(invoice.items[0].get("utility_service_request"))
 
 	def test_a_draft_keeping_its_header_is_filled_as_before(self):
@@ -252,6 +253,7 @@ class TestCostCenters(LineRequestCase):
 
 		self.assertEqual(invoice.items[0].cost_center, self.center_1)
 		self.assertNotEqual(invoice.items[1].cost_center, self.center_2)
+		self.assertEqual(invoice.items[1].utility_property, P2)
 
 
 class TestDailyJob(LineRequestCase):

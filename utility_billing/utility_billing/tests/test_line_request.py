@@ -147,12 +147,18 @@ class TestTwoPropertiesListingOneItem(LineRequestCase):
 		self.assertEqual(self.resolve("2027-03-10", utility_property=P1).service_request, self.u1.name)
 		self.assertEqual(self.resolve("2027-03-10", utility_property=P2).service_request, self.u3.name)
 
-	def test_without_a_property_the_message_names_the_properties_of_the_date(self):
+	def test_without_a_property_the_message_is_plain_and_names_the_row(self):
 		result = self.resolve("2027-03-10")
 
 		self.assertEqual((result.status, result.property_candidates), ("pick_property", [P1, P2]))
-		self.assertIn(f"can be billed for: <strong>{P1}</strong>, <strong>{P2}</strong>", result.message)
+		self.assertEqual(result.message, f"Row #1: <strong>{ELECTRICITY}</strong> has no property. Pick the property on this line.")
 		self.assertEqual(result.candidates, [])
+
+	def test_the_lease_message_stays_apart_from_the_missing_property_one(self):
+		result = self.resolve("2027-09-10", utility_property=P1)
+
+		self.assertNotIn("has no property", result.message)
+		self.assertIn("No Utility Service Request of", result.message)
 
 	def test_a_property_not_billing_the_item_on_the_date_names_the_one_that_does(self):
 		# P1 is leased by U2 in September, but U2 does not list Electricity
@@ -178,6 +184,106 @@ class TestLineFieldVisible(FrappeTestCase):
 		# Frappe hides an empty read only field, so the user could not see or pick it
 		self.assertFalse(fields["utility_service_request"]["read_only"])
 		self.assertFalse(fields["utility_service_request"]["read_only_depends_on"])
+
+
+class TestOtherLines(LineRequestCase):
+	"""Lines billing no utility item, and meter lines."""
+
+	def test_an_ordinary_line_loses_a_copied_property(self):
+		invoice = make_invoice([{"item_code": P1}, {"item_code": OTHER_ITEM, "rate": 5, "utility_property": P1}], "2027-03-10")
+
+		self.govern(invoice)
+
+		self.assertEqual([row.get("utility_property") for row in invoice.items], [P1, None])
+
+	def test_a_meter_line_keeps_its_property(self):
+		invoice = make_invoice(
+			[{"item_code": ELECTRICITY, "rate": 37, "meter_reading": "_Test MR", "utility_property": P1}], "2027-03-10"
+		)
+
+		self.govern(invoice)
+
+		self.assertEqual(invoice.items[0].utility_property, P1)
+
+	def test_a_draft_keeping_its_header_keeps_an_ordinary_property(self):
+		invoice = make_invoice(
+			[{"item_code": P1}, {"item_code": OTHER_ITEM, "rate": 5, "utility_property": P1}],
+			"2027-03-10",
+			header=self.u1.name,
+			auto_repeat="_Test AR",
+		)
+
+		self.govern(invoice)
+
+		self.assertEqual(invoice.items[1].utility_property, P1)
+
+	def test_auto_repeat_sites_keep_every_property(self):
+		fx.use_approach("Auto Repeat")
+		invoice = make_invoice([{"item_code": OTHER_ITEM, "rate": 5, "utility_property": P1}], "2027-03-10")
+
+		sales_invoice.validate(invoice)
+
+		self.assertEqual(invoice.items[0].utility_property, P1)
+
+
+class TestErpnextRowCopies(fx.SavepointMixin, FrappeTestCase):
+	"""Guard: the form filters ERPNext's row copies of the property and the cost center at
+	their two entry points, so a change to any of them must fail here."""
+
+	def source(self, app, path):
+		with open(frappe.get_app_path(app, *path.split("/"))) as handle:
+			return handle.read()
+
+	def test_the_first_row_copy_entry_point_still_exists(self):
+		source = self.source("frappe", "public/js/frappe/form/script_manager.js")
+
+		self.assertIn("copy_from_first_row(parentfield, current_row, fieldnames) {", source)
+
+	def test_the_sales_invoice_still_copies_the_cost_center_through_it(self):
+		source = self.source("erpnext", "accounts/doctype/sales_invoice/sales_invoice.js")
+
+		self.assertIn("items_add(doc, cdt, cdn) {", source)
+		self.assertIn('const field_copy = ["income_account", "discount_account", "cost_center"];', source)
+		self.assertIn('this.frm.script_manager.copy_from_first_row("items", row, field_copy);', source)
+
+	def test_the_dimension_copy_still_goes_through_it_on_a_new_row(self):
+		dimensions = self.source("erpnext", "public/js/utils/dimension_tree_filter.js")
+		transaction = self.source("erpnext", "public/js/controllers/transaction.js")
+
+		self.assertIn('frm.script_manager.copy_from_first_row(fieldname, row, [dimension["fieldname"]]);', dimensions)
+		self.assertIn('erpnext.accounts.dimensions.copy_dimension_from_first_row(frm, cdt, cdn, "items")', transaction)
+
+	def test_the_row_to_row_copy_entry_point_still_exists_and_is_used(self):
+		utils = self.source("erpnext", "public/js/utils.js")
+		transaction = self.source("erpnext", "public/js/controllers/transaction.js")
+
+		self.assertIn("copy_value_in_all_rows: function (doc, dt, dn, table_fieldname, fieldname) {", utils)
+		self.assertIn('erpnext.utils.copy_value_in_all_rows(doc, cdt, cdn, "items", "cost_center");', transaction)
+		self.assertIn('erpnext.utils.copy_value_in_all_rows(doc, cdt, cdn, "items", dim);', transaction)
+
+	def test_the_cost_center_and_the_property_are_still_copied_dimensions(self):
+		from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
+
+		fieldnames = [dimension.fieldname for dimension in get_dimensions(True)[0]]
+		self.assertIn("cost_center", fieldnames)
+		self.assertIn("utility_property", fieldnames)
+
+	def test_a_new_row_still_starts_with_the_company_cost_center(self):
+		self.assertEqual(frappe.get_meta("Sales Invoice Item").get_field("cost_center").default, ":Company")
+
+	def test_a_row_cost_center_still_beats_the_company_default(self):
+		"""Why the copies are filtered: ERPNext keeps a row's cost center over the company's."""
+		from erpnext.stock.get_item_details import get_default_cost_center
+
+		from utility_billing.utility_billing.tests import factories
+
+		company = frappe.db.get_value("Company", {}, "name")
+		other = factories.ensure_cost_center("_Test Copied Row Center", company)
+		ctx = frappe._dict(company=company, customer="_Test", item_code=None)
+
+		# A blank row falls back to the company's; a row carrying one keeps it
+		self.assertNotEqual(get_default_cost_center(ctx, company=company), other)
+		self.assertEqual(get_default_cost_center(frappe._dict(ctx, cost_center=other), company=company), other)
 
 
 class TestReleasedRows(LineRequestCase):
