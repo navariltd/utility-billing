@@ -6,8 +6,8 @@ Customers, plus the payment entries allocated against them.
 
 A property is reached from a voucher through the meter readings it references
 (``Sales Invoice Item.meter_reading``, ``Sales Invoice Meter Reading.meter_reading``
-and the Sales Order equivalents) or through its ``utility_service_request``
-header link. ``Payment Entry`` has no property link of its own; it is reached
+and the Sales Order equivalents) or through its ``utility_service_request``:
+the header link, or for a Sales Invoice each line's own, else the header's. ``Payment Entry`` has no property link of its own; it is reached
 through ``Payment Entry Reference`` rows pointing at those vouchers.
 
 Permissions are bypassed deliberately (query builder / ``frappe.db``) because
@@ -17,6 +17,8 @@ queries by their own Customers, which every function here does.
 
 import frappe
 from frappe.query_builder import DocType, Order
+
+from utility_billing.utility_billing.utils.line_request import invoice_requests
 
 #: Child doctypes that reference a meter reading, mapped to their link field.
 METER_READING_LINKS = (
@@ -156,6 +158,12 @@ def _get_vouchers(
 
 	if parent_names:
 		condition = voucher.name.isin(parent_names)
+	elif service_request_names and doctype == "Sales Invoice":
+		# Through each line's request, else the header's
+		invoice_names = sorted({name for name, _request in invoice_requests(service_request_names)})
+		if not invoice_names:
+			return []
+		condition = voucher.name.isin(invoice_names)
 	elif service_request_names:
 		condition = voucher.utility_service_request.isin(service_request_names)
 	else:

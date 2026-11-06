@@ -68,6 +68,31 @@ def request_of_line(line, invoice):
 	return Coalesce(NullIf(line[REQUEST_FIELD], ""), invoice[REQUEST_FIELD])
 
 
+def invoice_requests(service_requests) -> list[tuple[str, str]]:
+	"""Return the ``(invoice, request)`` pairs of the Sales Invoices of some requests.
+
+	An invoice belongs to each request its lines carry, else to its header's,
+	so one billing lines of two requests is returned for both.
+	"""
+	names = [name for name in service_requests or () if name]
+	if not names:
+		return []
+
+	invoice = frappe.qb.DocType("Sales Invoice")
+	line = frappe.qb.DocType("Sales Invoice Item")
+	request = request_of_line(line, invoice)
+
+	return (
+		frappe.qb.from_(line)
+		.join(invoice)
+		.on(line.parent == invoice.name)
+		.select(invoice.name, request.as_("service_request"))
+		.distinct()
+		.where(line.parenttype == "Sales Invoice")
+		.where(request.isin(names))
+	).run()
+
+
 def line_request(doc, row) -> str | None:
 	"""Return the request of an invoice line: its own, else its invoice's."""
 	return row.get(REQUEST_FIELD) or doc.get(REQUEST_FIELD)

@@ -8,6 +8,8 @@ from erpnext.accounts.utils import get_currency_precision, get_balance_on
 from collections import defaultdict
 from frappe.query_builder import functions as fn
 
+from utility_billing.utility_billing.utils.line_request import request_of_line
+
 
 def execute(filters=None):
     return PropertyBillingOverview(filters).run()
@@ -229,6 +231,8 @@ class PropertyBillingOverview:
     def get_invoices(self, property_list, customer_list):
         si = frappe.qb.DocType("Sales Invoice")
         sii = frappe.qb.DocType("Sales Invoice Item")
+        # The line's own request, else its invoice's (an invoice from before lines had one)
+        service_request = request_of_line(sii, si)
 
         invoices = (
             frappe.qb.from_(si)
@@ -242,7 +246,7 @@ class PropertyBillingOverview:
                 si.outstanding_amount,
                 si.status,
                 sii.utility_property,
-                si.utility_service_request,
+                service_request.as_("utility_service_request"),
                 sii.item_code,
                 sii.base_amount,
             )

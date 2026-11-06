@@ -20,6 +20,7 @@ from frappe.query_builder import functions as fn
 from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate, today
 
 from utility_billing.utility_billing.utils.item_price_scope import property_contract_period
+from utility_billing.utility_billing.utils.line_request import request_of_line
 
 REQUEST_DOCTYPE = "Utility Service Request"
 LEASE_DOCTYPE = "Contract Utility Property Item"
@@ -135,7 +136,8 @@ def get_invoiced_lines(filters, period_start: date, period_end: date, owners: di
     """Return the submitted invoice lines billing a service item in the period.
 
     Lines are summed per item, customer, request and Deferred Posting Date. A
-    line without that date falls back to the invoice Posting Date.
+    line's request is its own, else its invoice's. A line without that date
+    falls back to the invoice Posting Date.
     """
     if not owners:
         return []
@@ -143,6 +145,8 @@ def get_invoiced_lines(filters, period_start: date, period_end: date, owners: di
     invoice = frappe.qb.DocType("Sales Invoice")
     line = frappe.qb.DocType("Sales Invoice Item")
     billing_date = fn.Coalesce(line.custom_posting_date, invoice.posting_date)
+    # The line's own request, else its invoice's (an invoice from before lines had one)
+    service_request = request_of_line(line, invoice)
     query = (
         frappe.qb.from_(line)
         .join(invoice)
@@ -150,14 +154,14 @@ def get_invoiced_lines(filters, period_start: date, period_end: date, owners: di
         .select(
             line.item_code,
             invoice.customer,
-            invoice.utility_service_request.as_("service_request"),
+            service_request.as_("service_request"),
             billing_date.as_("billing_date"),
             fn.Sum(line.base_net_amount).as_("amount"),
         )
         .where(invoice.docstatus == 1)
         .where(line.item_code.isin(list(owners)))
         .where(billing_date[period_start:period_end])
-        .groupby(line.item_code, invoice.customer, invoice.utility_service_request, billing_date)
+        .groupby(line.item_code, invoice.customer, service_request, billing_date)
     )
     if filters.get("company"):
         query = query.where(invoice.company == filters.company)

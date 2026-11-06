@@ -275,7 +275,7 @@ class TestInvoiceFromRequest(LineRequestCase):
 @skipUnless(has_line_column(), "needs the line field, which a migrate adds")
 class TestAfterMigrate(LineRequestCase):
 	def test_the_request_lists_invoices_found_through_their_lines(self):
-		invoice = make_invoice([{"item_code": P1}], "2027-03-10")
+		invoice = make_invoice([{"item_code": P1}], "2027-03-10", set_posting_time=1)
 		invoice.flags.ignore_mandatory = True
 		invoice.insert(ignore_permissions=True)
 
@@ -283,7 +283,7 @@ class TestAfterMigrate(LineRequestCase):
 		self.assertNotIn(invoice.name, [row.name for row in invoice_api.get_request_invoices(self.u2.name)])
 
 	def test_cancelling_a_request_on_a_submitted_line_is_refused(self):
-		invoice = make_invoice([{"item_code": P1}], "2027-03-10")
+		invoice = make_invoice([{"item_code": P1}], "2027-03-10", set_posting_time=1)
 		invoice.insert(ignore_permissions=True)
 		invoice.submit()
 
