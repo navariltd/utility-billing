@@ -119,6 +119,15 @@ def make_invoice(lines, posting_date, header=None, customer=fx.CUSTOMER, **value
 	return invoice
 
 
+def billed(row):
+	"""Return what a governed line of an unsaved invoice bills.
+
+	A rent line's price list rate is set before ERPNext's calculation, which
+	does not run on an unsaved invoice; any other line bills its rate.
+	"""
+	return row.get("price_list_rate") or row.rate
+
+
 def fingerprint(invoice) -> dict:
 	"""Return what governance may change on an invoice, to compare with develop."""
 	return {

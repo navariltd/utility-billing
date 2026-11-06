@@ -274,3 +274,17 @@ def get_request_invoices(utility_service_request: str) -> list[dict]:
 		order_by="posting_date desc, name desc",
 		limit_page_length=100,
 	)
+
+
+@frappe.whitelist()
+def get_property_of_cost_center(cost_center: str) -> str | None:
+	"""Return the one Utility Property using a cost center, or None when none or several do.
+
+	Args:
+		cost_center: ``Cost Center`` name.
+	"""
+	if not frappe.has_permission("Utility Property", "read"):
+		return None
+
+	properties = frappe.get_all("Utility Property", filters={"cost_center": cost_center}, pluck="name", limit=2)
+	return properties[0] if len(properties) == 1 else None

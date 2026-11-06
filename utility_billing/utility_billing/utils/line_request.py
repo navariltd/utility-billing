@@ -279,7 +279,8 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 		``status`` (one of the module's statuses), ``service_request`` when
 		resolved, ``utility_property`` the line bills (``None`` without one),
 		``candidates`` the user may pick from, ``editable`` whether the line's
-		request is the user's to pick, ``property_candidates`` the properties
+		request is the user's to pick, ``rent_item`` whether the item is a
+		property's rent item, ``property_candidates`` the properties
 		of the customer leased on the line's date by a request listing its item,
 		and the blocking ``message``.
 	"""
@@ -292,6 +293,7 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 		utility_property=None,
 		candidates=[],
 		editable=False,
+		rent_item=False,
 		property_candidates=[],
 		message=None,
 	)
@@ -315,6 +317,7 @@ def resolve_line(doc, row, index: RequestIndex) -> frappe._dict:
 	)
 
 	owners = index.owners.get(row.item_code) or []
+	result.rent_item = bool(owners)
 	property_name = row.get("utility_property")
 	if owners and property_name not in owners:
 		# The rent item of a property bills that property, whatever the line says

@@ -95,6 +95,23 @@ class TestAutoRepeatDraftUnchanged(ComparisonCase):
 		self.assertEqual(fingerprint(draft)["header"], self.u1.name)
 
 
+	def test_a_discounted_draft_goes_through_before_validate_as_before(self):
+		draft = make_invoice(
+			[{"item_code": P1, "price_list_rate": 1000, "discount_percentage": 10, "rate": 900}, {"item_code": ELECTRICITY, "rate": 200}],
+			"2027-03-10",
+			header=self.u1.name,
+			auto_repeat=AUTO_REPEAT,
+		)
+
+		sales_invoice.before_validate(draft, "before_validate")
+		self.govern(draft)
+
+		self.assertEqual(
+			fingerprint(draft),
+			{"header": self.u1.name, "lines": [(P1, P1, None, 1000, 1000, None), (ELECTRICITY, None, None, 200, 0, None)]},
+		)
+
+
 class TestMeterLinesUnchanged(ComparisonCase):
 	def meter_line(self):
 		return {"item_code": ELECTRICITY, "rate": 37, "price_list_rate": 37, "meter_reading": METER_READING}
@@ -102,6 +119,7 @@ class TestMeterLinesUnchanged(ComparisonCase):
 	def test_a_meter_only_invoice_is_left_alone_and_its_header_cleared(self):
 		invoice = make_invoice([self.meter_line()], "2027-03-10", header=self.u1.name)
 
+		sales_invoice.before_validate(invoice, "before_validate")
 		self.assertEqual(self.govern(invoice), [])
 
 		self.assertEqual(
@@ -112,6 +130,8 @@ class TestMeterLinesUnchanged(ComparisonCase):
 	def test_a_meter_line_beside_a_rent_line_keeps_its_rate_and_no_request(self):
 		invoice = make_invoice([self.meter_line(), {"item_code": P1}], "2027-03-10", header=self.u1.name)
 
+		# As a save runs them: before_validate, then validate
+		sales_invoice.before_validate(invoice, "before_validate")
 		self.govern(invoice)
 
 		self.assertEqual(fingerprint(invoice)["lines"][0], (ELECTRICITY, None, None, 37, 37, METER_READING))

@@ -381,7 +381,7 @@ class TestRequestWithoutPropertyBilling(FrappeTestCase):
 
 		return invoice
 
-	def test_it_links_keeps_erpnext_cost_centers_and_locks_the_gas_rate(self):
+	def test_it_links_keeps_erpnext_cost_centers_and_the_gas_rate(self):
 		invoice = self._validate(gas_rate=300)
 
 		# The request is carried by the Gas line; Water is not a utility item
@@ -390,6 +390,6 @@ class TestRequestWithoutPropertyBilling(FrappeTestCase):
 		self.assertEqual([row.cost_center for row in invoice.items], [self.center_company, self.center_company])
 		self.assertFalse(self.request.items[0].cost_center)
 
-		with self.assertRaises(frappe.ValidationError):
-			self._validate(gas_rate=450)
+		# The Gas rate is the user's: prefilled from the request, then editable
+		self.assertEqual(self._validate(gas_rate=450).items[0].rate, 450)
 

@@ -20,6 +20,7 @@ from utility_billing.api.sales_invoice import get_line_rate
 from utility_billing.utility_billing.overrides.server import sales_invoice
 from utility_billing.utility_billing.tests import lease_fixtures as fx
 from utility_billing.utility_billing.tests.line_request_fixtures import (
+	billed,
 	ELECTRICITY,
 	OTHER_CUSTOMER,
 	OTHER_ITEM,
@@ -79,7 +80,7 @@ class TestRateLock(LineRequestCase):
 
 		self.govern(invoice)
 
-		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].rate), (self.u2.name, 1200))
+		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].price_list_rate), (self.u2.name, 1200))
 
 	def test_mixed_lines_each_take_their_request_price(self):
 		invoice = make_invoice(
@@ -93,7 +94,7 @@ class TestRateLock(LineRequestCase):
 
 		self.govern(invoice)
 
-		self.assertEqual([row.rate for row in invoice.items], [1000, 1200, 2000])
+		self.assertEqual([billed(row) for row in invoice.items], [1000, 1200, 2000])
 
 	def test_the_form_rate_uses_the_line_request(self):
 		args = {"customer": fx.CUSTOMER, "price_list": fx.PRICE_LIST, "uom": "Nos", "qty": 1}
@@ -102,11 +103,12 @@ class TestRateLock(LineRequestCase):
 		# U1's prices end with its lease
 		self.assertIsNone(get_line_rate(P1, "2027-09-10", utility_service_request=self.u1.name, **args))
 
-	def test_a_secondary_rate_is_checked_against_its_line_request(self):
+	def test_a_secondary_rate_set_by_the_user_is_kept(self):
 		invoice = make_invoice([{"item_code": ELECTRICITY, "utility_property": P2, "rate": 200}], "2027-03-10")
 
-		with self.assertRaisesRegex(frappe.ValidationError, f"250.* agreed on Utility Service Request <strong>{self.u3.name}"):
-			self.govern(invoice)
+		self.govern(invoice)
+
+		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].rate), (self.u3.name, 200))
 
 
 class TestDuplicateMonth(LineRequestCase):
@@ -159,6 +161,7 @@ class TestContractChecks(LineRequestCase):
 		fx.use_approach("Item Price", require_contract=1, require_signed=1)
 
 	def validate(self, invoice):
+		sales_invoice.prefill_line_rates(invoice)
 		sales_invoice.validate(invoice)
 
 	def two_requests(self):
@@ -222,6 +225,7 @@ class TestCostCenters(LineRequestCase):
 	def test_lines_of_two_requests_take_their_own_property_cost_center(self):
 		invoice = make_invoice([{"item_code": P1}, {"item_code": P2}, {"item_code": ELECTRICITY, "utility_property": P2, "rate": 250}], "2027-03-10")
 
+		sales_invoice.prefill_line_rates(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertEqual([row.cost_center for row in invoice.items], [self.center_1, self.center_2, self.center_2])
@@ -229,6 +233,7 @@ class TestCostCenters(LineRequestCase):
 	def test_an_ordinary_line_with_a_property_takes_its_cost_center(self):
 		invoice = make_invoice([{"item_code": OTHER_ITEM, "rate": 5, "utility_property": P2}], "2027-03-10")
 
+		sales_invoice.prefill_line_rates(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertEqual(invoice.items[0].cost_center, self.center_2)
@@ -242,6 +247,7 @@ class TestCostCenters(LineRequestCase):
 			auto_repeat="_Test AR",
 		)
 
+		sales_invoice.prefill_line_rates(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertEqual(invoice.items[0].cost_center, self.center_1)
@@ -370,7 +376,7 @@ class TestAutoRepeatCopy(LineRequestCase):
 
 		self.assertIsNone(draft.utility_service_request)
 		self.assertEqual([row.utility_service_request for row in draft.items], [self.u2.name, self.u3.name])
-		self.assertEqual([row.rate for row in draft.items], [1200, 250])
+		self.assertEqual([billed(row) for row in draft.items], [1200, 250])
 
 	def test_a_copy_past_every_lease_is_refused(self):
 		draft = self.copy(self.reference(), "2028-02-10")

@@ -19,6 +19,7 @@ from utility_billing.utility_billing.overrides.server import sales_invoice
 from utility_billing.utility_billing.tests import lease_fixtures as fx
 from utility_billing.utility_billing.utils.line_request import resolve_lines
 from utility_billing.utility_billing.tests.line_request_fixtures import (
+	billed,
 	ELECTRICITY,
 	OTHER_CUSTOMER,
 	OTHER_ITEM,
@@ -53,6 +54,8 @@ class LineRequestCase(fx.SavepointMixin, FrappeTestCase):
 		make_price(P2, 2000, "2027-01-01", "2027-12-31")
 
 	def govern(self, invoice):
+		# As a save runs them: the rates before ERPNext's totals, then the checks
+		sales_invoice.prefill_line_rates(invoice)
 		return sales_invoice.govern_utility_lines(invoice)
 
 	def requests(self, invoice):
@@ -67,8 +70,8 @@ class TestByProperty(LineRequestCase):
 		self.govern(march)
 		self.govern(september)
 
-		self.assertEqual((self.requests(march), march.items[0].rate), ([self.u1.name], 1000))
-		self.assertEqual((self.requests(september), september.items[0].rate), ([self.u2.name], 1200))
+		self.assertEqual((self.requests(march), march.items[0].price_list_rate), ([self.u1.name], 1000))
+		self.assertEqual((self.requests(september), september.items[0].price_list_rate), ([self.u2.name], 1200))
 		self.assertIsNone(march.utility_service_request)
 
 	def test_one_invoice_bills_a_property_across_both_requests(self):
@@ -80,7 +83,7 @@ class TestByProperty(LineRequestCase):
 		self.govern(invoice)
 
 		self.assertEqual(self.requests(invoice), [self.u1.name, self.u2.name])
-		self.assertEqual([row.rate for row in invoice.items], [1000, 1200])
+		self.assertEqual([billed(row) for row in invoice.items], [1000, 1200])
 
 	def test_an_invoice_with_two_properties_from_two_requests(self):
 		invoice = make_invoice([{"item_code": P1}, {"item_code": P2}], "2027-03-10")
@@ -89,7 +92,7 @@ class TestByProperty(LineRequestCase):
 
 		self.assertEqual(self.requests(invoice), [self.u1.name, self.u3.name])
 		self.assertEqual([row.utility_property for row in invoice.items], [P1, P2])
-		self.assertEqual([row.rate for row in invoice.items], [1000, 2000])
+		self.assertEqual([billed(row) for row in invoice.items], [1000, 2000])
 		self.assertEqual([entry.service_request for entry in governed], [self.u1.name, self.u3.name])
 
 	def test_electricity_with_a_chosen_property(self):
@@ -123,7 +126,7 @@ class TestByProperty(LineRequestCase):
 
 		self.govern(invoice)
 
-		self.assertEqual((self.requests(invoice), invoice.items[0].rate), ([self.u1.name], 1000))
+		self.assertEqual((self.requests(invoice), invoice.items[0].price_list_rate), ([self.u1.name], 1000))
 
 	def test_a_request_set_by_hand_on_a_derived_line_is_replaced(self):
 		invoice = make_invoice([{"item_code": P1, "utility_service_request": self.u2.name}], "2027-03-10")
@@ -259,7 +262,7 @@ class TestHeaderMovedToLines(LineRequestCase):
 		self.assertEqual(self.requests(invoice), [self.u1.name, self.u1.name, None])
 		# The request has one property, so its Electricity line bills it
 		self.assertEqual(invoice.items[1].utility_property, P1)
-		self.assertEqual([row.rate for row in invoice.items], [1000, 200, 5])
+		self.assertEqual([billed(row) for row in invoice.items], [1000, 200, 5])
 
 	def test_a_header_with_several_properties_asks_for_the_property(self):
 		both = make_request(
@@ -314,7 +317,7 @@ class TestInvoiceFromRequest(LineRequestCase):
 		self.assertEqual([(row.utility_service_request, row.utility_property) for row in invoice.items], [(self.u1.name, P1), (self.u1.name, P1)])
 
 		self.govern(invoice)
-		self.assertEqual([row.rate for row in invoice.items], [1000, 200])
+		self.assertEqual([billed(row) for row in invoice.items], [1000, 200])
 
 
 @skipUnless(has_line_column(), "needs the line field, which a migrate adds")

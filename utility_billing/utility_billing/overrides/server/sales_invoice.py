@@ -95,6 +95,8 @@ def validate(doc: Document, method: str | None = None) -> None:
 	governed = govern_utility_lines(doc) if is_item_price_approach() else []
 	# After linking, so a request linked on this save already gives its lines their cost center.
 	fill_request_line_dimensions(doc)
+	if governed and not uses_header_path(doc):
+		check_utility_cost_centers(doc, governed)
 
 	# Once per request on the invoice: the lines' own, else the header's
 	for service_request, entries in governed_by_request(doc, governed).items():
@@ -187,12 +189,13 @@ def govern_utility_lines(doc: Document) -> list[frappe._dict]:
 
 		if line.role == PRIMARY:
 			check_not_billed_twice_in_invoice(row, billing_date, seen_in_this_invoice)
-			apply_schedule_rate(doc, row, billing_date, service_request)
+			# Set by ``prefill_line_rates`` before the totals; only checked here
+			check_schedule_rate(doc, row, billing_date, service_request)
 			check_not_already_invoiced(doc, row, billing_date)
 		else:
-			# A secondary item may be billed once a month on each of the requests it is on
+			# A secondary item may be billed once a month on each of the requests it is on.
+			# Its rate is the request row's when the line had none, and stays editable.
 			check_not_billed_twice_in_invoice(row, billing_date, seen_in_this_invoice, service_request)
-			check_request_rate(doc, row, line, service_request)
 			check_not_already_invoiced(doc, row, billing_date, service_request=service_request)
 
 		governed.append(
@@ -570,7 +573,23 @@ def apply_schedule_rate(doc: Document, row, billing_date, service_request: str) 
 		frappe.ValidationError: When no Item Price covers the item, the customer
 			and the billing date.
 	"""
-	rate = get_rate_for_date(
+	rate = schedule_rate(doc, row, billing_date, service_request)
+
+	if rate is None:
+		frappe.throw(
+			_("Row #{0}: No Item Price of Utility Service Request {1} found for {2} valid on {3}.").format(
+				row.idx, frappe.bold(service_request), frappe.bold(row.item_code), billing_date
+			)
+		)
+
+	row.price_list_rate = rate
+	row.rate = rate
+	row.amount = flt(rate) * flt(row.qty or 1)
+
+
+def schedule_rate(doc: Document, row, billing_date, service_request: str) -> float | None:
+	"""Return the Item Price a rent line's request owns on its billing date, if any."""
+	return get_rate_for_date(
 		row.item_code,
 		billing_date,
 		customer=doc.customer,
@@ -583,6 +602,18 @@ def apply_schedule_rate(doc: Document, row, billing_date, service_request: str) 
 		service_request=service_request,
 	)
 
+
+def check_schedule_rate(doc: Document, row, billing_date, service_request: str) -> None:
+	"""Block a rent line whose price list rate is not its request's Item Price on its billing date.
+
+	``prefill_line_rates`` sets it before ERPNext computes the totals, so the
+	totals agree with the rate.
+
+	Raises:
+		frappe.ValidationError: When no Item Price covers the line, or its price
+			list rate differs.
+	"""
+	rate = schedule_rate(doc, row, billing_date, service_request)
 	if rate is None:
 		frappe.throw(
 			_("Row #{0}: No Item Price of Utility Service Request {1} found for {2} valid on {3}.").format(
@@ -590,9 +621,89 @@ def apply_schedule_rate(doc: Document, row, billing_date, service_request: str) 
 			)
 		)
 
-	row.price_list_rate = rate
-	row.rate = rate
-	row.amount = flt(rate) * flt(row.qty or 1)
+	precision = row.precision("price_list_rate")
+	if flt(row.price_list_rate, precision) != flt(rate, precision):
+		frappe.throw(
+			_("Row #{0}: The price list rate of {1} must be {2}, the Item Price of Utility Service Request {3} valid on {4}.").format(
+				row.idx,
+				frappe.bold(row.item_code),
+				frappe.bold(fmt_money(rate, currency=doc.currency)),
+				frappe.bold(service_request),
+				billing_date,
+			)
+		)
+
+
+def prefill_line_rates(doc: Document) -> None:
+	"""Set the rates of utility lines before ERPNext computes the totals, under Item Price.
+
+	Runs in before_validate. A rent line takes its schedule Item Price as its
+	price list rate, and ERPNext derives the rate, the amounts and the totals
+	from it as usual; nothing is written after ERPNext's calculation. A service
+	line without a rate takes its request row's rate; a rate the user set is kept. Lines without a request
+	are left to ``validate``, which says why. A line without a property takes
+	the one property of its cost center, when it has exactly one.
+
+	Drafts keeping their header request, return invoices and invoices inserted
+	without validation are left as before.
+	"""
+	if (
+		not is_item_price_approach()
+		or doc.docstatus != 0
+		or doc.get("is_return")
+		or doc.flags.ignore_validate
+		or uses_header_path(doc)
+		or not doc.get("customer")
+	):
+		return
+
+	rows = get_governed_rows(doc)
+	if not rows:
+		return
+
+	fill_property_from_cost_center(rows)
+	results = resolve_lines(doc, rows)
+	request_lines: dict[str, dict] = {}
+	for row in rows:
+		result = results[row.name or str(row.idx)]
+		if result.status != RESOLVED:
+			continue
+
+		if result.service_request not in request_lines:
+			request_lines[result.service_request] = get_request_lines(result.service_request)
+		line = request_lines[result.service_request].get(row.item_code)
+		if not line:
+			continue
+
+		if line.role == PRIMARY:
+			rate = schedule_rate(doc, row, line_billing_date(doc, row), result.service_request)
+			if rate is not None:
+				row.price_list_rate = rate
+		elif not flt(row.rate) and not flt(row.price_list_rate):
+			row.price_list_rate = line.rate
+			row.rate = line.rate
+
+
+def fill_property_from_cost_center(rows) -> None:
+	"""Give a line without a property the property of its cost center, when only one property has it."""
+	for row in rows:
+		if row.get("utility_property") or not row.get("cost_center"):
+			continue
+
+		properties = frappe.get_all("Utility Property", filters={"cost_center": row.cost_center}, pluck="name", limit=2)
+		if len(properties) == 1:
+			row.utility_property = properties[0]
+
+
+def check_utility_cost_centers(doc: Document, governed: list[frappe._dict]) -> None:
+	"""Block a utility line left without a cost center."""
+	for entry in governed:
+		if not entry.row.get("cost_center"):
+			frappe.throw(
+				_("Row #{0}: {1} needs a cost center. Pick its property, or its cost center.").format(
+					entry.row.idx, frappe.bold(entry.row.item_code)
+				)
+			)
 
 
 def check_request_rate(doc: Document, row, line, service_request: str) -> None:
@@ -671,6 +782,8 @@ def check_not_already_invoiced(
 
 def before_validate(doc: Document, method: str) -> None:
 	"""Intercepts submit event for document"""
+	# Before ERPNext computes the totals, so they agree with the rates
+	prefill_line_rates(doc)
 	# Also here, as invoices inserted with ``ignore_validate`` never reach ``validate``.
 	fill_request_line_dimensions(doc)
 	if not doc.taxes:
