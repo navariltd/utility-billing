@@ -7,6 +7,7 @@ from frappe.utils import add_days, cint, date_diff, getdate, today
 
 from utility_billing.utility_billing.utils.contract_status import contract_requirement_blocks
 from utility_billing.utility_billing.utils.line_request import line_request
+from utility_billing.utility_billing.utils.release import contract_releases, owns
 from utility_billing.utility_billing.utils.request_prices import is_item_price_approach, last_billed_day
 
 
@@ -334,6 +335,12 @@ def create_item_price_sales_invoices():
 			# checked here: no submitted Contract, none signed when signing is
 			# required, or every row released.
 			if contract_requirement_blocks(request.name):
+				continue
+
+			# A row released on the Contract is billed up to its Released On only
+			releases = contract_releases([request.name])
+			key = (request.name, row.utility_property)
+			if key in releases and not owns(row.start_date, row.end_date, billing_date, True, releases[key]):
 				continue
 
 			customer = request.get("customer") or (

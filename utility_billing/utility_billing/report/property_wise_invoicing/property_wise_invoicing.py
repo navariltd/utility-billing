@@ -21,6 +21,7 @@ from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate, 
 
 from utility_billing.utility_billing.utils.item_price_scope import property_contract_period
 from utility_billing.utility_billing.utils.line_request import request_of_line
+from utility_billing.utility_billing.utils.release import contract_releases, owned_period
 
 REQUEST_DOCTYPE = "Utility Service Request"
 LEASE_DOCTYPE = "Contract Utility Property Item"
@@ -93,10 +94,19 @@ def get_leases(filters) -> list[frappe._dict]:
     if filters.get("customer"):
         query = query.where(request.customer == filters.customer)
 
+    rows = query.run(as_dict=True)
+    releases = contract_releases(row.parent for row in rows)
     leases = []
-    for row in query.run(as_dict=True):
+    for row in rows:
         service_request = frappe.get_doc(REQUEST_DOCTYPE, row.parent)
-        start, end = property_contract_period(service_request, row.utility_property)
+        key = (row.parent, row.utility_property)
+        # A row released on the Contract ends on its Released On, or holds nothing without one
+        period = owned_period(
+            *property_contract_period(service_request, row.utility_property), key in releases, releases.get(key)
+        )
+        if not period:
+            continue
+        start, end = period
         leases.append(
             frappe._dict(
                 service_request=row.parent,

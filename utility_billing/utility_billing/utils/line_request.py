@@ -29,6 +29,7 @@ from frappe.query_builder.functions import Coalesce
 from frappe.utils import cint, getdate
 from pypika.functions import NullIf
 
+from utility_billing.utility_billing.utils.release import contract_releases, owns
 from utility_billing.utility_billing.utils.utility_item_classifier import (
 	USR_DOCTYPE,
 	USR_ITEM_DOCTYPE,
@@ -170,7 +171,7 @@ class RequestIndex:
 			)
 		}
 		self.leases = self._leases(names)
-		self.released = self._released_on_contracts(names)
+		self.released = contract_releases(names)
 		self.owners = self._owners(codes)
 
 	def _requests_by_item(self, codes) -> dict[str, set[str]]:
@@ -210,26 +211,6 @@ class RequestIndex:
 
 		return leases
 
-	def _released_on_contracts(self, names) -> set[tuple[str, str]]:
-		"""Return the ``(request, property)`` pairs released on a Contract that is not cancelled."""
-		if not names:
-			return set()
-
-		contract = frappe.qb.DocType("Contract")
-		row = frappe.qb.DocType(USR_PROPERTY_DOCTYPE)
-		rows = (
-			frappe.qb.from_(row)
-			.join(contract)
-			.on(row.parent == contract.name)
-			.select(contract.utility_service_request, row.utility_property)
-			.where(row.parenttype == "Contract")
-			.where(contract.docstatus < 2)
-			.where(contract.utility_service_request.isin(names))
-			.where(row.is_active == 0)
-		).run()
-
-		return {(request, property_name) for request, property_name in rows}
-
 	def _owners(self, codes) -> dict[str, list[str]]:
 		owners = {code: [] for code in codes}
 		if not codes:
@@ -243,15 +224,23 @@ class RequestIndex:
 		return owners
 
 	def leases_property(self, service_request: str, property_name: str, date) -> bool:
-		"""Return whether a request leases a property on a date. Released rows lease nothing."""
-		if (service_request, property_name) in self.released:
-			return False
+		"""Return whether a request leases a property on a date.
 
+		A row released on the Contract leases up to and including its Released
+		On; without one, and a row released on the request, it leases nothing.
+		"""
+		key = (service_request, property_name)
 		header = self.headers[service_request]
 		for row in self.leases.get(service_request) or []:
 			if row.utility_property != property_name or cint(row.is_active) == 0:
 				continue
-			if covers(row.start_date or header.start_date, row.end_date or header.end_date, date):
+			if owns(
+				row.start_date or header.start_date,
+				row.end_date or header.end_date,
+				date,
+				key in self.released,
+				self.released.get(key),
+			):
 				return True
 
 		return False

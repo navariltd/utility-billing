@@ -13,7 +13,6 @@ from ...utils.cost_center import (
 	resolve_primary_cost_center,
 	service_item_owners,
 )
-from ...utils.contract_status import contract_released
 from ...utils.deferred_posting import (
 	cancel_deferred_journal_entries,
 	create_deferred_journal_entries,
@@ -23,6 +22,7 @@ from ...utils.deferred_posting import (
 )
 from ...utils.item_price_scope import is_item_price_approach
 from ...utils.item_rate import get_rate_for_date
+from ...utils.release import owns
 from ...utils.line_request import (
 	RESOLVED,
 	billing_date as line_billing_date,
@@ -326,8 +326,9 @@ def check_service_request_contract(doc: Document, service_request: str | None = 
 
 	With Require Contract Before Sales Invoice Creation on, the request needs a
 	submitted Contract - and a signed one when Require Signed Contract is on too.
-	Under Item Price that Contract must also still hold a property: one whose
-	every row is released no longer allows the request to be invoiced.
+	A Contract that released its properties still satisfies it: under Item Price
+	``check_within_contract`` then refuses each line billing a day after its
+	row's Released On.
 
 	Known limitation: this also applies to invoices Auto Repeat generates, so a
 	request without the required Contract makes that scheduled generation fail
@@ -342,8 +343,7 @@ def check_service_request_contract(doc: Document, service_request: str | None = 
 		Contract is required.
 
 	Raises:
-		frappe.ValidationError: When the required Contract does not exist, or
-			under Item Price has released every property.
+		frappe.ValidationError: When the required Contract does not exist.
 	"""
 	service_request = service_request or doc.get(REQUEST_FIELD)
 	if doc.get("is_return") or not service_request:
@@ -358,19 +358,10 @@ def check_service_request_contract(doc: Document, service_request: str | None = 
 		filters["is_signed"] = 1
 
 	contracts = frappe.get_all("Contract", filters=filters, pluck="name", order_by="creation desc")
-	if not is_item_price_approach():
-		contracts = contracts[:1]
-	held = [name for name in contracts if not (is_item_price_approach() and contract_released(name))]
-	if held:
-		return held[0]
-
 	if contracts:
-		frappe.throw(
-			_(
-				"Contract {0} of Utility Service Request {1} has released every property, so the "
-				"request can no longer be invoiced."
-			).format(frappe.bold(contracts[0]), frappe.bold(service_request))
-		)
+		# A Contract that released its properties still covers the days up to each
+		# row's Released On: ``check_within_contract`` compares the billing dates.
+		return contracts[0]
 
 	if settings.require_signed_contract:
 		frappe.throw(
@@ -420,6 +411,9 @@ def check_within_contract(contract_name: str, governed: list[frappe._dict]) -> N
 
 	for line in governed:
 		contract_row = rows_by_property.get(line.utility_property)
+		if contract_row and not contract_row.is_active:
+			check_before_release(line, contract, contract_row)
+
 		start = (contract_row and contract_row.start_date) or contract.start_date
 		end = (contract_row and contract_row.end_date) or contract.end_date
 		coverage = (
@@ -449,6 +443,36 @@ def check_within_contract(contract_name: str, governed: list[frappe._dict]) -> N
 					getdate(end),
 				)
 			)
+
+
+def check_before_release(line, contract, contract_row) -> None:
+	"""Block a line billing a day after its property was released on the Contract.
+
+	The release day is inclusive; a released row without Released On covers nothing.
+	"""
+	start = contract_row.start_date or contract.start_date
+	end = contract_row.end_date or contract.end_date
+	released_on = contract_row.get("released_on")
+	if owns(start, end, line.billing_date, True, released_on):
+		return
+
+	if released_on:
+		frappe.throw(
+			_("Row #{0}: {1} is billed for {2}, after property {3} was released on Contract {4} on {5}.").format(
+				line.row.idx,
+				frappe.bold(line.row.item_code),
+				line.billing_date,
+				line.utility_property,
+				contract.name,
+				getdate(released_on),
+			)
+		)
+
+	frappe.throw(
+		_("Row #{0}: {1} is billed for {2}, but property {3} was released on Contract {4} without a Released On date.").format(
+			line.row.idx, frappe.bold(line.row.item_code), line.billing_date, line.utility_property, contract.name
+		)
+	)
 
 
 def link_service_request(

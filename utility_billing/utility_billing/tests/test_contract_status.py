@@ -201,12 +201,12 @@ class TestRequireContract(ContractStatusCase):
 		fx.release_rows(contract, 0)
 		return contract
 
-	def test_a_released_contract_is_refused(self):
+	def test_a_released_contract_is_not_refused_outright(self):
+		# Each line is compared with its row's Released On instead (see test_released_on)
 		contract = self.released()
 		fx.use_approach("Item Price", require_contract=1)
 
-		with self.assertRaisesRegex(frappe.ValidationError, "released every property"):
-			check_service_request_contract(self.invoice_of(contract.utility_service_request))
+		self.assertEqual(check_service_request_contract(self.invoice_of(contract.utility_service_request)), contract.name)
 
 	def test_a_contract_with_an_active_row_is_accepted(self):
 		contract = self.lease(P1, P2)

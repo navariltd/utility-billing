@@ -7,6 +7,7 @@ from utility_billing.utility_billing.utils.contract_status import (
     released_property_status,
     set_inactive_when_released,
 )
+from utility_billing.utility_billing.utils.release import check_released_on
 from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
 
 ROW_DOCTYPE = "Contract Utility Property Item"
@@ -31,12 +32,18 @@ FLOAT_FIELDS = {"contract_length_months"}
 def validate(doc: Document, method: str) -> None:
     if doc.is_new():
         check_new_contract(doc)
+        check_released_on(doc)
     else:
-        check_rows_unchanged(doc, get_saved_contract(doc))
+        saved = get_saved_contract(doc)
+        check_rows_unchanged(doc, saved)
+        check_released_on(doc, saved)
 
 
 def before_update_after_submit(doc: Document, method: str) -> None:
-    check_rows_unchanged(doc, get_saved_contract(doc))
+    saved = get_saved_contract(doc)
+    check_rows_unchanged(doc, saved)
+    # Released On is the one row field still editable, on a released row only
+    check_released_on(doc, saved)
     # After ERPNext's own hook, which sets the status from the dates
     set_inactive_when_released(doc)
 
