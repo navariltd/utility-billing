@@ -15,6 +15,7 @@ from frappe.utils import cint, flt, sanitize_html, strip_html
 from utility_billing.api.portal.properties import PROPERTY_FIELDS
 from utility_billing.api.portal.roles import get_portal_customers
 from utility_billing.utility_billing.utils.line_request import invoice_requests
+from utility_billing.utility_billing.utils.release import contract_releases
 from utility_billing.utility_billing.utils.lease_status import (
 	derive_allocation_status,
 	derive_lease_status,
@@ -160,10 +161,13 @@ def serialise_request(
 	properties = properties or {}
 	documents = documents or {"invoices": [], "orders": []}
 	has_contract = bool(contract)
+	# A request row stays active when its Contract releases it: read the release there
+	releases = contract_releases([data.get("name")])
 
 	rows = []
 	for row in data.get("requested_properties") or []:
 		property_doc = properties.get(row.get("utility_property")) or {}
+		key = (data.get("name"), row.get("utility_property"))
 		rows.append(
 			{
 				"utility_property": row.get("utility_property"),
@@ -176,7 +180,10 @@ def serialise_request(
 					row.get("is_active"),
 					row.get("start_date") or data.get("start_date"),
 					row.get("end_date") or data.get("end_date"),
+					released=key in releases,
+					released_on=releases.get(key),
 				),
+				**({"released_on": releases[key]} if releases.get(key) else {}),
 				"cover_image": property_doc.get("cover_image"),
 				"unit_number": property_doc.get("unit_number"),
 				"location": property_doc.get("location") or property_doc.get("territory"),

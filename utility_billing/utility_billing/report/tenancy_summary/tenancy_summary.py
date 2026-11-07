@@ -5,8 +5,18 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, today, date_diff, flt
 
+from utility_billing.utility_billing.utils.release import FIELD as RELEASED_ON
+from utility_billing.utility_billing.utils.release import contract_row_release, owned_period, release_dates_stored
+from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
+
 def execute(filters=None):
     columns = get_columns()
+    if is_item_price_approach():
+        # A released row holds its property up to and including this date
+        columns.insert(
+            [column["fieldname"] for column in columns].index("is_active") + 1,
+            {"label": _("Released On"), "fieldname": "released_on", "fieldtype": "Date", "width": 110},
+        )
     data = get_data(filters)
     summary = get_report_summary(data)
     chart = get_chart_data(data)
@@ -135,6 +145,10 @@ def get_data(filters):
     days_threshold = int(months_in_advance * 30)
 
     data = []
+    # Under Item Price a row released on the Contract holds its property up to and
+    # including its Released On: its end, remaining days and Active filter follow it
+    item_price = is_item_price_approach()
+    wanted_status = filters.get("property_status") or None
 
     for contract in contracts:
         prop_filters = {"parent": contract.name}
@@ -142,7 +156,7 @@ def get_data(filters):
         for key in ("property", "property_status"):
             filter_value = filters.get(key)
             if key == "property_status":
-                if filter_value == "" or filter_value is None:
+                if filter_value == "" or filter_value is None or item_price:
                     continue  
                 filter_value = 1 if filter_value == "Active" else 0
             if filter_value is not None:
@@ -155,18 +169,31 @@ def get_data(filters):
                 "utility_property", "start_date", "end_date", 
                 "is_active", "contract_length_months as contract_length", 
                 "adjustment_rule", "insurance"
-            ]
+            ] + ([RELEASED_ON] if item_price and release_dates_stored() else [])
         )
 
+        for prop in properties:
+            released, released_on = contract_row_release(prop)
+            prop.released_on = released_on
+            prop.lease_end = prop.end_date
+            prop.holding = bool(prop.is_active)
+            if item_price and released:
+                period = owned_period(prop.start_date, prop.end_date, True, released_on)
+                prop.lease_end = period[1] if period else None
+                prop.holding = bool(period) and getdate(period[1]) >= getdate(today())
+
+        if item_price and wanted_status:
+            properties = [prop for prop in properties if prop.holding == (wanted_status == "Active")]
+
         for idx, prop in enumerate(properties):
-            if filters.get("from_date") and prop.end_date and getdate(prop.end_date) < getdate(filters.get("from_date")):
+            if filters.get("from_date") and prop.lease_end and getdate(prop.lease_end) < getdate(filters.get("from_date")):
                 continue
             if filters.get("to_date") and prop.start_date and getdate(prop.start_date) > getdate(filters.get("to_date")):
                 continue
 
             remaining_days = 0
-            if prop.end_date:
-                remaining_days = date_diff(prop.end_date, today())
+            if prop.lease_end:
+                remaining_days = date_diff(prop.lease_end, today())
 
             row_status = contract.status if idx == 0 else ""
             if remaining_days > 0 and remaining_days <= days_threshold and contract.status == "Active":
@@ -184,7 +211,8 @@ def get_data(filters):
                 "end_date": prop.end_date,
                 "is_active": prop.is_active,
                 "contract_length": flt(prop.contract_length),
-                "remaining_days": remaining_days if prop.end_date else None,
+                "remaining_days": remaining_days if prop.lease_end else None,
+                **({"released_on": prop.released_on} if item_price else {}),
                 "adjustment_rule": prop.adjustment_rule,
                 "insurance": prop.insurance,
                 "status": row_status,

@@ -16,7 +16,7 @@ from datetime import date
 
 import frappe
 from frappe import _
-from frappe.utils import getdate, nowdate
+from frappe.utils import cint, getdate, nowdate
 
 from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
 
@@ -99,6 +99,31 @@ def owns(start, end, day, released: bool = False, released_on=None) -> bool:
 		return False
 
 	return not (end and day > getdate(end))
+
+
+def holds_on(start, end, day, released: bool = False, released_on=None) -> bool:
+	"""Return whether a lease still holds its property on ``day``: owning it then, or later.
+
+	A lease that has not started yet holds its property already, as a promise.
+	A released lease holds it up to and including its Released On, and not at
+	all without one.
+	"""
+	period = owned_period(start, end, released, released_on)
+	if not period:
+		return False
+
+	return not period[1] or getdate(period[1]) >= getdate(day)
+
+
+def contract_row_release(row) -> tuple[bool, date | None]:
+	"""Return whether a Contract row is released and its Released On, under Item Price only.
+
+	Under Auto Repeat a released row is read as before: released, without a date.
+	"""
+	released = not cint(row.get("is_active"))
+	released_on = row.get(FIELD) if released and is_item_price_approach() else None
+
+	return released, (getdate(released_on) if released_on else None)
 
 
 def check_released_on(doc, saved=None) -> None:

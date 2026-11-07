@@ -11,6 +11,10 @@ Allocations are classified as:
 * ``Active``   – active allocation on a signed contract.
 * ``Reserved`` – active allocation on a contract that is not signed yet.
 * ``History``  – allocation that was deactivated or whose end date has passed.
+
+Under Item Price an allocation released on the Contract stays ``Active`` (or
+``Reserved``) up to and including its Released On, and is ``History`` after it,
+or at once without one (see ``release``).
 """
 
 import frappe
@@ -18,6 +22,8 @@ from frappe.query_builder import DocType
 from frappe.utils import cint, getdate, today
 
 from utility_billing.api.portal.roles import get_linked_customers, require_authenticated_user
+from utility_billing.utility_billing.utils.release import FIELD as RELEASED_ON
+from utility_billing.utility_billing.utils.release import contract_row_release, holds_on, release_dates_stored
 
 ACTIVE = "Active"
 RESERVED = "Reserved"
@@ -61,6 +67,8 @@ def classify_lease_item(
 	end_date: str | None,
 	contract_is_signed: int | bool,
 	reference_date: str | None = None,
+	start_date: str | None = None,
+	released_on=None,
 ) -> str:
 	"""Classify a single contract property allocation for the portal.
 
@@ -69,15 +77,14 @@ def classify_lease_item(
 	    end_date: End date of the allocation, if any.
 	    contract_is_signed: ``Contract.is_signed`` of the parent contract.
 	    reference_date: Date used to detect expired allocations (defaults to today).
+	    start_date: Start of the allocation, for a released one.
+	    released_on: Released On of a released allocation, under Item Price.
 
 	Returns:
 	    One of ``Active``, ``Reserved`` or ``History``.
 	"""
-	if not cint(is_active):
-		return HISTORY
-
 	reference_date = getdate(reference_date or today())
-	if end_date and getdate(end_date) < reference_date:
+	if not holds_on(start_date, end_date, reference_date, not cint(is_active), released_on):
 		return HISTORY
 
 	if not cint(contract_is_signed):
@@ -159,9 +166,10 @@ def _get_contract_items(contract_names: list[str]) -> list:
 	"""Return the property allocations of the given contracts."""
 	item = DocType("Contract Utility Property Item")
 
+	fields = list(CONTRACT_ITEM_FIELDS) + ([RELEASED_ON] if release_dates_stored() else [])
 	return (
 		frappe.qb.from_(item)
-		.select(*[getattr(item, field) for field in CONTRACT_ITEM_FIELDS])
+		.select(*[getattr(item, field) for field in fields])
 		.where(item.parent.isin(contract_names))
 		.run(as_dict=True)
 	)
@@ -203,7 +211,14 @@ def _build_row(contract, item, property_doc) -> dict:
 		"floor_level": property_doc.floor_level,
 		"cover_image": property_doc.cover_image,
 		"parent_utility_property": property_doc.parent_utility_property,
-		"state": classify_lease_item(item.is_active, item.end_date, contract.is_signed),
+		"state": classify_lease_item(
+			item.is_active,
+			item.end_date,
+			contract.is_signed,
+			start_date=item.start_date,
+			released_on=contract_row_release(item)[1],
+		),
+		**({"released_on": contract_row_release(item)[1]} if contract_row_release(item)[1] else {}),
 		"contract": contract.name,
 		"contract_status": contract.status,
 		"is_signed": cint(contract.is_signed),

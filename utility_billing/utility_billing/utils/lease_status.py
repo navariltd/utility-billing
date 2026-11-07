@@ -13,6 +13,10 @@ Statuses returned by :func:`derive_lease_status`:
 * ``Awaiting Signature``  – the Contract is submitted but not signed.
 * ``Active``              – signed Contract with a live property allocation.
 * ``Expired``             – Contract inactive, or every allocation ended/released.
+
+Under Item Price a row released on the Contract stays live up to and including
+its Released On (see ``release``), so a Contract set Inactive because every row
+was released stays ``Active`` until the last of those dates.
 * ``Cancelled``           – the request was cancelled.
 """
 
@@ -20,6 +24,14 @@ from collections.abc import Iterable
 
 import frappe
 from frappe.utils import cint, getdate, today
+
+from utility_billing.utility_billing.utils.release import FIELD as RELEASED_ON
+from utility_billing.utility_billing.utils.release import (
+	contract_row_release,
+	holds_on,
+	owned_period,
+	release_dates_stored,
+)
 
 REQUEST_DOCTYPE = "Utility Service Request"
 CONTRACT_DOCTYPE = "Contract"
@@ -91,10 +103,11 @@ def get_contract_rows(contract_names: Iterable[str]) -> dict[str, list[dict]]:
 	if not names:
 		return {}
 
+	fields = list(ROW_FIELDS) + ([RELEASED_ON] if release_dates_stored() else [])
 	rows = frappe.db.get_all(
 		ROW_DOCTYPE,
 		filters={"parent": ("in", names), "parenttype": CONTRACT_DOCTYPE},
-		fields=list(ROW_FIELDS),
+		fields=fields,
 		order_by="idx asc",
 	)
 
@@ -137,18 +150,25 @@ def derive_lease_status(
 	if not cint(contract.get("is_signed")):
 		return AWAITING_SIGNATURE
 
-	if (contract.get("status") or "") == "Inactive":
+	rows = contract_rows or []
+	day = reference_date or today()
+	holding = [row for row in rows if row_holds_on(row, day)]
+
+	# Inactive because every row was released: live until the last Released On
+	all_released = bool(rows) and not any(cint(row.get("is_active")) for row in rows)
+	if (contract.get("status") or "") == "Inactive" and not (all_released and holding):
 		return EXPIRED
 
-	rows = contract_rows or []
-	if rows and not any(
-		cint(row.get("is_active"))
-		and (not row.get("end_date") or getdate(row["end_date"]) >= getdate(reference_date or today()))
-		for row in rows
-	):
+	if rows and not holding:
 		return EXPIRED
 
 	return ACTIVE
+
+
+def row_holds_on(row, day) -> bool:
+	"""Return whether a Contract row still holds its property on ``day``, Released On included."""
+	released, released_on = contract_row_release(row)
+	return holds_on(row.get("start_date"), row.get("end_date"), day, released, released_on)
 
 
 def derive_allocation_status(
@@ -156,16 +176,25 @@ def derive_allocation_status(
 	start_date: str | None,
 	end_date: str | None,
 	reference_date: str | None = None,
+	released: bool = False,
+	released_on=None,
 ) -> str:
 	"""Describe a single Contract property allocation.
+
+	A row released on its Contract (``released``, or ``is_active`` unticked)
+	stays ``Active`` or ``Upcoming`` up to and including its Released On, then
+	is ``Released``; without a date it is ``Released`` at once.
 
 	Returns:
 		``Released``, ``Expired``, ``Upcoming`` or ``Active``.
 	"""
-	if not cint(is_active):
-		return "Released"
-
 	current_date = getdate(reference_date or today())
+	if released or not cint(is_active):
+		period = owned_period(start_date, end_date, True, released_on)
+		if not period or getdate(period[1]) < current_date:
+			return "Released"
+		end_date = period[1]
+
 	if end_date and getdate(end_date) < current_date:
 		return "Expired"
 	if start_date and getdate(start_date) > current_date:
