@@ -332,10 +332,12 @@ after_job = ["utility_billing.utility_billing.utils.contract_status.after_schedu
 
 
 website_route_rules = [
-	{"from_route": "/rental", "to_route": "rental"},
-	{"from_route": "/rental/<path:app_path>", "to_route": "rental"},
+	{"from_route": "/utility-billing/<path:app_path>", "to_route": "utility-billing"},
 ]
 
-website_route_rules = [
-	{"from_route": "/utility-billing/<path:app_path>", "to_route": "utility-billing"},
+# The tenant portal moved from /rental, then /rental-portal, to /utility-billing.
+# Old bookmarks are sent on with their sub path and query string.
+website_redirects = [
+	{"source": r"/rental(/.*)?", "target": r"/utility-billing\1", "forward_query_parameters": True},
+	{"source": r"/rental-portal(/.*)?", "target": r"/utility-billing\1", "forward_query_parameters": True},
 ]

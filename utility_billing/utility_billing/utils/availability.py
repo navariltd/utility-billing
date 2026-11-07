@@ -10,6 +10,10 @@ A property is *held* while any submitted request has an active row for it whose
 effective end date is today or later, or which has no end date at all. Future
 leases hold the property immediately: the unit has been promised to somebody,
 even if the lease has not started yet.
+
+Under Item Price a row released on its Contract holds the property up to and
+including its Released On, and not at all without one (see ``release``), so the
+property can be booked from the day after.
 """
 
 from collections.abc import Iterable
@@ -17,6 +21,8 @@ from collections.abc import Iterable
 import frappe
 from frappe.query_builder import DocType
 from frappe.utils import getdate, today
+
+from utility_billing.utility_billing.utils.release import contract_releases, owned_period
 
 REQUEST_DOCTYPE = "Utility Service Request"
 ROW_DOCTYPE = "Contract Utility Property Item"
@@ -49,6 +55,7 @@ def get_live_leases(
 		.join(request)
 		.on(row.parent == request.name)
 		.select(
+			row.parent,
 			row.utility_property,
 			row.start_date,
 			row.end_date,
@@ -65,11 +72,21 @@ def get_live_leases(
 
 	rows = query.run(as_dict=True)
 	current_date = getdate(reference_date or today())
+	releases = contract_releases(entry.parent for entry in rows)
 
 	leases = []
 	for entry in rows:
-		start = entry.start_date or entry.request_start
-		end = entry.end_date or entry.request_end
+		key = (entry.parent, entry.utility_property)
+		period = owned_period(
+			entry.start_date or entry.request_start,
+			entry.end_date or entry.request_end,
+			key in releases,
+			releases.get(key),
+		)
+		if not period:
+			continue
+
+		start, end = period
 		leases.append(
 			{
 				"utility_property": entry.utility_property,

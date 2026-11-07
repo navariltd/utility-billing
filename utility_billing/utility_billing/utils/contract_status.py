@@ -80,8 +80,9 @@ def contract_requirement_blocks(service_request: str) -> bool:
 
 	The daily Item Price job inserts its drafts without validation, so it checks
 	here what ``check_service_request_contract`` checks when an invoice is saved:
-	a submitted Contract, signed when signing is required, that has not released
-	every property.
+	a submitted Contract, signed when signing is required. A Contract that has
+	released every property is not refused outright: the job compares each
+	billing date with the row's Released On instead (see ``release``).
 
 	Args:
 		service_request: ``Utility Service Request`` name.
@@ -99,7 +100,7 @@ def contract_requirement_blocks(service_request: str) -> bool:
 		filters["is_signed"] = 1
 	names = frappe.get_all("Contract", filters=filters, pluck="name")
 
-	return not names or all(contract_released(name) for name in names)
+	return not names
 
 
 def set_released_contracts_inactive() -> list[str]:

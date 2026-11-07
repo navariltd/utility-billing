@@ -11,18 +11,21 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
-from utility_billing.utility_billing.utils.contract_sync import (
-	refuse_unconfirmed_contract_change,
-	sync_contracts,
-)
 from utility_billing.utility_billing.utils.cost_center import (
 	fill_request_item_cost_centers,
 	resolve_primary_cost_center,
 )
 from utility_billing.utility_billing.utils.item_prices import delete_request_prices
+from utility_billing.utility_billing.utils.line_request import fill_single_property
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
-from utility_billing.utility_billing.utils.request_prices import adjust_prices_to_window, validate_lease_move
+from utility_billing.utility_billing.utils.release import check_not_on_request, contract_releases, owns
+from utility_billing.utility_billing.utils.request_contract_lock import check_contract_terms_locked
+from utility_billing.utility_billing.utils.request_prices import (
+	adjust_prices_to_window,
+	is_item_price_approach,
+	validate_lease_move,
+)
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -31,6 +34,10 @@ class UtilityServiceRequest(Document):
 		load_address_and_contact(self)
 
 	def validate(self):
+		# First, so a refused change gets this message rather than a date check's
+		# (a draft request can have a Contract too)
+		check_contract_terms_locked(self)
+		check_not_on_request(self)
 		self.validate_items()
 		self.set_customer_if_needed()
 		apply_default_price_list(self)
@@ -40,6 +47,8 @@ class UtilityServiceRequest(Document):
 		fill_request_item_cost_centers(self)
 
 	def before_update_after_submit(self):
+		check_contract_terms_locked(self)
+		check_not_on_request(self)
 		# Re-run validation logic when updating after submission
 		self.validate_contract_dates()
 		self.validate_child_items()
@@ -49,14 +58,11 @@ class UtilityServiceRequest(Document):
 		validate_no_overlapping_leases(self)
 		if before:
 			validate_lease_move(self, before)
-			# Last, so a change refused by the checks above never reaches the Contract
-			refuse_unconfirmed_contract_change(self, before)
 
 	def on_update_after_submit(self):
 		before = self.get_doc_before_save()
 		if before:
 			adjust_prices_to_window(self, before)
-			sync_contracts(self, before)
 
 	def before_submit(self):
 		validate_no_overlapping_leases(self)
@@ -735,10 +741,13 @@ def create_sales_invoice_doc(
 		docname, property, posting_date, start_date, end_date
 	)
 
+	# Under Item Price the request is carried by each line, not the header
+	item_price = is_item_price_approach()
+
 	si = frappe.get_doc(
 		{
 			"doctype": "Sales Invoice",
-			"utility_service_request": docname,
+			"utility_service_request": None if item_price else docname,
 			"utility_property": property if property else None,
 			"customer": customer or usr.customer,
 			"customer_name": customer_name or usr.customer_name,
@@ -759,7 +768,11 @@ def create_sales_invoice_doc(
 
 	for item_data in items:
 		item_dict = item_data.copy()
-		si.append("items", item_dict)
+		row = si.append("items", item_dict)
+		if item_price:
+			fill_request_line(row, docname, property)
+	if item_price:
+		omit_released_lines(si, usr)
 	si.insert()
 
 	_handle_auto_repeat(
@@ -767,6 +780,62 @@ def create_sales_invoice_doc(
 	)
 
 	return si.name
+
+
+def omit_released_lines(invoice, request) -> None:
+	"""Leave out the lines of properties the Contract released before the invoice's date.
+
+	A line billing a day up to and including its row's Released On stays.
+
+	Raises:
+		frappe.ValidationError: When every line was left out.
+	"""
+	from utility_billing.utility_billing.utils.item_price_scope import property_contract_period
+
+	releases = contract_releases([request.name])
+	omitted = []
+	for row in list(invoice.get("items") or []):
+		key = (request.name, row.get("utility_property"))
+		if key not in releases:
+			continue
+
+		start, end = property_contract_period(request, row.utility_property)
+		day = row.get("custom_posting_date") or invoice.posting_date
+		if not owns(start, end, day, True, releases[key]):
+			invoice.remove(row)
+			omitted.append(_("{0} ({1}, released on {2})").format(
+				row.item_code, row.utility_property, releases[key] or _("no date")
+			))
+
+	if not omitted:
+		return
+
+	message = _("Left out, as their property was released before {0}: {1}").format(
+		invoice.posting_date, ", ".join(omitted)
+	)
+	if not invoice.get("items"):
+		frappe.throw(message, title=_("Nothing to invoice"))
+
+	frappe.msgprint(message, title=_("Released properties left out"), indicator="orange")
+
+
+def fill_request_line(row, service_request: str, property_name: str | None = None) -> None:
+	"""Give an invoice line made from a request that request and the property it bills.
+
+	The rent item of a property bills that property. Another item takes the
+	property chosen when the invoice was made, else the request's property
+	when it has exactly one; with several and none chosen the user picks it on
+	the line.
+	"""
+	row.utility_service_request = service_request
+	if row.get("utility_property"):
+		return
+
+	owner = frappe.db.get_value("Utility Property", {"service_item": row.item_code}, "name") if row.item_code else None
+	if owner or property_name:
+		row.utility_property = owner or property_name
+	else:
+		fill_single_property(row, service_request)
 
 
 def _validate_items(items):

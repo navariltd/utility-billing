@@ -9,6 +9,7 @@
     "utility_property",
     "item_code",
     "is_active",
+    "released_on",
     "column_break_mplw",
     "start_date",
     "end_date",
@@ -76,6 +77,15 @@
       "in_preview": 1,
       "in_standard_filter": 1,
       "label": "Is Active?"
+    },
+    {
+      "allow_on_submit": 1,
+      "depends_on": "eval:doc.parenttype == 'Contract' && !doc.is_active",
+      "description": "Last day the property was held",
+      "fieldname": "released_on",
+      "fieldtype": "Date",
+      "label": "Released On",
+      "no_copy": 1
     },
     {
       "fieldname": "section_break_auto_billing",
@@ -165,7 +175,7 @@
   "index_web_pages_for_search": 1,
   "istable": 1,
   "links": [],
-  "modified": "2026-10-22 10:18:40.051929",
+  "modified": "2026-11-06 16:00:00.000000",
   "modified_by": "Administrator",
   "module": "Utility Billing",
   "name": "Contract Utility Property Item",

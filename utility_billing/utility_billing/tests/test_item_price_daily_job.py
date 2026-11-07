@@ -10,6 +10,7 @@ it behaves as on develop.
 Every test runs in a savepoint rolled back afterwards.
 """
 
+from unittest import skipUnless
 from unittest.mock import patch
 
 import frappe
@@ -50,9 +51,10 @@ class DailyJobCase(fx.SavepointMixin, FrappeTestCase):
 		with patch.object(auto_repeat, "today", return_value=day):
 			auto_repeat.create_item_price_sales_invoices()
 
+		# By the job's marker: under Item Price the request is on the line, not the header
 		return frappe.get_all(
 			"Sales Invoice",
-			filters={"utility_service_request": self.request.name, "posting_date": day, "docstatus": 0},
+			filters={"remarks": ("like", f"%AUTO-BILLING:{self.request.name}:%"), "posting_date": day, "docstatus": 0},
 			pluck="grand_total",
 		)
 
@@ -81,7 +83,8 @@ class TestRequireContractOn(DailyJobCase):
 		self.assertEqual(self.drafts_on(MID_LEASE), [])
 
 	def test_a_released_contract_is_skipped(self):
-		fx.release_rows(self.contract(), 0)
+		# Released before the billing day; the day itself and before are billed (see test_released_on)
+		fx.release_rows(self.contract(), 0, released_on="2026-05-31")
 
 		self.assertEqual(self.drafts_on(MID_LEASE), [])
 
@@ -110,8 +113,12 @@ class TestRequireContractOff(DailyJobCase):
 
 		self.assertEqual(self.drafts_on(MID_LEASE), [5000])
 
-	def test_a_released_contract_is_billed(self):
-		fx.release_rows(self.contract(), 0)
+	@skipUnless(
+		frappe.db.has_column("Contract Utility Property Item", "released_on"), "needs Released On, which a migrate adds"
+	)
+	def test_a_released_contract_is_billed_up_to_its_release(self):
+		# A released row owns its days up to its Released On, whatever Require Contract says
+		fx.release_rows(self.contract(), 0, released_on="2026-07-31")
 
 		self.assertEqual(self.drafts_on(MID_LEASE), [5000])
 

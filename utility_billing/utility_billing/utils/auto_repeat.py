@@ -6,6 +6,8 @@ from frappe.query_builder import DocType
 from frappe.utils import add_days, cint, date_diff, getdate, today
 
 from utility_billing.utility_billing.utils.contract_status import contract_requirement_blocks
+from utility_billing.utility_billing.utils.line_request import line_request
+from utility_billing.utility_billing.utils.release import contract_releases, owns
 from utility_billing.utility_billing.utils.request_prices import is_item_price_approach, last_billed_day
 
 
@@ -60,18 +62,20 @@ def process_penalties_for_overdue_invoices() -> None:
 		for invoice in overdue_invoices:
 			try:
 				original_invoice = frappe.get_doc("Sales Invoice", invoice["name"])
-				service_request = original_invoice.get("utility_service_request")
-
-				if not service_request:
-					continue
-
-				service_request_doc = frappe.get_doc("Utility Service Request", service_request)
-				requested_properties = service_request_doc.get("requested_properties")
+				# Each line's own request, else the invoice's (an invoice from before lines had one)
+				requests = {}
 
 				penalty_items = []
 
 				for item in original_invoice.items:
 					try:
+						service_request = line_request(original_invoice, item)
+						if not service_request:
+							continue
+
+						if service_request not in requests:
+							requests[service_request] = frappe.get_doc("Utility Service Request", service_request)
+						requested_properties = requests[service_request].get("requested_properties")
 						utility_property = item.utility_property
 
 						matching_request = next(
@@ -128,6 +132,7 @@ def process_penalties_for_overdue_invoices() -> None:
 									"income_account": rule.penalty_income_account,
 									"receivable_account": rule.penalty_receivable_account,
 									"utility_property": utility_property,
+									"utility_service_request": item.get("utility_service_request"),
 								}
 							)
 
@@ -137,7 +142,9 @@ def process_penalties_for_overdue_invoices() -> None:
 						)
 				if penalty_items:
 					try:
-						create_penalty_invoice(original_invoice, service_request, rule, penalty_items)
+						create_penalty_invoice(
+							original_invoice, original_invoice.get("utility_service_request"), rule, penalty_items
+						)
 					except Exception:
 						frappe.log_error(
 							f"Error creating penalty invoice for {invoice['name']}: {frappe.get_traceback()}"
@@ -228,8 +235,10 @@ def create_penalty_invoice(
 		)
 
 		add_comment("Sales Invoice", original_invoice.name, comment_content)
-		if getattr(original_invoice, "utility_service_request", None):
-			add_comment("Utility Service Request", original_invoice.utility_service_request, comment_content)
+		for service_request in sorted(
+			{line_request(original_invoice, row) for row in original_invoice.items} - {None, ""}
+		):
+			add_comment("Utility Service Request", service_request, comment_content)
 
 		frappe.msgprint(f"Penalty Invoice {invoice.name} created for {original_invoice.name}")
 
@@ -328,6 +337,12 @@ def create_item_price_sales_invoices():
 			if contract_requirement_blocks(request.name):
 				continue
 
+			# A row released on the Contract is billed up to its Released On only
+			releases = contract_releases([request.name])
+			key = (request.name, row.utility_property)
+			if key in releases and not owns(row.start_date, row.end_date, billing_date, True, releases[key]):
+				continue
+
 			customer = request.get("customer") or (
 				request.get("party_name") if request.get("service_request_from") == "Customer" else None
 			)
@@ -363,7 +378,9 @@ def create_item_price_sales_invoices():
 				invoice = frappe.new_doc("Sales Invoice")
 				invoice.customer = customer
 				invoice.company = request.company
-				invoice.utility_service_request = request.name
+				# Under Item Price the line carries the request, below
+				if not is_item_price_approach():
+					invoice.utility_service_request = request.name
 				invoice.posting_date = billing_date
 				invoice.set_posting_time = 1
 
@@ -461,6 +478,9 @@ def create_item_price_sales_invoices():
 						item.set(field, value)
 
 				item.qty = source_item.qty
+				if is_item_price_approach():
+					item.utility_service_request = request.name
+					item.utility_property = row.utility_property
 
 				invoice.calculate_taxes_and_totals()
 				invoice.posting_date = str(getdate(invoice.posting_date))

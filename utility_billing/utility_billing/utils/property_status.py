@@ -15,6 +15,7 @@ from frappe.utils import getdate, today
 
 from .contract_status import set_released_contracts_inactive
 from .item_price_scope import property_contract_period
+from .release import contract_releases, owned_period
 
 HELD_STATUSES = ("Occupied", "Reserved")
 LEASE_DOCTYPE = "Contract Utility Property Item"
@@ -26,7 +27,10 @@ def release_ended_leases() -> list[str]:
 
 	A property can be leased by several submitted requests over time, a renewal
 	for instance, so it is released only when all of its active leases ended
-	before today. A lease without an end date never ends, and a lease that has
+	before today. Under Item Price a lease released on its Contract ends on its
+	Released On, and one released without a date holds nothing (see
+	``release``), so a property re-leased after a release is freed when that
+	new lease ends, and never while it runs. A lease without an end date never ends, and a lease that has
 	not started yet still holds the property. A property without any submitted
 	lease is left alone, since there is no end date to judge it by.
 
@@ -84,11 +88,15 @@ def get_lease_ends(property_names: list[str]) -> dict[str, list]:
 		.run(as_dict=True)
 	)
 
+	releases = contract_releases(row.parent for row in rows)
 	lease_ends = defaultdict(list)
 	for row in rows:
 		service_request = frappe.get_doc(REQUEST_DOCTYPE, row.parent)
-		lease_ends[row.utility_property].append(
-			property_contract_period(service_request, row.utility_property)[1]
+		key = (row.parent, row.utility_property)
+		period = owned_period(
+			*property_contract_period(service_request, row.utility_property), key in releases, releases.get(key)
 		)
+		if period:
+			lease_ends[row.utility_property].append(period[1])
 
 	return lease_ends

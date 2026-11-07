@@ -12,6 +12,8 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 
+from utility_billing.utility_billing.utils.release import contract_releases, owned_period
+
 USR_DOCTYPE = "Utility Service Request"
 ROW_DOCTYPE = "Contract Utility Property Item"
 
@@ -78,6 +80,9 @@ def get_submitted_leases(utility_property: str, exclude: str | None = None) -> l
 		utility_property: ``Utility Property`` name.
 		exclude: Request to leave out, normally the one being checked.
 
+	A row released on its request's Contract holds the property up to and
+	including its Released On, and not at all without one (see ``release``).
+
 	Returns:
 		One entry per active row with its ``service_request``, ``customer`` and
 		effective ``start`` and ``end``.
@@ -104,15 +109,27 @@ def get_submitted_leases(utility_property: str, exclude: str | None = None) -> l
 		.where(request.name != (exclude or ""))
 	).run(as_dict=True)
 
-	return [
-		frappe._dict(
-			service_request=entry.service_request,
-			customer=entry.customer,
-			start=entry.start_date or entry.request_start,
-			end=entry.end_date or entry.request_end,
+	releases = contract_releases(entry.service_request for entry in rows)
+	leases = []
+	for entry in rows:
+		key = (entry.service_request, utility_property)
+		period = owned_period(
+			entry.start_date or entry.request_start,
+			entry.end_date or entry.request_end,
+			key in releases,
+			releases.get(key),
 		)
-		for entry in rows
-	]
+		if period:
+			leases.append(
+				frappe._dict(
+					service_request=entry.service_request,
+					customer=entry.customer,
+					start=period[0],
+					end=period[1],
+				)
+			)
+
+	return leases
 
 
 def periods_overlap(start, end, other_start, other_end) -> bool:
