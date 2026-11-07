@@ -2,28 +2,51 @@
 
 A rent line takes its request's Item Price as its price list rate before
 ERPNext computes the totals, and nothing is written after that calculation, so
-the totals agree with the rate on the first save and after submit. Discounts
-are neither refused nor added: whatever ERPNext derives from the price list
-rate is kept. A service line is prefilled with its request row's rate when it
+the totals agree with the rate on the first save and after submit. Rent is
+locked: a rate ERPNext keeps that is not the price (typed, discounted, with a
+margin or from a pricing rule) is refused, never overwritten. A service line is prefilled with its request row's rate when it
 has none, and keeps a rate the user set. A line without a property takes the
 one property of its cost center.
 
 Invoices are inserted inside the test's savepoint.
 """
 
-import frappe
+import csv
+import os
+import tempfile
 
+import frappe
+from frappe.core.doctype.data_import.importer import Importer
+
+from utility_billing.api.sales_invoice import get_line_rate
 from utility_billing.utility_billing.overrides.server import sales_invoice
 from utility_billing.utility_billing.tests import factories
 from utility_billing.utility_billing.tests import lease_fixtures as fx
-from utility_billing.utility_billing.tests.line_request_fixtures import ELECTRICITY, P1, P2, make_invoice
+from utility_billing.utility_billing.tests.line_request_fixtures import ELECTRICITY, P1, P2, currency, make_invoice
 from utility_billing.utility_billing.tests.test_line_request import LineRequestCase
 from utility_billing.utility_billing.tests.test_line_request_readers import submitted_invoice
 
 
+def import_rows(header, row):
+	"""Insert one Sales Invoice through Data Import's own importer, without its commits."""
+	path = os.path.join(tempfile.mkdtemp(), "invoices.csv")
+	with open(path, "w", newline="") as handle:
+		csv.writer(handle).writerows([header, row])
+
+	data_import = frappe.get_doc(doctype="Data Import", reference_doctype="Sales Invoice", import_type="Insert New Records")
+	data_import.db_set = lambda *args, **kwargs: None
+	importer = Importer("Sales Invoice", data_import=data_import, file_path=path, console=True)
+	importer.before_import()
+	try:
+		return importer.process_doc(importer.import_file.get_payloads_for_import()[0].doc)[0]
+	finally:
+		frappe.flags.in_import = False
+		os.remove(path)
+
+
 class RatesCase(LineRequestCase):
-	def insert(self, lines, posting_date="2027-03-10"):
-		invoice = make_invoice(lines, posting_date, set_posting_time=1, due_date="2027-04-30")
+	def insert(self, lines, posting_date="2027-03-10", due_date="2027-04-30"):
+		invoice = make_invoice(lines, posting_date, set_posting_time=1, due_date=due_date)
 		invoice.insert(ignore_permissions=True)
 		return invoice
 
@@ -35,13 +58,11 @@ class RatesCase(LineRequestCase):
 
 
 class TestRentRate(RatesCase):
-	def test_the_price_list_rate_is_locked_and_a_typed_rate_left_to_erpnext(self):
-		# Nothing is written after ERPNext's calculation: it keeps a typed rate,
-		# and the amounts and totals agree with it on the first save
-		invoice = self.insert([{"item_code": P1, "rate": 1, "price_list_rate": 1}])
-
-		self.assertEqual(invoice.items[0].price_list_rate, 1000)
-		self.assert_consistent(invoice, 1, 1)
+	def save_with(self, **changes):
+		invoice = self.insert([{"item_code": P1}])
+		invoice.items[0].update(changes)
+		invoice.save(ignore_permissions=True)
+		return invoice
 
 	def test_a_line_without_a_rate_bills_the_schedule(self):
 		invoice = self.insert([{"item_code": P1}])
@@ -49,27 +70,120 @@ class TestRentRate(RatesCase):
 		self.assertEqual(invoice.items[0].price_list_rate, 1000)
 		self.assert_consistent(invoice, 1000, 1000)
 
-	def test_erpnext_derived_rate_is_not_overwritten_through_submit(self):
-		invoice = self.insert([{"item_code": P1, "price_list_rate": 1000, "discount_percentage": 10}])
-		self.assertEqual(invoice.items[0].price_list_rate, 1000)
-		self.assert_consistent(invoice, 900, 900)
+	def test_the_schedule_rate_stays_consistent_through_submit(self):
+		invoice = self.insert([{"item_code": P1}])
 
 		invoice.submit()
 
-		self.assert_consistent(invoice, 900, 900)
+		self.assert_consistent(invoice, 1000, 1000)
 		debit = frappe.db.sql("select sum(debit) from `tabGL Entry` where voucher_no=%s and is_cancelled=0", invoice.name)[0][0]
-		self.assertEqual(debit, 900)
+		self.assertEqual(debit, 1000)
 
-	def test_erpnext_derived_rate_from_a_discount_amount_is_not_overwritten(self):
-		invoice = self.insert([{"item_code": P1, "price_list_rate": 1000, "discount_amount": 100}])
+	def test_a_typed_rate_is_refused(self):
+		with self.assertRaisesRegex(frappe.ValidationError, "Row #1: .*is rent and bills .*1,000.00.* not .*800.00"):
+			self.insert([{"item_code": P1, "rate": 800}])
 
-		self.assert_consistent(invoice, 900, 900)
+	def test_a_rate_edited_on_a_draft_is_refused(self):
+		# The form sends the discount ERPNext derives from it
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.save_with(rate=800, discount_amount=200)
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.save_with(rate=1200, margin_type="Amount", margin_rate_or_amount=200)
+
+	def test_a_discount_or_margin_is_refused(self):
+		for line in (
+			{"discount_percentage": 10},
+			{"discount_amount": 100},
+			{"margin_type": "Percentage", "margin_rate_or_amount": 10},
+		):
+			with self.subTest(**line), self.assertRaisesRegex(frappe.ValidationError, "Remove the discount, margin or pricing rule"):
+				self.insert([{"item_code": P1, "price_list_rate": 1000, **line}])
+
+	def test_a_price_list_rate_edited_with_its_rate_is_refused(self):
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.save_with(price_list_rate=800, rate=800)
+
+	def test_a_price_list_rate_edited_alone_is_set_back(self):
+		# Before ERPNext's calculation, as before: nothing billed differs
+		invoice = self.save_with(price_list_rate=800)
+
+		self.assertEqual(invoice.items[0].price_list_rate, 1000)
+		self.assert_consistent(invoice, 1000, 1000)
+
+	def test_a_pricing_rule_on_rent_is_refused(self):
+		frappe.get_doc(
+			{
+				"doctype": "Pricing Rule",
+				"title": "_Test Line Rate Rent Discount",
+				"apply_on": "Item Code",
+				"items": [{"item_code": P1}],
+				"selling": 1,
+				"applicable_for": "Customer",
+				"customer": fx.CUSTOMER,
+				"company": fx.company(),
+				"rate_or_discount": "Discount Percentage",
+				"discount_percentage": 10,
+				"currency": currency(),
+			}
+		).insert(ignore_permissions=True)
+
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.insert([{"item_code": P1}])
+
+	def test_a_data_import_rate_is_refused(self):
+		header = ["Customer", "Company", "Posting Date", "Set Posting Time", "Due Date", "Currency", "Price List", "Item (Items)", "Quantity (Items)", "UOM (Items)", "UOM Conversion Factor (Items)", "Rate (Items)"]
+		row = [fx.CUSTOMER, fx.company(), "2027-03-10", 1, "2027-04-30", currency(), fx.PRICE_LIST, P1, 1, "Nos", 1, 800]
+
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			import_rows(header, row)
 
 	def test_a_price_list_rate_off_the_schedule_is_refused(self):
 		invoice = make_invoice([{"item_code": P1, "price_list_rate": 1, "rate": 1}], "2027-03-10")
 
 		with self.assertRaisesRegex(frappe.ValidationError, "price list rate of .* must be"):
 			sales_invoice.govern_utility_lines(invoice)
+
+
+class TestRentRateUnderAutoRepeat(RatesCase):
+	def test_a_discounted_rent_line_is_kept(self):
+		fx.use_approach("Auto Repeat")
+
+		invoice = self.insert([{"item_code": P1, "price_list_rate": 1000, "discount_percentage": 10}])
+
+		self.assert_consistent(invoice, 900, 900)
+
+
+class TestAutoRepeatCopyRate(RatesCase):
+	def copy(self, reference, posting_date, header=None):
+		"""As Auto Repeat makes a draft: copy, new dates, ``on_recurring``, insert."""
+		draft = frappe.copy_doc(reference)
+		draft.update({"posting_date": posting_date, "due_date": posting_date, "set_posting_time": 1, "auto_repeat": header and "_Test AR"})
+		draft.set("payment_schedule", [])
+		draft.on_recurring(reference_doc=reference, auto_repeat_doc=frappe._dict())
+		return draft
+
+	def test_a_copy_bills_the_price_of_its_new_date(self):
+		june = self.insert([{"item_code": P1}], "2027-06-10", due_date="2027-06-30")
+
+		draft = self.copy(june, "2027-07-10")
+		draft.insert(ignore_permissions=True)
+
+		self.assertEqual((draft.items[0].utility_service_request, draft.items[0].price_list_rate), (self.u2.name, 1200))
+		self.assert_consistent(draft, 1200, 1200)
+
+	def test_a_service_line_of_a_copy_keeps_its_rate(self):
+		march = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "rate": 260, "price_list_rate": 260}])
+
+		draft = self.copy(march, "2027-04-10")
+
+		self.assertEqual(draft.items[0].rate, 260)
+
+	def test_a_copy_keeping_its_header_is_left_as_it_is(self):
+		reference = make_invoice([{"item_code": P1, "rate": 1000, "price_list_rate": 1000}], "2027-06-10", header=self.u1.name)
+
+		draft = self.copy(reference, "2027-07-10", header=True)
+
+		self.assertEqual((draft.items[0].price_list_rate, draft.items[0].rate), (1000, 1000))
 
 
 class TestServiceRate(RatesCase):
@@ -85,6 +199,7 @@ class TestServiceRate(RatesCase):
 		self.assertEqual(invoice.items[0].utility_service_request, self.u1.name)
 
 	def test_a_service_rate_derived_by_erpnext_is_not_overwritten(self):
+		# Discounts stay allowed on service lines
 		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "price_list_rate": 200, "discount_percentage": 10}])
 
 		self.assert_consistent(invoice, 180, 180)
@@ -121,8 +236,13 @@ class TestPropertyAndCostCenter(RatesCase):
 	def test_a_cost_center_shared_by_two_properties_gives_none(self):
 		frappe.db.set_value("Utility Property", P2, "cost_center", self.center_1)
 
-		with self.assertRaisesRegex(frappe.ValidationError, "Pick the property on this line"):
-			self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_1}])
+		invoice = self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_1, "rate": 210}])
+
+		row = invoice.items[0]
+		self.assertEqual(
+			(row.get("utility_property"), row.get("utility_service_request"), row.cost_center, row.rate),
+			(None, None, self.center_1, 210),
+		)
 
 	def test_the_property_gives_the_cost_center(self):
 		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P2}])
@@ -151,3 +271,49 @@ class TestPropertyAndCostCenter(RatesCase):
 
 		with self.assertRaisesRegex(frappe.ValidationError, "needs a cost center"):
 			sales_invoice.check_utility_cost_centers(frappe._dict(), [entry])
+
+
+class TestFormPrice(RatesCase):
+	def test_a_converted_price_comes_back_rounded_as_the_line_stores_it(self):
+		# 1000 x 1.37 is 1370.0000000000002 in floats: the form took that noise for
+		# another price and set it on a saved draft, which then lost its Submit button
+		rate = get_line_rate(
+			item_code=P1,
+			posting_date="2027-03-10",
+			customer=fx.CUSTOMER,
+			price_list=fx.PRICE_LIST,
+			uom="Nos",
+			qty=1,
+			conversion_factor=1,
+			plc_conversion_rate=1.37,
+			conversion_rate=1,
+			utility_service_request=self.u1.name,
+		)
+
+		self.assertEqual(repr(rate), "1370.0")
+
+	def test_no_price_is_still_none(self):
+		self.assertIsNone(get_line_rate(item_code=P1, posting_date="2026-01-10", customer=fx.CUSTOMER, price_list=fx.PRICE_LIST, utility_service_request=self.u1.name))
+
+
+class TestServiceLineWithoutProperty(RatesCase):
+	def test_it_saves_as_an_ordinary_line(self):
+		company_center = frappe.get_cached_value("Company", fx.company(), "cost_center")
+
+		invoice = self.insert([{"item_code": ELECTRICITY, "rate": 210}])
+
+		row = invoice.items[0]
+		self.assertEqual(
+			(row.get("utility_property"), row.get("utility_service_request"), row.cost_center, row.rate),
+			(None, None, company_center, 210),
+		)
+		self.assert_consistent(invoice, 210, 210)
+
+	def test_with_a_property_it_still_finds_its_request(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P1}])
+
+		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].rate), (self.u1.name, 200))
+
+	def test_a_rent_line_on_the_same_invoice_is_still_locked(self):
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.insert([{"item_code": ELECTRICITY, "rate": 210}, {"item_code": P1, "rate": 800}])

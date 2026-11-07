@@ -119,6 +119,14 @@ def make_invoice(lines, posting_date, header=None, customer=fx.CUSTOMER, **value
 	return invoice
 
 
+def prefill(invoice) -> None:
+	"""Set the rates as a save does: the rent price list rates, then ERPNext's own calculation."""
+	from utility_billing.utility_billing.overrides.server import sales_invoice
+
+	sales_invoice.prefill_line_rates(invoice)
+	invoice.calculate_taxes_and_totals()
+
+
 def billed(row):
 	"""Return what a governed line of an unsaved invoice bills.
 

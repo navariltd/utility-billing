@@ -25,6 +25,7 @@ from utility_billing.utility_billing.tests.line_request_fixtures import (
 	make_invoice,
 	make_price,
 	make_request,
+	prefill,
 	setup_items,
 )
 from utility_billing.utility_billing.utils import auto_repeat, release
@@ -134,7 +135,7 @@ class ReleasedCase(fx.SavepointMixin, FrappeTestCase):
 
 	def govern(self, posting_date, item=P1, **line):
 		invoice = make_invoice([{"item_code": item, **line}], posting_date)
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.govern_utility_lines(invoice)
 		return invoice
 
@@ -160,7 +161,7 @@ class TestRequireContract(ReleasedCase):
 
 	def test_a_line_up_to_the_release_is_accepted(self):
 		invoice = make_invoice([{"item_code": P1}], "2027-05-31")
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.validate(invoice)
 		self.assertEqual(invoice.items[0].utility_service_request, self.u1.name)
 

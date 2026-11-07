@@ -29,6 +29,7 @@ from utility_billing.utility_billing.tests.line_request_fixtures import (
 	make_invoice,
 	make_price,
 	make_request,
+	prefill,
 )
 from utility_billing.utility_billing.tests.test_line_request import LineRequestCase, has_line_column
 from utility_billing.utility_billing.utils import auto_repeat
@@ -76,9 +77,11 @@ def captured_inserts(doctype):
 
 class TestRateLock(LineRequestCase):
 	def test_a_new_line_takes_the_price_of_its_own_request(self):
+		# A rate of U1's price on a line of U2's lease is held to U2's price
 		invoice = make_invoice([{"item_code": P1, "rate": 1000, "price_list_rate": 1000}], "2027-09-10")
 
-		self.govern(invoice)
+		with self.assertRaisesRegex(frappe.ValidationError, f"bills .*1,200.00.*{self.u2.name}"):
+			self.govern(invoice)
 
 		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].price_list_rate), (self.u2.name, 1200))
 
@@ -161,7 +164,7 @@ class TestContractChecks(LineRequestCase):
 		fx.use_approach("Item Price", require_contract=1, require_signed=1)
 
 	def validate(self, invoice):
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.validate(invoice)
 
 	def two_requests(self):
@@ -225,7 +228,7 @@ class TestCostCenters(LineRequestCase):
 	def test_lines_of_two_requests_take_their_own_property_cost_center(self):
 		invoice = make_invoice([{"item_code": P1}, {"item_code": P2}, {"item_code": ELECTRICITY, "utility_property": P2, "rate": 250}], "2027-03-10")
 
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertEqual([row.cost_center for row in invoice.items], [self.center_1, self.center_2, self.center_2])
@@ -233,7 +236,7 @@ class TestCostCenters(LineRequestCase):
 	def test_an_ordinary_line_keeps_erpnext_cost_center_and_drops_the_property(self):
 		invoice = make_invoice([{"item_code": OTHER_ITEM, "rate": 5, "utility_property": P2}], "2027-03-10")
 
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertNotEqual(invoice.items[0].cost_center, self.center_2)
@@ -248,7 +251,7 @@ class TestCostCenters(LineRequestCase):
 			auto_repeat="_Test AR",
 		)
 
-		sales_invoice.prefill_line_rates(invoice)
+		prefill(invoice)
 		sales_invoice.validate(invoice)
 
 		self.assertEqual(invoice.items[0].cost_center, self.center_1)
@@ -387,7 +390,7 @@ class TestAutoRepeatCopy(LineRequestCase):
 			self.govern(draft)
 
 	@needs_column
-	def test_a_request_picked_on_a_line_without_property_is_kept(self):
+	def test_a_request_picked_on_a_line_without_property_is_cleared(self):
 		n1 = make_request([], "2027-01-01", "2028-01-01", [(ELECTRICITY, 200)], customer=OTHER_CUSTOMER)
 		n2 = make_request([], "2027-01-01", "2028-01-01", [(ELECTRICITY, 300)], customer=OTHER_CUSTOMER)
 		reference = make_invoice(
@@ -398,8 +401,9 @@ class TestAutoRepeatCopy(LineRequestCase):
 		draft = self.copy(reference, "2027-07-10")
 		self.govern(draft)
 
-		self.assertEqual(draft.items[0].utility_service_request, n2.name)
-		self.assertNotEqual(draft.items[0].utility_service_request, n1.name)
+		# A service line without a property is ordinary: no request, picked or not
+		self.assertIsNone(draft.items[0].get("utility_service_request"))
+		self.assertTrue(n1.name and n2.name)
 
 
 class TestColumnGuard(LineRequestCase):

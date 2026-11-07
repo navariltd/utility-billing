@@ -5,6 +5,7 @@ Deferred Posting Date and with the utility property its item belongs to.
 """
 
 import frappe
+from frappe.utils import flt
 
 from utility_billing.utility_billing.utils.item_price_scope import is_item_price_approach
 from utility_billing.utility_billing.utils.item_rate import get_rate_for_date
@@ -59,8 +60,9 @@ def get_line_rate(
 			Price approach its primary items are priced from its own prices only.
 
 	Returns:
-		The rate in the currency of the transaction, or None when no Item Price
-		covers the item, the customer and the date.
+		The rate in the currency of the transaction, rounded to the line's
+		precision, or None when no Item Price covers the item, the customer and
+		the date.
 	"""
 	service_request = (
 		utility_service_request
@@ -70,7 +72,7 @@ def get_line_rate(
 		else None
 	)
 
-	return get_rate_for_date(
+	rate = get_rate_for_date(
 		item_code,
 		posting_date,
 		customer=customer,
@@ -82,6 +84,13 @@ def get_line_rate(
 		conversion_rate=conversion_rate or 1,
 		service_request=service_request,
 	)
+	if rate is None:
+		return None
+
+	# Rounded as the line stores it: a currency conversion leaves float noise
+	# (205500.00000000003), which the form would take for another price and set
+	# on a saved draft, leaving it unsaved.
+	return flt(rate, frappe.get_precision("Sales Invoice Item", "price_list_rate"))
 
 
 @frappe.whitelist()

@@ -1,8 +1,8 @@
 """Tests for the Utility Service Request of each Sales Invoice line, under Item Price.
 
-Covers the resolution rules of ``line_request``: by property and date, by date
-among requests without a property, the user's pick between several, and the
-blocks; the header of a draft moved onto its lines; and the API the form uses.
+Covers the resolution rules of ``line_request``: by property and date, a
+service line without a property left ordinary, the user's pick between
+several, and the blocks; the header of a draft moved onto its lines; and the API the form uses.
 Invoices are unsaved and governed through the hook functions.
 """
 
@@ -28,6 +28,7 @@ from utility_billing.utility_billing.tests.line_request_fixtures import (
 	make_invoice,
 	make_price,
 	make_request,
+	prefill,
 	setup_items,
 )
 
@@ -54,8 +55,8 @@ class LineRequestCase(fx.SavepointMixin, FrappeTestCase):
 		make_price(P2, 2000, "2027-01-01", "2027-12-31")
 
 	def govern(self, invoice):
-		# As a save runs them: the rates before ERPNext's totals, then the checks
-		sales_invoice.prefill_line_rates(invoice)
+		# As a save runs them: the rates and ERPNext's totals, then the checks
+		prefill(invoice)
 		return sales_invoice.govern_utility_lines(invoice)
 
 	def requests(self, invoice):
@@ -109,11 +110,13 @@ class TestByProperty(LineRequestCase):
 		self.assertEqual(self.requests(invoice), [self.u1.name, self.u3.name])
 		self.assertEqual([row.rate for row in invoice.items], [200, 250])
 
-	def test_electricity_without_a_property_asks_for_one(self):
-		invoice = make_invoice([{"item_code": ELECTRICITY}], "2027-03-10")
+	def test_electricity_without_a_property_is_an_ordinary_line(self):
+		invoice = make_invoice([{"item_code": ELECTRICITY, "rate": 180}], "2027-03-10")
 
-		with self.assertRaisesRegex(frappe.ValidationError, "Pick the property on this line"):
-			self.govern(invoice)
+		self.assertEqual(self.govern(invoice), [])
+
+		self.assertEqual(self.requests(invoice), [None])
+		self.assertEqual((invoice.items[0].get("utility_property"), invoice.items[0].rate), (None, 180))
 
 	def test_a_property_not_leased_on_the_date_is_blocked(self):
 		invoice = make_invoice([{"item_code": P2}], "2028-02-10")
@@ -122,9 +125,11 @@ class TestByProperty(LineRequestCase):
 			self.govern(invoice)
 
 	def test_the_rate_never_chooses_the_request(self):
+		# 1200 is U2's price; March is U1's lease, so the line is held to U1's price
 		invoice = make_invoice([{"item_code": P1, "rate": 1200, "price_list_rate": 1200}], "2027-03-10")
 
-		self.govern(invoice)
+		with self.assertRaisesRegex(frappe.ValidationError, f"bills .*1,000.00.*{self.u1.name}"):
+			self.govern(invoice)
 
 		self.assertEqual((self.requests(invoice), invoice.items[0].price_list_rate), ([self.u1.name], 1000))
 
@@ -147,12 +152,10 @@ class TestTwoPropertiesListingOneItem(LineRequestCase):
 		self.assertEqual(self.resolve("2027-03-10", utility_property=P1).service_request, self.u1.name)
 		self.assertEqual(self.resolve("2027-03-10", utility_property=P2).service_request, self.u3.name)
 
-	def test_without_a_property_the_message_is_plain_and_names_the_row(self):
+	def test_without_a_property_the_line_is_ordinary_and_says_nothing(self):
 		result = self.resolve("2027-03-10")
 
-		self.assertEqual((result.status, result.property_candidates), ("pick_property", [P1, P2]))
-		self.assertEqual(result.message, f"Row #1: <strong>{ELECTRICITY}</strong> has no property. Pick the property on this line.")
-		self.assertEqual(result.candidates, [])
+		self.assertEqual((result.status, result.service_request, result.message, result.candidates), ("ordinary", None, None, []))
 
 	def test_the_lease_message_stays_apart_from_the_missing_property_one(self):
 		result = self.resolve("2027-09-10", utility_property=P1)
@@ -305,7 +308,7 @@ class TestReleasedRows(LineRequestCase):
 
 
 class TestWithoutProperty(fx.SavepointMixin, FrappeTestCase):
-	"""Requests of another customer listing Electricity without any property."""
+	"""Requests of another customer listing Electricity without any property: a line without a property stays ordinary."""
 
 	def setUp(self):
 		super().setUp()
@@ -317,41 +320,26 @@ class TestWithoutProperty(fx.SavepointMixin, FrappeTestCase):
 	def invoice(self, posting_date, rate=200, **line):
 		return make_invoice([{"item_code": ELECTRICITY, "rate": rate, **line}], posting_date, customer=OTHER_CUSTOMER)
 
-	def test_one_request_covering_the_date_is_used(self):
-		invoice = self.invoice("2027-03-10")
+	def test_a_line_without_a_property_takes_no_request(self):
+		invoice = self.invoice("2027-03-10", rate=210)
+
+		self.assertEqual(sales_invoice.govern_utility_lines(invoice), [])
+
+		self.assertEqual((invoice.items[0].get("utility_service_request"), invoice.items[0].rate), (None, 210))
+
+	def test_a_request_picked_on_it_is_cleared(self):
+		invoice = self.invoice("2027-03-10", utility_service_request=self.n2.name)
 
 		sales_invoice.govern_utility_lines(invoice)
 
-		self.assertEqual((invoice.items[0].utility_service_request, invoice.items[0].rate), (self.n1.name, 200))
+		self.assertIsNone(invoice.items[0].get("utility_service_request"))
 
-	def test_overlapping_requests_let_the_user_pick(self):
-		n3 = make_request([], "2027-01-01", "2028-01-01", [(ELECTRICITY, 400)], customer=OTHER_CUSTOMER)
+	def test_no_date_is_refused(self):
+		invoice = self.invoice("2029-03-10")
 
-		with self.assertRaisesRegex(frappe.ValidationError, "Several Utility Service Requests cover"):
-			sales_invoice.govern_utility_lines(self.invoice("2027-03-10"))
-
-		picked = self.invoice("2027-03-10", rate=400, utility_service_request=n3.name)
-		sales_invoice.govern_utility_lines(picked)
-		self.assertEqual((picked.items[0].utility_service_request, picked.items[0].rate), (n3.name, 400))
-
-	def test_a_pick_outside_the_candidates_is_refused(self):
-		make_request([], "2027-01-01", "2028-01-01", [(ELECTRICITY, 400)], customer=OTHER_CUSTOMER)
-
-		with self.assertRaisesRegex(frappe.ValidationError, "Several"):
-			sales_invoice.govern_utility_lines(self.invoice("2027-03-10", utility_service_request=self.n2.name))
-
-	def test_no_request_covering_the_date_says_so(self):
-		with self.assertRaisesRegex(frappe.ValidationError, "without a property covers"):
-			sales_invoice.govern_utility_lines(self.invoice("2028-03-10"))
-
-	def test_mixed_candidates_use_the_requests_without_a_property(self):
-		make_request([(P1, "2027-01-01", "2027-12-31")], "2027-01-01", "2028-01-01", [(ELECTRICITY, 999)], customer=OTHER_CUSTOMER)
-		make_price(P1, 1000, "2027-01-01", "2027-12-31", customer=OTHER_CUSTOMER)
-
-		invoice = self.invoice("2027-03-10")
 		sales_invoice.govern_utility_lines(invoice)
 
-		self.assertEqual(invoice.items[0].utility_service_request, self.n1.name)
+		self.assertIsNone(invoice.items[0].get("utility_service_request"))
 
 
 class TestHeaderMovedToLines(LineRequestCase):
@@ -370,17 +358,19 @@ class TestHeaderMovedToLines(LineRequestCase):
 		self.assertEqual(invoice.items[1].utility_property, P1)
 		self.assertEqual([billed(row) for row in invoice.items], [1000, 200, 5])
 
-	def test_a_header_with_several_properties_asks_for_the_property(self):
+	def test_a_header_with_several_properties_leaves_the_line_ordinary(self):
 		both = make_request(
 			[(P1, "2028-01-01", "2028-12-31"), (P2, "2028-01-01", "2028-12-31")],
 			"2028-01-01",
 			"2029-01-01",
 			[(ELECTRICITY, 300)],
 		)
-		invoice = make_invoice([{"item_code": ELECTRICITY}], "2028-03-10", header=both.name)
+		invoice = make_invoice([{"item_code": ELECTRICITY, "rate": 300}], "2028-03-10", header=both.name)
 
-		with self.assertRaisesRegex(frappe.ValidationError, "Pick the property on this line"):
-			self.govern(invoice)
+		self.govern(invoice)
+
+		self.assertIsNone(invoice.utility_service_request)
+		self.assertEqual((self.requests(invoice), invoice.items[0].get("utility_property")), ([None], None))
 
 	def test_an_ordinary_line_carries_no_request(self):
 		invoice = make_invoice([{"item_code": OTHER_ITEM, "rate": 5, "utility_service_request": self.u1.name}], "2027-03-10")
@@ -401,8 +391,7 @@ class TestFormApi(LineRequestCase):
 		self.assertFalse(result["header_path"])
 		first, second = result["rows"]["new-line-0"], result["rows"]["new-line-1"]
 		self.assertEqual((first.status, first.service_request, first.role), ("resolved", self.u1.name, "primary"))
-		self.assertEqual(second.status, "pick_property")
-		self.assertIn("Pick the property on this line", second.message)
+		self.assertEqual((second.status, second.service_request, second.message), ("ordinary", None, None))
 
 	def test_an_auto_repeat_draft_keeps_its_header_in_the_form(self):
 		invoice = make_invoice([{"item_code": P1}], "2027-03-10", header=self.u1.name, auto_repeat="_Test AR")

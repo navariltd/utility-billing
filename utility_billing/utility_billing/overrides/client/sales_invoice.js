@@ -6,12 +6,13 @@
 //
 // Under the Item Price billing approach, utility lines (items flagged
 // `is_utility_item`) are also governed by a Utility Service Request, carried by
-// each line: the request leasing the line's property on its date, or for an
-// item without a property the one request without properties covering the
-// date. Where several qualify the user picks one on the line. The rates follow
-// the line's request - primary lines the Item Price valid on their date,
-// secondary lines the rate on the request row. A rate typed by hand is put back
-// when the field is left. The header request stays read only; only a draft Auto
+// each line: the request leasing the line's property on its date. A service
+// item without a property is an ordinary line, with no request. Where several
+// requests qualify the user picks one on the line. The rates follow
+// the line's request - primary lines the Item Price valid on their date, with
+// no discount or margin, secondary lines start at the rate on the request row
+// and stay editable. A rent rate typed by hand, or a discount or margin on it,
+// is put back when the field is left. The header request stays read only; only a draft Auto
 // Repeat generated from an invoice linked through its header keeps using it. The
 // server enforces all of this again on save; this is UX only.
 
@@ -406,9 +407,10 @@ function set_governed_price(frm, row, rate) {
 
 // Put back a governed rate edited by hand. Returns whether the row is governed.
 //
-// A service line's rate is the user's. A rent line's price list rate is put
-// back; its rate is left to ERPNext. A draft keeping its header request is held
-// to both, as before.
+// A service line's rate is the user's. A rent line is locked to its Item
+// Price: its price list rate and its rate are put back. A discount or margin
+// reaches here too, as ERPNext sets the rate from it. A draft keeping its header
+// request is held to both, as before.
 function revert_governed_rate(frm, cdt, cdn, fieldname) {
 	const row = locals[cdt][cdn];
 	const line = get_governed_line(frm, row);
@@ -416,12 +418,7 @@ function revert_governed_rate(frm, cdt, cdn, fieldname) {
 	if (!line) return false;
 
 	if (!frm.utility_header_path) {
-		if (line.role === "secondary" || fieldname !== "price_list_rate") return true;
-
-		const price = (frm.utility_expected_prices || {})[cdn];
-		if (price === undefined || flt(row.price_list_rate) === flt(price)) return true;
-
-		frappe.model.set_value(cdt, cdn, "price_list_rate", price);
+		if (line.role !== "secondary") put_back_rent_price(frm, row);
 		return true;
 	}
 
@@ -443,6 +440,44 @@ function revert_governed_rate(frm, cdt, cdn, fieldname) {
 	});
 
 	return true;
+}
+
+// Put a rent line back on its Item Price, without discount or margin, quietly:
+// the server refuses any other rate on save, and says why.
+//
+// Every field is set directly, as ERPNext's own handlers do, and never through
+// frappe.model.set_value, so putting back fires no field trigger and cannot
+// call itself again through ERPNext's rate or price list rate handlers. A
+// second call finds the row already on its price and does nothing.
+function put_back_rent_price(frm, row) {
+	const price = (frm.utility_expected_prices || {})[row.name];
+	if (price === undefined) return; // still resolving
+
+	if (is_on_price(row, price)) return;
+
+	Object.assign(row, {
+		price_list_rate: price,
+		rate: price,
+		rate_with_margin: price,
+		discount_percentage: 0,
+		discount_amount: 0,
+		margin_type: "",
+		margin_rate_or_amount: 0,
+	});
+	frm.cscript.calculate_taxes_and_totals();
+	frm.dirty();
+	frm.refresh_field("items");
+}
+
+function is_on_price(row, price) {
+	const same = (fieldname) => flt(row[fieldname], precision(fieldname, row)) === flt(price, precision(fieldname, row));
+	return (
+		same("price_list_rate") &&
+		same("rate") &&
+		!flt(row.discount_percentage) &&
+		!flt(row.discount_amount) &&
+		!flt(row.margin_rate_or_amount)
+	);
 }
 
 // Fill the cost center of a line from its property, unless one was set by hand
