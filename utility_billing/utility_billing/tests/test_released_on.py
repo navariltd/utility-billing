@@ -149,9 +149,14 @@ class TestResolution(ReleasedCase):
 			self.govern("2027-06-01")
 
 	def test_electricity_follows_its_property(self):
-		self.assertEqual(self.govern("2027-05-10", ELECTRICITY, utility_property=P1, rate=200).items[0].rate, 200)
-		with self.assertRaisesRegex(frappe.ValidationError, "leases"):
-			self.govern("2027-06-10", ELECTRICITY, utility_property=P1, rate=200)
+		before = self.govern("2027-05-10", ELECTRICITY, utility_property=P1, rate=200).items[0]
+		self.assertEqual((before.utility_service_request, before.rate), (self.u1.name, 200))
+
+		# After the release no request covers P1: an ordinary line, kept as it is and not refused
+		frappe.clear_messages()  # the fixture's Contract leaves one of its own
+		after = self.govern("2027-06-10", ELECTRICITY, utility_property=P1, rate=200).items[0]
+		self.assertEqual((after.get("utility_service_request"), after.utility_property, after.rate), (None, P1, 200))
+		self.assertFalse(frappe.message_log)
 
 
 class TestRequireContract(ReleasedCase):
