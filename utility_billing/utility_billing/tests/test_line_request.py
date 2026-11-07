@@ -157,23 +157,16 @@ class TestTwoPropertiesListingOneItem(LineRequestCase):
 
 		self.assertEqual((result.status, result.service_request, result.message, result.candidates), ("ordinary", None, None, []))
 
-	def test_the_lease_message_stays_apart_from_the_missing_property_one(self):
-		result = self.resolve("2027-09-10", utility_property=P1)
-
-		self.assertNotIn("has no property", result.message)
-		self.assertIn("No Utility Service Request of", result.message)
-
-	def test_a_property_not_billing_the_item_on_the_date_names_the_one_that_does(self):
+	def test_a_property_not_billing_the_item_on_the_date_keeps_it_without_a_request(self):
 		# P1 is leased by U2 in September, but U2 does not list Electricity
 		result = self.resolve("2027-09-10", utility_property=P1)
 
-		self.assertEqual((result.status, result.property_candidates), ("not_covered", [P2]))
-		self.assertIn(f"can be billed for: <strong>{P2}</strong>", result.message)
+		self.assertEqual((result.status, result.utility_property, result.service_request, result.message), ("unlinked", P1, None, None))
 
-	def test_a_date_no_property_covers_says_so(self):
+	def test_a_date_no_request_covers_keeps_the_property_without_a_request(self):
 		result = self.resolve("2028-03-10", utility_property=P2)
 
-		self.assertIn("No property of", result.message)
+		self.assertEqual((result.status, result.utility_property, result.message), ("unlinked", P2, None))
 
 
 class TestLineFieldVisible(FrappeTestCase):

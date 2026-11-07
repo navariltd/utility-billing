@@ -225,12 +225,13 @@ class TestPropertyAndCostCenter(RatesCase):
 			[(self.u1.name, self.u3.name)],
 		)
 
-	def test_the_cost_center_gives_the_property_when_only_one_has_it(self):
-		invoice = self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_2}])
+	def test_a_cost_center_used_by_one_property_never_gives_the_property(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_2, "rate": 210}])
 
+		row = invoice.items[0]
 		self.assertEqual(
-			(invoice.items[0].utility_property, invoice.items[0].utility_service_request, invoice.items[0].rate),
-			(P2, self.u3.name, 250),
+			(row.get("utility_property"), row.get("utility_service_request"), row.cost_center, row.rate),
+			(None, None, self.center_2, 210),
 		)
 
 	def test_a_cost_center_shared_by_two_properties_gives_none(self):
@@ -317,3 +318,84 @@ class TestServiceLineWithoutProperty(RatesCase):
 	def test_a_rent_line_on_the_same_invoice_is_still_locked(self):
 		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
 			self.insert([{"item_code": ELECTRICITY, "rate": 210}, {"item_code": P1, "rate": 800}])
+
+
+class TestServiceLineRules(RatesCase):
+	"""The agreed rules for service lines (1 to 6) and rent lines (7), on saved invoices.
+
+	P1 is leased by U1 (listing Electricity at 200) to June 2027, then by U2
+	(no Electricity); P2 by U3 (Electricity at 250) all 2027.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		company = fx.company()
+		self.company_center = frappe.get_cached_value("Company", company, "cost_center")
+		self.center_1 = factories.ensure_cost_center("_Test Line Rule Center 1", company)
+		self.center_2 = factories.ensure_cost_center("_Test Line Rule Center 2", company)
+		self.center_hand = factories.ensure_cost_center("_Test Line Rule Center Hand", company)
+		frappe.db.set_value("Utility Property", P1, "cost_center", self.center_1)
+		frappe.db.set_value("Utility Property", P2, "cost_center", self.center_2)
+		frappe.db.sql(
+			"update `tabUtility Service Request Item` set cost_center=null where parent in %s",
+			[(self.u1.name, self.u3.name)],
+		)
+
+	def line(self, invoice):
+		row = invoice.items[0]
+		return (row.get("utility_property"), row.get("utility_service_request"), row.cost_center, row.rate)
+
+	def test_rule_1_a_cost_center_is_kept_and_gives_no_property(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_2, "rate": 210}])
+
+		self.assertEqual(self.line(invoice), (None, None, self.center_2, 210))
+
+	def test_rule_2_the_property_gives_its_cost_center_unless_one_was_set_by_hand(self):
+		filled = self.insert([{"item_code": ELECTRICITY, "utility_property": P2}])
+		by_hand = self.insert([{"item_code": ELECTRICITY, "utility_property": P2, "cost_center": self.center_hand}])
+		# Also for a property no request covers on the date
+		unlinked = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "rate": 90}], "2027-09-10", due_date="2027-09-30")
+
+		self.assertEqual(filled.items[0].cost_center, self.center_2)
+		self.assertEqual(by_hand.items[0].cost_center, self.center_hand)
+		self.assertEqual(unlinked.items[0].cost_center, self.center_1)
+
+	def test_rule_3_a_covered_property_links_its_request_and_prefills_only_a_missing_rate(self):
+		prefilled = self.insert([{"item_code": ELECTRICITY, "utility_property": P1}])
+		typed = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "rate": 260}])
+
+		self.assertEqual(self.line(prefilled), (P1, self.u1.name, self.center_1, 200))
+		self.assertEqual(self.line(typed), (P1, self.u1.name, self.center_1, 260))
+
+	def test_rule_4_a_property_no_request_covers_is_kept_without_a_request(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "rate": 90}], "2027-09-10", due_date="2027-09-30")
+
+		self.assertEqual(self.line(invoice), (P1, None, self.center_1, 90))
+
+	def test_rule_5_a_blank_property_is_an_ordinary_line(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "rate": 75}])
+
+		self.assertEqual(self.line(invoice), (None, None, self.company_center, 75))
+
+	def test_rule_6_a_typed_rate_or_discount_survives_a_new_property_or_date(self):
+		invoice = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "rate": 260}])
+		discounted = self.insert([{"item_code": ELECTRICITY, "utility_property": P1, "price_list_rate": 200, "discount_percentage": 10}])
+
+		invoice.items[0].utility_property = P2
+		invoice.items[0].custom_posting_date = "2027-04-01"
+		invoice.save(ignore_permissions=True)
+		discounted.items[0].utility_property = P2
+		discounted.save(ignore_permissions=True)
+
+		self.assertEqual(self.line(invoice), (P2, self.u3.name, self.center_1, 260))
+		self.assertEqual((discounted.items[0].discount_percentage, discounted.items[0].rate), (10, 180))
+		self.assert_consistent(discounted, 180, 180)
+
+	def test_rule_7_rent_stays_strict(self):
+		with self.assertRaisesRegex(frappe.ValidationError, "is rent and bills"):
+			self.insert([{"item_code": P1, "rate": 800}])
+
+		# A rent item shared by several properties still asks for the property
+		frappe.db.set_value("Utility Property", P2, "service_item", P1)
+		with self.assertRaisesRegex(frappe.ValidationError, "Pick the property on this line"):
+			self.insert([{"item_code": P1}])

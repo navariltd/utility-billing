@@ -35,8 +35,8 @@ var UTILITY_API = "utility_billing.api.sales_invoice";
 // starts with Frappe's default cost center (the company's) and no property: a rent
 // line takes its property from its item, a service line waits for the user to
 // pick it, and its cost center then follows the property. A copied cost center
-// would otherwise pass for one set by hand, and give the line its property on
-// save. The first row copy goes through the form's own copy_from_first_row, and
+// would otherwise pass for one set by hand. A property never follows a cost
+// center. The first row copy goes through the form's own copy_from_first_row, and
 // the row to row copy through copy_value_in_all_rows, so both are filtered there.
 // A cost center set on the invoice header still applies to every row, and a
 // draft keeping its header request, like every Auto Repeat site, copies as before.
@@ -138,10 +138,6 @@ frappe.ui.form.on("Sales Invoice Item", {
 	utility_property: function (frm, cdt, cdn) {
 		set_item_of_property(frm, cdt, cdn);
 		govern_utility_lines(frm, cdn);
-	},
-
-	cost_center: function (frm, cdt, cdn) {
-		set_property_of_cost_center(frm, cdt, cdn);
 	},
 
 	utility_service_request: function (frm, cdt, cdn) {
@@ -330,8 +326,8 @@ function get_governed_line(frm, row) {
 // Set the rate of a governed row. Returns whether the row is governed.
 //
 // A rent line takes its request's Item Price as its price list rate, and ERPNext
-// derives its rate from it. A service line is prefilled with its
-// request row's rate while the user has not changed it, and stays editable.
+// derives its rate from it. A service line without a rate yet takes its
+// request row's rate; any rate it has, typed or prefilled, is kept.
 // A draft keeping its header request is held to both rates, as before.
 function enforce_governed_rate(frm, cdt, cdn) {
 	const row = locals[cdt][cdn];
@@ -342,8 +338,7 @@ function enforce_governed_rate(frm, cdt, cdn) {
 	if (line.role === "secondary") {
 		if (frm.utility_header_path) {
 			set_governed_rate(frm, row, flt(line.rate));
-		} else if (!flt(row.rate) || flt(row.rate) === flt(row.__prefilled_rate)) {
-			row.__prefilled_rate = flt(line.rate);
+		} else if (!flt(row.rate) && !flt(row.price_list_rate)) {
 			frappe.model.set_value(row.doctype, row.name, { price_list_rate: flt(line.rate), rate: flt(line.rate) });
 		}
 		return true;
@@ -502,26 +497,6 @@ function set_cost_center_of_property(frm, cdt, cdn) {
 	});
 }
 
-// Fill the property of a utility line from its cost center, when exactly one
-// property uses that cost center.
-function set_property_of_cost_center(frm, cdt, cdn) {
-	const row = locals[cdt][cdn];
-	const entry = (frm.utility_line_results || {})[cdn];
-	if (frm.doc.docstatus !== 0 || !row.cost_center || row.utility_property || !entry || entry.rent_item) return;
-	if (row.cost_center === row.__filled_cost_center) return;
-
-	frappe.call({
-		method: `${UTILITY_API}.get_property_of_cost_center`,
-		args: { cost_center: row.cost_center },
-		callback: function (r) {
-			const current = locals[cdt][cdn];
-			if (r.message && current && !current.utility_property) {
-				frappe.model.set_value(cdt, cdn, "utility_property", r.message);
-			}
-		},
-	});
-}
-
 // Fill the property billed by the selected item, when the item is the service
 // item of a property.
 function set_property_of_item(frm, cdt, cdn) {
@@ -589,6 +564,20 @@ function apply_rate_of_deferred_date(frm, cdt, cdn, force) {
 	if (!force && resolved_line_rates[key] === flt(row.price_list_rate)) {
 		return; // the rate of the deferred posting date is already applied
 	}
+
+	// Under Item Price a utility line is not priced by its date here: a rent line
+	// follows its request's schedule, and a service line keeps the user's rate.
+	is_item_price_approach()
+		.then((item_price) => item_price && frappe.db.get_value("Item", row.item_code, "is_utility_item"))
+		.then((r) => {
+			if (r && r.message && cint(r.message.is_utility_item)) return;
+			if (!locals[cdt][cdn] || locals[cdt][cdn].item_code !== row.item_code) return;
+			fetch_rate_of_deferred_date(frm, cdt, cdn, key);
+		});
+}
+
+function fetch_rate_of_deferred_date(frm, cdt, cdn, key) {
+	const row = locals[cdt][cdn];
 
 	frappe.call({
 		method: "utility_billing.api.sales_invoice.get_line_rate",
