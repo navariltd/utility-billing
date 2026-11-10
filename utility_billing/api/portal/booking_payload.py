@@ -14,6 +14,8 @@ from frappe.utils import cint, flt, sanitize_html, strip_html
 
 from utility_billing.api.portal.properties import PROPERTY_FIELDS
 from utility_billing.api.portal.roles import get_portal_customers
+from utility_billing.utility_billing.utils.line_request import invoice_requests
+from utility_billing.utility_billing.utils.release import contract_releases
 from utility_billing.utility_billing.utils.lease_status import (
 	derive_allocation_status,
 	derive_lease_status,
@@ -76,16 +78,18 @@ def get_request_documents(request_names: Iterable[str], customer_names: Iterable
 	if not names or not customers:
 		return {}
 
+	# Through each line's request, else the header's; an invoice billing two
+	# requests is listed under both
+	pairs = invoice_requests(names)
 	invoices = frappe.db.get_all(
 		"Sales Invoice",
 		filters={
-			"utility_service_request": ("in", names),
+			"name": ("in", sorted({invoice for invoice, _request in pairs}) or [""]),
 			"customer": ("in", customers),
 			"docstatus": 1,
 		},
 		fields=[
 			"name",
-			"utility_service_request",
 			"posting_date",
 			"due_date",
 			"grand_total",
@@ -117,9 +121,12 @@ def get_request_documents(request_names: Iterable[str], customer_names: Iterable
 	)
 
 	documents: dict[str, dict] = {name: {"invoices": [], "orders": []} for name in names}
+	by_name = {invoice.name: invoice for invoice in invoices}
 	for invoice in invoices:
 		invoice["payable"] = flt(invoice.outstanding_amount) > 0
-		documents[invoice.utility_service_request]["invoices"].append(invoice)
+	for name, request in pairs:
+		if name in by_name:
+			documents[request]["invoices"].append(frappe._dict(by_name[name], utility_service_request=request))
 
 	for order in orders:
 		payable = max(flt(order.grand_total) - flt(order.advance_paid), 0)
@@ -154,10 +161,13 @@ def serialise_request(
 	properties = properties or {}
 	documents = documents or {"invoices": [], "orders": []}
 	has_contract = bool(contract)
+	# A request row stays active when its Contract releases it: read the release there
+	releases = contract_releases([data.get("name")])
 
 	rows = []
 	for row in data.get("requested_properties") or []:
 		property_doc = properties.get(row.get("utility_property")) or {}
+		key = (data.get("name"), row.get("utility_property"))
 		rows.append(
 			{
 				"utility_property": row.get("utility_property"),
@@ -170,7 +180,10 @@ def serialise_request(
 					row.get("is_active"),
 					row.get("start_date") or data.get("start_date"),
 					row.get("end_date") or data.get("end_date"),
+					released=key in releases,
+					released_on=releases.get(key),
 				),
+				**({"released_on": releases[key]} if releases.get(key) else {}),
 				"cover_image": property_doc.get("cover_image"),
 				"unit_number": property_doc.get("unit_number"),
 				"location": property_doc.get("location") or property_doc.get("territory"),

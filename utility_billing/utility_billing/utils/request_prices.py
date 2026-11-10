@@ -350,6 +350,8 @@ def validate_lease_move(service_request, before) -> None:
 	if moved:
 		validate_unshared_service_items(service_request, moved)
 
+	from utility_billing.utility_billing.utils.line_request import request_of_line
+
 	invoice = frappe.qb.DocType("Sales Invoice")
 	line = frappe.qb.DocType("Sales Invoice Item")
 
@@ -364,7 +366,8 @@ def validate_lease_move(service_request, before) -> None:
 			.on(line.parent == invoice.name)
 			.select(invoice.name, line.custom_posting_date, invoice.posting_date)
 			.where(invoice.docstatus == 1)
-			.where(invoice.utility_service_request == service_request.name)
+			# The line's own request, else its invoice's (an invoice from before lines had one)
+			.where(request_of_line(line, invoice) == service_request.name)
 			.where(line.item_code == item_code)
 		).run(as_dict=True)
 

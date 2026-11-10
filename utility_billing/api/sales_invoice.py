@@ -5,9 +5,17 @@ Deferred Posting Date and with the utility property its item belongs to.
 """
 
 import frappe
+from frappe.utils import flt
 
 from utility_billing.utility_billing.utils.item_price_scope import is_item_price_approach
 from utility_billing.utility_billing.utils.item_rate import get_rate_for_date
+from utility_billing.utility_billing.utils.line_request import (
+	REQUEST_FIELD,
+	get_governed_rows,
+	move_header_to_lines,
+	resolve_lines,
+	uses_header_path,
+)
 from utility_billing.utility_billing.utils.service_item import (
 	get_property_of_service_item,
 	get_service_item_of_property,
@@ -52,8 +60,9 @@ def get_line_rate(
 			Price approach its primary items are priced from its own prices only.
 
 	Returns:
-		The rate in the currency of the transaction, or None when no Item Price
-		covers the item, the customer and the date.
+		The rate in the currency of the transaction, rounded to the line's
+		precision, or None when no Item Price covers the item, the customer and
+		the date.
 	"""
 	service_request = (
 		utility_service_request
@@ -63,7 +72,7 @@ def get_line_rate(
 		else None
 	)
 
-	return get_rate_for_date(
+	rate = get_rate_for_date(
 		item_code,
 		posting_date,
 		customer=customer,
@@ -75,6 +84,13 @@ def get_line_rate(
 		conversion_rate=conversion_rate or 1,
 		service_request=service_request,
 	)
+	if rate is None:
+		return None
+
+	# Rounded as the line stores it: a currency conversion leaves float noise
+	# (205500.00000000003), which the form would take for another price and set
+	# on a saved draft, leaving it unsaved.
+	return flt(rate, frappe.get_precision("Sales Invoice Item", "price_list_rate"))
 
 
 @frappe.whitelist()
@@ -170,3 +186,100 @@ def get_utility_service_request_lines(utility_service_request: str) -> list[dict
 	)
 
 	return list(get_request_lines(utility_service_request).values())
+
+
+@frappe.whitelist()
+def resolve_invoice_lines(doc: dict | str) -> dict:
+	"""Return the Utility Service Request of each utility line of an invoice in the form.
+
+	Resolves the lines the way saving the invoice does (see ``line_request``),
+	without saving or raising, so the form can fill each line's request, let
+	the user pick one where several qualify, and show why a line has none.
+
+	Args:
+		doc: The Sales Invoice as it is in the form.
+
+	Returns:
+		``applies`` (False when rates are not billed by Item Price or the
+		invoice is not a draft), ``header_path`` (True for a draft Auto Repeat
+		generated from an invoice linked through its header) and ``rows``: per
+		line name, its ``status``, ``service_request``, ``utility_property``,
+		``candidates``, ``editable``, ``message`` and, once resolved, the
+		``role`` and request ``rate`` of its item.
+	"""
+	if not is_item_price_approach():
+		return {"applies": False}
+
+	frappe.has_permission("Utility Service Request", "read", throw=True)
+
+	doc = frappe.get_doc(frappe.parse_json(doc) if isinstance(doc, str) else doc)
+	if doc.doctype != "Sales Invoice" or doc.docstatus != 0 or doc.get("is_return") or not doc.customer:
+		return {"applies": False}
+
+	rows = get_governed_rows(doc)
+	if uses_header_path(doc):
+		lines = get_request_lines(doc.get(REQUEST_FIELD))
+		return {
+			"applies": True,
+			"header_path": True,
+			"rows": {
+				row.name: {"status": "resolved", "service_request": doc.get(REQUEST_FIELD), **lines[row.item_code]}
+				for row in rows
+				if row.item_code in lines
+			},
+		}
+
+	move_header_to_lines(doc, rows)
+	results = resolve_lines(doc, rows)
+	request_lines = {}
+	out = {}
+	for row in rows:
+		entry = results[row.name or str(row.idx)]
+		if entry.service_request:
+			if entry.service_request not in request_lines:
+				request_lines[entry.service_request] = get_request_lines(entry.service_request)
+			line = request_lines[entry.service_request].get(row.item_code)
+			if line:
+				entry.update(role=line.role, rate=line.rate)
+		out[row.name] = entry
+
+	return {"applies": True, "header_path": False, "rows": out}
+
+
+@frappe.whitelist()
+def get_request_invoices(utility_service_request: str) -> list[dict]:
+	"""Return the Sales Invoices of a Utility Service Request, found through their header or their lines.
+
+	Connections only follow the header while the header field exists, so
+	invoices linked through their lines are listed here.
+
+	Args:
+		utility_service_request: ``Utility Service Request`` name.
+
+	Returns:
+		The invoices the user can read, newest first, at most 100.
+	"""
+	frappe.has_permission("Utility Service Request", "read", doc=utility_service_request, throw=True)
+	if not frappe.has_permission("Sales Invoice", "read"):
+		return []
+
+	names = frappe.db.sql_list(
+		"""
+		select distinct invoice.name
+		from `tabSales Invoice` invoice
+		join `tabSales Invoice Item` line
+			on line.parent = invoice.name and line.parenttype = 'Sales Invoice'
+		where coalesce(nullif(line.utility_service_request, ''), invoice.utility_service_request) = %(request)s
+		""",
+		{"request": utility_service_request},
+	)
+	if not names:
+		return []
+
+	return frappe.get_list(
+		"Sales Invoice",
+		filters={"name": ("in", names)},
+		fields=["name", "status", "docstatus", "posting_date", "grand_total", "outstanding_amount", "currency"],
+		order_by="posting_date desc, name desc",
+		limit_page_length=100,
+	)

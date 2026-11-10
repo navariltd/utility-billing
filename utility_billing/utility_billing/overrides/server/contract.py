@@ -7,6 +7,7 @@ from utility_billing.utility_billing.utils.contract_status import (
     released_property_status,
     set_inactive_when_released,
 )
+from utility_billing.utility_billing.utils.release import check_released_on
 from utility_billing.utility_billing.utils.request_prices import is_item_price_approach
 
 ROW_DOCTYPE = "Contract Utility Property Item"
@@ -31,12 +32,18 @@ FLOAT_FIELDS = {"contract_length_months"}
 def validate(doc: Document, method: str) -> None:
     if doc.is_new():
         check_new_contract(doc)
+        check_released_on(doc)
     else:
-        check_rows_unchanged(doc, get_saved_contract(doc))
+        saved = get_saved_contract(doc)
+        check_rows_unchanged(doc, saved)
+        check_released_on(doc, saved)
 
 
 def before_update_after_submit(doc: Document, method: str) -> None:
-    check_rows_unchanged(doc, get_saved_contract(doc))
+    saved = get_saved_contract(doc)
+    check_rows_unchanged(doc, saved)
+    # Released On is the one row field still editable, on a released row only
+    check_released_on(doc, saved)
     # After ERPNext's own hook, which sets the status from the dates
     set_inactive_when_released(doc)
 
@@ -80,20 +87,15 @@ def check_rows_unchanged(doc, saved) -> None:
     """Block adding, removing or editing what was copied from the request.
 
     That is the properties and, on a Contract linked to a request, its start
-    and end dates. Compared with the saved Contract, not the request: a request
-    edited after its Contract was made leaves the Contract as it is, and the
-    mismatch is caught when invoicing.
-
-    A Contract updated by its request (see ``contract_sync``) carries the server
-    only ``from_service_request`` flag and is not checked: that is the one way
-    its dates and rows change.
+    and end dates. Compared with the saved Contract, not the request. Under Item
+    Price the request is locked too while it has a Contract (see
+    ``request_contract_lock``), so the two stay the same; under Auto Repeat a
+    request edited after its Contract was made leaves the Contract as it is, and
+    the mismatch is caught when invoicing.
 
     Raises:
         frappe.ValidationError: Naming the request link, date, row or field changed.
     """
-    if doc.flags.from_service_request:
-        return
-
     if (doc.get("utility_service_request") or None) != (saved.get("utility_service_request") or None):
         frappe.throw(_("The Utility Service Request of a Contract cannot be changed."))
 

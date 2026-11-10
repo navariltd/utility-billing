@@ -11,15 +11,13 @@ frappe.ui.form.on("Utility Service Request", {
 		frm.toggle_display("address_html", !frm.is_new());
 		frm.toggle_display("contact_html", !frm.is_new());
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
-		// Consent to update the Contract covers one save only
-		delete frm.doc.__update_contract;
-		wrap_save_for_contract_update(frm);
 
 		set_dynamic_field_label(frm);
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
 			load_item_price_summary(frm);
+			load_request_invoices(frm);
 			frappe.call({
 				method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.update_request_status",
 				args: {
@@ -2571,62 +2569,47 @@ function make_dialog_wide(dialog, width = "92vw") {
 }
 
 /**
- * Ask before an Update that would change the request's Contracts.
- *
- * Frappe runs no client validation on Update, so the form's save is wrapped.
- * The server lists the Contracts the change would update (Item Price only).
- * With consent the save carries ``__update_contract`` and the server updates
- * them; without it nothing is saved. The server refuses such a change on its
- * own as well, so API calls and imports are covered too.
+ * List the Sales Invoices of the request, found through their header or their
+ * lines. Connections only follow the header while that field exists, so an
+ * invoice carrying the request on its lines shows here only. The dashboard
+ * clears the section on every refresh.
  */
-function wrap_save_for_contract_update(frm) {
-	if (frm._contract_save_wrapped) return;
-	frm._contract_save_wrapped = true;
+function load_request_invoices(frm) {
+	frappe.call({
+		method: "utility_billing.api.sales_invoice.get_request_invoices",
+		args: { utility_service_request: frm.doc.name },
+		callback: function (r) {
+			const invoices = r.message || [];
+			if (!invoices.length) return;
 
-	const save = frm.save.bind(frm);
+			const rows = invoices
+				.map((invoice) => {
+					const link = `<a href="/app/sales-invoice/${encodeURIComponent(invoice.name)}">${frappe.utils.escape_html(invoice.name)}</a>`;
+					return `<tr>
+						<td>${link}</td>
+						<td>${frappe.datetime.str_to_user(invoice.posting_date)}</td>
+						<td>${frappe.utils.escape_html(__(invoice.status))}</td>
+						<td class="text-right">${format_currency(invoice.grand_total, invoice.currency)}</td>
+						<td class="text-right">${format_currency(invoice.outstanding_amount, invoice.currency)}</td>
+					</tr>`;
+				})
+				.join("");
 
-	frm.save = function (save_action, ...args) {
-		if (save_action !== "Update" || frm.doc.docstatus !== 1 || frm.doc.__update_contract) {
-			return save(save_action, ...args);
-		}
-
-		return frappe
-			.call({
-				method: "utility_billing.utility_billing.utils.contract_sync.get_contracts_to_update",
-				args: { doc: frm.doc },
-			})
-			.then((response) => {
-				const contracts = response.message || [];
-				if (!contracts.length) return save(save_action, ...args);
-
-				return new Promise((resolve) => {
-					frappe.confirm(
-						__(
-							"This change also applies to Contract {0}. Update the Contract to match?",
-							[contracts.join(", ")],
-						),
-						() => {
-							frm.doc.__update_contract = 1;
-							save(save_action, ...args).finally(() => {
-								delete frm.doc.__update_contract;
-								resolve();
-							});
-						},
-						() => {
-							frappe.msgprint({
-								title: __("Not saved"),
-								message: __(
-									"The change was not saved, because Contract {0} has to follow the request.",
-									[contracts.join(", ")],
-								),
-								indicator: "orange",
-							});
-							resolve();
-						},
-					);
-				});
-			});
-	};
+			frm.dashboard.add_section(
+				`<table class="table table-condensed table-bordered small">
+					<thead><tr>
+						<th>${__("Sales Invoice")}</th>
+						<th>${__("Posting Date")}</th>
+						<th>${__("Status")}</th>
+						<th class="text-right">${__("Grand Total")}</th>
+						<th class="text-right">${__("Outstanding")}</th>
+					</tr></thead>
+					<tbody>${rows}</tbody>
+				</table>`,
+				__("Sales Invoices (header or lines)"),
+			);
+		},
+	});
 }
 
 function showItemPriceScheduleModal(frm) {

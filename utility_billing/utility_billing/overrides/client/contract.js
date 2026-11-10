@@ -29,6 +29,23 @@ frappe.ui.form.on("Contract Utility Property Item", {
 		if (frm.doc.docstatus === 1 && !row.__islocal && row.is_active) {
 			frappe.msgprint("You cannot activate a property once the contract is submitted.");
 			frappe.model.set_value(cdt, cdn, "is_active", 0);
+			return;
+		}
+
+		if (row.is_active && row.released_on) {
+			frappe.model.set_value(cdt, cdn, "released_on", null);
+			return;
+		}
+
+		// The last day the property was held, under Item Price; the server keeps it within the lease
+		if (!row.is_active && !row.released_on) {
+			frappe.db
+				.get_single_value("Utility Billing Settings", "rent_billing_approach")
+				.then((approach) => {
+					if (approach === "Item Price" && !locals[cdt][cdn].is_active) {
+						frappe.model.set_value(cdt, cdn, "released_on", frappe.datetime.get_today());
+					}
+				});
 		}
 	},
 

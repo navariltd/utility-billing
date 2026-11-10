@@ -120,11 +120,17 @@ def make_contract(service_request: str, signed: bool = True, submit: bool = True
 	return contract
 
 
-def release_rows(contract, *indexes) -> None:
-	"""Untick the given property rows of a submitted Contract and save it."""
+def release_rows(contract, *indexes, released_on=None) -> None:
+	"""Untick the given property rows of a submitted Contract and save it.
+
+	Args:
+		released_on: Released On of the rows; left blank, the save fills it.
+	"""
 	contract.reload()
 	for index in indexes:
 		contract.properties[index].is_active = 0
+		if released_on:
+			contract.properties[index].released_on = released_on
 	contract.save(ignore_permissions=True)
 	contract.reload()
 
