@@ -1493,6 +1493,23 @@ async function addActionButtons(frm) {
 		frm.add_custom_button(
 			__("BOM"),
 			async function () {
+				// Only the submitted, active default BOM of each item on the request can be versioned.
+				const itemCodes = [
+					...new Set((frm.doc.items || []).map((row) => row.item_code).filter(Boolean)),
+				];
+				const defaultFilters = {
+					item: ["in", itemCodes],
+					docstatus: 1,
+					is_active: 1,
+					is_default: 1,
+				};
+				const defaults = itemCodes.length
+					? await frappe.db.get_list("BOM", { filters: defaultFilters, fields: ["item"] })
+					: [];
+				const withoutDefault = itemCodes.filter(
+					(code) => !defaults.some((bom) => bom.item === code),
+				);
+
 				const dialog = new frappe.ui.Dialog({
 					title: __("Select or Create BOM"),
 					fields: [
@@ -1501,6 +1518,12 @@ async function addActionButtons(frm) {
 							label: __("Select BOM"),
 							fieldtype: "Link",
 							options: "BOM",
+							description: withoutDefault.length
+								? __("No default BOM for: {0}. Use New BOM for these items.", [
+										withoutDefault.join(", "),
+									])
+								: "",
+							get_query: () => ({ filters: defaultFilters }),
 						},
 					],
 					primary_action_label: __("New BOM"),
@@ -1519,13 +1542,12 @@ async function addActionButtons(frm) {
 									method: "utility_billing.utility_billing.doctype.utility_service_request.utility_service_request.bom_new_version",
 									args: {
 										bom: selected_bom,
+										docname: frm.doc.name,
 									},
 								});
 
 								if (response && response.message) {
-									const new_bom = response.message;
-									new_bom.utility_service_request = frm.doc.name;
-									const doc = await frappe.db.insert(new_bom);
+									const doc = await frappe.db.insert(response.message);
 									frappe.set_route("Form", "BOM", doc.name);
 								}
 							} catch (err) {
