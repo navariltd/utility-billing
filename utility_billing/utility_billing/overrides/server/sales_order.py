@@ -3,6 +3,9 @@ from datetime import datetime
 
 import frappe
 from erpnext.accounts.party import get_party_account
+from erpnext.selling.doctype.sales_order.sales_order import (
+	get_work_order_items as erpnext_get_work_order_items,
+)
 from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 from erpnext.stock.doctype.item.item import get_item_defaults
 from frappe import _
@@ -11,6 +14,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.utils import flt, today
 from frappe.model.document import Document
+from ...utils.bom import set_request_boms
 from ...utils.utils import (
 	sync_meter_readings,
 )
@@ -18,6 +22,34 @@ from ...utils.utils import (
 
 def validate(doc: Document, method: str) -> None:
 	sync_meter_readings(doc)
+	# Auto Repeat copies keep their current behaviour and get no BOM refresh.
+	if doc.get("utility_service_request") and not doc.get("auto_repeat"):
+		set_request_boms(doc, doc.utility_service_request)
+
+
+@frappe.whitelist()
+def get_work_order_items(sales_order, for_raw_material_request=0):
+	"""ERPNext's Work Order proposal, with each row's own BOM in place of the item default.
+
+	Registered in ``override_whitelisted_methods``. A row's BOM is used only while it is
+	submitted, active and for the row's item; otherwise ERPNext's proposal stays.
+	"""
+	items = erpnext_get_work_order_items(sales_order, for_raw_material_request)
+	row_boms = dict(
+		frappe.get_all(
+			"Sales Order Item",
+			filters={"parent": sales_order, "parenttype": "Sales Order"},
+			fields=["name", "bom_no"],
+			as_list=True,
+		)
+	)
+	for item in items:
+		bom = row_boms.get(item.get("sales_order_item"))
+		if bom and frappe.db.exists(
+			"BOM", {"name": bom, "item": item["item_code"], "docstatus": 1, "is_active": 1}
+		):
+			item["bom"] = bom
+	return items
 
 
 def create_log(

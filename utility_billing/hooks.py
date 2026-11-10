@@ -65,6 +65,7 @@ doctype_js = {
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
 	"Sales Invoice": "utility_billing/overrides/client/sales_invoice.js",
 	"Warranty Claim": "utility_billing/overrides/client/warranty_claim.js",
+	"BOM": "utility_billing/overrides/client/bom.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
@@ -222,6 +223,10 @@ doc_events = {
 	"Item": {
 		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
 	},
+	"BOM": {
+		"before_insert": ["utility_billing.utility_billing.overrides.server.bom.before_insert"],
+		"validate": ["utility_billing.utility_billing.overrides.server.bom.validate"],
+	},
 }
 
 # Scheduled Tasks
@@ -258,9 +263,11 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "utility_billing.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.selling.doctype.sales_order.sales_order.get_work_order_items": (
+		"utility_billing.utility_billing.overrides.server.sales_order.get_work_order_items"
+	),
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

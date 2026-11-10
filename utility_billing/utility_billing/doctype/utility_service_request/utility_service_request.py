@@ -11,6 +11,7 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
+from utility_billing.utility_billing.utils.bom import set_request_boms
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
@@ -27,6 +28,7 @@ class UtilityServiceRequest(Document):
 		self.validate_contract_dates()
 		self.validate_child_items()
 		ensure_service_items_for_properties(self)
+		set_request_boms(self, self.name)
 
 	def before_update_after_submit(self):
 		# Re-run validation logic when updating after submission
@@ -493,9 +495,30 @@ def get_item_details(item_code, price_list=None):
 
 
 @frappe.whitelist()
-def bom_new_version(bom):
-	bom = frappe.get_doc("BOM", bom)
-	return frappe.copy_doc(bom)
+def bom_new_version(bom, docname=None):
+	"""Copy the item's default BOM as a new draft version for a request.
+
+	The copy is not the default, so submitting it leaves the item's default BOM
+	alone and the request keeps its own BOM.
+	"""
+	source = frappe.get_doc("BOM", bom)
+	if not (source.docstatus == 1 and source.is_active and source.is_default):
+		frappe.throw(_("{0} is not the submitted, active default BOM of {1}.").format(bom, source.item))
+
+	if docname:
+		item_codes = frappe.get_all(
+			"Utility Service Request Item",
+			filters={"parent": docname, "parenttype": "Utility Service Request"},
+			pluck="item_code",
+		)
+		if source.item not in item_codes:
+			frappe.throw(_("{0} is not an item on {1}.").format(source.item, docname))
+
+	new_bom = frappe.copy_doc(source)
+	new_bom.docstatus = 0
+	new_bom.is_default = 0
+	new_bom.utility_service_request = docname
+	return new_bom
 
 
 def create_warranty_claim(customer_doc, serial_number, item_code):
