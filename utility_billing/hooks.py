@@ -65,6 +65,7 @@ doctype_js = {
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat.js",
 	"Sales Invoice": "utility_billing/overrides/client/sales_invoice.js",
 	"Warranty Claim": "utility_billing/overrides/client/warranty_claim.js",
+	"BOM": "utility_billing/overrides/client/bom.js",
 }
 # doctype_js = {"Customer": "utility_billing/overrides/client/customer.js"}
 doctype_list_js = {
@@ -221,6 +222,10 @@ doc_events = {
 	},
 	"Item": {
 		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
+	},
+	"BOM": {
+		"before_insert": ["utility_billing.utility_billing.overrides.server.bom.before_insert"],
+		"validate": ["utility_billing.utility_billing.overrides.server.bom.validate"],
 	},
 }
 

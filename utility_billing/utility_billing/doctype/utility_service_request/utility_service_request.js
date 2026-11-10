@@ -1525,13 +1525,28 @@ async function addActionButtons(frm) {
 								: "",
 							get_query: () => ({ filters: defaultFilters }),
 						},
+						{
+							fieldname: "new_bom_item",
+							label: __("Item for New BOM"),
+							fieldtype: "Select",
+							options: itemCodes,
+							default: itemCodes[0],
+						},
 					],
 					primary_action_label: __("New BOM"),
 					primary_action: function () {
-						const new_bom = frappe.model.get_new_doc("BOM");
-						new_bom.utility_service_request = frm.doc.name;
+						const item = dialog.get_value("new_bom_item");
+						if (!item) {
+							frappe.msgprint(__("Add an item to the request before creating a BOM."));
+							return;
+						}
 
-						frappe.set_route("Form", "BOM", new_bom.name);
+						// The server unticks Is Default on insert for BOMs linked to a request.
+						dialog.hide();
+						frappe.new_doc("BOM", {
+							item: item,
+							utility_service_request: frm.doc.name,
+						});
 					},
 					secondary_action_label: __("New Version"),
 					secondary_action: async function () {
