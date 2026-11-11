@@ -220,10 +220,8 @@ class TestCostCenters(LineRequestCase):
 		frappe.db.set_value("Utility Property", P1, "cost_center", self.center_1)
 		frappe.db.set_value("Utility Property", P2, "cost_center", self.center_2)
 		# The requests were made before: clear their rows' cost centers, so the property's apply
-		frappe.db.sql(
-			"update `tabUtility Service Request Item` set cost_center=null where parent in %s",
-			[(self.u1.name, self.u3.name)],
-		)
+		row = frappe.qb.DocType("Utility Service Request Item")
+		frappe.qb.update(row).set(row.cost_center, None).where(row.parent.isin((self.u1.name, self.u3.name))).run()
 
 	def test_lines_of_two_requests_take_their_own_property_cost_center(self):
 		invoice = make_invoice([{"item_code": P1}, {"item_code": P2}, {"item_code": ELECTRICITY, "utility_property": P2, "rate": 250}], "2027-03-10")
@@ -267,10 +265,8 @@ class TestDailyJob(LineRequestCase):
 			self.u1.requested_properties[0].name,
 			{"enable_auto_billing": 1, "billing_date_type": "First Day of Month"},
 		)
-		frappe.db.sql(
-			"update `tabUtility Service Request Item` set utility_property=%s where parent=%s and item_code=%s",
-			(P1, self.u1.name, P1),
-		)
+		row = frappe.qb.DocType("Utility Service Request Item")
+		frappe.qb.update(row).set(row.utility_property, P1).where(row.parent == self.u1.name).where(row.item_code == P1).run()
 
 	def test_the_draft_carries_the_request_on_its_line(self):
 		with captured_inserts("Sales Invoice") as inserted, patch.object(auto_repeat, "today", return_value="2027-03-01"):

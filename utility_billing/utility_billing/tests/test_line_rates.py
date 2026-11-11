@@ -17,6 +17,7 @@ import tempfile
 
 import frappe
 from frappe.core.doctype.data_import.importer import Importer
+from frappe.query_builder.functions import Sum
 
 from utility_billing.api.sales_invoice import get_line_rate
 from utility_billing.utility_billing.overrides.server import sales_invoice
@@ -76,7 +77,8 @@ class TestRentRate(RatesCase):
 		invoice.submit()
 
 		self.assert_consistent(invoice, 1000, 1000)
-		debit = frappe.db.sql("select sum(debit) from `tabGL Entry` where voucher_no=%s and is_cancelled=0", invoice.name)[0][0]
+		gle = frappe.qb.DocType("GL Entry")
+		debit = frappe.qb.from_(gle).select(Sum(gle.debit)).where(gle.voucher_no == invoice.name).where(gle.is_cancelled == 0).run()[0][0]
 		self.assertEqual(debit, 1000)
 
 	def test_a_typed_rate_is_refused(self):
@@ -220,10 +222,8 @@ class TestPropertyAndCostCenter(RatesCase):
 		self.center_hand = factories.ensure_cost_center("_Test Line Rate Center Hand", company)
 		frappe.db.set_value("Utility Property", P1, "cost_center", self.center_1)
 		frappe.db.set_value("Utility Property", P2, "cost_center", self.center_2)
-		frappe.db.sql(
-			"update `tabUtility Service Request Item` set cost_center=null where parent in %s",
-			[(self.u1.name, self.u3.name)],
-		)
+		row = frappe.qb.DocType("Utility Service Request Item")
+		frappe.qb.update(row).set(row.cost_center, None).where(row.parent.isin((self.u1.name, self.u3.name))).run()
 
 	def test_a_cost_center_used_by_one_property_never_gives_the_property(self):
 		invoice = self.insert([{"item_code": ELECTRICITY, "cost_center": self.center_2, "rate": 210}])
@@ -336,10 +336,8 @@ class TestServiceLineRules(RatesCase):
 		self.center_hand = factories.ensure_cost_center("_Test Line Rule Center Hand", company)
 		frappe.db.set_value("Utility Property", P1, "cost_center", self.center_1)
 		frappe.db.set_value("Utility Property", P2, "cost_center", self.center_2)
-		frappe.db.sql(
-			"update `tabUtility Service Request Item` set cost_center=null where parent in %s",
-			[(self.u1.name, self.u3.name)],
-		)
+		row = frappe.qb.DocType("Utility Service Request Item")
+		frappe.qb.update(row).set(row.cost_center, None).where(row.parent.isin((self.u1.name, self.u3.name))).run()
 
 	def line(self, invoice):
 		row = invoice.items[0]
