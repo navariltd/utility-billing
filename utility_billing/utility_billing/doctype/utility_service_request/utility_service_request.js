@@ -594,6 +594,13 @@ function update_child_contract_fields(frm, cdt, cdn, changed_field) {
 		return;
 	}
 
+	if (starts_on_first(row.start_date)) {
+		update_whole_month_fields(row, changed_field, frm.doc.end_date, (values) =>
+			frappe.model.set_value(cdt, cdn, values),
+		);
+		return;
+	}
+
 	if (changed_field === "start_date" && end) {
 		const diff = get_month_diff(end, start);
 		frappe.model.set_value(cdt, cdn, "contract_length_months", diff);
@@ -635,7 +642,68 @@ function get_month_diff(start_date, end_date) {
 	return months <= 0 ? 0 : months;
 }
 
+// A lease starting on the 1st may end on the last day of a month, inclusive, and
+// counts whole months. Its end is kept as typed: an end on the 1st works as before.
+// Any other start keeps today's handling.
+function starts_on_first(date) {
+	return Boolean(date) && moment(date).date() === 1;
+}
+
+function month_end(date) {
+	return moment(date).endOf("month").format("YYYY-MM-DD");
+}
+
+function get_whole_lease_months(start_date, end_date) {
+	if (end_date === month_end(end_date)) {
+		end_date = moment(end_date).add(1, "day").format("YYYY-MM-DD");
+	}
+	return get_month_diff(start_date, end_date);
+}
+
+// Leases whose end and length are being set together, by doctype and name
+const updating_lease_fields = new Set();
+
+/**
+ * Keep the end and the length of a lease starting on the 1st in step.
+ *
+ * Setting one field fires the other's handler, which must not rewrite the
+ * field the user just typed, so the handlers do nothing until the values
+ * are applied.
+ */
+function update_whole_month_fields(doc, changed_field, limit, set_values) {
+	const key = `${doc.doctype}:${doc.name}`;
+	if (updating_lease_fields.has(key)) return;
+
+	const values = {};
+	if (changed_field === "contract_length_months") {
+		const length = doc.contract_length_months;
+		if (!length || length < 0) return;
+		if (length !== Math.round(length)) {
+			frappe.msgprint(__("Contract Length (Months) must be a whole number when the contract starts on the 1st of a month."));
+			return;
+		}
+		let end = moment(doc.start_date).add(length, "months").subtract(1, "day").format("YYYY-MM-DD");
+		if (limit && end > limit) {
+			end = limit;
+			frappe.msgprint(__("Adjusted property end date to match contract end date."));
+		}
+		values.end_date = end;
+	} else if (doc.end_date) {
+		values.contract_length_months = get_whole_lease_months(doc.start_date, doc.end_date);
+	} else {
+		return;
+	}
+
+	updating_lease_fields.add(key);
+	Promise.resolve(set_values(values)).finally(() => updating_lease_fields.delete(key));
+}
+
 function update_contract_fields(frm, changed_field) {
+	if (starts_on_first(frm.doc.start_date)) {
+		update_whole_month_fields(frm.doc, changed_field, null, (values) => frm.set_value(values));
+		return;
+	}
+
 	const start = frm.doc.start_date ? frappe.datetime.str_to_obj(frm.doc.start_date) : null;
 	const end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
 	const length = frm.doc.contract_length_months;

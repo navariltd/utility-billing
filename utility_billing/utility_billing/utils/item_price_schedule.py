@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Iterable
 
-from frappe.utils import add_days, add_months, getdate
+from frappe.utils import add_days, add_months, get_last_day, getdate
 
 # Frequency values used by ``Billing Adjustment Rule.frequency``.
 DAILY = "Daily"
@@ -197,6 +197,32 @@ def last_lease_day(start_date: date, end_date: date | None) -> date | None:
 
     return end_date
 
+
+def ends_whole_months(start_date: date, end_date: date | None) -> bool:
+    """Return whether a lease starting on the 1st ends on the last day of a month.
+
+    Such an end is inclusive: 2030-01-01 to 2030-02-28 is two whole months.
+    ``last_lease_day`` already returns it unchanged, since the last day of a
+    month is never an anniversary of a 1st.
+    """
+    if not (start_date and end_date):
+        return False
+
+    start_date, end_date = getdate(start_date), getdate(end_date)
+    return start_date.day == 1 and start_date <= end_date == getdate(get_last_day(end_date))
+
+
+def whole_lease_months(start_date: date, end_date: date) -> int:
+    """Return the months of a lease, counting an inclusive month end as a whole month.
+
+    2030-01-01 to 2030-02-28 and the anniversary form 2030-01-01 to
+    2030-03-01 are both two months. Any other pair is ``month_diff``.
+    """
+    start_date, end_date = getdate(start_date), getdate(end_date)
+    if ends_whole_months(start_date, end_date):
+        end_date = getdate(add_days(end_date, 1))
+
+    return month_diff(start_date, end_date)
 
 def increment_count(rule: IncrementRule, months_elapsed: int) -> int:
     """Return how many increments have been applied after ``months_elapsed``.
