@@ -9,12 +9,13 @@ from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
-from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
+from frappe.utils import add_days, add_months, cint, flt, formatdate, get_last_day, getdate, nowdate
 
 from utility_billing.utility_billing.utils.cost_center import (
 	fill_request_item_cost_centers,
 	resolve_primary_cost_center,
 )
+from utility_billing.utility_billing.utils.item_price_schedule import ends_whole_months, whole_lease_months
 from utility_billing.utility_billing.utils.item_prices import delete_request_prices
 from utility_billing.utility_billing.utils.line_request import fill_single_property
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
@@ -107,6 +108,12 @@ class UtilityServiceRequest(Document):
 		if self.start_date and self.end_date and getdate(self.start_date) > getdate(self.end_date):
 			frappe.throw("Contract start date cannot be after the end date.")
 
+		starts_on_first = bool(self.start_date) and getdate(self.start_date).day == 1
+		if starts_on_first and flt(self.contract_length_months) != cint(self.contract_length_months):
+			frappe.throw(
+				_("Contract Length (Months) must be a whole number when the contract starts on the 1st of a month.")
+			)
+
 		if self.start_date and self.contract_length_months and not self.end_date:
 			self.end_date = add_months(getdate(self.start_date), self.contract_length_months)
 
@@ -114,11 +121,11 @@ class UtilityServiceRequest(Document):
 			self.start_date = add_months(getdate(self.end_date), -self.contract_length_months)
 
 		elif self.start_date and self.end_date:
-			self.contract_length_months = self.get_month_diff(
-				getdate(self.start_date), getdate(self.end_date)
-			)
+			self.contract_length_months = whole_lease_months(self.start_date, self.end_date)
 
-		if self.start_date and self.contract_length_months and self.end_date:
+		# From the 1st the end is kept as typed: the last day of a month, or the 1st
+		# of the next one as before
+		if self.start_date and self.contract_length_months and self.end_date and not starts_on_first:
 			expected_end = add_months(getdate(self.start_date), self.contract_length_months)
 			if getdate(expected_end) != getdate(self.end_date):
 				self.end_date = expected_end
@@ -132,6 +139,15 @@ class UtilityServiceRequest(Document):
 			row_end = getdate(row.end_date) if row.end_date else None
 			length = row.contract_length_months
 
+			if row_start and row_start.day >= 28 and ends_whole_months(parent_start, parent_end):
+				# Billing would end a day early, on the day before the month end
+				frappe.throw(
+					_(
+						"Row {0}: property {1} cannot start on {2} because this request runs in whole months "
+						"to {3}. Start the property on the 1st of a month or on or before the 27th."
+					).format(row.idx, row.utility_property, formatdate(row_start), formatdate(parent_end))
+				)
+
 			if row_start and parent_start and row_start < parent_start:
 				frappe.throw(
 					f"Property start date '{row_start}' in row {row.idx} cannot be before contract start date '{parent_start}'."
@@ -143,7 +159,7 @@ class UtilityServiceRequest(Document):
 				)
 
 			if row_start and row_end:
-				row.contract_length_months = self.get_month_diff(row_start, row_end)
+				row.contract_length_months = whole_lease_months(row_start, row_end)
 
 			elif row_start and length is not None:
 				new_end = add_months(row_start, length)
