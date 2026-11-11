@@ -12,6 +12,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from utility_billing.api import sales_invoice as invoice_api
 from utility_billing.api.portal.booking_payload import get_request_documents
 from utility_billing.api.portal.property_vouchers import SALES_INVOICE_FIELDS, _get_vouchers
 from utility_billing.utility_billing.report.property_billing_overview.property_billing_overview import (
@@ -23,6 +24,15 @@ from utility_billing.utility_billing.tests.line_request_fixtures import P1, P2, 
 from utility_billing.utility_billing.tests.test_line_request import LineRequestCase, has_line_column
 from utility_billing.utility_billing.tests.test_line_request_readers import submitted_invoice
 from utility_billing.utility_billing.utils.line_request import invoice_requests
+
+# The raw query get_request_invoices ran before the query builder, kept to compare against
+OLD_REQUEST_INVOICES_QUERY = """
+	select distinct invoice.name
+	from `tabSales Invoice` invoice
+	join `tabSales Invoice Item` line
+		on line.parent = invoice.name and line.parenttype = 'Sales Invoice'
+	where coalesce(nullif(line.utility_service_request, ''), invoice.utility_service_request) = %(request)s
+"""
 
 
 @skipUnless(has_line_column(), "needs the line field, which a migrate adds")
@@ -55,6 +65,42 @@ class TestInvoiceRequests(ListingCase):
 				(self.mixed.name, self.u3.name),
 			},
 		)
+
+
+
+class TestRequestInvoices(ListingCase):
+	"""Old, new and mixed invoices, plus an Auto Repeat one, a blank line request and a header with a line request."""
+
+	def setUp(self):
+		super().setUp()
+		self.repeated = submitted_invoice(
+			[{"item_code": P1, "rate": 1000, "utility_property": P1}], "2027-05-01", header=self.u1.name, auto_repeat="_Test AR"
+		)
+		self.blank_line = submitted_invoice(
+			[{"item_code": P2, "rate": 2000, "utility_property": P2, "utility_service_request": ""}], "2027-05-01", header=self.u3.name
+		)
+		self.both = submitted_invoice(
+			[
+				{"item_code": P1, "rate": 1000, "utility_property": P1},
+				{"item_code": P2, "rate": 2000, "utility_property": P2, "utility_service_request": self.u3.name},
+			],
+			"2027-06-01",
+			header=self.u1.name,
+		)
+
+	def listed(self, request):
+		return {row.name for row in invoice_api.get_request_invoices(request)}
+
+	def test_each_request_lists_what_the_old_query_listed(self):
+		for request in (self.u1.name, self.u2.name, self.u3.name, "_Test No Request"):
+			with self.subTest(request=request):
+				old = set(frappe.db.sql_list(OLD_REQUEST_INVOICES_QUERY, {"request": request}))  # noqa: TID251 reference for the query builder
+				self.assertEqual(self.listed(request), old)
+
+	def test_old_new_mixed_and_auto_repeat_invoices_are_listed(self):
+		self.assertEqual(self.listed(self.u1.name), {self.old.name, self.mixed.name, self.repeated.name, self.both.name})
+		self.assertEqual(self.listed(self.u2.name), {self.new.name})
+		self.assertEqual(self.listed(self.u3.name), {self.mixed.name, self.blank_line.name, self.both.name})
 
 
 class TestPortal(ListingCase):

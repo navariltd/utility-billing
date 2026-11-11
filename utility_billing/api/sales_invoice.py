@@ -5,7 +5,9 @@ Deferred Posting Date and with the utility property its item belongs to.
 """
 
 import frappe
+from frappe.query_builder.functions import Coalesce
 from frappe.utils import flt
+from pypika.functions import NullIf
 
 from utility_billing.utility_billing.utils.item_price_scope import is_item_price_approach
 from utility_billing.utility_billing.utils.item_rate import get_rate_for_date
@@ -263,16 +265,16 @@ def get_request_invoices(utility_service_request: str) -> list[dict]:
 	if not frappe.has_permission("Sales Invoice", "read"):
 		return []
 
-	names = frappe.db.sql_list(
-		"""
-		select distinct invoice.name
-		from `tabSales Invoice` invoice
-		join `tabSales Invoice Item` line
-			on line.parent = invoice.name and line.parenttype = 'Sales Invoice'
-		where coalesce(nullif(line.utility_service_request, ''), invoice.utility_service_request) = %(request)s
-		""",
-		{"request": utility_service_request},
-	)
+	invoice = frappe.qb.DocType("Sales Invoice")
+	line = frappe.qb.DocType("Sales Invoice Item")
+	names = (
+		frappe.qb.from_(invoice)
+		.join(line)
+		.on((line.parent == invoice.name) & (line.parenttype == "Sales Invoice"))
+		.select(invoice.name)
+		.distinct()
+		.where(Coalesce(NullIf(line[REQUEST_FIELD], ""), invoice[REQUEST_FIELD]) == utility_service_request)
+	).run(pluck=True)
 	if not names:
 		return []
 

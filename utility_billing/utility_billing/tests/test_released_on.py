@@ -197,10 +197,8 @@ class TestDailyJob(ReleasedCase):
 			self.u1.requested_properties[0].name,
 			{"enable_auto_billing": 1, "billing_date_type": "First Day of Month"},
 		)
-		frappe.db.sql(
-			"update `tabUtility Service Request Item` set utility_property=%s where parent=%s and item_code=%s",
-			(P1, self.u1.name, P1),
-		)
+		row = frappe.qb.DocType("Utility Service Request Item")
+		frappe.qb.update(row).set(row.utility_property, P1).where(row.parent == self.u1.name).where(row.item_code == P1).run()
 
 	def drafts_on(self, day):
 		with patch.object(auto_repeat, "today", return_value=day):
