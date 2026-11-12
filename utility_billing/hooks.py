@@ -185,6 +185,7 @@ utility_demo_master_doctypes = [
 
 override_doctype_class = {
 	"Sales Invoice": "utility_billing.utility_billing.overrides.server.sales_invoice.UtilityBillingSalesInvoice",
+	"Auto Repeat": "utility_billing.utility_billing.overrides.server.auto_repeat.UtilityBillingAutoRepeat",
 }
 
 # Document Events

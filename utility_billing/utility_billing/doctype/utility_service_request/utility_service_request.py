@@ -1074,6 +1074,14 @@ def _calculate_end_date(
 ):
 	"""Calculate the appropriate end date for the auto-repeat"""
 	if not has_increment or not increment_date:
+		if (
+			contract_end_date
+			and frequency == "Monthly"
+			and repeat_on_last_day
+			and contract_end_date == getdate(get_last_day(contract_end_date))
+		):
+			# Billed on month ends: the contract's own last month end is the last copy
+			return contract_end_date
 		return add_days(contract_end_date, -1) if contract_end_date else None
 
 	# Calculate base end date before considering effective_start
