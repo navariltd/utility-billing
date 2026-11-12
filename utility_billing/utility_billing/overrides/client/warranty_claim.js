@@ -1,6 +1,7 @@
 frappe.ui.form.on("Warranty Claim", {
 	refresh: function (frm) {
 		set_serial_no_query(frm);
+		set_request_query(frm);
 	},
 
 	item_code: function (frm) {
@@ -54,4 +55,12 @@ async function set_serial_no_query(frm) {
 			filters: filters,
 		};
 	});
+}
+
+// The customer's requests, limited to the claim's property when one is set
+function set_request_query(frm) {
+	frm.set_query("utility_service_request", () => ({
+		query: "utility_billing.utility_billing.utils.request_link.customer_request_query",
+		filters: { customer: frm.doc.customer, utility_property: frm.doc.utility_property },
+	}));
 }

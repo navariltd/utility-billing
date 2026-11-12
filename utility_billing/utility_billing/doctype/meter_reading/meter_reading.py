@@ -8,10 +8,15 @@ from frappe.utils import nowdate
 from pypika import Order
 
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
+from ...utils.request_link import check_meters_of_customer, check_request_customer, request_from_claims
 
 
 class MeterReading(Document):
 	def validate(self):
+		check_meters_of_customer(self)
+		if not self.get("utility_service_request"):
+			self.utility_service_request = request_from_claims(self)
+		check_request_customer(self)
 		for item in self.items:
 			self.validate_item_readings(item)
 		create_meter_reading_rates(self, self.price_list, self.date)

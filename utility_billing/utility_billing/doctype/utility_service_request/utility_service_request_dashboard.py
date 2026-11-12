@@ -22,6 +22,13 @@ def get_data():
                 ],
             },
             {
+                "label": "Meter",
+                "items": [
+                    "Warranty Claim",
+                    "Meter Reading",
+                ],
+            },
+            {
                 "label": "Contract Management",
                 "items": [
                     "Contract",

@@ -1,0 +1,110 @@
+"""The Utility Service Request link on Warranty Claims and Meter Readings.
+
+The link is optional. A request picked by hand must belong to the claim's or
+reading's customer. A reading takes its request from the Closed claims of its
+meters, only when every meter row's claims point to one request; it is never
+guessed from the customer alone.
+"""
+
+import frappe
+from frappe import _
+
+from utility_billing.utility_billing.utils.utility_item_classifier import USR_DOCTYPE, USR_PROPERTY_DOCTYPE
+
+REQUEST_FIELD = "utility_service_request"
+CLAIM_DOCTYPE = "Warranty Claim"
+
+
+def check_request_customer(doc) -> None:
+    """Refuse a request that does not belong to the document's customer.
+
+    Args:
+        doc: ``Warranty Claim`` or ``Meter Reading`` document.
+    """
+    request = doc.get(REQUEST_FIELD)
+    if not request:
+        return
+
+    if frappe.db.get_value(USR_DOCTYPE, request, "customer") != doc.get("customer"):
+        frappe.throw(
+            _("Utility Service Request {0} does not belong to customer {1}.").format(request, doc.get("customer")),
+            title=_("Wrong Utility Service Request"),
+        )
+
+
+def check_meters_of_customer(doc) -> None:
+    """Refuse a reading whose meters are not on a Closed Warranty Claim of its customer.
+
+    Rows without a meter are left as they are.
+
+    Args:
+        doc: ``Meter Reading`` document.
+    """
+    for row in doc.items:
+        if row.meter_number and not frappe.db.exists(
+            CLAIM_DOCTYPE, {"customer": doc.customer, "serial_no": row.meter_number, "status": "Closed"}
+        ):
+            frappe.throw(
+                _("Meter {0} in row {1} is not on a Closed Warranty Claim of customer {2}.").format(
+                    row.meter_number, row.idx, doc.customer
+                ),
+                title=_("Meter of Another Customer"),
+            )
+
+
+def request_from_claims(doc) -> str | None:
+    """Return the request every meter row's Closed claims point to, or ``None``.
+
+    ``None`` when a row has no meter, a claim has no request, or the claims
+    point to different requests.
+
+    Args:
+        doc: ``Meter Reading`` document.
+    """
+    requests = set()
+    for row in doc.items:
+        if not row.meter_number:
+            return None
+        requests.update(
+            frappe.get_all(
+                CLAIM_DOCTYPE,
+                filters={"customer": doc.customer, "serial_no": row.meter_number, "status": "Closed"},
+                pluck=REQUEST_FIELD,
+            )
+        )
+
+    if len(requests) != 1 or None in requests or "" in requests:
+        return None
+
+    return requests.pop()
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def customer_request_query(doctype, txt, searchfield, start, page_len, filters):
+    """Search the customer's requests, limited to those of a property when one is given."""
+    customer = filters.get("customer")
+    if not customer:
+        return []
+
+    request = frappe.qb.DocType(USR_DOCTYPE)
+    row = frappe.qb.DocType(USR_PROPERTY_DOCTYPE)
+    query = (
+        frappe.qb.from_(request)
+        .select(request.name, request.customer_name)
+        .where(request.customer == customer)
+        .where(request.docstatus < 2)
+        .where(request.name.like(f"%{txt}%"))
+        .orderby(request.name, order=frappe.qb.desc)
+        .limit(page_len)
+        .offset(start)
+    )
+
+    utility_property = filters.get("utility_property")
+    if utility_property:
+        listed = frappe.qb.from_(row).select(row.parent).where(row.parenttype == USR_DOCTYPE).where(
+            row.utility_property == utility_property
+        )
+        query = query.where((request.utility_property == utility_property) | request.name.isin(listed))
+
+    return query.run()
