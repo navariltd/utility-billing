@@ -645,6 +645,37 @@ function get_month_diff(start_date, end_date) {
 	return months <= 0 ? 0 : months;
 }
 
+/**
+ * Open a new Warranty Claim for the request; the user picks the meter.
+ *
+ * When the request already has claims, ask first. Nothing is created here.
+ */
+function new_warranty_claim(frm) {
+	frappe
+		.call({
+			method: "utility_billing.utility_billing.utils.request_link.warranty_claim_defaults",
+			args: { utility_service_request: frm.doc.name },
+		})
+		.then((response) => {
+			const defaults = response?.message;
+			if (!defaults) {
+				frappe.msgprint(__("A Warranty Claim needs a submitted request with a customer and a submitted Sales Order."));
+				return;
+			}
+
+			const open = () => frappe.new_doc("Warranty Claim", defaults.values);
+			if (!defaults.claims.length) {
+				open();
+				return;
+			}
+
+			frappe.confirm(
+				__("This request already has a Warranty Claim ({0}). Create another?", [defaults.claims.join(", ")]),
+				open,
+			);
+		});
+}
+
 function update_contract_fields(frm, changed_field) {
 	const start = frm.doc.start_date ? frappe.datetime.str_to_obj(frm.doc.start_date) : null;
 	const end = frm.doc.end_date ? frappe.datetime.str_to_obj(frm.doc.end_date) : null;
@@ -1406,6 +1437,11 @@ async function addActionButtons(frm) {
 
 			const isItemPriceApproach =
 				frm.doc.requested_properties[0]?.rent_billing_approach === "Item Price";
+
+			// A submitted Sales Order linked to this request; the server checks it again
+			if (depositName) {
+				frm.add_custom_button(__("Warranty Claim"), () => new_warranty_claim(frm), __("Create"));
+			}
 
 			if (isItemPriceApproach) {
 				frm.add_custom_button(

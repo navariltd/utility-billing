@@ -15,6 +15,7 @@ from utility_billing.utility_billing.utils.request_link import (
     check_meters_of_customer,
     check_request_customer,
     request_from_claims,
+    warranty_claim_defaults,
 )
 
 METER_ITEM = "_Test Request Link Meter"
@@ -144,6 +145,81 @@ class TestMeterReading(RequestLinkCase):
 
     def test_rows_without_a_meter_are_left_as_before(self):
         check_meters_of_customer(self.reading(None))
+
+
+class TestCreateWarrantyClaim(RequestLinkCase):
+    """Create > Warranty Claim: shown for a submitted request with a customer and a submitted Sales Order."""
+
+    def submitted(self, request):
+        # Only the state the button reads: submitting a request runs far more than this needs
+        frappe.get_doc("Utility Service Request", request).db_set("docstatus", 1)
+        return request
+
+    def order(self, request, docstatus=1):
+        order = frappe.new_doc("Sales Order")
+        order.update({"customer": self.customer, "company": self.company, "utility_service_request": request})
+        order.name = frappe.generate_hash(length=10)
+        order.docstatus = docstatus
+        order.db_insert()
+
+    def properties(self, request, header=None, rows=()):
+        doc = frappe.get_doc("Utility Service Request", request)
+        if header:
+            doc.db_set("utility_property", header)
+        for name in rows:
+            row = doc.append("requested_properties", {"utility_property": name})
+            row.db_insert()
+
+    def test_not_offered_for_a_draft_request(self):
+        self.order(self.request)
+
+        self.assertIsNone(warranty_claim_defaults(self.request))
+
+    def test_not_offered_without_a_submitted_sales_order(self):
+        self.submitted(self.request)
+        self.order(self.request, docstatus=0)
+
+        self.assertIsNone(warranty_claim_defaults(self.request))
+
+    def test_offered_with_a_submitted_sales_order(self):
+        self.order(self.submitted(self.request))
+
+        defaults = warranty_claim_defaults(self.request)
+
+        self.assertEqual(defaults["claims"], [])
+        self.assertEqual(
+            defaults["values"],
+            {
+                "customer": self.customer,
+                "utility_property": None,
+                "utility_service_request": self.request,
+                "complaint_date": frappe.utils.today(),
+            },
+        )
+
+    def test_the_property_comes_from_the_request_or_its_one_row(self):
+        names = frappe.get_all("Utility Property", pluck="name", limit=2)
+        self.order(self.submitted(self.request))
+        self.order(self.submitted(self.second))
+        self.properties(self.request, header=names[0])
+        self.properties(self.second, rows=names[:1])
+
+        self.assertEqual(warranty_claim_defaults(self.request)["values"]["utility_property"], names[0])
+        self.assertEqual(warranty_claim_defaults(self.second)["values"]["utility_property"], names[0])
+
+    def test_no_property_with_several_property_rows(self):
+        names = frappe.get_all("Utility Property", pluck="name", limit=2)
+        self.order(self.submitted(self.request))
+        self.properties(self.request, rows=names)
+
+        self.assertIsNone(warranty_claim_defaults(self.request)["values"]["utility_property"])
+
+    def test_existing_claims_are_listed_and_cancelled_ones_left_out(self):
+        self.order(self.submitted(self.request))
+        first = self.claim("_TRL-M1", self.request).name
+        self.claim("_TRL-M2", self.request, status="Cancelled")
+
+        self.assertEqual(warranty_claim_defaults(self.request)["claims"], [first])
 
 
 @skipUnless(has_link_columns(), "needs the link fields, which a migrate adds")

@@ -8,6 +8,7 @@ guessed from the customer alone.
 
 import frappe
 from frappe import _
+from frappe.utils import today
 
 from utility_billing.utility_billing.utils.utility_item_classifier import USR_DOCTYPE, USR_PROPERTY_DOCTYPE
 
@@ -108,3 +109,46 @@ def customer_request_query(doctype, txt, searchfield, start, page_len, filters):
         query = query.where((request.utility_property == utility_property) | request.name.isin(listed))
 
     return query.run()
+
+
+@frappe.whitelist()
+def warranty_claim_defaults(utility_service_request: str) -> dict | None:
+    """Return what Create > Warranty Claim on a request needs, or ``None`` when it is not offered.
+
+    Offered for a submitted request with a customer and a submitted Sales Order
+    linked to it through ``Sales Order.utility_service_request``. The property
+    is prefilled from the request's own, else from its one property row; with
+    several property rows the user picks it.
+
+    Args:
+        utility_service_request: ``Utility Service Request`` name.
+
+    Returns:
+        ``{"claims": [...], "values": {...}}``: the request's Warranty Claims
+        that are not Cancelled, and the new claim's values.
+    """
+    request = frappe.get_doc(USR_DOCTYPE, utility_service_request)
+    request.check_permission("read")
+    if (
+        request.docstatus != 1
+        or not request.customer
+        or not frappe.db.exists("Sales Order", {REQUEST_FIELD: request.name, "docstatus": 1})
+    ):
+        return None
+
+    properties = {row.utility_property for row in request.requested_properties if row.utility_property}
+    return {
+        "claims": frappe.get_all(
+            CLAIM_DOCTYPE,
+            filters={REQUEST_FIELD: request.name, "status": ("!=", "Cancelled")},
+            pluck="name",
+            order_by="creation",
+        ),
+        "values": {
+            "customer": request.customer,
+            "utility_property": request.get("utility_property")
+            or (next(iter(properties)) if len(properties) == 1 else None),
+            REQUEST_FIELD: request.name,
+            "complaint_date": today(),
+        },
+    }
