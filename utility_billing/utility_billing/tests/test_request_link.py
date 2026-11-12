@@ -15,6 +15,7 @@ from utility_billing.utility_billing.utils.request_link import (
     check_meters_of_customer,
     check_request_customer,
     make_meter_reading,
+    make_meter_reading_from_claims,
     meter_reading_offered,
     request_from_claims,
     warranty_claim_defaults,
@@ -270,6 +271,80 @@ class TestCreateMeterReading(RequestLinkCase):
 
         check_meters_of_customer(reading)
         self.assertEqual(request_from_claims(reading), self.request)
+
+
+class TestMeterReadingFromSeveralClaims(RequestLinkCase):
+    """Warranty Claim list: Actions > Create Meter Reading."""
+
+    def summary(self, reading):
+        return {
+            "customer": reading.customer,
+            "price_list": reading.price_list,
+            "property": reading.property,
+            "utility_service_request": reading.utility_service_request,
+            "rows": [(row.item_code, row.meter_number, row.warehouse) for row in reading.items],
+            "new": reading.is_new(),
+        }
+
+    def test_one_row_per_meter_and_nothing_saved(self):
+        names = [self.claim("_TRL-M1").name, self.claim("_TRL-M2").name, self.claim("_TRL-M1").name]
+        readings = frappe.db.count("Meter Reading")
+
+        reading = make_meter_reading_from_claims(frappe.as_json(names))
+
+        self.assertEqual([(row.item_code, row.meter_number, row.warehouse) for row in reading.items], [(None, "_TRL-M1", None), (None, "_TRL-M2", None)])
+        self.assertTrue(reading.is_new())
+        self.assertEqual(frappe.db.count("Meter Reading"), readings)
+
+    def test_one_claim_matches_the_single_claim_button(self):
+        name = self.claim("_TRL-M1", self.request).name
+
+        self.assertEqual(self.summary(make_meter_reading_from_claims([name])), self.summary(make_meter_reading(name)))
+
+    def test_claims_not_closed_or_without_a_serial_are_refused(self):
+        closed = self.claim("_TRL-M1").name
+        open_claim = self.claim("_TRL-M2", status="Open").name
+        no_serial = self.claim("_TRL-M3")
+        no_serial.db_set("serial_no", None)
+
+        with self.assertRaises(frappe.ValidationError) as refused:
+            make_meter_reading_from_claims([closed, open_claim, no_serial.name])
+        self.assertIn(open_claim, str(refused.exception))
+        self.assertIn(no_serial.name, str(refused.exception))
+        self.assertNotIn(closed, str(refused.exception))
+
+    def test_claims_of_several_customers_are_refused(self):
+        names = [self.claim("_TRL-M1").name, self.claim("_TRL-M2", customer=self.other).name]
+
+        with self.assertRaises(frappe.ValidationError):
+            make_meter_reading_from_claims(names)
+
+    def test_the_request_only_when_every_claim_has_the_same(self):
+        same = [self.claim("_TRL-M1", self.request).name, self.claim("_TRL-M2", self.request).name]
+        mixed = [same[0], self.claim("_TRL-M3", self.second).name]
+        blank = [same[0], self.claim("_TRL-M4").name]
+
+        self.assertEqual(make_meter_reading_from_claims(same).utility_service_request, self.request)
+        self.assertIsNone(make_meter_reading_from_claims(mixed).utility_service_request)
+        self.assertIsNone(make_meter_reading_from_claims(blank).utility_service_request)
+
+    def test_the_property_only_when_every_claim_has_the_same(self):
+        first, second = frappe.get_all("Utility Property", pluck="name", limit=2)
+        claims = [self.claim(serial) for serial in ("_TRL-M1", "_TRL-M2", "_TRL-M3")]
+        for claim, value in zip(claims, (first, first, second)):
+            claim.db_set("utility_property", value)
+
+        self.assertEqual(make_meter_reading_from_claims([c.name for c in claims[:2]]).property, first)
+        self.assertIsNone(make_meter_reading_from_claims([c.name for c in claims]).property)
+
+    def test_the_price_list_is_the_customer_default(self):
+        frappe.db.set_value("Customer", self.customer, "default_price_list", "Standard Selling")
+        reading = make_meter_reading_from_claims([self.claim("_TRL-M1").name, self.claim("_TRL-M2").name])
+
+        self.assertEqual(
+            (reading.customer, reading.customer_name, reading.price_list),
+            (self.customer, "_Test Request Link Customer", "Standard Selling"),
+        )
 
 
 @skipUnless(has_link_columns(), "needs the link fields, which a migrate adds")

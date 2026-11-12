@@ -179,24 +179,74 @@ def make_meter_reading(source_name: str):
     Args:
         source_name: ``Warranty Claim`` name.
     """
-    from utility_billing.utility_billing.doctype.meter_reading.meter_reading import get_customer_details
-
     claim = frappe.get_doc(CLAIM_DOCTYPE, source_name)
     claim.check_permission("read")
     if not meter_reading_offered(claim):
         frappe.throw(_("A Meter Reading needs a saved, Closed Warranty Claim with a customer and a serial number."))
 
-    customer = get_customer_details(claim.customer)
+    return build_meter_reading([claim])
+
+
+@frappe.whitelist()
+def make_meter_reading_from_claims(source_name):
+    """Return one unsaved Meter Reading for the meters of several Warranty Claims.
+
+    The claims must all be Closed, have a serial number and share one customer.
+    One row per meter: two claims on one meter give one row. The request and
+    property are set only when every claim has the same one.
+
+    Args:
+        source_name: ``Warranty Claim`` names, as a list or a JSON list.
+    """
+    names = list(dict.fromkeys(frappe.parse_json(source_name) if isinstance(source_name, str) else source_name))
+    if not names:
+        frappe.throw(_("Select at least one Warranty Claim."))
+
+    claims = [frappe.get_doc(CLAIM_DOCTYPE, name) for name in names]
+    for claim in claims:
+        claim.check_permission("read")
+
+    refused = [claim.name for claim in claims if not meter_reading_offered(claim)]
+    if refused:
+        frappe.throw(
+            _("These Warranty Claims are not Closed or have no serial number: {0}.").format(", ".join(refused)),
+            title=_("Cannot Create Meter Reading"),
+        )
+
+    customers = sorted({claim.customer for claim in claims})
+    if len(customers) > 1:
+        frappe.throw(
+            _("The selected Warranty Claims belong to different customers ({0}). Select claims of one customer.").format(
+                ", ".join(customers)
+            ),
+            title=_("Cannot Create Meter Reading"),
+        )
+
+    return build_meter_reading(claims)
+
+
+def build_meter_reading(claims):
+    """Return an unsaved Meter Reading for claims of one customer, one row per meter."""
+    from utility_billing.utility_billing.doctype.meter_reading.meter_reading import get_customer_details
+
+    customer = get_customer_details(claims[0].customer)
     reading = frappe.new_doc("Meter Reading")
     reading.update(
         {
-            "customer": claim.customer,
+            "customer": claims[0].customer,
             "customer_name": customer.customer_name,
             "territory": customer.territory,
             "price_list": customer.default_price_list,
-            "property": claim.get("utility_property"),
-            REQUEST_FIELD: claim.get(REQUEST_FIELD),
+            "property": shared_value(claims, "utility_property"),
+            REQUEST_FIELD: shared_value(claims, REQUEST_FIELD),
         }
     )
-    reading.append("items", {"meter_number": claim.serial_no})
+    for serial in dict.fromkeys(claim.serial_no for claim in claims):
+        reading.append("items", {"meter_number": serial})
     return reading
+
+
+def shared_value(claims, fieldname: str):
+    """Return the value every claim has for ``fieldname``, or ``None`` when they differ or any is blank."""
+    values = {claim.get(fieldname) for claim in claims}
+    return values.pop() if len(values) == 1 else None

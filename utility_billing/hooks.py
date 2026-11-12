@@ -71,6 +71,7 @@ doctype_js = {
 doctype_list_js = {
 	"Sales Order": "utility_billing/overrides/client/sales_order_list.js",
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat_list.js",
+	"Warranty Claim": "utility_billing/overrides/client/warranty_claim_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
