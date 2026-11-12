@@ -152,3 +152,51 @@ def warranty_claim_defaults(utility_service_request: str) -> dict | None:
             "complaint_date": today(),
         },
     }
+
+
+def meter_reading_offered(claim) -> bool:
+    """Return whether Create > Meter Reading is offered on a Warranty Claim.
+
+    For a saved, Closed claim with a customer and a serial number.
+    """
+    return bool(
+        not claim.is_new()
+        and frappe.db.get_value(CLAIM_DOCTYPE, claim.name, "status") == "Closed"
+        and claim.customer
+        and claim.serial_no
+    )
+
+
+@frappe.whitelist()
+def make_meter_reading(source_name: str):
+    """Return an unsaved Meter Reading for the meter of a Warranty Claim.
+
+    Prefilled with the claim's customer, property, request and one row with its
+    meter. The row's item is left for the user: the claim's item is the meter
+    hardware, not the billed item. The price list is the customer's default,
+    else its Customer Group's, as the Meter Reading form sets it.
+
+    Args:
+        source_name: ``Warranty Claim`` name.
+    """
+    from utility_billing.utility_billing.doctype.meter_reading.meter_reading import get_customer_details
+
+    claim = frappe.get_doc(CLAIM_DOCTYPE, source_name)
+    claim.check_permission("read")
+    if not meter_reading_offered(claim):
+        frappe.throw(_("A Meter Reading needs a saved, Closed Warranty Claim with a customer and a serial number."))
+
+    customer = get_customer_details(claim.customer)
+    reading = frappe.new_doc("Meter Reading")
+    reading.update(
+        {
+            "customer": claim.customer,
+            "customer_name": customer.customer_name,
+            "territory": customer.territory,
+            "price_list": customer.default_price_list,
+            "property": claim.get("utility_property"),
+            REQUEST_FIELD: claim.get(REQUEST_FIELD),
+        }
+    )
+    reading.append("items", {"meter_number": claim.serial_no})
+    return reading

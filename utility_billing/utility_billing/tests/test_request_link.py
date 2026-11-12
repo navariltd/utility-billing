@@ -3,7 +3,7 @@
 A request picked by hand must belong to the document's customer. A reading
 takes its request from its meters' Closed claims only when they all point to
 one request, and its meters must be on Closed claims of its customer. Existing
-records keep a blank link. Needs the link columns, which a migrate adds.
+records pass these checks. Needs the link columns, which a migrate adds.
 """
 
 from unittest import skipUnless
@@ -14,6 +14,8 @@ from frappe.tests.utils import FrappeTestCase
 from utility_billing.utility_billing.utils.request_link import (
     check_meters_of_customer,
     check_request_customer,
+    make_meter_reading,
+    meter_reading_offered,
     request_from_claims,
     warranty_claim_defaults,
 )
@@ -222,17 +224,62 @@ class TestCreateWarrantyClaim(RequestLinkCase):
         self.assertEqual(warranty_claim_defaults(self.request)["claims"], [first])
 
 
+class TestCreateMeterReading(RequestLinkCase):
+    """Create > Meter Reading: shown on a saved, Closed claim with a customer and a serial number."""
+
+    def test_offered_on_a_saved_closed_claim(self):
+        self.assertTrue(meter_reading_offered(self.claim("_TRL-M1")))
+
+    def test_not_offered_on_an_open_or_unsaved_claim(self):
+        self.assertFalse(meter_reading_offered(self.claim("_TRL-M1", status="Open")))
+        self.assertFalse(meter_reading_offered(frappe.new_doc("Warranty Claim")))
+
+    def test_not_offered_without_a_serial_number(self):
+        claim = self.claim("_TRL-M1")
+        claim.db_set("serial_no", None)
+
+        self.assertFalse(meter_reading_offered(claim))
+        with self.assertRaises(frappe.ValidationError):
+            make_meter_reading(claim.name)
+
+    def test_the_reading_is_prefilled_and_not_saved(self):
+        utility_property = frappe.db.get_value("Utility Property", {}, "name")
+        claim = self.claim("_TRL-M1", self.request)
+        claim.db_set("utility_property", utility_property)
+        frappe.db.set_value("Customer", self.customer, "default_price_list", "Standard Selling")
+        readings = frappe.db.count("Meter Reading")
+
+        reading = make_meter_reading(claim.name)
+
+        self.assertTrue(reading.is_new())
+        self.assertEqual(frappe.db.count("Meter Reading"), readings)
+        self.assertEqual(
+            (reading.customer, reading.property, reading.utility_service_request, reading.price_list),
+            (self.customer, utility_property, self.request, "Standard Selling"),
+        )
+        self.assertEqual([(row.item_code, row.meter_number) for row in reading.items], [(None, "_TRL-M1")])
+
+    def test_the_price_list_falls_back_to_the_customer_group(self):
+        group = frappe.db.get_value("Customer Group", {"default_price_list": ("is", "set")}, ["name", "default_price_list"])
+        frappe.db.set_value("Customer", self.customer, {"default_price_list": None, "customer_group": group[0]})
+
+        self.assertEqual(make_meter_reading(self.claim("_TRL-M1").name).price_list, group[1])
+
+    def test_the_prefilled_meter_passes_the_meter_rule(self):
+        reading = make_meter_reading(self.claim("_TRL-M1", self.request).name)
+
+        check_meters_of_customer(reading)
+        self.assertEqual(request_from_claims(reading), self.request)
+
+
 @skipUnless(has_link_columns(), "needs the link fields, which a migrate adds")
 class TestExistingRecords(FrappeTestCase):
-    def test_existing_readings_and_claims_pass_and_stay_blank(self):
+    def test_existing_readings_and_claims_pass_the_new_checks(self):
         for name in frappe.get_all("Meter Reading", filters={"docstatus": ("<", 2)}, pluck="name"):
             doc = frappe.get_doc("Meter Reading", name)
             with self.subTest(reading=name):
                 check_meters_of_customer(doc)
                 check_request_customer(doc)
-                self.assertIsNone(doc.utility_service_request)
         for name in frappe.get_all("Warranty Claim", pluck="name"):
-            doc = frappe.get_doc("Warranty Claim", name)
             with self.subTest(claim=name):
-                check_request_customer(doc)
-                self.assertIsNone(doc.utility_service_request)
+                check_request_customer(frappe.get_doc("Warranty Claim", name))

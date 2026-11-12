@@ -2,6 +2,19 @@ frappe.ui.form.on("Warranty Claim", {
 	refresh: function (frm) {
 		set_serial_no_query(frm);
 		set_request_query(frm);
+
+		// The server checks the saved claim again and opens the reading unsaved
+		if (!frm.is_new() && !frm.is_dirty() && frm.doc.status === "Closed" && frm.doc.customer && frm.doc.serial_no) {
+			frm.add_custom_button(
+				__("Meter Reading"),
+				() =>
+					frappe.model.open_mapped_doc({
+						method: "utility_billing.utility_billing.utils.request_link.make_meter_reading",
+						frm: frm,
+					}),
+				__("Create"),
+			);
+		}
 	},
 
 	item_code: function (frm) {
