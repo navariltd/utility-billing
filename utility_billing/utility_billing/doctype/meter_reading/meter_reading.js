@@ -19,6 +19,12 @@ frappe.ui.form.on("Meter Reading", {
 
 		update_property_query(frm);
 		update_meter_number_query(frm);
+
+		// Taken from the meters' claims on save when they agree; otherwise one of the customer's requests
+		frm.set_query("utility_service_request", () => ({
+			query: "utility_billing.utility_billing.utils.request_link.customer_request_query",
+			filters: { customer: frm.doc.customer },
+		}));
 	},
 
 	customer: function (frm) {

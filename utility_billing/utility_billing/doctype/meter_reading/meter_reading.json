@@ -16,6 +16,7 @@
   "column_break_aiuo",
   "company",
   "property",
+  "utility_service_request",
   "territory",
   "accounting_dimensions_section",
   "cost_center",
@@ -158,6 +159,12 @@
    "options": "Utility Property"
   },
   {
+   "fieldname": "utility_service_request",
+   "fieldtype": "Link",
+   "label": "Utility Service Request",
+   "options": "Utility Service Request"
+  },
+  {
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
@@ -193,7 +200,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-22 09:51:40.884463",
+ "modified": "2026-11-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

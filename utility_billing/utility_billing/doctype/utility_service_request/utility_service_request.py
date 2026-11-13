@@ -13,7 +13,13 @@ from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
 from utility_billing.utility_billing.utils.bom import set_request_boms
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
-from utility_billing.utility_billing.utils.price_list import apply_default_price_list
+from utility_billing.utility_billing.utils.price_list import (
+	apply_default_price_list,
+	fill_customer_price_list,
+	require_price_list,
+	sales_order_price_list,
+	set_price_list_of_new_customer,
+)
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -25,6 +31,7 @@ class UtilityServiceRequest(Document):
 		self.validate_items()
 		self.set_customer_if_needed()
 		apply_default_price_list(self)
+		require_price_list(self)
 		self.validate_contract_dates()
 		self.validate_child_items()
 		ensure_service_items_for_properties(self)
@@ -47,6 +54,7 @@ class UtilityServiceRequest(Document):
 		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
 		if settings.create_customer_from_utility_service_request_on_submit:
 			make_customer(self.name)
+		fill_customer_price_list(self)
 
 	def validate_items(self):
 		"""Fill the items table from the bill structure when it is empty.
@@ -275,23 +283,29 @@ def create_customer(doc):
 		existing_customer = frappe.db.get_value("Customer", {"lead_name": doc.party_name}, "name")
 		if existing_customer:
 			return frappe.get_doc("Customer", existing_customer)
-		return create_customer_from_lead(doc.party_name, ignore_permissions=True)
+		customer = create_customer_from_lead(doc.party_name, ignore_permissions=True)
+		set_price_list_of_new_customer(customer, doc)
+		return customer
 
 	elif doc.service_request_from == "Prospect":
 		existing_customer = frappe.db.get_value("Customer", {"prospect_name": doc.party_name}, "name")
 		if existing_customer:
 			return frappe.get_doc("Customer", existing_customer)
-		return create_customer_from_prospect(doc.party_name, ignore_permissions=True)
+		customer = create_customer_from_prospect(doc.party_name, ignore_permissions=True)
+		set_price_list_of_new_customer(customer, doc)
+		return customer
 
 	elif doc.service_request_from == "CRM Deal":
 		existing_customer = frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name")
-		if not existing_customer:
-			deal = frappe.get_doc("CRM Deal", doc.party_name)
-			deal.status = "Won"
-			deal.save()
-			create_customer_in_erpnext(deal, None)
-		existing_customer = frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name")
-		return frappe.get_doc("Customer", existing_customer)
+		if existing_customer:
+			return frappe.get_doc("Customer", existing_customer)
+		deal = frappe.get_doc("CRM Deal", doc.party_name)
+		deal.status = "Won"
+		deal.save()
+		create_customer_in_erpnext(deal, None)
+		customer = frappe.get_doc("Customer", frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name"))
+		set_price_list_of_new_customer(customer, doc)
+		return customer
 
 	elif doc.service_request_from == "Customer":
 		return frappe.get_doc("Customer", doc.party_name)
@@ -652,11 +666,14 @@ def create_sales_order_doc(
 		docname, property, transaction_date, start_date, end_date
 	)
 
+	selling_price_list = sales_order_price_list(customer or usr.customer)
 	so = frappe.get_doc(
 		{
 			"doctype": "Sales Order",
 			"utility_service_request": docname,
 			"utility_property": property if property else None,
+			"selling_price_list": selling_price_list,
+			"price_list_currency": frappe.db.get_value("Price List", selling_price_list, "currency"),
 			"customer": customer or usr.customer,
 			"customer_name": customer_name or usr.customer_name,
 			"transaction_date": final_transaction_date,
@@ -1057,6 +1074,14 @@ def _calculate_end_date(
 ):
 	"""Calculate the appropriate end date for the auto-repeat"""
 	if not has_increment or not increment_date:
+		if (
+			contract_end_date
+			and frequency == "Monthly"
+			and repeat_on_last_day
+			and contract_end_date == getdate(get_last_day(contract_end_date))
+		):
+			# Billed on month ends: the contract's own last month end is the last copy
+			return contract_end_date
 		return add_days(contract_end_date, -1) if contract_end_date else None
 
 	# Calculate base end date before considering effective_start

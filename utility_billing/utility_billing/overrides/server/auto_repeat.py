@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.automation.doctype.auto_repeat.auto_repeat import AutoRepeat
 from frappe.model.document import Document
 from frappe.utils import (
     add_days,
@@ -12,6 +13,51 @@ from frappe.utils import (
 from typing import Optional, Dict, Any
 
 AUTO_REPEAT_SAVEPOINT = "utility_billing_auto_repeat"
+
+# The date Frappe gives a copy: the Auto Repeat's next schedule date (AutoRepeat.update_doc)
+COPY_DATE_FIELDS = {"Sales Order": "transaction_date", "Sales Invoice": "posting_date"}
+
+
+class UtilityBillingAutoRepeat(AutoRepeat):
+    def create_documents(self):
+        """Create the copy for the next schedule date only when it is due.
+
+        Every path that creates copies goes through here: the app's daily job,
+        Frappe's and a manual run.
+        """
+        if not copy_is_due(self):
+            return
+
+        return super().create_documents()
+
+
+def copy_is_due(auto_repeat) -> bool:
+    """Return whether the copy for an Auto Repeat's next schedule date is still to be made.
+
+    Not when that date is on or before the start date, which the reference
+    document bills, or after the end date, nor when a document of the Auto
+    Repeat, cancelled ones left out, already has that date.
+
+    Frappe keeps the next schedule date unchanged once the next one would pass
+    the end date, and resets it to the start date when the Auto Repeat is
+    saved as Completed, so without this the daily runs copied again.
+    """
+    schedule_date = getdate(auto_repeat.next_schedule_date)
+    if schedule_date <= getdate(auto_repeat.start_date):
+        return False
+    if auto_repeat.end_date and schedule_date > getdate(auto_repeat.end_date):
+        return False
+
+    date_field = COPY_DATE_FIELDS.get(auto_repeat.reference_doctype)
+    if not date_field:
+        return True
+
+    # Both daily jobs may run at once: the second waits here until the first commits
+    frappe.db.get_value("Auto Repeat", auto_repeat.name, "name", for_update=True)
+    return not frappe.db.exists(
+        auto_repeat.reference_doctype,
+        {"auto_repeat": auto_repeat.name, date_field: schedule_date, "docstatus": ("<", 2)},
+    )
 
 @frappe.whitelist()
 def on_update(doc: Document, method: str) -> None:
@@ -293,6 +339,8 @@ def create_repeated_entries(data):
                 doc.create_documents()
                 if schedule_date and not doc.disabled:
                     frappe.db.set_value("Auto Repeat", doc.name, "next_schedule_date", schedule_date)
+                    # set_value changed modified; marking it Completed below saves it again
+                    doc.reload()
 
             if doc.is_completed():
                 doc.status = "Completed"

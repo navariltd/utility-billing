@@ -71,6 +71,7 @@ doctype_js = {
 doctype_list_js = {
 	"Sales Order": "utility_billing/overrides/client/sales_order_list.js",
 	"Auto Repeat": "utility_billing/overrides/client/auto_repeat_list.js",
+	"Warranty Claim": "utility_billing/overrides/client/warranty_claim_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -184,6 +185,7 @@ utility_demo_master_doctypes = [
 
 override_doctype_class = {
 	"Sales Invoice": "utility_billing.utility_billing.overrides.server.sales_invoice.UtilityBillingSalesInvoice",
+	"Auto Repeat": "utility_billing.utility_billing.overrides.server.auto_repeat.UtilityBillingAutoRepeat",
 }
 
 # Document Events
@@ -222,6 +224,9 @@ doc_events = {
 	},
 	"Item": {
 		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
+	},
+	"Warranty Claim": {
+		"validate": ["utility_billing.utility_billing.overrides.server.warranty_claim.validate"],
 	},
 	"BOM": {
 		"before_insert": ["utility_billing.utility_billing.overrides.server.bom.before_insert"],
