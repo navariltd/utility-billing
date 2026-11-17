@@ -1,0 +1,119 @@
+{
+ "doctype": "DocType",
+ "name": "Utility Bill Structure Assignment",
+ "module": "Utility Billing",
+ "creation": "2026-11-15 15:10:46.921373",
+ "modified": "2026-11-16 13:50:08.744148",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "company",
+  "property",
+  "utility_bill_structure",
+  "start_date",
+  "end_date",
+  "previous_assignment",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Utility Property"
+  },
+  {
+   "fieldname": "utility_bill_structure",
+   "fieldtype": "Link",
+   "label": "Bill Structure",
+   "options": "Utility Bill Structure",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Utility Bill Structure Assignment",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "previous_assignment",
+   "fieldtype": "Link",
+   "label": "Previous Assignment",
+   "options": "Utility Bill Structure Assignment",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Utility Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Utility User",
+   "write": 1
+  }
+ ],
+ "autoname": "hash",
+ "is_submittable": 1
+}

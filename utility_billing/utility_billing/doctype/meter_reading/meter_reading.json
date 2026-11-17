@@ -9,6 +9,7 @@
  "field_order": [
   "naming_series",
   "customer",
+  "bill_structure_assignment",
   "warehouse",
   "column_break_qmhh",
   "date",
@@ -29,6 +30,8 @@
   "section_break_4qzn",
   "items",
   "rates",
+  "calculation_details_section",
+  "calculations",
   "amended_from",
   "more_info_tab",
   "tab_3_tab"
@@ -195,12 +198,34 @@
    "in_standard_filter": 1,
    "label": "Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "fieldname": "bill_structure_assignment",
+   "fieldtype": "Link",
+   "label": "Bill Structure Assignment",
+   "options": "Utility Bill Structure Assignment",
+   "read_only": 1,
+   "description": "Selected automatically from the customer, company, property and reading date."
+  },
+  {
+   "fieldname": "calculation_details_section",
+   "fieldtype": "Section Break",
+   "label": "Calculation Details",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "calculations",
+   "fieldtype": "Table",
+   "label": "Calculations",
+   "options": "Bill Calculation",
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-11-12 12:00:00.000000",
+ "modified": "2026-11-16 16:11:06.041515",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading",

@@ -12,6 +12,10 @@
   "column_break_xsni",
   "start_date",
   "end_date",
+  "metered_billing",
+  "water_item",
+  "sewerage_item",
+  "bands",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -84,13 +88,13 @@
   {
    "fieldname": "items",
    "fieldtype": "Table",
-   "label": "Items",
+   "label": "Calculations and Charges",
    "options": "Utility Bill Structure Item"
   },
   {
    "fieldname": "total_amount",
    "fieldtype": "Currency",
-   "label": "Total Amount",
+   "label": "Total Fixed Charges",
    "read_only": 1
   },
   {
@@ -126,6 +130,37 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company"
+  },
+  {
+   "fieldname": "metered_billing",
+   "fieldtype": "Check",
+   "label": "Metered Billing",
+   "default": "0"
+  },
+  {
+   "fieldname": "water_item",
+   "fieldtype": "Link",
+   "label": "Consumption Item",
+   "options": "Item",
+   "depends_on": "metered_billing",
+   "mandatory_depends_on": "metered_billing"
+  },
+  {
+   "fieldname": "sewerage_item",
+   "fieldtype": "Link",
+   "label": "Sewerage Item",
+   "options": "Item",
+   "depends_on": "metered_billing",
+   "hidden": 1
+  },
+  {
+   "fieldname": "bands",
+   "fieldtype": "Table",
+   "label": "Consumption Bands",
+   "options": "Utility Bill Band",
+   "depends_on": "metered_billing",
+   "description": "Retained for older structures; new structures use calculation rows.",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
@@ -138,7 +173,7 @@
    "link_fieldname": "utility_bill_structure"
   }
  ],
- "modified": "2025-06-10 12:38:15.315941",
+ "modified": "2026-11-16 16:11:06.041515",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure",

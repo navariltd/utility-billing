@@ -1,0 +1,66 @@
+{
+ "doctype": "DocType",
+ "name": "Utility Bill Band",
+ "module": "Utility Billing",
+ "creation": "2026-11-15 15:10:46.921373",
+ "modified": "2026-11-15 16:05:59.369135",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "min_qty",
+  "upper_limit",
+  "rate",
+  "water_rate",
+  "sewerage_rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "upper_limit",
+   "fieldtype": "Float",
+   "label": "Max Qty",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Consumption equal to this maximum belongs to this band."
+  },
+  {
+   "fieldname": "water_rate",
+   "fieldtype": "Currency",
+   "label": "Water Rate",
+   "in_list_view": 0,
+   "hidden": 1
+  },
+  {
+   "fieldname": "sewerage_rate",
+   "fieldtype": "Currency",
+   "label": "Sewerage Rate",
+   "in_list_view": 0,
+   "hidden": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "min_qty",
+   "fieldtype": "Float",
+   "label": "Min Qty",
+   "default": "0",
+   "in_list_view": 1,
+   "description": "Consumption must be greater than this minimum; a minimum of zero includes zero."
+  }
+ ],
+ "permissions": [],
+ "istable": 1,
+ "editable_grid": 1
+}

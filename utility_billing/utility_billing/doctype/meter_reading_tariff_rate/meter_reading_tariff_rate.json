@@ -22,8 +22,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Meter Reading Item",
-   "options": "Meter Reading Item",
-   "reqd": 1
+   "options": "Meter Reading Item"
   },
   {
    "fieldname": "item_code",
@@ -68,8 +67,7 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Rate",
-   "reqd": 1
+   "label": "Rate"
   },
   {
    "fieldname": "amount",
@@ -79,8 +77,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Amount",
-   "precision": "2",
-   "reqd": 1
+   "precision": "2"
   },
   {
    "fieldname": "warehouse",
@@ -96,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-22 09:54:43.549273",
+ "modified": "2026-11-15 15:10:46.921373",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Meter Reading Tariff Rate",

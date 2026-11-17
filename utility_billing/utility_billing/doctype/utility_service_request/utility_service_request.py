@@ -585,6 +585,8 @@ def get_utility_bill_structure_details(name):
 
 	items = []
 	for row in structure.items:
+		if row.get("row_type") == "Calculation Only":
+			continue
 		item = frappe.get_doc("Item", row.item)
 		item_details = {
 			"item_name": item.item_name,
