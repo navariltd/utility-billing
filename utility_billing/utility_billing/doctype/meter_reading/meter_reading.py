@@ -4,7 +4,7 @@ import frappe
 from erpnext.controllers.accounts_controller import AccountsController
 from frappe.model.document import Document
 from frappe.query_builder import DocType
-from frappe.utils import nowdate
+from frappe.utils import flt, nowdate
 from pypika import Order
 
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
@@ -13,6 +13,8 @@ from ...utils.request_link import check_meters_of_customer, check_request_custom
 
 class MeterReading(Document):
 	def validate(self):
+		from ...utils.structure_billing import set_assignment_for_date
+		set_assignment_for_date(self)
 		check_meters_of_customer(self)
 		if not self.get("utility_service_request"):
 			self.utility_service_request = request_from_claims(self)
@@ -22,6 +24,8 @@ class MeterReading(Document):
 		create_meter_reading_rates(self, self.price_list, self.date)
 
 	def on_submit(self):
+		from ...utils.structure_billing import check_monthly_duplicate
+		check_monthly_duplicate(self)
 		settings = frappe.get_single("Utility Billing Settings")
 		if not self.rates or len(self.rates) == 0:
 			frappe.throw(frappe._("Cannot submit Meter Reading. No rates available."))
@@ -49,6 +53,9 @@ class MeterReading(Document):
 			customer=self.customer,
 			meter_number=item.meter_number,
 		)
+		if self.get("bill_structure_assignment"):
+			from ...utils.structure_billing import previous_assigned_reading
+			previous_reading = previous_assigned_reading(self, item, previous_reading)
 		item.previous_reading = previous_reading
 
 		item.consumption = item.current_reading - previous_reading
@@ -67,10 +74,12 @@ def create_sales_order(meter_reading):
 		{
 			"doctype": "Sales Order",
 			"customer": meter_reading.customer,
+			"company": meter_reading.company,
 			"meter_readings": [],
 			"items": [],
 			"order_type": "Sales",
 			"selling_price_list": meter_reading.price_list,
+			"ignore_pricing_rule": int(bool(meter_reading.get("bill_structure_assignment"))),
 		}
 	)
 
@@ -102,7 +111,7 @@ def create_sales_order(meter_reading):
 				"stock_uom": i.stock_uom,
 				"qty": 1,
 				"current_reading": i.current_reading,
-				"previous_reading": prev_reading,
+				"previous_reading": i.previous_reading,
 				"consumption": i.consumption,
 				"warehouse": i.warehouse,
 			},
@@ -111,6 +120,12 @@ def create_sales_order(meter_reading):
 	sales_order.insert()
 	AccountsController.append_taxes_from_item_tax_template(sales_order)
 	sales_order.save()
+	if meter_reading.get("bill_structure_assignment"):
+		if len(sales_order.items) != len(meter_reading.rates):
+			frappe.throw(frappe._("Sales Order items must match the calculated bill lines."))
+		for calculated, line in zip(meter_reading.rates, sales_order.items):
+			if flt(calculated.amount, line.precision("amount")) != flt(line.amount, line.precision("amount")):
+				frappe.throw(frappe._("The unit rate rounding changed the charge for {0}. Check the tier quantities and rates.").format(line.item_code))
 
 	return sales_order
 

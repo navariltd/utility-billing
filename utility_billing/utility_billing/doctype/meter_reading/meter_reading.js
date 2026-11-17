@@ -267,3 +267,51 @@ function calculate_consumption(frm, row) {
 	}
 	frm.refresh_field("items");
 }
+
+frappe.ui.form.on('Meter Reading', {
+    refresh: select_effective_assignment,
+    customer: select_effective_assignment,
+    company: select_effective_assignment,
+    property: select_effective_assignment,
+    date: select_effective_assignment,
+});
+
+async function select_effective_assignment(frm) {
+    if (frm.doc.docstatus !== 0) return;
+    const args = {
+        customer: frm.doc.customer || '', company: frm.doc.company || '',
+        reading_date: frm.doc.date || '', property: frm.doc.property || ''
+    };
+    const key = JSON.stringify(args);
+    const request = (frm.assignment_request || 0) + 1;
+    frm.assignment_request = request;
+    if (!args.customer || !args.company || !args.reading_date) {
+        await frm.set_value('bill_structure_assignment', null);
+        return;
+    }
+    const response = await frappe.call({
+        method: 'utility_billing.utility_billing.utils.structure_billing.assignment_for_date', args
+    });
+    const current = JSON.stringify({customer: frm.doc.customer || '', company: frm.doc.company || '',
+        reading_date: frm.doc.date || '', property: frm.doc.property || ''});
+    if (request !== frm.assignment_request || current !== key || frm.doc.docstatus !== 0) return;
+    const assignment = response.message || {};
+    const changed = (frm.doc.bill_structure_assignment || '') !== (assignment.name || '');
+    await frm.set_value('bill_structure_assignment', assignment.name || null);
+    if (changed) {
+        frm.clear_table('rates');
+        frm.clear_table('calculations');
+        frm.refresh_field('rates');
+        frm.refresh_field('calculations');
+    }
+    if (!assignment.name) {
+        frm.set_intro(assignment.has_assignments ? __('No Bill Structure Assignment covers the selected reading date. Check the assignment dates.') : '');
+        return;
+    }
+    frm.set_intro('');
+    if (assignment.metered_billing && !(frm.doc.items || []).length) {
+        const row = frm.add_child('items', {warehouse: frm.doc.warehouse});
+        await frappe.model.set_value(row.doctype, row.name, 'item_code', assignment.consumption_item);
+        frm.refresh_field('items');
+    }
+}

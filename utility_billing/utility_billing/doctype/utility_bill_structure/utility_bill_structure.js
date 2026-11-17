@@ -2,28 +2,6 @@ frappe.ui.form.on("Utility Bill Structure", {
 	async refresh(frm) {
 		calculate_overall_total(frm);
 
-		const today = frappe.datetime.get_today();
-		frappe.db
-			.get_value(
-				"Fiscal Year",
-				{
-					year_start_date: ["<=", today],
-					year_end_date: [">=", today],
-				},
-				["name", "year_start_date", "year_end_date"]
-			)
-			.then((result) => {
-				if (result && result.message) {
-					frm.set_value("fiscal_year", result.message.name);
-					frm.set_value("start_date", result.message.year_start_date);
-					frm.set_value("end_date", result.message.year_end_date);
-				}
-			});
-
-		if (!frm.doc.fiscal_year) {
-			frm.set_value("fiscal_year", frappe.defaults.get_user_default("fiscal_year"));
-		}
-
 		frm.fields_dict["items"].grid.get_field("item").get_query = function () {
 			return {
 				filters: {
@@ -34,14 +12,6 @@ frappe.ui.form.on("Utility Bill Structure", {
 			};
 		};
 
-		frm.fields_dict["utility_property"].get_query = function () {
-			return {
-				filters: {
-					is_group: 1,
-					company: frm.doc.company || frappe.defaults.get_user_default("Company"),
-				},
-			};
-		};
 	},
 
 	items_on_form_rendered(frm) {
@@ -68,6 +38,9 @@ frappe.ui.form.on("Utility Bill Structure", {
 });
 
 frappe.ui.form.on("Utility Bill Structure Item", {
+    row_type(frm, cdt, cdn) { calculate_row_total(frm, cdt, cdn); calculate_overall_total(frm); },
+    calculation_type(frm, cdt, cdn) { calculate_row_total(frm, cdt, cdn); calculate_overall_total(frm); },
+    condition(frm, cdt, cdn) { calculate_row_total(frm, cdt, cdn); calculate_overall_total(frm); },
 	amount(frm, cdt, cdn) {
 		calculate_row_total(frm, cdt, cdn);
 		calculate_overall_total(frm);
@@ -80,7 +53,7 @@ frappe.ui.form.on("Utility Bill Structure Item", {
 
 function calculate_row_total(frm, cdt, cdn) {
 	let row = locals[cdt][cdn];
-	let amount = parseFloat(row.amount) || 0;
+	let amount = row.calculation_type === "Formula" || row.condition ? 0 : parseFloat(row.amount) || 0;
 	let discount = parseFloat(row.discount) || 0;
 
 	let total = amount - (discount / 100) * amount;
@@ -90,7 +63,7 @@ function calculate_row_total(frm, cdt, cdn) {
 function calculate_overall_total(frm) {
 	let total = 0;
 	(frm.doc.items || []).forEach((row) => {
-		total += parseFloat(row.total) || 0;
+		if (row.row_type !== "Calculation Only") total += parseFloat(row.total) || 0;
 	});
 	frm.set_value("total_amount", total);
 }

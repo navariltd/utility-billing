@@ -10,3 +10,8 @@ utility_billing.utility_billing.patches.initiate_frappe_crm # 16/06/25
 utility_billing.utility_billing.patches.contract_end_notification # 16/06/25   
 utility_billing.utility_billing.patches.create_property_service_items # 17/09/26
 
+utility_billing.utility_billing.patches.add_bill_band_min_qty
+utility_billing.utility_billing.patches.remove_assignment_sewerage_toggle
+utility_billing.utility_billing.patches.convert_sample_bands_to_calculations
+utility_billing.utility_billing.patches.add_stock_quantity_sources
+utility_billing.utility_billing.patches.use_conditional_tier_formulas

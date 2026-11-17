@@ -1,0 +1,70 @@
+{
+ "doctype": "DocType",
+ "name": "Bill Calculation",
+ "module": "Utility Billing",
+ "creation": "2026-11-16 16:11:06.041515",
+ "modified": "2026-11-16 17:49:37.042602",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "engine": "InnoDB",
+ "istable": 1,
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Description",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "row_type",
+   "fieldtype": "Select",
+   "label": "Row Type",
+   "options": "Billable Item\nCalculation Only",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "abbreviation",
+   "fieldtype": "Data",
+   "label": "Abbreviation"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applied",
+   "fieldtype": "Check",
+   "label": "Applied",
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Small Text",
+   "label": "Formula"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "label": "Rate"
+  }
+ ],
+ "field_order": [
+  "label",
+  "row_type",
+  "abbreviation",
+  "qty",
+  "rate",
+  "amount",
+  "applied",
+  "formula"
+ ],
+ "permissions": []
+}

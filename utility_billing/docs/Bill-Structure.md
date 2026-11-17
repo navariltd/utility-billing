@@ -22,6 +22,45 @@ The Utility Bill Structure acts as a **template** for recurring utility billing 
 
 ---
 
+## Calculate monthly bills
+
+For monthly customer billing, use **Calculations and Charges** and a submitted **Bill Structure Assignment**. The reading date selects the assignment that applies to the customer.
+
+- **Calculation Only** rows work out intermediate amounts. Give each one a Description and an Abbreviation so later rows can use its result. These rows do not require an Item and do not become charges.
+- **Billable Item** rows produce the actual charges. Choose an Item, then a fixed amount or an Amount Formula.
+
+Rows calculate from top to bottom. For example, at 15 units:
+
+| Description | Abbreviation | Amount Formula | Row Type |
+|---|---|---|---|
+| First 10 units | W1 | `consumption * 10 if consumption <= 10 else 10 * 10` | Calculation Only |
+| Next 10 units | W2 | `0 if consumption <= 10 else ((consumption - 10) * 8 if consumption <= 20 else 10 * 8)` | Calculation Only |
+| Above 20 units | W3 | `(consumption - 20) * 6 if consumption > 20 else 0` | Calculation Only |
+| Water | WATER | `W1 + W2 + W3` | Billable Item |
+
+Read each formula as “use this amount if the condition is true; otherwise use the amount after else.” The Water charge is **140**. Intermediate values of 100, 40 and 0 appear under **Calculation Details** on Meter Reading, while **Rates** contains only the final billable Water line.
+
+**Fixed** charges always use quantity 1 and the fixed amount, including stock items. Their stock accounting treatment is deferred.
+
+For **Formula** charges, the system checks **Maintain Stock** on the billable Item:
+
+- **Non-stock items:** one final charge with quantity 1. This avoids rounding a combined total into an average unit rate.
+- **Stock items:** actual quantities are billed. For progressive pricing, give each calculation row a **Quantity Formula**, then list its abbreviations in the final item's **Stock Quantity Sources**.
+
+For the Water example, use `consumption if consumption <= 10 else 10` for W1's quantity, `0 if consumption <= 10 else (consumption - 10 if consumption <= 20 else 10)` for W2, and `consumption - 20 if consumption > 20 else 0` for W3. Set the Water billable row's Stock Quantity Sources to `W1, W2, W3`. At 15 units, a stock item produces two Water lines: 10 at 10 and 5 at 8. The unused third tier produces no charge line. The same configuration produces one Water charge of 140 when the Item is non-stock.
+
+Stock source amounts must add up to the billable amount. For the consumption item, their quantities must also add up to the meter consumption. A formula-based stock item without tier sources needs its own Quantity Formula; missing quantities are rejected rather than defaulting to 1.
+
+Enable **Allow Item to Be Added Multiple Times in a Transaction** in Selling Settings for stock tier lines. Sales Orders do not move stock; submit a Delivery Note or a Sales Invoice with Update Stock to record the actual stock movement. Configure the quantity formulas in the units used for the billed stock item.
+
+The sample structures use formulas instead of a separate Bands table. Older band-based structures remain supported for compatibility. **Total Fixed Charges** excludes calculation-only rows and does not predict formula charges before a reading is entered.
+
+When copying a structure into a Utility Service Request, calculation-only rows are excluded. Consumption formulas are evaluated through Meter Reading.
+
+See the [demo walkthrough](Billing-Demo-Walkthrough.md) for examples with meters, sewerage, fixed monthly charges and assignment history.
+
+---
+
 ## 🧱 Doctype Fields
 
 | Field          | Type     | Description                                                     |
@@ -31,8 +70,8 @@ The Utility Bill Structure acts as a **template** for recurring utility billing 
 | `End Date`     | Date     | End date for billing                                            |
 | `Cost Center`  | Link     | Optional cost center to track financials                        |
 | `Project`      | Link     | Optional project association                                    |
-| `Items`        | Table    | List of utility billing items and their amounts (child doctype) |
-| `Total Amount` | Currency | Auto-calculated total of all listed item amounts                |
+| `Items`        | Table    | Billable items and intermediate calculation rows |
+| `Total Amount` | Currency | Total fixed billable charges; excludes intermediate calculations                |
 
 ---
 
@@ -53,7 +92,7 @@ Each item in the bill structure is defined in this child table.
 
 When used within a **Utility Service Request**, the Utility Bill Structure:
 
-- Autofills all defined utility items into the request
+- Autofills billable utility items into the request
 - Calculates totals and applies discounts
 - Enables standardized billing and streamlined sales workflows
 
