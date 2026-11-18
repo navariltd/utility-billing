@@ -124,6 +124,7 @@
    "write": 1
   }
  ],
- "autoname": "hash",
- "is_submittable": 1
+ "autoname": "format:UBSA-{YYYY}-{#####}",
+ "is_submittable": 1,
+ "naming_rule": "Expression"
 }

@@ -132,35 +132,35 @@
    "options": "Company"
   },
   {
+   "default": "0",
    "fieldname": "metered_billing",
    "fieldtype": "Check",
-   "label": "Metered Billing",
-   "default": "0"
+   "label": "Metered Billing"
   },
   {
+   "depends_on": "metered_billing",
    "fieldname": "water_item",
    "fieldtype": "Link",
    "label": "Consumption Item",
-   "options": "Item",
-   "depends_on": "metered_billing",
-   "mandatory_depends_on": "metered_billing"
+   "mandatory_depends_on": "metered_billing",
+   "options": "Item"
   },
   {
+   "depends_on": "metered_billing",
    "fieldname": "sewerage_item",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Sewerage Item",
-   "options": "Item",
-   "depends_on": "metered_billing",
-   "hidden": 1
+   "options": "Item"
   },
   {
-   "fieldname": "bands",
-   "fieldtype": "Table",
-   "label": "Consumption Bands",
-   "options": "Utility Bill Band",
    "depends_on": "metered_billing",
    "description": "Retained for older structures; new structures use calculation rows.",
-   "hidden": 1
+   "fieldname": "bands",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Consumption Bands",
+   "options": "Utility Bill Band"
   }
  ],
  "grid_page_length": 50,
@@ -171,9 +171,14 @@
    "group": "Utility Billing",
    "link_doctype": "Utility Service Request",
    "link_fieldname": "utility_bill_structure"
+  },
+  {
+   "group": "Bill Structure Assignment",
+   "link_doctype": "Utility Bill Structure Assignment",
+   "link_fieldname": "utility_bill_structure"
   }
  ],
- "modified": "2026-11-16 16:11:06.041515",
+ "modified": "2026-11-19 00:00:38.363324",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure",
