@@ -199,10 +199,14 @@ doc_events = {
 	# 	"on_trash": "method"
 	# }
 	"Sales Order": {
+		"before_validate": ["utility_billing.utility_billing.utils.fixed_billing.validate_fixed_bill"],
 		"validate": ["utility_billing.utility_billing.overrides.server.sales_order.validate"],
 	},
 	"Sales Invoice": {
-		"before_validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.before_validate"],
+		"before_validate": [
+			"utility_billing.utility_billing.utils.fixed_billing.validate_fixed_bill",
+			"utility_billing.utility_billing.overrides.server.sales_invoice.before_validate",
+		],
 		"validate": ["utility_billing.utility_billing.overrides.server.sales_invoice.validate"],
 		"on_submit": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_submit"],
 		"on_cancel": ["utility_billing.utility_billing.overrides.server.sales_invoice.on_cancel"],

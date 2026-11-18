@@ -383,6 +383,21 @@
    "translatable": 0,
    "unique": 0,
    "width": null
+  },
+  {
+   "dt": "Auto Repeat",
+   "name": "Auto Repeat-bill_structure_assignment",
+   "module": "Utility Billing",
+   "creation": "2026-11-18 23:17:47.634458",
+   "modified": "2026-11-18 23:17:47.634458",
+   "owner": "Administrator",
+   "modified_by": "Administrator",
+   "fieldname": "bill_structure_assignment",
+   "label": "Bill Structure Assignment",
+   "fieldtype": "Link",
+   "options": "Utility Bill Structure Assignment",
+   "insert_after": "reference_document",
+   "read_only": 1
   }
  ],
  "custom_perms": [],

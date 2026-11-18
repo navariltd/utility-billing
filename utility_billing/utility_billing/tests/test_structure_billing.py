@@ -59,7 +59,7 @@ class TestStructureBilling(TestCase):
         self.assertFalse(structure_rates(self.reading))
 
     def test_duplicate_month(self):
-        with patch.object(frappe.db, 'get_value'), patch.object(frappe.db, 'exists', return_value=True):
+        with patch.object(frappe.db, 'get_value'), patch.object(frappe.db, 'exists', return_value=True), patch('frappe.get_doc', return_value=self.assignment), patch('utility_billing.utility_billing.utils.fixed_billing.scope_lock'), patch('utility_billing.utility_billing.utils.fixed_billing.existing_bills', return_value=[]):
             with self.assertRaises(frappe.ValidationError):
                 check_monthly_duplicate(self.reading)
 
