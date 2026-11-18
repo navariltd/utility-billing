@@ -22,9 +22,9 @@ def migrate_expression(expression, condition=False):
 
 
 def execute():
-    for row in frappe.get_all('Utility Bill Structure Item', fields=['name', 'condition', 'formula', 'quantity_formula']):
+    for row in frappe.get_all('Utility Bill Structure Item', fields=['name', 'condition', 'formula']):
         changes = {}
-        for field in ('condition', 'formula', 'quantity_formula'):
+        for field in ('condition', 'formula'):
             original = row.get(field)
             updated = migrate_expression(original, condition=field == 'condition')
             if updated != original:
