@@ -288,6 +288,8 @@ def check_within_contract(contract_name: str, governed: list[frappe._dict]) -> N
 
 def get_governed_rows(doc: Document) -> list:
 	"""Return the lines billing a utility item, except those priced from a Meter Reading."""
+	if doc.get("fixed_utility_bill") and doc.get("bill_structure_assignment"):
+		return []
 	rows = [row for row in doc.get("items") or [] if row.item_code and not row.get("meter_reading")]
 	utility_items = get_utility_items(row.item_code for row in rows)
 

@@ -20,7 +20,7 @@ def execute():
             template = expected.get(row.abbreviation)
             if not template or row.formula != template.get('formula'):
                 continue
-            for field in ('quantity_formula', 'stock_quantity_sources'):
+            for field in ('stock_quantity_sources',):
                 if template.get(field) and row.get(field) != template[field]:
                     row.set(field, template[field])
                     changed = True

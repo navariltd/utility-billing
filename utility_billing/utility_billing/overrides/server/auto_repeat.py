@@ -19,16 +19,28 @@ COPY_DATE_FIELDS = {"Sales Order": "transaction_date", "Sales Invoice": "posting
 
 
 class UtilityBillingAutoRepeat(AutoRepeat):
+    def before_insert(self):
+        if not self.get('bill_structure_assignment'):
+            return super().before_insert()
+
     def create_documents(self):
         """Create the copy for the next schedule date only when it is due.
 
         Every path that creates copies goes through here: the app's daily job,
         Frappe's and a manual run.
         """
+        if self.get("bill_structure_assignment") and (self.disabled or not self.next_schedule_date):
+            return
         if not copy_is_due(self):
             return
 
         return super().create_documents()
+
+    def make_new_document(self, assignee=None):
+        if self.get('bill_structure_assignment'):
+            from ...utils.fixed_billing import recurring_bill
+            return recurring_bill(self)
+        return super().make_new_document(assignee)
 
 
 def copy_is_due(auto_repeat) -> bool:

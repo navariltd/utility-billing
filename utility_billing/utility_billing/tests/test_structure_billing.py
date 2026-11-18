@@ -59,7 +59,7 @@ class TestStructureBilling(TestCase):
         self.assertFalse(structure_rates(self.reading))
 
     def test_duplicate_month(self):
-        with patch.object(frappe.db, 'get_value'), patch.object(frappe.db, 'exists', return_value=True):
+        with patch.object(frappe.db, 'get_value'), patch.object(frappe.db, 'exists', return_value=True), patch('frappe.get_doc', return_value=self.assignment), patch('utility_billing.utility_billing.utils.fixed_billing.scope_lock'), patch('utility_billing.utility_billing.utils.fixed_billing.existing_bills', return_value=[]):
             with self.assertRaises(frappe.ValidationError):
                 check_monthly_duplicate(self.reading)
 
@@ -71,8 +71,8 @@ class TestStructureBilling(TestCase):
     def test_generic_formulas_and_extra_item(self):
         self.structure.set('bands', [dict(item='Water', min_qty=0, upper_limit=20, rate=8), dict(item='Sewer', min_qty=0, upper_limit=20, rate=4)])
         self.structure.set('items', [
-            dict(item='Water', abbreviation='water_total', calculation_type='Formula', formula='consumption * band_rate', quantity_formula='consumption'),
-            dict(item='Sewer', calculation_type='Formula', formula='consumption * band_rate', quantity_formula='consumption'),
+            dict(item='Water', abbreviation='water_total', calculation_type='Formula', formula='consumption * band_rate'),
+            dict(item='Sewer', calculation_type='Formula', formula='consumption * band_rate'),
             dict(item='Other Service', calculation_type='Formula', formula='max(water_total * 0.1, 20)')])
         self.structure.validate()
         self.rates()
@@ -301,13 +301,14 @@ class TestStructureBilling(TestCase):
         with self.assertRaises(frappe.ValidationError):
             self.rates(stock_items={'Water'})
         self.structure.items[3].formula = 'W1 + W2 + W3'
-        self.structure.items[1].quantity_formula = '1'
+        self.structure.items[1].formula = '1 * 8'
+        self.structure.items[3].formula = 'W1 + W2 + W3'
         with self.assertRaises(frappe.ValidationError):
             self.rates(stock_items={'Water'})
 
     def test_stock_sources_require_prior_tier_quantities(self):
         self.use_progressive_structure()
-        self.structure.items[0].quantity_formula = None
+        self.structure.items[0].formula = '100'
         with self.assertRaises(frappe.ValidationError):
             self.structure.validate()
         with self.assertRaises(frappe.ValidationError):
@@ -349,9 +350,21 @@ class TestStructureBilling(TestCase):
 
     def test_fixed_stock_charge_does_not_use_meter_quantity(self):
         self.structure.set('bands', [])
-        self.structure.set('items', [dict(item='Water', amount=500, quantity_formula='consumption')])
+        self.structure.set('items', [dict(item='Water', amount=500)])
         self.rates(stock_items={'Water'})
         self.assertEqual([(r.qty, r.amount) for r in self.reading.rates], [(1, 500)])
+
+
+    def test_amount_formula_supplies_stock_quantities(self):
+        from utility_billing.utility_billing.utils.billing_formula import quantity_from_amount
+        context = dict(consumption=15)
+        self.assertEqual(quantity_from_amount('(consumption - 10) * 8', context), 5)
+        self.assertEqual(quantity_from_amount('consumption * 10 if consumption <= 10 else 10 * 10', context), 10)
+        self.assertEqual(quantity_from_amount('0 if consumption <= 20 else (consumption - 20) * 6', context), 0)
+        self.assertIsNone(quantity_from_amount('140', context))
+        self.assertIsNone(quantity_from_amount('consumption + 10', context))
+        self.assertIsNone(quantity_from_amount('consumption * consumption', context))
+        self.assertIsNone(quantity_from_amount('water_total * 8', dict(context, water_total=140)))
 
 
 
@@ -389,8 +402,8 @@ def run_integration_check():
             fiscal_year=fy, company=company, metered_billing=1, water_item=items[0], sewerage_item=items[1],
             bands=[dict(item=items[0], upper_limit=10, rate=10), dict(item=items[0], min_qty=10, upper_limit=20, rate=8),
                    dict(item=items[1], upper_limit=10, rate=5), dict(item=items[1], min_qty=10, upper_limit=20, rate=4)],
-            items=[dict(item=items[0], calculation_type='Formula', formula='consumption * band_rate', quantity_formula='consumption'),
-                   dict(item=items[1], calculation_type='Formula', formula='consumption * band_rate', quantity_formula='consumption')])).insert()
+            items=[dict(item=items[0], calculation_type='Formula', formula='consumption * band_rate'),
+                   dict(item=items[1], calculation_type='Formula', formula='consumption * band_rate')])).insert()
         structure.submit()
         assignment = frappe.get_doc(dict(doctype='Utility Bill Structure Assignment', customer=customer.name,
             company=company, utility_bill_structure=structure.name, start_date=date)).insert()

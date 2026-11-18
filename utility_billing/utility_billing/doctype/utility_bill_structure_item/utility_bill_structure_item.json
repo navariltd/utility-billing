@@ -14,7 +14,6 @@
   "amount",
   "condition",
   "formula",
-  "quantity_formula",
   "stock_quantity_sources",
   "column_break_jqkh",
   "discount",
@@ -101,13 +100,6 @@
    "description": "Use consumption, current_reading, previous_reading, amount, days_in_month and earlier abbreviations. Functions: min, max, round, abs."
   },
   {
-   "fieldname": "quantity_formula",
-   "fieldtype": "Code",
-   "label": "Quantity Formula",
-   "options": "Python",
-   "description": "Tier quantity for calculation rows, or actual quantity for a stock item without sources. Non-stock items are billed as one charge."
-  },
-  {
    "fieldname": "row_type",
    "fieldtype": "Select",
    "label": "Row Type",
@@ -127,14 +119,14 @@
    "fieldtype": "Data",
    "label": "Stock Quantity Sources",
    "depends_on": "eval:doc.row_type != 'Calculation Only'",
-   "description": "Earlier calculation abbreviations that supply stock quantities, for example W1, W2, W3. Used only for stock items."
+   "description": "Earlier tier abbreviations, for example W1, W2, W3. Stock quantities come from the units \u00d7 numeric rate in their Amount Formulas."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-11-16 17:49:37.042602",
+ "modified": "2026-11-18 23:45:21.990323",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Bill Structure Item",

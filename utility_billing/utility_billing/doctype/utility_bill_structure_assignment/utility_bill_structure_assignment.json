@@ -3,7 +3,7 @@
  "name": "Utility Bill Structure Assignment",
  "module": "Utility Billing",
  "creation": "2026-11-15 15:10:46.921373",
- "modified": "2026-11-16 13:50:08.744148",
+ "modified": "2026-11-19 00:14:59.601220",
  "owner": "Administrator",
  "modified_by": "Administrator",
  "engine": "InnoDB",
@@ -14,6 +14,7 @@
   "utility_bill_structure",
   "start_date",
   "end_date",
+  "billing_auto_repeat",
   "previous_assignment",
   "amended_from"
  ],
@@ -74,6 +75,15 @@
    "options": "Utility Bill Structure Assignment",
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "billing_auto_repeat",
+   "fieldtype": "Link",
+   "label": "Billing Auto Repeat",
+   "options": "Auto Repeat",
+   "read_only": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1
   }
  ],
  "permissions": [
@@ -114,6 +124,7 @@
    "write": 1
   }
  ],
- "autoname": "hash",
- "is_submittable": 1
+ "autoname": "format:UBSA-{YYYY}-{#####}",
+ "is_submittable": 1,
+ "naming_rule": "Expression"
 }

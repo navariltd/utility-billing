@@ -3,22 +3,24 @@ import frappe
 
 
 def replacements():
-    from utility_billing.utility_billing.patches.demo.formula_billing import progressive_rows
-
     old_portions = ['min(consumption, 10)', 'min(max(consumption - 10, 0), 10)', 'max(consumption - 20, 0)']
     changes = {}
-    for item, prefix, rates, total in [('Water', 'W', (10, 8, 6), 'water_total'), ('Sewerage', 'S', (5, 4, 3), 'sewerage_total')]:
-        for old, rate, row in zip(old_portions, rates, progressive_rows(item, prefix, rates, total)):
-            changes[old] = row['quantity_formula']
-            changes[f'{old} * {rate}'] = row['formula']
+    for rates in [(10, 8, 6), (5, 4, 3)]:
+        amounts = [
+            f'consumption * {rates[0]} if consumption <= 10 else 10 * {rates[0]}',
+            f'0 if consumption <= 10 else ((consumption - 10) * {rates[1]} if consumption <= 20 else 10 * {rates[1]})',
+            f'(consumption - 20) * {rates[2]} if consumption > 20 else 0',
+        ]
+        for old, rate, expression in zip(old_portions, rates, amounts):
+            changes[f'{old} * {rate}'] = expression
     changes['max(water_total * 0.2, 50)'] = 'water_total * 0.2 if water_total * 0.2 >= 50 else 50'
     return changes
 
 
 def execute():
     changes = replacements()
-    for row in frappe.get_all('Utility Bill Structure Item', fields=['name', 'formula', 'quantity_formula']):
-        updated = {field: changes[row[field]] for field in ('formula', 'quantity_formula') if row.get(field) in changes}
+    for row in frappe.get_all('Utility Bill Structure Item', fields=['name', 'formula']):
+        updated = {field: changes[row[field]] for field in ('formula',) if row.get(field) in changes}
         if updated:
             frappe.db.set_value('Utility Bill Structure Item', row.name, updated, update_modified=False)
     # Refresh draft explanations only. Submitted bills keep the formulas recorded when billed.

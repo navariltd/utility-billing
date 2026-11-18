@@ -45,7 +45,7 @@ def validate_formulas(structure):
                     raise ValueError('Discounts apply to billable items only')
             elif not row.get('item'):
                 raise ValueError('Select an Item for every billable row')
-            for key in ('condition', 'formula', 'quantity_formula'):
+            for key in ('condition', 'formula'):
                 expression = row.get(key)
                 if expression:
                     parse_expression(expression, names)
@@ -54,8 +54,8 @@ def validate_formulas(structure):
             sources = quantity_sources(row)
             for code in sources:
                 helper = earlier_calculations.get(code)
-                if not helper or not helper.get('quantity_formula'):
-                    raise ValueError(f'Stock quantity source {code} must be an earlier calculation-only row with a Quantity Formula')
+                if not helper or helper.get('calculation_type') != 'Formula' or not has_quantity_expression(helper.formula):
+                    raise ValueError(f'Stock quantity source {code} must be an earlier calculation-only row whose Amount Formula is units * numeric rate (if/else is supported)')
             code = row.get('abbreviation')
             if code:
                 if not re.fullmatch('[A-Za-z][A-Za-z0-9_]*', code) or code in names or code in FUNCTIONS:
@@ -94,7 +94,7 @@ def calculate_rows(structure, reading, source):
     for row in structure.items:
         try:
             local = dict(context, amount=flt(row.amount), band_rate=0)
-            expressions = [row.get(k) or '' for k in ('condition', 'formula', 'quantity_formula')]
+            expressions = [row.get(k) or '' for k in ('condition', 'formula')]
             uses_band = any(any(isinstance(n, ast.Name) and n.id == 'band_rate' for n in ast.walk(ast.parse(e, mode='eval'))) for e in expressions if e)
             # Conditions can skip a charge before its tariff is needed.
             if row.get('condition') and 'band_rate' not in row.condition and not evaluate(row.condition, local):
@@ -125,7 +125,7 @@ def calculate_rows(structure, reading, source):
                 raise ValueError('Amount must be finite and nonnegative')
             if row.get('abbreviation'): context[row.abbreviation] = amount
             if calculation_only:
-                qty = evaluate(row.quantity_formula, local) if row.get('quantity_formula') else None
+                qty = quantity_from_amount(row.formula, local) if row.get('calculation_type') == 'Formula' else None
                 if qty is not None and (qty < 0 or (qty == 0 and amount != 0)):
                     raise ValueError('Tier quantity must be nonnegative; nonzero tier amounts require a quantity')
                 if row.get('abbreviation'):
@@ -146,7 +146,7 @@ def calculate_rows(structure, reading, source):
                             raise ValueError(f'Stock quantity source {code} was already used for this item')
                         portion = quantities.get(code)
                         if not portion or portion['qty'] is None:
-                            raise ValueError(f'Stock quantity source {code} requires a tier Quantity Formula')
+                            raise ValueError(f'Stock quantity source {code} requires an Amount Formula written as units * numeric rate')
                         portions.append(portion)
                         used_sources.add((row.item, code))
                     if not math.isclose(sum(p['amount'] for p in portions), gross_amount, rel_tol=1e-9, abs_tol=1e-8):
@@ -156,9 +156,9 @@ def calculate_rows(structure, reading, source):
                         if portion['qty']:
                             results.append(dict(item=row.item, qty=portion['qty'], rate=portion['amount'] * factor / portion['qty']))
                 else:
-                    if not row.get('quantity_formula'):
-                        raise ValueError('Stock items require a Quantity Formula or Stock Quantity Sources')
-                    qty = evaluate(row.quantity_formula, local)
+                    qty = quantity_from_amount(row.formula, local)
+                    if qty is None:
+                        raise ValueError('Stock quantities cannot be determined. Use units * numeric rate in Amount Formula, or select Stock Quantity Sources.')
                     if qty < 0 or (qty == 0 and amount != 0):
                         raise ValueError('Stock quantity must be nonnegative; nonzero amounts require a quantity')
                     if qty:
@@ -189,3 +189,38 @@ def quantity_sources(row):
     if len(sources) != len(set(sources)):
         raise ValueError('Stock Quantity Sources cannot contain duplicate abbreviations')
     return sources
+
+
+def has_quantity_expression(expression):
+    """Only explicit units × numeric-rate expressions have a reliable stock quantity."""
+    def supported(node):
+        if isinstance(node, ast.IfExp):
+            return supported(node.body) and supported(node.orelse)
+        if isinstance(node, ast.Constant) and node.value == 0:
+            return True
+        return (isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult)
+            and isinstance(node.right, ast.Constant) and type(node.right.value) in (int, float)
+            and node.right.value >= 0 and is_units_expression(node.left))
+    return bool(expression) and supported(ast.parse(expression, mode='eval').body)
+
+
+def quantity_from_amount(expression, context):
+    """Follow the active if/else branch and read the units operand; never infer from money alone."""
+    if not expression:
+        return None
+    node = parse_expression(expression, set(context)).body
+    while isinstance(node, ast.IfExp):
+        node = node.body if evaluate(ast.unparse(node.test), context) else node.orelse
+    if isinstance(node, ast.Constant) and node.value == 0:
+        return 0
+    if (isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult)
+        and isinstance(node.right, ast.Constant) and type(node.right.value) in (int, float)
+        and node.right.value >= 0 and is_units_expression(node.left)):
+        return evaluate(ast.unparse(node.left), context)
+    return None
+
+
+def is_units_expression(node):
+    # Abbreviations hold money, so they must not accidentally become stock units.
+    allowed_names = {'consumption', 'current_reading', 'previous_reading'} | FUNCTIONS.keys()
+    return all(not isinstance(part, ast.Name) or part.id in allowed_names for part in ast.walk(node))

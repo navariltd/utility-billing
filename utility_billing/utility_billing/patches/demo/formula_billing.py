@@ -174,22 +174,18 @@ def setup_meters():
 
 def progressive_rows(item, prefix, rates, total_abbreviation):
     """First ten units, next ten units, then all remaining consumption."""
-    portions = [
-        'consumption if consumption <= 10 else 10',
-        '0 if consumption <= 10 else (consumption - 10 if consumption <= 20 else 10)',
-        'consumption - 20 if consumption > 20 else 0',
-    ]
     amounts = [
         f'consumption * {rates[0]} if consumption <= 10 else 10 * {rates[0]}',
-        f'0 if consumption <= 10 else ((consumption - 10) * {rates[1]} if consumption <= 20 else 10 * {rates[1]})',
-        f'(consumption - 20) * {rates[2]} if consumption > 20 else 0',
+        f'(consumption - 10) * {rates[1]} if consumption <= 20 else 10 * {rates[1]}',
+        f'(consumption - 20) * {rates[2]}',
     ]
+    conditions = ['consumption > 0', 'consumption > 10', 'consumption > 20']
     labels = ['first 10 units', 'next 10 units', 'above 20 units']
     rows = [dict(row_type='Calculation Only', label=f'{item}: {label}', abbreviation=f'{prefix}{index}',
-        calculation_type='Formula', formula=amount, quantity_formula=portion)
-        for index, (portion, label, amount) in enumerate(zip(portions, labels, amounts), 1)]
+        calculation_type='Formula', condition=condition, formula=amount)
+        for index, (label, condition, amount) in enumerate(zip(labels, conditions, amounts), 1)]
     rows.append(dict(row_type='Billable Item', item=item, abbreviation=total_abbreviation,
-        calculation_type='Formula', formula=' + '.join(f'{prefix}{i}' for i in range(1, 4)), quantity_formula='consumption', stock_quantity_sources=', '.join(f'{prefix}{i}' for i in range(1, 4))))
+        calculation_type='Formula', formula=' + '.join(f'{prefix}{i}' for i in range(1, 4)), stock_quantity_sources=', '.join(f'{prefix}{i}' for i in range(1, 4))))
     return rows
 
 

@@ -68,6 +68,11 @@ def append_rate(reading, item, qty, rate, source=None):
 def check_monthly_duplicate(reading):
     if not reading.get('bill_structure_assignment'):
         return
+    from .fixed_billing import existing_bills, scope_lock
+    assignment = frappe.get_doc('Utility Bill Structure Assignment', reading.bill_structure_assignment)
+    scope_lock(assignment)
+    if existing_bills(assignment, reading.date, check_meter_readings=False):
+        frappe.throw(_('A fixed utility bill already exists for this customer and property for this month.'))
     # Serialize submissions for this assignment before checking the billing month.
     frappe.db.get_value('Utility Bill Structure Assignment', reading.bill_structure_assignment, 'name', for_update=True)
     if frappe.db.exists('Meter Reading', {
