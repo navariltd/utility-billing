@@ -44,13 +44,13 @@ The abbreviations, such as **W1**, **W2** and **W3**, name the intermediate amou
 
 Read `amount if condition else another_amount` as: “Use this amount when the condition is true; otherwise use the other amount.”
 
-| Water tier | Amount Formula | How to explain it |
-|---|---|---|
-| First 10 units | `consumption * 10 if consumption <= 10 else 10 * 10` | Charge all units if consumption is 10 or less; otherwise charge a full first tier of 100. |
-| Next 10 units | `0 if consumption <= 10 else ((consumption - 10) * 8 if consumption <= 20 else 10 * 8)` | Charge nothing until consumption exceeds 10. Then charge the next units at 8, up to a full tier of 80. |
-| Above 20 units | `(consumption - 20) * 6 if consumption > 20 else 0` | Charge only the units above 20, at 6 each. |
+| Water tier | Condition | Amount Formula | How to explain it |
+|---|---|---|---|
+| First 10 units | `consumption > 0` | `consumption * 10 if consumption <= 10 else 10 * 10` | Charge all units if consumption is 10 or less; otherwise charge a full first tier of 100. |
+| Next 10 units | `consumption > 10` | `(consumption - 10) * 8 if consumption <= 20 else 10 * 8` | Start this tier only above 10 units. Charge the next units at 8, up to a full tier of 80. |
+| Above 20 units | `consumption > 20` | `(consumption - 20) * 6` | Start this tier only above 20 units, then charge the remaining units at 6. |
 
-At 15 units, those three rows give **100**, **40**, and **0**. The final Water row adds them to **140**. Sewerage follows the same steps with its own rates.
+A row whose Condition is false contributes zero; later rows can still use its abbreviation. No separate quantity formula is required. At 15 units, those three rows give **100**, **40**, and **0**. The final Water row adds them to **140**. Sewerage follows the same steps with its own rates.
 
 ## 2. Show the customer assignment and installed meter
 
@@ -122,13 +122,18 @@ Restore Current Reading to **15** and save.
 
 4. Restore Current Reading to **15** and save.
 
-### Fixed monthly charges
+### Fixed monthly charges without a meter reading
 
-1. Open [Peter's reading](http://utility-billing.localhost:8000/desk/meter-reading/MR-202611-00004).
-2. Confirm Customer **Peter Kamau** and Date **16 November 2026**.
-3. Leave the meter-reading Items table empty and save.
+1. Open **Utility Bill Structure Assignment**, filter Customer to **Peter Kamau**, and open his submitted assignment.
+2. Click **Start Billing**. Choose **Sales Invoice** and First Billing Date **18 November 2026**, then click **Create Bill and Schedule**.
+3. Review the new draft invoice: Water **500** plus Sewerage **200**, totaling **700**, with no meter reading.
+4. Return to the assignment and click **View Billing Schedule**. The Auto Repeat is Monthly, and the next bill is due **18 December 2026**. If billing has already started, open the existing schedule instead of creating another one.
 
-**Expected result:** Water is **500** and Sewerage is **200**, giving a fixed monthly bill of **700**. No consumption or meter is required. For now, a Fixed charge uses quantity 1 even if the item is marked as stock; the accounting treatment for that case is deferred.
+**What happens:** Start Billing creates the first bill and its monthly schedule. Later bills are recalculated from the assigned structure, including formulas that depend on the number of days in the month. Generated bills stay in draft for review. The site's scheduler must be running for unattended generation.
+
+The earlier prepared Meter Reading for Peter was a calculation example. Use **Start Billing** for his ongoing fixed billing. A bill and a submitted Meter Reading cannot both charge him for the same month.
+
+Fixed charges still use quantity 1, including stock items; their stock accounting treatment remains deferred.
 
 ### Optional: explain stock-item billing
 
@@ -144,7 +149,7 @@ For 15 units of stock Water, **Rates** and the Sales Order would show:
 | Water | 5 | 8 | 40 |
 | **Total water** | **15** | | **140** |
 
-Show **Quantity Formula** on the calculation rows and **Stock Quantity Sources** (`W1, W2, W3`) on the final Water row. They tell the system which quantities belong to the Water total. For non-stock items, the quantities still explain the calculation but are combined into one final charge.
+Show **Amount Formula** on the tier rows and **Stock Quantity Sources** (`W1, W2, W3`) on the final Water row. Each tier formula states units × rate, so the system obtains both its quantity and amount from that one expression. There is no separate Quantity Formula field. For non-stock items, the calculated amounts are combined into one final charge.
 
 The site allows the same item on multiple sales lines. An actual stock movement happens when a Delivery Note or a Sales Invoice with Update Stock is submitted, rather than when the reading or Sales Order is submitted.
 
@@ -210,3 +215,15 @@ This step changes James's billing from December onward.
 - **A past reading is refused:** A later reading may already have been submitted for the meter. Complete the date comparisons while the readings are still drafts.
 - **A formula reports an unknown name:** Check the abbreviation and row order. A row can use results from earlier rows.
 - **Old fields are still showing:** Hard-refresh and reopen the form.
+
+## Change a fixed customer's recurring charges
+
+On the fixed customer's assignment, choose **Change Bill Structure** and use the first day of the new billing month. The old schedule is ended or disabled, and a replacement fixed structure starts a new schedule. If the replacement is metered, recurring fixed billing stops and future bills start from meter readings.
+
+Existing bills must not extend beyond the old assignment's end date. Review those bills before changing the assignment. The old assignments, schedules and bills remain available as history.
+
+### Replace an assignment that has no end date
+
+You can create the next Bill Structure Assignment without manually ending the current one. Use the same customer, company and property, select the new structure, and enter its start date. The system links the earlier open-ended assignment automatically.
+
+Save the replacement as a draft to review it; the old assignment stays active. When you submit the replacement, the old assignment ends the previous day. Existing bills are protected, and the dates must not create conflicting assignments. For recurring fixed billing, use the first day of a month.
