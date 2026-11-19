@@ -1,0 +1,740 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:allocation_id",
+ "creation": "2026-07-12 14:01:47.779749",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_information_section",
+  "allocation_id",
+  "property",
+  "unit",
+  "column_break_yrux",
+  "tenant",
+  "lease_status",
+  "active",
+  "lease_details_section",
+  "lease_start_date",
+  "lease_end_date",
+  "occupation_date",
+  "vacate_date",
+  "column_break_vhia",
+  "lease_duration",
+  "renewal_date",
+  "renewal_reminder_days",
+  "lease_type",
+  "utilities_section",
+  "utilities",
+  "occupancy_information_section",
+  "number_of_occupants",
+  "adults",
+  "children",
+  "column_break_ptqo",
+  "pets_allowed",
+  "pet_details",
+  "parking_space",
+  "parking_number",
+  "tenant_snapshot_section",
+  "phone",
+  "email",
+  "national_id",
+  "column_break_dmgg",
+  "kra_pin",
+  "employer",
+  "emergency_contact",
+  "emergency_phone",
+  "keys_and_access_section",
+  "keys_issued",
+  "access_card",
+  "gate_remote",
+  "column_break_kbwe",
+  "parking_sticker",
+  "wifi_password",
+  "unit_condition_section",
+  "move_in_inspection_completed",
+  "move_out_inspection_completed",
+  "condition_report",
+  "photos",
+  "column_break_smqu",
+  "damages",
+  "repair_cost",
+  "documents_section",
+  "signed_lease",
+  "tenant_id_copy",
+  "passport_photo",
+  "column_break_dqay",
+  "employment_letter",
+  "deposit_receipt",
+  "inspection_report",
+  "financial_information_tab",
+  "financial_information_section",
+  "monthly_rent",
+  "deposit_required",
+  "deposit_paid",
+  "deposit_balance",
+  "column_break_airq",
+  "advance_rent",
+  "rent_due_day",
+  "billing_frequency",
+  "currency",
+  "deposit_refund_section",
+  "refund_amount",
+  "deduction_amount",
+  "column_break_lpgp",
+  "deduction_reason",
+  "refund_date",
+  "notice_information_section",
+  "notice_given_by",
+  "notice_date",
+  "notice_period",
+  "column_break_bahe",
+  "expected_vacate_date",
+  "reason_for_leaving",
+  "kenyan_specific_fields_section",
+  "kplc_meter_number",
+  "water_account_number",
+  "caretaker",
+  "estate",
+  "county",
+  "column_break_znjo",
+  "house_category",
+  "service_charge",
+  "garbage_fee",
+  "security_fee",
+  "internet_fee",
+  "rent_includes_utilities",
+  "payment_configuration_tab",
+  "rent_invoice_series",
+  "payment_terms_template",
+  "auto_generate_invoice",
+  "column_break_ojit",
+  "invoice_generation_day",
+  "grace_period",
+  "penalty_enabled",
+  "late_fee_type",
+  "late_fee_amount",
+  "workflow_tab",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_information_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "description": "Generated identifier",
+   "fieldname": "allocation_id",
+   "fieldtype": "Data",
+   "label": "Allocation ID",
+   "unique": 1
+  },
+  {
+   "description": "Apartment/Building",
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Utility Property"
+  },
+  {
+   "description": "Specific unit",
+   "fieldname": "unit",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Unit",
+   "options": "Utility Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_yrux",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Current tenant",
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tenant",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "lease_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Lease Status",
+   "options": "Draft\nActive\nNotice Given\nExpired\nTerminated\nVacated"
+  },
+  {
+   "default": "0",
+   "description": "Current allocation flags",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "lease_details_section",
+   "fieldtype": "Section Break",
+   "label": "Lease Details"
+  },
+  {
+   "fieldname": "lease_start_date",
+   "fieldtype": "Date",
+   "label": "Lease Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lease_end_date",
+   "fieldtype": "Date",
+   "label": "Lease End Date"
+  },
+  {
+   "fieldname": "occupation_date",
+   "fieldtype": "Date",
+   "label": "Occupation Date"
+  },
+  {
+   "fieldname": "vacate_date",
+   "fieldtype": "Date",
+   "label": "Vacate Date"
+  },
+  {
+   "fieldname": "column_break_vhia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lease_duration",
+   "fieldtype": "Int",
+   "label": "Lease Duration"
+  },
+  {
+   "fieldname": "renewal_date",
+   "fieldtype": "Date",
+   "label": "Renewal Date"
+  },
+  {
+   "fieldname": "renewal_reminder_days",
+   "fieldtype": "Int",
+   "label": "Renewal Reminder Days"
+  },
+  {
+   "fieldname": "lease_type",
+   "fieldtype": "Select",
+   "label": "Lease Type",
+   "options": "Monthly\nFixed Term\nYearly"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "utilities_section",
+   "fieldtype": "Section Break",
+   "label": "Utilities"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "occupancy_information_section",
+   "fieldtype": "Section Break",
+   "label": "Occupancy Information"
+  },
+  {
+   "fieldname": "number_of_occupants",
+   "fieldtype": "Int",
+   "label": "Number of Occupants"
+  },
+  {
+   "fieldname": "adults",
+   "fieldtype": "Int",
+   "label": "Adults"
+  },
+  {
+   "fieldname": "children",
+   "fieldtype": "Int",
+   "label": "Children"
+  },
+  {
+   "fieldname": "column_break_ptqo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "pets_allowed",
+   "fieldtype": "Check",
+   "label": "Pets Allowed"
+  },
+  {
+   "fieldname": "pet_details",
+   "fieldtype": "Data",
+   "label": "Pet Details"
+  },
+  {
+   "default": "0",
+   "fieldname": "parking_space",
+   "fieldtype": "Check",
+   "label": "Parking Space"
+  },
+  {
+   "fieldname": "parking_number",
+   "fieldtype": "Data",
+   "label": "Parking Number"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "tenant_snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Tenant Snapshot"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "national_id",
+   "fieldtype": "Data",
+   "label": "National ID"
+  },
+  {
+   "fieldname": "column_break_dmgg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kra_pin",
+   "fieldtype": "Data",
+   "label": "KRA PIN"
+  },
+  {
+   "fieldname": "employer",
+   "fieldtype": "Data",
+   "label": "Employer"
+  },
+  {
+   "fieldname": "emergency_contact",
+   "fieldtype": "Data",
+   "label": "Emergency Contact"
+  },
+  {
+   "fieldname": "emergency_phone",
+   "fieldtype": "Data",
+   "label": "Emergency Phone"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "keys_and_access_section",
+   "fieldtype": "Section Break",
+   "label": "Keys And Access"
+  },
+  {
+   "fieldname": "keys_issued",
+   "fieldtype": "Data",
+   "label": "Keys Issued"
+  },
+  {
+   "fieldname": "access_card",
+   "fieldtype": "Data",
+   "label": "Access Card"
+  },
+  {
+   "fieldname": "gate_remote",
+   "fieldtype": "Data",
+   "label": "Gate Remote"
+  },
+  {
+   "fieldname": "column_break_kbwe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parking_sticker",
+   "fieldtype": "Data",
+   "label": "Parking Sticker"
+  },
+  {
+   "fieldname": "wifi_password",
+   "fieldtype": "Password",
+   "label": "WiFi Password"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "unit_condition_section",
+   "fieldtype": "Section Break",
+   "label": "Unit Condition"
+  },
+  {
+   "default": "0",
+   "fieldname": "move_in_inspection_completed",
+   "fieldtype": "Check",
+   "label": "Move In Inspection Completed"
+  },
+  {
+   "default": "0",
+   "fieldname": "move_out_inspection_completed",
+   "fieldtype": "Check",
+   "label": "Move Out Inspection Completed"
+  },
+  {
+   "fieldname": "condition_report",
+   "fieldtype": "Data",
+   "label": "Condition Report"
+  },
+  {
+   "fieldname": "photos",
+   "fieldtype": "Attach",
+   "label": "Photos"
+  },
+  {
+   "fieldname": "column_break_smqu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "damages",
+   "fieldtype": "Small Text",
+   "label": "Damages"
+  },
+  {
+   "fieldname": "repair_cost",
+   "fieldtype": "Currency",
+   "label": "Repair Cost"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "documents_section",
+   "fieldtype": "Section Break",
+   "label": "Documents"
+  },
+  {
+   "default": "0",
+   "fieldname": "signed_lease",
+   "fieldtype": "Check",
+   "label": "Signed Lease"
+  },
+  {
+   "fieldname": "tenant_id_copy",
+   "fieldtype": "Attach",
+   "label": "Tenant ID Copy"
+  },
+  {
+   "fieldname": "passport_photo",
+   "fieldtype": "Attach",
+   "label": "Passport Photo"
+  },
+  {
+   "fieldname": "column_break_dqay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employment_letter",
+   "fieldtype": "Attach",
+   "label": "Employment Letter"
+  },
+  {
+   "fieldname": "deposit_receipt",
+   "fieldtype": "Attach",
+   "label": "Deposit Receipt"
+  },
+  {
+   "fieldname": "inspection_report",
+   "fieldtype": "Attach",
+   "label": "Inspection Report"
+  },
+  {
+   "fieldname": "financial_information_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "financial_information_section",
+   "fieldtype": "Section Break",
+   "label": "Financial Information"
+  },
+  {
+   "fieldname": "monthly_rent",
+   "fieldtype": "Currency",
+   "label": "Monthly Rent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "deposit_required",
+   "fieldtype": "Currency",
+   "label": "Deposit Required"
+  },
+  {
+   "fieldname": "deposit_paid",
+   "fieldtype": "Currency",
+   "label": "Deposit Paid"
+  },
+  {
+   "fieldname": "deposit_balance",
+   "fieldtype": "Currency",
+   "label": "Deposit Balance"
+  },
+  {
+   "fieldname": "column_break_airq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "advance_rent",
+   "fieldtype": "Currency",
+   "label": "Advance Rent"
+  },
+  {
+   "fieldname": "rent_due_day",
+   "fieldtype": "Int",
+   "label": "Rent Due Day"
+  },
+  {
+   "fieldname": "billing_frequency",
+   "fieldtype": "Select",
+   "label": "Billing Frequency",
+   "options": "Monthly\nQuarterly"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "deposit_refund_section",
+   "fieldtype": "Section Break",
+   "label": "Deposit Refund"
+  },
+  {
+   "fieldname": "refund_amount",
+   "fieldtype": "Currency",
+   "label": "Refund Amount"
+  },
+  {
+   "fieldname": "deduction_amount",
+   "fieldtype": "Currency",
+   "label": "Deduction Amount"
+  },
+  {
+   "fieldname": "column_break_lpgp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deduction_reason",
+   "fieldtype": "Small Text",
+   "label": "Deduction Reason"
+  },
+  {
+   "fieldname": "refund_date",
+   "fieldtype": "Date",
+   "label": "Refund Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "notice_information_section",
+   "fieldtype": "Section Break",
+   "label": "Notice Information"
+  },
+  {
+   "fieldname": "notice_given_by",
+   "fieldtype": "Select",
+   "label": "Notice Given By",
+   "options": "Tenant\nLandlord\nProperty Manager"
+  },
+  {
+   "fieldname": "notice_date",
+   "fieldtype": "Date",
+   "label": "Notice Date"
+  },
+  {
+   "fieldname": "notice_period",
+   "fieldtype": "Int",
+   "label": "Notice Period"
+  },
+  {
+   "fieldname": "column_break_bahe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_vacate_date",
+   "fieldtype": "Date",
+   "label": "Expected Vacate Date"
+  },
+  {
+   "fieldname": "reason_for_leaving",
+   "fieldtype": "Small Text",
+   "label": "Reason for Leaving"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "kenyan_specific_fields_section",
+   "fieldtype": "Section Break",
+   "label": "Kenyan Specific Fields"
+  },
+  {
+   "fieldname": "kplc_meter_number",
+   "fieldtype": "Data",
+   "label": "KPLC Meter Number"
+  },
+  {
+   "fieldname": "water_account_number",
+   "fieldtype": "Data",
+   "label": "Water Account Number"
+  },
+  {
+   "fieldname": "caretaker",
+   "fieldtype": "Data",
+   "label": "Caretaker"
+  },
+  {
+   "fieldname": "estate",
+   "fieldtype": "Data",
+   "label": "Estate"
+  },
+  {
+   "fieldname": "county",
+   "fieldtype": "Data",
+   "label": "County"
+  },
+  {
+   "fieldname": "column_break_znjo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "house_category",
+   "fieldtype": "Data",
+   "label": "House Category"
+  },
+  {
+   "fieldname": "service_charge",
+   "fieldtype": "Currency",
+   "label": "Service Charge"
+  },
+  {
+   "fieldname": "garbage_fee",
+   "fieldtype": "Currency",
+   "label": "Garbage Fee"
+  },
+  {
+   "fieldname": "security_fee",
+   "fieldtype": "Currency",
+   "label": "Security Fee"
+  },
+  {
+   "fieldname": "internet_fee",
+   "fieldtype": "Currency",
+   "label": "Internet Fee"
+  },
+  {
+   "default": "0",
+   "fieldname": "rent_includes_utilities",
+   "fieldtype": "Check",
+   "label": "Rent Includes Utilities"
+  },
+  {
+   "fieldname": "payment_configuration_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Configuration"
+  },
+  {
+   "fieldname": "rent_invoice_series",
+   "fieldtype": "Data",
+   "label": "Rent Invoice Series"
+  },
+  {
+   "fieldname": "payment_terms_template",
+   "fieldtype": "Link",
+   "label": "Payment Terms Template",
+   "options": "Payment Terms Template"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_generate_invoice",
+   "fieldtype": "Check",
+   "label": "Auto Generate Invoice"
+  },
+  {
+   "fieldname": "column_break_ojit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoice_generation_day",
+   "fieldtype": "Int",
+   "label": "Invoice Generation Day"
+  },
+  {
+   "description": "Days",
+   "fieldname": "grace_period",
+   "fieldtype": "Int",
+   "label": "Grace Period"
+  },
+  {
+   "default": "0",
+   "fieldname": "penalty_enabled",
+   "fieldtype": "Check",
+   "label": "Penalty Enabled"
+  },
+  {
+   "fieldname": "late_fee_type",
+   "fieldtype": "Select",
+   "label": "Late Fee Type",
+   "options": "Fixed\nPercentage"
+  },
+  {
+   "fieldname": "late_fee_amount",
+   "fieldtype": "Currency",
+   "label": "Late Fee Amount"
+  },
+  {
+   "fieldname": "workflow_tab",
+   "fieldtype": "Tab Break",
+   "label": "Workflow "
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Unit Allocation",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "utilities",
+   "fieldtype": "Table",
+   "label": "Utilities",
+   "options": "Utilities"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-07-13 01:33:16.851365",
+ "modified_by": "Administrator",
+ "module": "Utility Billing",
+ "name": "Unit Allocation",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
