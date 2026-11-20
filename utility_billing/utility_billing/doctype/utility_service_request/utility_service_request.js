@@ -13,7 +13,6 @@ frappe.ui.form.on("Utility Service Request", {
 		frm.ignore_doctypes_on_cancel_all = ["BOM"];
 
 		set_dynamic_field_label(frm);
-		show_price_list_requirement(frm);
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
@@ -294,11 +293,6 @@ frappe.ui.form.on("Utility Service Request", {
 
 	price_list: function (frm) {
 		refresh_property_item_rates(frm);
-		show_price_list_requirement(frm);
-	},
-
-	service_request_from: function (frm) {
-		show_price_list_requirement(frm);
 	},
 });
 
@@ -450,45 +444,41 @@ function set_property_row_item(frm, row) {
  * Default the price list when the document has none.
  *
  * Resolution order matches the server: the customer's default price list, then
- * its Customer Group's. A Lead, Prospect or CRM Deal gets none: the user picks
- * one. An explicitly chosen price list is never overwritten.
+ * the Default Price List in Utility Billing Settings. An explicitly chosen
+ * price list is never overwritten.
  */
 function default_price_list_from_customer(frm) {
-	if (frm.doc.price_list || frm.doc.service_request_from !== "Customer") return;
+	if (frm.doc.price_list) return;
 
-	frappe
-		.call({
-			method: "utility_billing.utility_billing.utils.price_list.get_default_price_list",
-			args: { customer: frm.doc.customer || frm.doc.party_name },
-		})
-		.then((response) => {
-			if (response?.message && !frm.doc.price_list) {
-				frm.set_value("price_list", response.message);
+	const customer = frm.doc.customer || frm.doc.party_name;
+
+	if (customer && frappe.db.exists("Customer", customer)) {
+		frappe.db.get_value("Customer", customer, "default_price_list").then((response) => {
+			const price_list = response?.message?.default_price_list;
+			if (price_list) {
+				frm.set_value("price_list", price_list);
+				return;
 			}
+
+			set_price_list_from_settings(frm);
 		});
+		return;
+	}
+
+	set_price_list_from_settings(frm);
 }
 
 /**
- * Tell the user a request needs a price list.
- *
- * Not made mandatory on the form, so drafts still save: the server refuses
- * the submit without one, and for a Lead, Prospect or CRM Deal also the first
- * approval step.
+ * Fall back to the Default Price List configured in Utility Billing Settings.
  */
-function show_price_list_requirement(frm) {
-	const party_type = frm.doc.service_request_from;
-	let note = "";
+function set_price_list_from_settings(frm) {
+	if (frm.doc.price_list) return;
 
-	if (frm.doc.docstatus === 0 && !frm.doc.price_list) {
-		note =
-			party_type && party_type !== "Customer"
-				? __("Required before this request is sent for approval or submitted: a {0} has no price list to default to.", [
-						__(party_type),
-					])
-				: __("Required before this request is submitted.");
-	}
-
-	frm.set_df_property("price_list", "description", note);
+	frappe.db.get_doc(settingsDoctypeName, settingsDoctypeName).then((settings) => {
+		if (settings?.default_price_list) {
+			frm.set_value("price_list", settings.default_price_list);
+		}
+	});
 }
 
 /**
@@ -1454,7 +1444,7 @@ async function addActionButtons(frm) {
 			}
 
 			frm.add_custom_button(
-				__("Sales Order / Deposit"),
+				__("Sales Order"),
 				function () {
 					if (isItemPriceApproach) {
 						open_new_sales_document(frm, "Sales Order");
