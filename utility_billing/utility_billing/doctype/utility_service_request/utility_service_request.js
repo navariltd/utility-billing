@@ -1454,7 +1454,7 @@ async function addActionButtons(frm) {
 			}
 
 			frm.add_custom_button(
-				__("Sales Order / Deposit"),
+				__("Sales Order"),
 				function () {
 					if (isItemPriceApproach) {
 						open_new_sales_document(frm, "Sales Order");

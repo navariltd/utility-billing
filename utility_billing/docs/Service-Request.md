@@ -164,8 +164,8 @@ graph TD
 - Sales Order submitted for payment processing
 - Auto repeat can be optionally configured for recurring orders
 
-When **Rent Billing Approach** is **Item Price**, **Create → Sales Order /
-Deposit** skips the modal and opens the standard **new Sales Order form**
+When **Rent Billing Approach** is **Item Price**, **Create → Sales Order**
+skips the modal and opens the standard **new Sales Order form**
 instead, pre-filled with the customer, the service request, the company, the
 dates and the price list. The document is completed and saved on its own form.
 
