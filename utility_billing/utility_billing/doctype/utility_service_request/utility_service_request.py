@@ -15,6 +15,7 @@ from utility_billing.utility_billing.utils.bom import set_request_boms
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
 from utility_billing.utility_billing.utils.price_list import apply_default_price_list, sales_order_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
+from utility_billing.utility_billing.utils.site_survey import fill_survey_customer, survey_lead, survey_property
 
 
 class UtilityServiceRequest(Document):
@@ -258,6 +259,7 @@ def make_customer(name):
 	customer_doc = create_customer(doc)
 	frappe.db.set_value("Utility Service Request", name, "customer", customer_doc.name)
 	frappe.db.set_value("Utility Service Request", name, "customer_name", customer_doc.customer_name)
+	fill_survey_customer(name, customer_doc.name)
 	return customer_doc.name
 
 
@@ -368,7 +370,8 @@ def get_site_survey_defaults(docname):
 		"utility_service_request": docname,
 		"issue_type": doc.request_type,
 		"customer": doc.customer,
-		"utility_property": doc.utility_property,
+		"lead": survey_lead(doc),
+		"utility_property": survey_property(doc),
 	}
 
 
