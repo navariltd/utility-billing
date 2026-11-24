@@ -8,11 +8,14 @@ from frappe.utils import flt, nowdate
 from pypika import Order
 
 from ...utils.create_meter_reading_rates import create_meter_reading_rates
+from ...utils.disconnection import check_reading_customer
+from ...utils.previous_reading import check_reading_not_lower, previous_reading
 from ...utils.request_link import check_meters_of_customer, check_request_customer, request_from_claims
 
 
 class MeterReading(Document):
 	def validate(self):
+		check_reading_customer(self)
 		set_row_warehouses(self)
 		from ...utils.structure_billing import set_assignment_for_date
 		set_assignment_for_date(self)
@@ -49,24 +52,9 @@ class MeterReading(Document):
 		if item.current_reading is None:
 			frappe.throw(frappe._(f"Current reading is required for item: {item.item_code}"))
 
-		previous_reading = get_previous_invoice_reading(
-			item_code=item.item_code,
-			customer=self.customer,
-			meter_number=item.meter_number,
-		)
-		if self.get("bill_structure_assignment"):
-			from ...utils.structure_billing import previous_assigned_reading
-			previous_reading = previous_assigned_reading(self, item, previous_reading)
-		item.previous_reading = previous_reading
-
-		item.consumption = item.current_reading - previous_reading
-
-		if item.consumption < 0:
-			frappe.throw(
-				frappe._(
-					f"Current reading cannot be lower than the previous reading for item: {item.item_code}"
-				)
-			)
+		item.previous_reading, claim = previous_reading(self, item)
+		check_reading_not_lower(self, item, claim)
+		item.consumption = item.current_reading - item.previous_reading
 
 
 def set_row_warehouses(reading) -> None:

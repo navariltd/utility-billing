@@ -230,7 +230,10 @@ doc_events = {
 		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
 	},
 	"Warranty Claim": {
-		"validate": ["utility_billing.utility_billing.overrides.server.warranty_claim.validate"],
+		"validate": [
+			"utility_billing.utility_billing.overrides.server.warranty_claim.validate",
+			"utility_billing.utility_billing.utils.previous_reading.check_opening_reading",
+		],
 	},
 	"BOM": {
 		"before_insert": ["utility_billing.utility_billing.overrides.server.bom.before_insert"],
