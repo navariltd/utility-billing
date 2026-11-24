@@ -19,6 +19,10 @@
   "column_break_rmpo",
   "create_customer_from_utility_service_request_on_submit",
   "enable_extra_rows_for_sosi_creation",
+  "disconnection_section",
+  "disconnection_request_type",
+  "column_break_disconnection",
+  "reconnection_request_type",
   "demo_section",
   "generate_demo_data",
   "column_break_agjn",
@@ -86,6 +90,28 @@
    "fieldname": "enable_extra_rows_for_sosi_creation",
    "fieldtype": "Check",
    "label": "Enable Adding Extra Rows for SO/SI Creation"
+  },
+  {
+   "description": "Request Types (Issue Types) that mark a Utility Service Request as a disconnection or a reconnection. Submitting a disconnection request sets the customer's Status to Disconnected and turns off its Auto Repeats. Neither request shows Create > Site Survey. Leave blank to keep the usual behaviour.",
+   "fieldname": "disconnection_section",
+   "fieldtype": "Section Break",
+   "label": "Disconnection and Reconnection"
+  },
+  {
+   "fieldname": "disconnection_request_type",
+   "fieldtype": "Link",
+   "label": "Disconnection Request Type",
+   "options": "Issue Type"
+  },
+  {
+   "fieldname": "column_break_disconnection",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reconnection_request_type",
+   "fieldtype": "Link",
+   "label": "Reconnection Request Type",
+   "options": "Issue Type"
   },
   {
    "fieldname": "column_break_rmpo",
@@ -239,7 +265,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-30 12:00:00.000000",
+ "modified": "2026-11-24 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Utility Billing",
  "name": "Utility Billing Settings",
