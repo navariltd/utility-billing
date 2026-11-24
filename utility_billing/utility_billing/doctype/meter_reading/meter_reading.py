@@ -13,6 +13,7 @@ from ...utils.request_link import check_meters_of_customer, check_request_custom
 
 class MeterReading(Document):
 	def validate(self):
+		set_row_warehouses(self)
 		from ...utils.structure_billing import set_assignment_for_date
 		set_assignment_for_date(self)
 		check_meters_of_customer(self)
@@ -66,6 +67,20 @@ class MeterReading(Document):
 					f"Current reading cannot be lower than the previous reading for item: {item.item_code}"
 				)
 			)
+
+
+def set_row_warehouses(reading) -> None:
+	"""Give rows without a warehouse the header Warehouse, as Stock Entry does.
+
+	Rows with their own warehouse keep it, and a reading without a header
+	Warehouse is left as it is.
+	"""
+	if not reading.get("warehouse"):
+		return
+
+	for row in reading.items:
+		if not row.warehouse:
+			row.warehouse = reading.warehouse
 
 
 def create_sales_order(meter_reading):

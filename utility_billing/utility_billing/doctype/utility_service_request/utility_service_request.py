@@ -13,13 +13,7 @@ from frappe.utils import add_days, add_months, get_last_day, getdate, nowdate
 
 from utility_billing.utility_billing.utils.bom import set_request_boms
 from utility_billing.utility_billing.utils.lease_overlap import validate_no_overlapping_leases
-from utility_billing.utility_billing.utils.price_list import (
-	apply_default_price_list,
-	fill_customer_price_list,
-	require_price_list,
-	sales_order_price_list,
-	set_price_list_of_new_customer,
-)
+from utility_billing.utility_billing.utils.price_list import apply_default_price_list, sales_order_price_list
 from utility_billing.utility_billing.utils.service_item import ensure_service_item
 
 
@@ -31,7 +25,6 @@ class UtilityServiceRequest(Document):
 		self.validate_items()
 		self.set_customer_if_needed()
 		apply_default_price_list(self)
-		require_price_list(self)
 		self.validate_contract_dates()
 		self.validate_child_items()
 		ensure_service_items_for_properties(self)
@@ -54,7 +47,6 @@ class UtilityServiceRequest(Document):
 		settings = frappe.get_doc("Utility Billing Settings", "Utility Billing Settings")
 		if settings.create_customer_from_utility_service_request_on_submit:
 			make_customer(self.name)
-		fill_customer_price_list(self)
 
 	def validate_items(self):
 		"""Fill the items table from the bill structure when it is empty.
@@ -283,29 +275,23 @@ def create_customer(doc):
 		existing_customer = frappe.db.get_value("Customer", {"lead_name": doc.party_name}, "name")
 		if existing_customer:
 			return frappe.get_doc("Customer", existing_customer)
-		customer = create_customer_from_lead(doc.party_name, ignore_permissions=True)
-		set_price_list_of_new_customer(customer, doc)
-		return customer
+		return create_customer_from_lead(doc.party_name, ignore_permissions=True)
 
 	elif doc.service_request_from == "Prospect":
 		existing_customer = frappe.db.get_value("Customer", {"prospect_name": doc.party_name}, "name")
 		if existing_customer:
 			return frappe.get_doc("Customer", existing_customer)
-		customer = create_customer_from_prospect(doc.party_name, ignore_permissions=True)
-		set_price_list_of_new_customer(customer, doc)
-		return customer
+		return create_customer_from_prospect(doc.party_name, ignore_permissions=True)
 
 	elif doc.service_request_from == "CRM Deal":
 		existing_customer = frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name")
-		if existing_customer:
-			return frappe.get_doc("Customer", existing_customer)
-		deal = frappe.get_doc("CRM Deal", doc.party_name)
-		deal.status = "Won"
-		deal.save()
-		create_customer_in_erpnext(deal, None)
-		customer = frappe.get_doc("Customer", frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name"))
-		set_price_list_of_new_customer(customer, doc)
-		return customer
+		if not existing_customer:
+			deal = frappe.get_doc("CRM Deal", doc.party_name)
+			deal.status = "Won"
+			deal.save()
+			create_customer_in_erpnext(deal, None)
+		existing_customer = frappe.db.get_value("Customer", {"crm_deal": doc.party_name}, "name")
+		return frappe.get_doc("Customer", existing_customer)
 
 	elif doc.service_request_from == "Customer":
 		return frappe.get_doc("Customer", doc.party_name)

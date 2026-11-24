@@ -19,6 +19,7 @@ frappe.ui.form.on("Meter Reading", {
 
 		update_property_query(frm);
 		update_meter_number_query(frm);
+		fill_row_warehouses(frm);
 
 		// Taken from the meters' claims on save when they agree; otherwise one of the customer's requests
 		frm.set_query("utility_service_request", () => ({
@@ -48,6 +49,20 @@ frappe.ui.form.on("Meter Reading", {
 		}
 		update_property_query(frm);
 		update_meter_number_query(frm);
+	},
+
+	warehouse: function (frm) {
+		// As on Stock Entry: setting or changing the header Warehouse fills every row
+		if (!frm.doc.warehouse) return;
+		(frm.doc.items || []).forEach((row) => {
+			if (row.warehouse !== frm.doc.warehouse) {
+				frappe.model.set_value(row.doctype, row.name, "warehouse", frm.doc.warehouse);
+			}
+		});
+	},
+
+	before_save: function (frm) {
+		fill_row_warehouses(frm);
 	},
 
 	items_add: function (frm) {
@@ -139,6 +154,17 @@ frappe.ui.form.on("Meter Reading Item", {
 		frm.refresh_field("items");
 	},
 });
+
+// Rows added by any route (a claim, the claims list, an assignment) take the header
+// Warehouse when they have none; a warehouse set on a row is kept
+function fill_row_warehouses(frm) {
+	if (!frm.doc.warehouse || frm.doc.docstatus !== 0) return;
+	(frm.doc.items || []).forEach((row) => {
+		if (!row.warehouse) {
+			frappe.model.set_value(row.doctype, row.name, "warehouse", frm.doc.warehouse);
+		}
+	});
+}
 
 function update_property_query(frm) {
 	frappe.db
