@@ -1378,6 +1378,117 @@ async function showSalesDocumentModal(frm, docType, allowAdditionalRows = false)
 	configure_dialog(dialog, frm);
 }
 
+/**
+ * Create > Disconnect Meter on a submitted disconnection request, while the
+ * customer still has a Closed Warranty Claim. The server decides and checks again.
+ */
+async function add_disconnect_meter_button(frm) {
+	const options = (
+		await frappe.call({
+			method: "utility_billing.utility_billing.utils.disconnection.disconnect_options",
+			args: { request: frm.doc.name },
+		})
+	).message;
+	if (!options) return;
+
+	frm.add_custom_button(__("Disconnect Meter"), () => disconnect_meter_dialog(frm, options), __("Create"));
+}
+
+function disconnect_meter_dialog(frm, options) {
+	const unread = options.claims.filter((claim) => claim.no_final_reading).map((claim) => claim.serial_no);
+	const warning = unread.length
+		? `<div class="alert alert-warning">${__(
+				"These meters have no submitted Meter Reading dated on or after {0}: {1}. Take the final reading before disconnecting, or go ahead anyway.",
+				[frappe.datetime.str_to_user(options.date), unread.join(", ")],
+		  )}</div>`
+		: "";
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Disconnect Meter of {0}", [options.customer]),
+		size: "large",
+		fields: [
+			{ fieldtype: "HTML", fieldname: "warning", options: warning },
+			{
+				fieldtype: "Table",
+				fieldname: "claims",
+				label: __("Closed Warranty Claims"),
+				cannot_add_rows: true,
+				cannot_delete_rows: true,
+				in_place_edit: true,
+				data: options.claims.map((claim) => ({
+					select: claim.selected ? 1 : 0,
+					claim: claim.name,
+					serial_no: claim.serial_no,
+					utility_property: claim.utility_property,
+					utility_service_request: claim.utility_service_request,
+					no_final_reading: claim.no_final_reading ? 1 : 0,
+				})),
+				fields: [
+					{ fieldtype: "Check", fieldname: "select", label: __("Disconnect"), in_list_view: 1, columns: 1 },
+					{ fieldtype: "Link", fieldname: "claim", label: __("Claim"), options: "Warranty Claim", in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Link", fieldname: "serial_no", label: __("Serial No"), options: "Serial No", in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Link", fieldname: "utility_property", label: __("Property"), options: "Utility Property", in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Link", fieldname: "utility_service_request", label: __("Claim Request"), options: "Utility Service Request", in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Check", fieldname: "no_final_reading", label: __("No Final Reading"), in_list_view: 1, read_only: 1, columns: 1 },
+				],
+			},
+			{
+				fieldtype: "Table",
+				fieldname: "auto_repeats",
+				label: __("Auto Repeats to Stop"),
+				description: __("Auto Repeats cannot be traced to a meter. Tick those of the meters being disconnected."),
+				cannot_add_rows: true,
+				cannot_delete_rows: true,
+				in_place_edit: true,
+				data: options.auto_repeats.map((row) => ({
+					select: row.selected ? 1 : 0,
+					auto_repeat: row.name,
+					reference_doctype: row.reference_doctype,
+					reference_document: row.reference_document,
+					frequency: row.frequency,
+				})),
+				fields: [
+					{ fieldtype: "Check", fieldname: "select", label: __("Stop"), in_list_view: 1, columns: 1 },
+					{ fieldtype: "Link", fieldname: "auto_repeat", label: __("Auto Repeat"), options: "Auto Repeat", in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Data", fieldname: "reference_doctype", label: __("Reference Type"), in_list_view: 1, read_only: 1, columns: 2 },
+					{ fieldtype: "Dynamic Link", fieldname: "reference_document", label: __("Reference Document"), options: "reference_doctype", in_list_view: 1, read_only: 1, columns: 3 },
+					{ fieldtype: "Data", fieldname: "frequency", label: __("Frequency"), in_list_view: 1, read_only: 1, columns: 2 },
+				],
+			},
+		],
+		primary_action_label: __("Disconnect"),
+		primary_action(values) {
+			const claims = (values.claims || []).filter((row) => row.select).map((row) => row.claim);
+			const auto_repeats = (values.auto_repeats || []).filter((row) => row.select).map((row) => row.auto_repeat);
+			if (!claims.length) {
+				frappe.msgprint(__("Tick at least one Warranty Claim to disconnect."));
+				return;
+			}
+
+			frappe
+				.call({
+					method: "utility_billing.utility_billing.utils.disconnection.disconnect_meters",
+					args: { request: frm.doc.name, claims, auto_repeats },
+					freeze: true,
+				})
+				.then((r) => {
+					dialog.hide();
+					const result = r.message || {};
+					let message = __("Reopened Warranty Claims: {0}.", [result.claims.join(", ")]);
+					if (result.auto_repeats.length) {
+						message += " " + __("Turned off Auto Repeats: {0}.", [result.auto_repeats.join(", ")]);
+					}
+					if (result.status) {
+						message += " " + __("Customer {0} is now {1}.", [options.customer, __(result.status)]);
+					}
+					frappe.msgprint({ title: __("Meters Disconnected"), message, indicator: "green" });
+					frm.reload_doc();
+				});
+		},
+	});
+	dialog.show();
+}
+
 async function addActionButtons(frm) {
 	const currentStatus = frm.doc.request_status;
 
@@ -1431,6 +1542,10 @@ async function addActionButtons(frm) {
 			// A submitted Sales Order linked to this request; the server checks it again
 			if (depositName) {
 				frm.add_custom_button(__("Warranty Claim"), () => new_warranty_claim(frm), __("Create"));
+			}
+
+			if (settings?.disconnection_request_type && frm.doc.request_type === settings.disconnection_request_type) {
+				add_disconnect_meter_button(frm);
 			}
 
 			if (isItemPriceApproach) {
@@ -1507,7 +1622,17 @@ async function addActionButtons(frm) {
 		}
 	}
 
-	if (currentStatus === "" && settings?.enable_site_survey == 1) {
+	// A disconnection or reconnection request needs no site survey
+	const surveyFreeTypes = [
+		settings?.disconnection_request_type,
+		settings?.reconnection_request_type,
+	].filter(Boolean);
+
+	if (
+		currentStatus === "" &&
+		settings?.enable_site_survey == 1 &&
+		!surveyFreeTypes.includes(frm.doc.request_type)
+	) {
 		frm.add_custom_button(
 			__("Site Survey"),
 			function () {
