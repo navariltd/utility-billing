@@ -38,14 +38,43 @@ def customer_status(customer: str | None) -> str | None:
     return frappe.db.get_value("Customer", customer, STATUS_FIELD)
 
 
-def is_disconnection_request(doc) -> bool:
-    """Return whether a request's Request Type is the Disconnection Request Type."""
+def disconnection_request_type() -> str | None:
+    """Return the Disconnection Request Type in Utility Billing Settings, or ``None``."""
     # Read only once the site is migrated: until then the setting does not exist
     if not frappe.get_meta(SETTINGS).has_field("disconnection_request_type"):
-        return False
+        return None
+    return frappe.db.get_single_value(SETTINGS, "disconnection_request_type") or None
 
-    request_type = frappe.db.get_single_value(SETTINGS, "disconnection_request_type")
+
+def is_disconnection_request(doc) -> bool:
+    """Return whether a request's Request Type is the Disconnection Request Type."""
+    request_type = disconnection_request_type()
     return bool(request_type and doc.get("request_type") == request_type)
+
+
+def check_status_not_set_by_hand(doc, method=None) -> None:
+    """Refuse a Customer save that sets the Status to Disconnected.
+
+    Only while a Disconnection Request Type is set: then a customer is
+    disconnected through Create > Disconnect Meter, which writes the Status
+    without saving the customer. A customer already Disconnected can still be
+    saved, and every other Status is left alone.
+
+    Args:
+        doc: ``Customer`` document.
+    """
+    if not has_status_field() or not disconnection_request_type():
+        return
+    if doc.get(STATUS_FIELD) != DISCONNECTED or not doc.has_value_changed(STATUS_FIELD):
+        return
+
+    frappe.throw(
+        _(
+            "A customer cannot be set to Disconnected by hand. Create a Utility Service Request with the "
+            "Disconnection request type, then use Create > Disconnect Meter on it."
+        ),
+        title=_("Use a Disconnection Request"),
+    )
 
 
 def closed_claims(customer: str) -> list[dict]:

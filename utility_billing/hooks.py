@@ -229,6 +229,9 @@ doc_events = {
 	"Item": {
 		"validate": ["utility_billing.utility_billing.overrides.server.item.validate"],
 	},
+	"Customer": {
+		"validate": ["utility_billing.utility_billing.utils.disconnection.check_status_not_set_by_hand"],
+	},
 	"Warranty Claim": {
 		"validate": [
 			"utility_billing.utility_billing.overrides.server.warranty_claim.validate",

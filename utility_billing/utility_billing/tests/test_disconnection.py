@@ -356,3 +356,77 @@ class TestMeterReading(DisconnectionCase):
         frappe.db.set_value("Customer", self.customer, "custom_status", "Disconnected")
         with patch.object(disconnection, "has_status_field", return_value=False):
             check_reading_customer(reading)
+
+
+@unittest.skipUnless(HAS_STATUS, "Customer has no custom_status field on this site")
+class TestStatusByHand(DisconnectionCase):
+    """Disconnected is set through Create > Disconnect Meter, not by saving the customer."""
+
+    MESSAGE = "A customer cannot be set to Disconnected by hand"
+
+    def set_status(self, status, customer=None):
+        doc = frappe.get_doc("Customer", customer or self.customer)
+        doc.custom_status = status
+        doc.save(ignore_permissions=True)
+
+    def test_setting_disconnected_by_hand_is_refused(self):
+        with self.assertRaises(frappe.ValidationError) as raised:
+            self.set_status("Disconnected")
+
+        self.assertIn(self.MESSAGE, str(raised.exception))
+        self.assertIn("Create > Disconnect Meter", str(raised.exception))
+        self.assertEqual(self.status(), "Active")
+
+    def test_a_new_customer_cannot_start_disconnected(self):
+        customer = frappe.get_doc(
+            {
+                "doctype": "Customer",
+                "customer_name": "_Test Disconnection New Customer",
+                "customer_type": "Individual",
+                "custom_status": "Disconnected",
+            }
+        )
+        self.assertRaises(frappe.ValidationError, customer.insert, ignore_permissions=True)
+
+    def test_other_statuses_are_allowed(self):
+        self.set_status("Suspended")
+        self.assertEqual(self.status(), "Suspended")
+
+        self.set_status("Active")
+        self.assertEqual(self.status(), "Active")
+
+    def test_an_already_disconnected_customer_can_be_saved_again(self):
+        frappe.db.set_value("Customer", self.customer, "custom_status", "Disconnected")
+        doc = frappe.get_doc("Customer", self.customer)
+        doc.customer_details = "_Test saved again"
+
+        doc.save(ignore_permissions=True)
+
+        self.assertEqual(self.status(), "Disconnected")
+        self.set_status("Active")
+        self.assertEqual(self.status(), "Active")
+
+    def test_allowed_while_the_setting_is_blank(self):
+        self.set_disconnection_type(None)
+
+        self.set_status("Disconnected")
+
+        self.assertEqual(self.status(), "Disconnected")
+
+    def test_allowed_without_the_status_field(self):
+        with patch.object(disconnection, "has_status_field", return_value=False):
+            self.set_status("Disconnected")
+
+        self.assertEqual(self.status(), "Disconnected")
+
+    def test_disconnect_meters_still_sets_the_status(self):
+        claim = self.claim("_TD-A")
+
+        result = disconnect_meters(self.request().name, [claim])
+
+        self.assertEqual(result["status"], "Disconnected")
+        self.assertEqual(self.status(), "Disconnected")
+        # And the customer can be saved afterwards
+        doc = frappe.get_doc("Customer", self.customer)
+        doc.customer_details = "_Test saved after disconnection"
+        doc.save(ignore_permissions=True)
