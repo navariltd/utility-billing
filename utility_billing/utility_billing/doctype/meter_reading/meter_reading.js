@@ -322,7 +322,7 @@ async function select_effective_assignment(frm) {
     const request = (frm.assignment_request || 0) + 1;
     frm.assignment_request = request;
     if (!args.customer || !args.company || !args.reading_date) {
-        await frm.set_value('bill_structure_assignment', null);
+        if (frm.doc.bill_structure_assignment) await frm.set_value('bill_structure_assignment', null);
         return;
     }
     const response = await frappe.call({
@@ -333,8 +333,8 @@ async function select_effective_assignment(frm) {
     if (request !== frm.assignment_request || current !== key || frm.doc.docstatus !== 0) return;
     const assignment = response.message || {};
     const changed = (frm.doc.bill_structure_assignment || '') !== (assignment.name || '');
-    await frm.set_value('bill_structure_assignment', assignment.name || null);
     if (changed) {
+        await frm.set_value('bill_structure_assignment', assignment.name || null);
         frm.clear_table('rates');
         frm.clear_table('calculations');
         frm.refresh_field('rates');
