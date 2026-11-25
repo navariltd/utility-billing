@@ -267,17 +267,22 @@ function update_property_query(frm) {
 	});
 }
 
+// The same lookup the save uses, Opening Reading and Bill Structure Assignment included
 function fetch_previous_reading(frm, row) {
 	if (row.item_code && frm.doc.customer) {
 		frappe.call({
-			method: "utility_billing.utility_billing.doctype.meter_reading.meter_reading.get_previous_invoice_reading",
+			method: "utility_billing.utility_billing.utils.previous_reading.preview_previous_reading",
 			args: {
-				item_code: row.item_code,
 				customer: frm.doc.customer,
+				item_code: row.item_code,
 				meter_number: row.meter_number,
+				company: frm.doc.company,
+				date: frm.doc.date,
+				property: frm.doc.property,
+				name: frm.doc.name,
 			},
 			callback: function (r) {
-				row.previous_reading = r.message || 0;
+				row.previous_reading = r.message?.previous_reading || 0;
 				frm.refresh_field("items");
 			},
 		});
@@ -287,7 +292,12 @@ function fetch_previous_reading(frm, row) {
 function calculate_consumption(frm, row) {
 	row.consumption = row.current_reading - row.previous_reading;
 	if (row.consumption < 0) {
-		frappe.msgprint(__("Current reading cannot be lower than previous reading."));
+		frappe.msgprint(
+			__(
+				"The current reading cannot be lower than the previous reading {0}. If the meter was reset or replaced, correct the Opening Reading on its Warranty Claim.",
+				[row.previous_reading],
+			),
+		);
 		row.consumption = 0;
 		row.current_reading = 0;
 	}
@@ -312,7 +322,7 @@ async function select_effective_assignment(frm) {
     const request = (frm.assignment_request || 0) + 1;
     frm.assignment_request = request;
     if (!args.customer || !args.company || !args.reading_date) {
-        await frm.set_value('bill_structure_assignment', null);
+        if (frm.doc.bill_structure_assignment) await frm.set_value('bill_structure_assignment', null);
         return;
     }
     const response = await frappe.call({
@@ -323,8 +333,8 @@ async function select_effective_assignment(frm) {
     if (request !== frm.assignment_request || current !== key || frm.doc.docstatus !== 0) return;
     const assignment = response.message || {};
     const changed = (frm.doc.bill_structure_assignment || '') !== (assignment.name || '');
-    await frm.set_value('bill_structure_assignment', assignment.name || null);
     if (changed) {
+        await frm.set_value('bill_structure_assignment', assignment.name || null);
         frm.clear_table('rates');
         frm.clear_table('calculations');
         frm.refresh_field('rates');
